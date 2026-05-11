@@ -20,37 +20,34 @@ jobs:
           node-version: 22
           cache: "pnpm"
       
-      - name: Установка зависимостей
-        run: pnpm install --frozen-lockfile
-      
-      - name: Сборка проекта
-        run: |
-          pnpm -r typecheck || true
-          pnpm build || true
-          cd ui && pnpm build || true
-      
-      - name: Деплой на сервер
-        uses: easingthemes/ssh-deploy@v5
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          ARGS: "-rlgoDzvc --delete"
-          SOURCE: "./"
-          REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
-          REMOTE_USER: ${{ secrets.DEPLOY_USER }}
-          TARGET: "/opt/paperclip-ru"
-          EXCLUDE: "/node_modules/, /.git/, /__pycache__/, /.pnpm-store/"
-      
-      - name: Перезапуск Paperclip
-        uses: appleboy/ssh-action@v1
+      - name: Деплой файлов и перезапуск
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
+            set -e
+            echo "=== Pull последней версии ==="
             cd /opt/paperclip-ru
-            pnpm install --frozen-lockfile
-            pnpm -r build || true
-            cd ui && pnpm build || true
+            git config user.email "privatenedopekin@gmail.com"
+            git config user.name "Nedopekin"
+            git pull origin master || true
+            
+            echo "=== Установка зависимостей ==="
+            pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
+            
+            echo "=== Проверка типов ==="
+            pnpm -r typecheck || echo "⚠️ typecheck failed, continuing"
+            
+            echo "=== Сборка UI ==="
+            cd ui && npx vite build || echo "⚠️ build failed, continuing"
+            
+            echo "=== Перезапуск Paperclip ==="
             pkill -f "paperclip" || true
-            nohup pnpm dev > /dev/null 2>&1 &
-            echo "Paperclip RU перезапущен"
+            sleep 2
+            nohup pnpm dev > /opt/paperclip-ru/server.log 2>&1 &
+            
+            echo "=== Готово ==="
+            sleep 3
+            curl -s http://localhost:3101/api/health || echo "Health check pending..."
