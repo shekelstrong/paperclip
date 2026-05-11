@@ -1,21 +1,21 @@
 import * as React from "react";
 import { useMemo, useState } from "react";
 import * as RouterDom from "react-router-dom";
-import type { Задача } from "@paperclipai/shared";
+import type { Issue } from "@paperclipai/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { timeAgo } from "@/lib/timeAgo";
-import { createЗадачаDetailПуть, withЗадачаDetailHeaderSeed } from "@/lib/issueDetailBreadcrumb";
+import { createIssueDetailPath, withIssueDetailHeaderSeed } from "@/lib/issueDetailBreadcrumb";
 import {
-  getЗадачаDetailQueryOptions,
+  getIssueDetailQueryOptions,
   ISSUE_DETAIL_STALE_TIME_MS,
-  prefetchЗадачаDetail,
+  prefetchIssueDetail,
 } from "@/lib/issueDetailCache";
-import { queryКлючs } from "@/lib/queryКлючs";
+import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { СтатусIcon } from "@/components/СтатусIcon";
+import { StatusIcon } from "@/components/StatusIcon";
 
-function summarizeЗадачаОписание(description: string | null | undefined) {
+function summarizeIssueDescription(description: string | null | undefined) {
   if (!description) return null;
   const summary = description
     .replace(/!\[[^\]]*]\([^)]+\)/g, " ")
@@ -28,40 +28,40 @@ function summarizeЗадачаОписание(description: string | null | unde
   return summary.length > 180 ? `${summary.slice(0, 177).trimEnd()}...` : summary;
 }
 
-export function ЗадачаQuicklookCard({
+export function IssueQuicklookCard({
   issue,
   linkTo,
   linkState,
   compact = false,
 }: {
-  issue: Задача;
+  issue: Issue;
   linkTo: RouterDom.To;
   linkState?: unknown;
   compact?: boolean;
 }) {
-  const description = useMemo(() => summarizeЗадачаОписание(issue.description), [issue.description]);
+  const description = useMemo(() => summarizeIssueDescription(issue.description), [issue.description]);
 
   return (
-    <div classИмя={cn("space-y-2", compact && "space-y-1.5")}>
-      <div classИмя="flex items-start gap-2">
-        <СтатусIcon status={issue.status} blockerAttention={issue.blockerAttention} classИмя="mt-0.5 shrink-0" />
+    <div className={cn("space-y-2", compact && "space-y-1.5")}>
+      <div className="flex items-start gap-2">
+        <StatusIcon status={issue.status} blockerAttention={issue.blockerAttention} className="mt-0.5 shrink-0" />
         <RouterDom.Link
           to={linkTo}
-          state={linkState ?? withЗадачаDetailHeaderSeed(null, issue)}
-          classИмя="text-sm font-medium leading-snug hover:underline line-clamp-2"
+          state={linkState ?? withIssueDetailHeaderSeed(null, issue)}
+          className="text-sm font-medium leading-snug hover:underline line-clamp-2"
         >
           {issue.title}
         </RouterDom.Link>
       </div>
-      <div classИмя="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span classИмя="font-mono">{issue.identifier ?? issue.id.slice(0, 8)}</span>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span className="font-mono">{issue.identifier ?? issue.id.slice(0, 8)}</span>
         <span>&middot;</span>
         <span>{issue.status.replace(/_/g, " ")}</span>
         <span>&middot;</span>
         <span>{timeAgo(new Date(issue.updatedAt))}</span>
       </div>
       {description ? (
-        <p classИмя="text-xs leading-5 text-muted-foreground [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:4] overflow-hidden">
+        <p className="text-xs leading-5 text-muted-foreground [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:4] overflow-hidden">
           {description}
         </p>
       ) : null}
@@ -69,50 +69,50 @@ export function ЗадачаQuicklookCard({
   );
 }
 
-export const ЗадачаLinkQuicklook = React.forwardRef<
+export const IssueLinkQuicklook = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentProps<typeof RouterDom.Link> & {
-    issueПутьId: string;
-    disableЗадачаQuicklook?: boolean;
-    issuePrefetch?: Задача | null;
+    issuePathId: string;
+    disableIssueQuicklook?: boolean;
+    issuePrefetch?: Issue | null;
   }
->(function ЗадачаLinkQuicklookImpl(
+>(function IssueLinkQuicklookImpl(
   {
-    issueПутьId,
+    issuePathId,
     to,
     children,
-    classИмя,
+    className,
     state,
-    disableЗадачаQuicklook = false,
+    disableIssueQuicklook = false,
     issuePrefetch = null,
     onClick,
     onClickCapture,
     onMouseEnter,
     onFocus,
-    onTouchНачать,
+    onTouchStart,
     ...props
   },
   ref,
 ) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const prefetchedState = issuePrefetch ? withЗадачаDetailHeaderSeed(state, issuePrefetch) : state;
-  const { data, isЗагрузка } = useQuery({
-    ...getЗадачаDetailQueryOptions(queryClient, issueПутьId, { placeholderЗадача: issuePrefetch ?? undefined }),
+  const prefetchedState = issuePrefetch ? withIssueDetailHeaderSeed(state, issuePrefetch) : state;
+  const { data, isLoading } = useQuery({
+    ...getIssueDetailQueryOptions(queryClient, issuePathId, { placeholderIssue: issuePrefetch ?? undefined }),
     enabled: open,
     staleTime: ISSUE_DETAIL_STALE_TIME_MS,
   });
 
-  const detailПуть = createЗадачаDetailПуть(issueПутьId);
+  const detailPath = createIssueDetailPath(issuePathId);
   const handlePrefetch = React.useCallback(() => {
-    void prefetchЗадачаDetail(queryClient, issueПутьId, { issue: issuePrefetch });
-  }, [issueПутьId, issuePrefetch, queryClient]);
+    void prefetchIssueDetail(queryClient, issuePathId, { issue: issuePrefetch });
+  }, [issuePathId, issuePrefetch, queryClient]);
   const link = (
     <RouterDom.Link
       ref={ref}
       to={to}
       state={prefetchedState}
-      classИмя={classИмя}
+      className={className}
       onMouseEnter={(event) => {
         handlePrefetch();
         onMouseEnter?.(event);
@@ -121,9 +121,9 @@ export const ЗадачаLinkQuicklook = React.forwardRef<
         handlePrefetch();
         onFocus?.(event);
       }}
-      onTouchНачать={(event) => {
+      onTouchStart={(event) => {
         handlePrefetch();
-        onTouchНачать?.(event);
+        onTouchStart?.(event);
       }}
       onClickCapture={(event) => {
         handlePrefetch();
@@ -139,7 +139,7 @@ export const ЗадачаLinkQuicklook = React.forwardRef<
     </RouterDom.Link>
   );
 
-  if (disableЗадачаQuicklook) {
+  if (disableIssueQuicklook) {
     return link;
   }
 
@@ -156,22 +156,22 @@ export const ЗадачаLinkQuicklook = React.forwardRef<
         {link}
       </PopoverTrigger>
       <PopoverContent
-        classИмя="w-72 p-3"
+        className="w-72 p-3"
         side="top"
         align="start"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
-        onOpenАвтоFocus={(event) => event.preventПо умолчанию()}
+        onOpenAutoFocus={(event) => event.preventDefault()}
       >
         {data ? (
-          <ЗадачаQuicklookCard issue={data} linkTo={detailПуть} linkState={prefetchedState} compact />
+          <IssueQuicklookCard issue={data} linkTo={detailPath} linkState={prefetchedState} compact />
         ) : (
-          <div classИмя="space-y-2">
-            <div classИмя="h-4 w-24 rounded bg-accent/50" />
-            <div classИмя="h-4 w-full rounded bg-accent/40" />
-            <div classИмя="h-4 w-3/4 rounded bg-accent/30" />
-            {!isЗагрузка ? (
-              <p classИмя="text-xs text-muted-foreground">Unable to load issue preview.</p>
+          <div className="space-y-2">
+            <div className="h-4 w-24 rounded bg-accent/50" />
+            <div className="h-4 w-full rounded bg-accent/40" />
+            <div className="h-4 w-3/4 rounded bg-accent/30" />
+            {!isLoading ? (
+              <p className="text-xs text-muted-foreground">Unable to load issue preview.</p>
             ) : null}
           </div>
         )}

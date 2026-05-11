@@ -1,5 +1,5 @@
-import type { АдаптерConfigFieldsProps } from "./types";
+import type { AdapterConfigFieldsProps } from "./types";
 
-export function LocalРабочая областьЗапуститьtimeFields(_props: АдаптерConfigFieldsProps) {
+export function LocalWorkspaceRuntimeFields(_props: AdapterConfigFieldsProps) {
   return null;
 }

@@ -12,14 +12,14 @@ import {
   type PointerEvent as ReactPointerEvent,
   type TouchEvent as ReactTouchEvent,
 } from "react";
-import { createПортal } from "react-dom";
+import { createPortal } from "react-dom";
 import {
-  CodeMirrorИзменитьor,
-  MDXИзменитьor,
+  CodeMirrorEditor,
+  MDXEditor,
   codeBlockPlugin,
   codeMirrorPlugin,
-  type CodeBlockИзменитьorDescriptor,
-  type MDXИзменитьorMethods,
+  type CodeBlockEditorDescriptor,
+  type MDXEditorMethods,
   headingsPlugin,
   imagePlugin,
   linkDialogPlugin,
@@ -31,17 +31,17 @@ import {
   thematicBreakPlugin,
   type RealmPlugin,
 } from "@mdxeditor/editor";
-import { buildАгентMentionHref, buildProjectMentionHref, buildUserMentionHref } from "@paperclipai/shared";
+import { buildAgentMentionHref, buildProjectMentionHref, buildUserMentionHref } from "@paperclipai/shared";
 import { Boxes, User } from "lucide-react";
-import { АгентIcon } from "./АгентIconPicker";
+import { AgentIcon } from "./AgentIconPicker";
 import { applyMentionChipDecoration, clearMentionChipDecoration, parseMentionChipHref } from "../lib/mention-chips";
-import { MentionAwareLinkНетde, mentionAwareLinkНетdeReplacement } from "../lib/mention-aware-link-node";
+import { MentionAwareLinkNode, mentionAwareLinkNodeReplacement } from "../lib/mention-aware-link-node";
 import { mentionDeletionPlugin } from "../lib/mention-deletion";
 import { looksLikeMarkdownPaste } from "../lib/markdownPaste";
 import { normalizeMarkdown } from "../lib/normalize-markdown";
-import { pasteНетrmalizationPlugin } from "../lib/paste-normalization";
+import { pasteNormalizationPlugin } from "../lib/paste-normalization";
 import { cn } from "../lib/utils";
-import { useИзменитьorАвтоcomplete, type НавыкКомандаOption } from "../context/ИзменитьorАвтоcompleteContext";
+import { useEditorAutocomplete, type SkillCommandOption } from "../context/EditorAutocompleteContext";
 
 /* ---- Mention types ---- */
 
@@ -56,30 +56,30 @@ export interface MentionOption {
   userId?: string;
 }
 
-/* ---- Изменитьor props ---- */
+/* ---- Editor props ---- */
 
-interface MarkdownИзменитьorProps {
+interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  classИмя?: string;
-  contentClassИмя?: string;
+  className?: string;
+  contentClassName?: string;
   onBlur?: () => void;
-  imageЗагрузитьHandler?: (file: File) => Promise<string>;
+  imageUploadHandler?: (file: File) => Promise<string>;
   /** Called when a non-image file is dropped onto the editor (e.g. .zip). */
   onDropFile?: (file: File) => Promise<void>;
   /** When set to `parent`, a wrapper owns drag/drop behavior and visuals. */
-  fileDropЦель?: "editor" | "parent";
+  fileDropTarget?: "editor" | "parent";
   bordered?: boolean;
-  /** List of mentionable entities. Включитьs @-mention autocomplete. */
+  /** List of mentionable entities. Enables @-mention autocomplete. */
   mentions?: MentionOption[];
   /** Called on Cmd/Ctrl+Enter */
-  onОтправить?: () => void;
+  onSubmit?: () => void;
   /** Render the rich editor without allowing edits. */
   readOnly?: boolean;
 }
 
-export interface MarkdownИзменитьorRef {
+export interface MarkdownEditorRef {
   focus: () => void;
 }
 
@@ -95,14 +95,14 @@ function convertHtmlImagesToMarkdown(text: string): string {
     const alt = readHtmlAttribute(attrs, "alt") ?? "image";
     const title = readHtmlAttribute(attrs, "title");
     const escapedAlt = alt.replace(/[[\]]/g, "\\$&");
-    const escapedНазвание = title?.replace(/"/g, '\\"');
-    return escapedНазвание
-      ? `![${escapedAlt}](${src} "${escapedНазвание}")`
+    const escapedTitle = title?.replace(/"/g, '\\"');
+    return escapedTitle
+      ? `![${escapedAlt}](${src} "${escapedTitle}")`
       : `![${escapedAlt}](${src})`;
   });
 }
 
-function prepareMarkdownForИзменитьor(value: string): string {
+function prepareMarkdownForEditor(value: string): string {
   const normalizedLineEndings = value.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   return convertHtmlImagesToMarkdown(normalizedLineEndings);
 }
@@ -111,40 +111,40 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function hasMeaningfulИзменитьorContent(node: Нетde | null): boolean {
+function hasMeaningfulEditorContent(node: Node | null): boolean {
   if (!node) return false;
-  if (node.nodeТип === Нетde.TEXT_NODE) {
+  if (node.nodeType === Node.TEXT_NODE) {
     return (node.textContent ?? "").trim().length > 0;
   }
-  if (node.nodeТип !== Нетde.ELEMENT_NODE) {
+  if (node.nodeType !== Node.ELEMENT_NODE) {
     return false;
   }
 
   const element = node as HTMLElement;
-  if (["IMG", "HR", "TABLE", "VIDEO", "IFRAME"].includes(element.tagИмя)) {
+  if (["IMG", "HR", "TABLE", "VIDEO", "IFRAME"].includes(element.tagName)) {
     return true;
   }
 
-  return Array.from(element.childНетdes).some((child) => hasMeaningfulИзменитьorContent(child));
+  return Array.from(element.childNodes).some((child) => hasMeaningfulEditorContent(child));
 }
 
 function hasMarkdownImage(value: string): boolean {
   return /!\[[\s\S]*?\]\([^)]+\)/.test(value);
 }
 
-function isRichИзменитьorDomEmpty(
+function isRichEditorDomEmpty(
   editable: HTMLElement,
-  expectedЗначение: string,
+  expectedValue: string,
   placeholder?: string,
 ): boolean {
-  const expectedText = expectedЗначение.trim();
+  const expectedText = expectedValue.trim();
   if (!expectedText) return false;
   const expectedHasImage = hasMarkdownImage(expectedText);
 
   const visibleText = (editable.textContent ?? "").trim();
   if (visibleText.length === 0) {
     if (expectedHasImage) return false;
-    return !Array.from(editable.childНетdes).some((child) => hasMeaningfulИзменитьorContent(child));
+    return !Array.from(editable.childNodes).some((child) => hasMeaningfulEditorContent(child));
   }
 
   const normalizedPlaceholder = placeholder?.trim();
@@ -176,19 +176,19 @@ interface MentionState {
   left: number;
   /**
    * Caret-aligned viewport coords for portal positioning. `viewportTop` /
-   * `viewportБотtom` describe the active text line, and `viewportLeft` is the
+   * `viewportBottom` describe the active text line, and `viewportLeft` is the
    * caret X (right edge of the last typed character) so the menu can sit on
    * the same line, just to the right of the cursor.
    */
   viewportTop: number;
-  viewportБотtom: number;
+  viewportBottom: number;
   viewportLeft: number;
-  textНетde: Text;
+  textNode: Text;
   atPos: number;
   endPos: number;
 }
 
-type АвтоcompleteOption = MentionOption | НавыкКомандаOption;
+type AutocompleteOption = MentionOption | SkillCommandOption;
 
 interface MentionMenuViewport {
   offsetLeft: number;
@@ -215,8 +215,8 @@ const CODE_BLOCK_LANGUAGES: Record<string, string> = {
   md: "Markdown",
   js: "JavaScript",
   jsx: "JavaScript (JSX)",
-  ts: "ТипScript",
-  tsx: "ТипScript (TSX)",
+  ts: "TypeScript",
+  tsx: "TypeScript (TSX)",
   json: "JSON",
   bash: "Bash",
   sh: "Shell",
@@ -230,12 +230,12 @@ const CODE_BLOCK_LANGUAGES: Record<string, string> = {
   yml: "YAML",
 };
 
-const FALLBACK_CODE_BLOCK_DESCRIPTOR: CodeBlockИзменитьorDescriptor = {
+const FALLBACK_CODE_BLOCK_DESCRIPTOR: CodeBlockEditorDescriptor = {
   // Keep this lower than codeMirrorPlugin's descriptor priority so known languages
   // still use the standard matching path; this catches malformed/unknown fences.
   priority: 0,
   match: () => true,
-  Изменитьor: CodeMirrorИзменитьor,
+  Editor: CodeMirrorEditor,
 };
 
 export function findMentionMatch(
@@ -278,13 +278,13 @@ interface CaretRect {
   x: number;
 }
 
-function measureCaretRect(textНетde: Text, offset: number, atPos: number): CaretRect {
-  const length = textНетde.textContent?.length ?? 0;
+function measureCaretRect(textNode: Text, offset: number, atPos: number): CaretRect {
+  const length = textNode.textContent?.length ?? 0;
   const rectFromRange = (start: number, end: number, side: "right" | "left"): CaretRect | null => {
     if (start < 0 || end > length || end <= start) return null;
     const range = document.createRange();
-    range.setНачать(textНетde, start);
-    range.setEnd(textНетde, end);
+    range.setStart(textNode, start);
+    range.setEnd(textNode, end);
     const rect = range.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) return null;
     return { top: rect.top, bottom: rect.bottom, x: side === "right" ? rect.right : rect.left };
@@ -306,18 +306,18 @@ function detectMention(container: HTMLElement): MentionState | null {
   if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return null;
 
   const range = sel.getRangeAt(0);
-  const textНетde = range.startContainer;
-  if (textНетde.nodeТип !== Нетde.TEXT_NODE) return null;
-  if (!container.contains(textНетde)) return null;
+  const textNode = range.startContainer;
+  if (textNode.nodeType !== Node.TEXT_NODE) return null;
+  if (!container.contains(textNode)) return null;
 
-  const text = textНетde.textContent ?? "";
+  const text = textNode.textContent ?? "";
   const offset = range.startOffset;
   const match = findMentionMatch(text, offset);
   if (!match) return null;
 
   // Anchor the menu to the live caret so it tracks each typed character instead of
   // staying glued to the @ marker.
-  const caret = measureCaretRect(textНетde as Text, offset, match.atPos);
+  const caret = measureCaretRect(textNode as Text, offset, match.atPos);
   const containerRect = container.getBoundingClientRect();
 
   return {
@@ -327,9 +327,9 @@ function detectMention(container: HTMLElement): MentionState | null {
     top: caret.top - containerRect.top,
     left: caret.x - containerRect.left,
     viewportTop: caret.top,
-    viewportБотtom: caret.bottom,
+    viewportBottom: caret.bottom,
     viewportLeft: caret.x,
-    textНетde: textНетde as Text,
+    textNode: textNode as Text,
     atPos: match.atPos,
     endPos: match.endPos,
   };
@@ -355,7 +355,7 @@ function getMentionMenuViewport(): MentionMenuViewport {
 }
 
 export function computeMentionMenuPosition(
-  anchor: Pick<MentionState, "viewportTop" | "viewportБотtom" | "viewportLeft">,
+  anchor: Pick<MentionState, "viewportTop" | "viewportBottom" | "viewportLeft">,
   viewport: MentionMenuViewport,
   menuSize: MentionMenuSize = { width: MENTION_MENU_WIDTH, height: MENTION_MENU_HEIGHT },
 ) {
@@ -369,7 +369,7 @@ export function computeMentionMenuPosition(
   const desiredTop = viewport.offsetTop + anchor.viewportTop;
   let top: number;
   if (desiredTop > maxTop) {
-    const flipped = viewport.offsetTop + anchor.viewportБотtom - menuSize.height;
+    const flipped = viewport.offsetTop + anchor.viewportBottom - menuSize.height;
     top = Math.max(minTop, Math.min(flipped, maxTop));
   } else {
     top = Math.max(minTop, desiredTop);
@@ -394,9 +394,9 @@ function getMentionMenuSize(optionCount: number): MentionMenuSize {
   };
 }
 
-function nodeInsideCodeLike(container: HTMLElement, node: Нетde | null): boolean {
+function nodeInsideCodeLike(container: HTMLElement, node: Node | null): boolean {
   if (!node || !container.contains(node)) return false;
-  const el = node.nodeТип === Нетde.ELEMENT_NODE
+  const el = node.nodeType === Node.ELEMENT_NODE
     ? (node as HTMLElement)
     : node.parentElement;
   return Boolean(el?.closest("pre, code"));
@@ -406,7 +406,7 @@ function isSelectionInsideCodeLikeElement(container: HTMLElement | null) {
   if (!container) return false;
   const selection = window.getSelection();
   if (!selection) return false;
-  for (const node of [selection.anchorНетde, selection.focusНетde]) {
+  for (const node of [selection.anchorNode, selection.focusNode]) {
     if (nodeInsideCodeLike(container, node)) return true;
   }
   return false;
@@ -420,18 +420,18 @@ function mentionMarkdown(option: MentionOption): string {
     return `[@${option.name}](${buildUserMentionHref(option.userId)}) `;
   }
   const agentId = option.agentId ?? option.id.replace(/^agent:/, "");
-  return `[@${option.name}](${buildАгентMentionHref(agentId, option.agentIcon ?? null)}) `;
+  return `[@${option.name}](${buildAgentMentionHref(agentId, option.agentIcon ?? null)}) `;
 }
 
-function skillMarkdown(option: НавыкКомандаOption): string {
+function skillMarkdown(option: SkillCommandOption): string {
   return `[/${option.slug}](${option.href}) `;
 }
 
-function autocompleteMarkdown(option: АвтоcompleteOption): string {
+function autocompleteMarkdown(option: AutocompleteOption): string {
   return option.kind === "skill" ? skillMarkdown(option) : mentionMarkdown(option);
 }
 
-export function shouldПринятьАвтоcompleteКлюч(
+export function shouldAcceptAutocompleteKey(
   key: string,
   trigger: MentionState["trigger"] | null,
   skillEnterArmed = false,
@@ -441,20 +441,20 @@ export function shouldПринятьАвтоcompleteКлюч(
   return trigger === "mention" || (trigger === "skill" && skillEnterArmed);
 }
 
-export function isSameАвтоcompleteSession(
-  left: Pick<MentionState, "trigger" | "marker" | "query" | "textНетde" | "atPos" | "endPos"> | null,
-  right: Pick<MentionState, "trigger" | "marker" | "query" | "textНетde" | "atPos" | "endPos"> | null,
+export function isSameAutocompleteSession(
+  left: Pick<MentionState, "trigger" | "marker" | "query" | "textNode" | "atPos" | "endPos"> | null,
+  right: Pick<MentionState, "trigger" | "marker" | "query" | "textNode" | "atPos" | "endPos"> | null,
 ): boolean {
   if (!left || !right) return false;
   return left.trigger === right.trigger
     && left.marker === right.marker
     && left.query === right.query
-    && left.textНетde === right.textНетde
+    && left.textNode === right.textNode
     && left.atPos === right.atPos
     && left.endPos === right.endPos;
 }
 
-function autocompleteOptionMatchesLink(option: АвтоcompleteOption, href: string): boolean {
+function autocompleteOptionMatchesLink(option: AutocompleteOption, href: string): boolean {
   const parsed = parseMentionChipHref(href);
   if (!parsed) return false;
 
@@ -473,12 +473,12 @@ function autocompleteOptionMatchesLink(option: АвтоcompleteOption, href: str
   return parsed.kind === "agent" && parsed.agentId === agentId;
 }
 
-export function findЗакрытьstАвтоcompleteAnchor(
+export function findClosestAutocompleteAnchor(
   editable: HTMLElement,
-  option: АвтоcompleteOption,
+  option: AutocompleteOption,
   origin?: Pick<MentionState, "left" | "top"> | null,
 ): HTMLAnchorElement | null {
-  const matchingMentions = Array.from(editable.querySelectorВсе("a"))
+  const matchingMentions = Array.from(editable.querySelectorAll("a"))
     .filter((node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement)
     .filter((link) => autocompleteOptionMatchesLink(option, link.getAttribute("href") ?? ""));
 
@@ -505,33 +505,33 @@ export function placeCaretAfterMentionAnchor(target: HTMLAnchorElement): boolean
 
   const range = document.createRange();
   const nextSibling = target.nextSibling;
-  if (nextSibling?.nodeТип === Нетde.TEXT_NODE) {
+  if (nextSibling?.nodeType === Node.TEXT_NODE) {
     const text = nextSibling.textContent ?? "";
     if (text.startsWith(" ")) {
-      range.setНачать(nextSibling, 1);
+      range.setStart(nextSibling, 1);
       range.collapse(true);
-      selection.removeВсеRanges();
+      selection.removeAllRanges();
       selection.addRange(range);
       return true;
     }
     if (text.length > 0) {
-      range.setНачать(nextSibling, 0);
+      range.setStart(nextSibling, 0);
       range.collapse(true);
-      selection.removeВсеRanges();
+      selection.removeAllRanges();
       selection.addRange(range);
       return true;
     }
   }
 
-  range.setНачатьAfter(target);
+  range.setStartAfter(target);
   range.collapse(true);
-  selection.removeВсеRanges();
+  selection.removeAllRanges();
   selection.addRange(range);
   return true;
 }
 
 /** Replace the active autocomplete token in the markdown string with the selected token. */
-function applyMention(markdown: string, state: MentionState, option: АвтоcompleteOption): string {
+function applyMention(markdown: string, state: MentionState, option: AutocompleteOption): string {
   const search = `${state.marker}${state.query}`;
   const replacement = autocompleteMarkdown(option);
   const idx = markdown.lastIndexOf(search);
@@ -541,44 +541,44 @@ function applyMention(markdown: string, state: MentionState, option: Автоcom
 
 /* ---- Component ---- */
 
-export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorRef, MarkdownИзменитьorProps>(function MarkdownИзменитьor({
+export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(function MarkdownEditor({
   value,
   onChange,
   placeholder,
-  classИмя,
-  contentClassИмя,
+  className,
+  contentClassName,
   onBlur,
-  imageЗагрузитьHandler,
+  imageUploadHandler,
   onDropFile,
-  fileDropЦель = "editor",
+  fileDropTarget = "editor",
   bordered = true,
   mentions,
-  onОтправить,
+  onSubmit,
   readOnly = false,
-}: MarkdownИзменитьorProps, forwardedRef) {
-  const editorЗначение = useMemo(() => prepareMarkdownForИзменитьor(value), [value]);
-  const { slashКоманды } = useИзменитьorАвтоcomplete();
+}: MarkdownEditorProps, forwardedRef) {
+  const editorValue = useMemo(() => prepareMarkdownForEditor(value), [value]);
+  const { slashCommands } = useEditorAutocomplete();
   const containerRef = useRef<HTMLDivElement>(null);
-  const ref = useRef<MDXИзменитьorMethods>(null);
+  const ref = useRef<MDXEditorMethods>(null);
   const fallbackTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const valueRef = useRef(editorЗначение);
-  valueRef.current = editorЗначение;
-  const latestЗначениеRef = useRef(editorЗначение);
+  const valueRef = useRef(editorValue);
+  valueRef.current = editorValue;
+  const latestValueRef = useRef(editorValue);
   const initialChildOnChangeRef = useRef(true);
   /**
-   * After imperative `setMarkdown` (prop sync, mentions, image upload), MDXИзменитьor may emit `onChange`
+   * After imperative `setMarkdown` (prop sync, mentions, image upload), MDXEditor may emit `onChange`
    * with the same markdown. Skip notifying the parent for that echo so controlled parents that
    * normalize or transform values cannot loop. Replaces the older blur/focus gate for the same concern.
    */
   const echoIgnoreMarkdownRef = useRef<string | null>(null);
-  const [uploadОшибка, setЗагрузитьОшибка] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [richИзменитьorОшибка, setRichИзменитьorОшибка] = useState<string | null>(null);
+  const [richEditorError, setRichEditorError] = useState<string | null>(null);
   const dragDepthRef = useRef(0);
 
-  // Stable ref for imageЗагрузитьHandler so plugins don't recreate on every render
-  const imageЗагрузитьHandlerRef = useRef(imageЗагрузитьHandler);
-  imageЗагрузитьHandlerRef.current = imageЗагрузитьHandler;
+  // Stable ref for imageUploadHandler so plugins don't recreate on every render
+  const imageUploadHandlerRef = useRef(imageUploadHandler);
+  imageUploadHandlerRef.current = imageUploadHandler;
 
   // Mention state (ref kept in sync so callbacks always see the latest value)
   const [mentionState, setMentionState] = useState<MentionState | null>(null);
@@ -586,11 +586,11 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
   const [mentionIndex, setMentionIndex] = useState(0);
   const skillEnterArmedRef = useRef(false);
   const autocompleteSelectionHandledRef = useRef(false);
-  const mentionАктивен = mentionState !== null && (
+  const mentionActive = mentionState !== null && (
     (mentionState.trigger === "mention" && Boolean(mentions?.length))
-    || (mentionState.trigger === "skill" && slashКоманды.length > 0)
+    || (mentionState.trigger === "skill" && slashCommands.length > 0)
   );
-  const mentionOptionByКлюч = useMemo(() => {
+  const mentionOptionByKey = useMemo(() => {
     const map = new Map<string, MentionOption>();
     for (const mention of mentions ?? []) {
       if (mention.kind === "agent") {
@@ -607,43 +607,43 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
     return map;
   }, [mentions]);
 
-  const setИзменитьorRef = useCallback((instance: MDXИзменитьorMethods | null) => {
+  const setEditorRef = useCallback((instance: MDXEditorMethods | null) => {
     ref.current = instance;
     if (!instance) {
       return;
     }
-    if (valueRef.current !== latestЗначениеRef.current) {
-      // Re-apply the latest controlled value once MDXИзменитьor exposes its imperative API.
+    if (valueRef.current !== latestValueRef.current) {
+      // Re-apply the latest controlled value once MDXEditor exposes its imperative API.
       echoIgnoreMarkdownRef.current = valueRef.current;
       instance.setMarkdown(valueRef.current);
-      latestЗначениеRef.current = valueRef.current;
+      latestValueRef.current = valueRef.current;
     }
   }, []);
 
-  const filteredMentions = useMemo<АвтоcompleteOption[]>(() => {
+  const filteredMentions = useMemo<AutocompleteOption[]>(() => {
     if (!mentionState) return [];
-    const q = mentionState.query.trim().toНизкийerCase();
+    const q = mentionState.query.trim().toLowerCase();
     if (mentionState.trigger === "skill") {
-      return slashКоманды
+      return slashCommands
         .filter((command) => {
           if (!q) return true;
-          return command.aliases.some((alias) => alias.toНизкийerCase().includes(q));
+          return command.aliases.some((alias) => alias.toLowerCase().includes(q));
         })
         .slice(0, 8);
     }
     if (!mentions) return [];
-    return mentions.filter((m) => m.name.toНизкийerCase().includes(q)).slice(0, 8);
-  }, [mentionState, mentions, slashКоманды]);
+    return mentions.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 8);
+  }, [mentionState, mentions, slashCommands]);
 
   useImperativeHandle(forwardedRef, () => ({
     focus: () => {
-      if (richИзменитьorОшибка) {
+      if (richEditorError) {
         fallbackTextareaRef.current?.focus();
         return;
       }
       ref.current?.focus(undefined, { defaultSelection: "rootEnd" });
     },
-  }), [richИзменитьorОшибка]);
+  }), [richEditorError]);
 
   const autoSizeFallbackTextarea = useCallback((element: HTMLTextAreaElement | null) => {
     if (!element) return;
@@ -652,12 +652,12 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
   }, []);
 
   useEffect(() => {
-    if (!richИзменитьorОшибка) return;
+    if (!richEditorError) return;
     autoSizeFallbackTextarea(fallbackTextareaRef.current);
-  }, [autoSizeFallbackTextarea, richИзменитьorОшибка, value]);
+  }, [autoSizeFallbackTextarea, richEditorError, value]);
 
   useEffect(() => {
-    if (richИзменитьorОшибка || editorЗначение.trim().length === 0) return;
+    if (richEditorError || editorValue.trim().length === 0) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -669,8 +669,8 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
         if (!(editable instanceof HTMLElement)) return;
         const activeElement = document.activeElement;
         if (activeElement === editable || editable.contains(activeElement)) return;
-        if (isRichИзменитьorDomEmpty(editable, editorЗначение, placeholder)) {
-          setRichИзменитьorОшибка("Rich editor failed to load content");
+        if (isRichEditorDomEmpty(editable, editorValue, placeholder)) {
+          setRichEditorError("Rich editor failed to load content");
         }
       }, 0);
     };
@@ -689,31 +689,31 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
       window.clearTimeout(timeoutId);
       observer.disconnect();
     };
-  }, [editorЗначение, placeholder, richИзменитьorОшибка]);
+  }, [editorValue, placeholder, richEditorError]);
 
   // Whether the image plugin should be included (boolean is stable across renders
   // as long as the handler presence doesn't toggle)
-  const hasImageЗагрузить = Boolean(imageЗагрузитьHandler);
+  const hasImageUpload = Boolean(imageUploadHandler);
 
   const plugins = useMemo<RealmPlugin[]>(() => {
-    const imageHandler = hasImageЗагрузить
+    const imageHandler = hasImageUpload
       ? async (file: File) => {
-          const handler = imageЗагрузитьHandlerRef.current;
-          if (!handler) throw new Ошибка("Нет image upload handler");
+          const handler = imageUploadHandlerRef.current;
+          if (!handler) throw new Error("No image upload handler");
           try {
             const src = await handler(file);
-            setЗагрузитьОшибка(null);
-            // After MDXИзменитьor inserts the image, ensure two newlines follow it
+            setUploadError(null);
+            // After MDXEditor inserts the image, ensure two newlines follow it
             // so the cursor isn't stuck right next to the image.
             setTimeout(() => {
-              const current = latestЗначениеRef.current;
+              const current = latestValueRef.current;
               const escapedSrc = escapeRegExp(src);
               const updated = current.replace(
                 new RegExp(`(!\\[[^\\]]*\\]\\(${escapedSrc}\\))(?!\\n\\n)`, "g"),
                 "$1\n\n",
               );
               if (updated !== current) {
-                latestЗначениеRef.current = updated;
+                latestValueRef.current = updated;
                 echoIgnoreMarkdownRef.current = updated;
                 ref.current?.setMarkdown(updated);
                 onChange(updated);
@@ -724,8 +724,8 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
             }, 100);
             return src;
           } catch (err) {
-            const message = err instanceof Ошибка ? err.message : "Image upload failed";
-            setЗагрузитьОшибка(message);
+            const message = err instanceof Error ? err.message : "Image upload failed";
+            setUploadError(message);
             throw err;
           }
         }
@@ -738,36 +738,36 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
       linkPlugin({ validateUrl: isSafeMarkdownLinkUrl }),
       linkDialogPlugin(),
       mentionDeletionPlugin(),
-      pasteНетrmalizationPlugin(),
+      pasteNormalizationPlugin(),
       thematicBreakPlugin(),
       codeBlockPlugin({
         defaultCodeBlockLanguage: "txt",
-        codeBlockИзменитьorDescriptors: [FALLBACK_CODE_BLOCK_DESCRIPTOR],
+        codeBlockEditorDescriptors: [FALLBACK_CODE_BLOCK_DESCRIPTOR],
       }),
       codeMirrorPlugin({ codeBlockLanguages: CODE_BLOCK_LANGUAGES }),
       markdownShortcutPlugin(),
     ];
     if (imageHandler) {
-      all.push(imagePlugin({ imageЗагрузитьHandler: imageHandler }));
+      all.push(imagePlugin({ imageUploadHandler: imageHandler }));
     }
     return all;
-  }, [hasImageЗагрузить]);
+  }, [hasImageUpload]);
 
   useEffect(() => {
-    if (editorЗначение !== latestЗначениеRef.current) {
+    if (editorValue !== latestValueRef.current) {
       if (ref.current) {
         // Pair with onChange echo suppression (echoIgnoreMarkdownRef).
-        echoIgnoreMarkdownRef.current = editorЗначение;
-        ref.current.setMarkdown(editorЗначение);
-        latestЗначениеRef.current = editorЗначение;
+        echoIgnoreMarkdownRef.current = editorValue;
+        ref.current.setMarkdown(editorValue);
+        latestValueRef.current = editorValue;
       }
     }
-  }, [editorЗначение]);
+  }, [editorValue]);
 
   const decorateProjectMentions = useCallback(() => {
     const editable = containerRef.current?.querySelector('[contenteditable="true"]');
     if (!editable) return;
-    const links = editable.querySelectorВсе("a");
+    const links = editable.querySelectorAll("a");
     for (const node of links) {
       const link = node as HTMLAnchorElement;
       const parsed = parseMentionChipHref(link.getAttribute("href") ?? "");
@@ -777,7 +777,7 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
       }
 
       if (parsed.kind === "project") {
-        const option = mentionOptionByКлюч.get(`project:${parsed.projectId}`);
+        const option = mentionOptionByKey.get(`project:${parsed.projectId}`);
         applyMentionChipDecoration(link, {
           ...parsed,
           color: parsed.color ?? option?.projectColor ?? null,
@@ -795,13 +795,13 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
         continue;
       }
 
-      const option = mentionOptionByКлюч.get(`agent:${parsed.agentId}`);
+      const option = mentionOptionByKey.get(`agent:${parsed.agentId}`);
       applyMentionChipDecoration(link, {
         ...parsed,
         icon: parsed.icon ?? option?.agentIcon ?? null,
       });
     }
-  }, [mentionOptionByКлюч]);
+  }, [mentionOptionByKey]);
 
   // Mention detection: listen for selection changes and input events
   const checkMention = useCallback(() => {
@@ -825,7 +825,7 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
     if (
       result
       && result.trigger === "skill"
-      && slashКоманды.length === 0
+      && slashCommands.length === 0
     ) {
       mentionStateRef.current = null;
       skillEnterArmedRef.current = false;
@@ -833,17 +833,17 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
       return;
     }
     const previous = mentionStateRef.current;
-    const sameSession = isSameАвтоcompleteSession(previous, result);
+    const sameSession = isSameAutocompleteSession(previous, result);
     mentionStateRef.current = result;
     if (!sameSession) {
       skillEnterArmedRef.current = false;
       setMentionIndex(0);
     }
     setMentionState(result);
-  }, [mentions, slashКоманды.length]);
+  }, [mentions, slashCommands.length]);
 
   useEffect(() => {
-    if ((!mentions || mentions.length === 0) && slashКоманды.length === 0) return;
+    if ((!mentions || mentions.length === 0) && slashCommands.length === 0) return;
 
     const el = containerRef.current;
     // Listen for input events on the container so mention detection
@@ -856,10 +856,10 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
       document.removeEventListener("selectionchange", checkMention);
       el?.removeEventListener("input", onInput, true);
     };
-  }, [checkMention, mentions, slashКоманды.length]);
+  }, [checkMention, mentions, slashCommands.length]);
 
   useEffect(() => {
-    if (!mentionАктивен) return;
+    if (!mentionActive) return;
 
     const updatePosition = () => requestAnimationFrame(checkMention);
     const viewport = window.visualViewport;
@@ -875,12 +875,12 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [checkMention, mentionАктивен]);
+  }, [checkMention, mentionActive]);
 
   useEffect(() => {
-    if (mentionАктивен) return;
+    if (mentionActive) return;
     autocompleteSelectionHandledRef.current = false;
-  }, [mentionАктивен]);
+  }, [mentionActive]);
 
   useEffect(() => {
     const editable = containerRef.current?.querySelector('[contenteditable="true"]');
@@ -898,15 +898,15 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
   }, [decorateProjectMentions, value]);
 
   const selectMention = useCallback(
-    (option: АвтоcompleteOption) => {
+    (option: AutocompleteOption) => {
       // Read from ref to avoid stale-closure issues (selectionchange can
       // update state between the last render and this callback firing).
       const state = mentionStateRef.current;
       if (!state) return false;
-      const current = latestЗначениеRef.current;
+      const current = latestValueRef.current;
       const next = applyMention(current, state, option);
       if (next !== current) {
-        latestЗначениеRef.current = next;
+        latestValueRef.current = next;
         echoIgnoreMarkdownRef.current = next;
         ref.current?.setMarkdown(next);
         onChange(next);
@@ -919,7 +919,7 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
         decorateProjectMentions();
         editable.focus();
 
-        const target = findЗакрытьstАвтоcompleteAnchor(editable, option, state);
+        const target = findClosestAutocompleteAnchor(editable, option, state);
         if (!target) {
           if (attemptsRemaining > 0) {
             requestAnimationFrame(() => restoreSelection(attemptsRemaining - 1));
@@ -940,11 +940,11 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
     [decorateProjectMentions, onChange],
   );
 
-  const handleАвтоcompletePress = useCallback((
+  const handleAutocompletePress = useCallback((
     event: ReactMouseEvent<HTMLButtonElement> | ReactPointerEvent<HTMLButtonElement> | ReactTouchEvent<HTMLButtonElement>,
-    option: АвтоcompleteOption,
+    option: AutocompleteOption,
   ) => {
-    event.preventПо умолчанию();
+    event.preventDefault();
     event.stopPropagation();
     if (autocompleteSelectionHandledRef.current) return;
     const handled = selectMention(option);
@@ -953,60 +953,60 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
     }
   }, [selectMention]);
 
-  // Touch handling for the mention menu. We deliberately do NOT preventПо умолчанию
+  // Touch handling for the mention menu. We deliberately do NOT preventDefault
   // on touchstart so the browser can still scroll the menu vertically; instead
   // we record the start point and only treat the gesture as a selection if the
   // finger lifted with negligible movement (i.e., a tap, not a scroll).
-  const touchНачатьPointRef = useRef<{ x: number; y: number } | null>(null);
+  const touchStartPointRef = useRef<{ x: number; y: number } | null>(null);
   const TOUCH_TAP_THRESHOLD_PX = 8;
 
-  const handleАвтоcompleteTouchНачать = useCallback((event: ReactTouchEvent<HTMLButtonElement>) => {
+  const handleAutocompleteTouchStart = useCallback((event: ReactTouchEvent<HTMLButtonElement>) => {
     const touch = event.touches[0];
     if (!touch) return;
-    touchНачатьPointRef.current = { x: touch.clientX, y: touch.clientY };
+    touchStartPointRef.current = { x: touch.clientX, y: touch.clientY };
   }, []);
 
-  const handleАвтоcompleteTouchMove = useCallback((event: ReactTouchEvent<HTMLButtonElement>) => {
-    const start = touchНачатьPointRef.current;
+  const handleAutocompleteTouchMove = useCallback((event: ReactTouchEvent<HTMLButtonElement>) => {
+    const start = touchStartPointRef.current;
     if (!start) return;
     const touch = event.touches[0];
     if (!touch) return;
     if (Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > TOUCH_TAP_THRESHOLD_PX) {
-      touchНачатьPointRef.current = null;
+      touchStartPointRef.current = null;
     }
   }, []);
 
-  const handleАвтоcompleteTouchEnd = useCallback((
+  const handleAutocompleteTouchEnd = useCallback((
     event: ReactTouchEvent<HTMLButtonElement>,
-    option: АвтоcompleteOption,
+    option: AutocompleteOption,
   ) => {
-    const start = touchНачатьPointRef.current;
-    touchНачатьPointRef.current = null;
+    const start = touchStartPointRef.current;
+    touchStartPointRef.current = null;
     if (!start) return;
     const touch = event.changedTouches[0];
     if (!touch) return;
     if (Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > TOUCH_TAP_THRESHOLD_PX) {
       return;
     }
-    handleАвтоcompletePress(event, option);
-  }, [handleАвтоcompletePress]);
+    handleAutocompletePress(event, option);
+  }, [handleAutocompletePress]);
 
   function hasFilePayload(evt: DragEvent<HTMLDivElement>) {
-    return Array.from(evt.dataTransfer?.types ?? []).includes("Файлы");
+    return Array.from(evt.dataTransfer?.types ?? []).includes("Files");
   }
 
-  const canDropFile = fileDropЦель === "editor" && Boolean(imageЗагрузитьHandler || onDropFile);
+  const canDropFile = fileDropTarget === "editor" && Boolean(imageUploadHandler || onDropFile);
   const handlePasteCapture = useCallback((event: ClipboardEvent<HTMLDivElement>) => {
     const clipboard = event.clipboardData;
     if (!clipboard || !ref.current) return;
     const types = new Set(Array.from(clipboard.types));
-    if (types.has("Файлы") || types.has("text/html")) return;
+    if (types.has("Files") || types.has("text/html")) return;
     if (isSelectionInsideCodeLikeElement(containerRef.current)) return;
 
     const rawText = clipboard.getData("text/plain");
     if (!looksLikeMarkdownPaste(rawText)) return;
 
-    event.preventПо умолчанию();
+    event.preventDefault();
     ref.current.insertMarkdown(normalizeMarkdown(rawText));
   }, []);
 
@@ -1018,26 +1018,26 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
       )
     : null;
 
-  if (richИзменитьorОшибка) {
+  if (richEditorError) {
     return (
       <div
         ref={containerRef}
-        classИмя={cn(
+        className={cn(
           "relative paperclip-mdxeditor-scope",
           bordered ? "rounded-md border border-border bg-transparent" : "bg-transparent",
-          classИмя,
+          className,
         )}
       >
-        <div classИмя="flex items-start justify-between gap-3 px-3 pt-2 text-xs text-muted-foreground">
+        <div className="flex items-start justify-between gap-3 px-3 pt-2 text-xs text-muted-foreground">
           <p>Rich editor unavailable for this markdown. Showing raw source instead.</p>
           <button
             type="button"
-            classИмя="shrink-0 underline underline-offset-2 hover:text-foreground"
+            className="shrink-0 underline underline-offset-2 hover:text-foreground"
             onClick={() => {
-              setRichИзменитьorОшибка(null);
+              setRichEditorError(null);
             }}
           >
-            Повторить rich editor
+            Retry rich editor
           </button>
         </div>
         <textarea
@@ -1051,15 +1051,15 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
             autoSizeFallbackTextarea(event.target);
           }}
           onBlur={() => onBlur?.()}
-          onКлючDown={(event) => {
-            if (onОтправить && event.key === "Enter" && (event.metaКлюч || event.ctrlКлюч)) {
-              event.preventПо умолчанию();
-              onОтправить();
+          onKeyDown={(event) => {
+            if (onSubmit && event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+              event.preventDefault();
+              onSubmit();
             }
           }}
-          classИмя={cn(
+          className={cn(
             "min-h-[12rem] w-full resize-none bg-transparent px-3 pb-3 pt-2 font-mono text-sm leading-6 outline-none",
-            contentClassИмя,
+            contentClassName,
           )}
         />
       </div>
@@ -1069,24 +1069,24 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
   return (
     <div
       ref={containerRef}
-      classИмя={cn(
+      className={cn(
         "relative paperclip-mdxeditor-scope",
         bordered ? "rounded-md border border-border bg-transparent" : "bg-transparent",
         isDragOver && "ring-1 ring-primary/60 bg-accent/20",
-        classИмя,
+        className,
       )}
-      onКлючDownCapture={(e) => {
+      onKeyDownCapture={(e) => {
         if (readOnly) return;
         // Cmd/Ctrl+Enter to submit
-        if (onОтправить && e.key === "Enter" && (e.metaКлюч || e.ctrlКлюч)) {
-          e.preventПо умолчанию();
+        if (onSubmit && e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
           e.stopPropagation();
-          onОтправить();
+          onSubmit();
           return;
         }
 
         // Mention keyboard handling
-        if (mentionАктивен) {
+        if (mentionActive) {
           if (e.key === " " && mentionStateRef.current?.trigger === "skill") {
             mentionStateRef.current = null;
             skillEnterArmedRef.current = false;
@@ -1095,7 +1095,7 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
           }
           // Escape always dismisses
           if (e.key === "Escape") {
-            e.preventПо умолчанию();
+            e.preventDefault();
             e.stopPropagation();
             mentionStateRef.current = null;
             skillEnterArmedRef.current = false;
@@ -1105,27 +1105,27 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
           // Arrow / Enter / Tab only when there are filtered results
           if (filteredMentions.length > 0) {
             if (e.key === "ArrowDown") {
-              e.preventПо умолчанию();
+              e.preventDefault();
               e.stopPropagation();
               skillEnterArmedRef.current = mentionStateRef.current?.trigger === "skill";
               setMentionIndex((prev) => Math.min(prev + 1, filteredMentions.length - 1));
               return;
             }
             if (e.key === "ArrowUp") {
-              e.preventПо умолчанию();
+              e.preventDefault();
               e.stopPropagation();
               skillEnterArmedRef.current = mentionStateRef.current?.trigger === "skill";
               setMentionIndex((prev) => Math.max(prev - 1, 0));
               return;
             }
             if (
-              shouldПринятьАвтоcompleteКлюч(
+              shouldAcceptAutocompleteKey(
                 e.key,
                 mentionStateRef.current?.trigger ?? null,
                 skillEnterArmedRef.current,
               )
             ) {
-              e.preventПо умолчанию();
+              e.preventDefault();
               e.stopPropagation();
               selectMention(filteredMentions[mentionIndex]);
               return;
@@ -1142,7 +1142,7 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
       onDragOver={(evt) => {
         if (readOnly) return;
         if (!canDropFile || !hasFilePayload(evt)) return;
-        evt.preventПо умолчанию();
+        evt.preventDefault();
         evt.dataTransfer.dropEffect = "copy";
       }}
       onDragLeave={() => {
@@ -1158,27 +1158,27 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
         if (!onDropFile) return;
         const files = evt.dataTransfer?.files;
         if (!files || files.length === 0) return;
-        const allФайлы = Array.from(files);
-        const nonImageФайлы = allФайлы.filter(
+        const allFiles = Array.from(files);
+        const nonImageFiles = allFiles.filter(
           (f) => !f.type.startsWith("image/"),
         );
-        if (nonImageФайлы.length === 0) return;
-        // If all dropped files are non-image, prevent default so MDXИзменитьor
+        if (nonImageFiles.length === 0) return;
+        // If all dropped files are non-image, prevent default so MDXEditor
         // doesn't try to handle them. If mixed, let images flow through to
         // the image plugin and only handle the non-image files ourselves.
-        if (nonImageФайлы.length === allФайлы.length) {
-          evt.preventПо умолчанию();
+        if (nonImageFiles.length === allFiles.length) {
+          evt.preventDefault();
           evt.stopPropagation();
         }
-        for (const file of nonImageФайлы) {
+        for (const file of nonImageFiles) {
           void onDropFile(file);
         }
       }}
       onPasteCapture={handlePasteCapture}
     >
-      <MDXИзменитьor
-        ref={setИзменитьorRef}
-        markdown={editorЗначение}
+      <MDXEditor
+        ref={setEditorRef}
+        markdown={editorValue}
         suppressHtmlProcessing
         placeholder={placeholder}
         readOnly={readOnly}
@@ -1187,7 +1187,7 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
           const echo = echoIgnoreMarkdownRef.current;
           if (echo !== null && next === echo) {
             echoIgnoreMarkdownRef.current = null;
-            latestЗначениеRef.current = next;
+            latestValueRef.current = next;
             return;
           }
           if (echo !== null) {
@@ -1196,33 +1196,33 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
 
           if (initialChildOnChangeRef.current) {
             initialChildOnChangeRef.current = false;
-            if (next === "" && editorЗначение !== "") {
-              echoIgnoreMarkdownRef.current = editorЗначение;
-              ref.current?.setMarkdown(editorЗначение);
+            if (next === "" && editorValue !== "") {
+              echoIgnoreMarkdownRef.current = editorValue;
+              ref.current?.setMarkdown(editorValue);
               return;
             }
           }
-          latestЗначениеRef.current = next;
+          latestValueRef.current = next;
           onChange(next);
         }}
         onBlur={() => onBlur?.()}
-        onОшибка={(payload) => {
-          setRichИзменитьorОшибка(payload.error);
+        onError={(payload) => {
+          setRichEditorError(payload.error);
         }}
-        classИмя={cn("paperclip-mdxeditor", !bordered && "paperclip-mdxeditor--borderless")}
-        contentИзменитьableClassИмя={cn(
+        className={cn("paperclip-mdxeditor", !bordered && "paperclip-mdxeditor--borderless")}
+        contentEditableClassName={cn(
           "paperclip-mdxeditor-content focus:outline-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:list-item",
-          contentClassИмя,
+          contentClassName,
         )}
-        additionalLexicalНетdes={[MentionAwareLinkНетde, mentionAwareLinkНетdeReplacement]}
+        additionalLexicalNodes={[MentionAwareLinkNode, mentionAwareLinkNodeReplacement]}
         plugins={plugins}
       />
 
       {/* Mention dropdown — rendered via portal so it isn't clipped by overflow containers */}
-      {mentionАктивен && filteredMentions.length > 0 && mentionMenuPosition &&
-        createПортal(
+      {mentionActive && filteredMentions.length > 0 && mentionMenuPosition &&
+        createPortal(
           <div
-            classИмя="fixed z-[9999] min-w-[180px] max-w-[calc(100vw-16px)] max-h-[208px] overflow-y-auto rounded-md border border-border bg-popover shadow-md"
+            className="fixed z-[9999] min-w-[180px] max-w-[calc(100vw-16px)] max-h-[208px] overflow-y-auto rounded-md border border-border bg-popover shadow-md"
             style={{
               top: mentionMenuPosition.top,
               left: mentionMenuPosition.left,
@@ -1235,20 +1235,20 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
                 key={option.id}
                 type="button"
                 tabIndex={-1}
-                classИмя={cn(
+                className={cn(
                   "flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left hover:bg-accent/50 transition-colors",
                   i === mentionIndex && "bg-accent",
                 )}
                 onPointerDown={(e) => {
-                  // Touch is handled via onTouchНачать/onTouchEnd so vertical scrolling
+                  // Touch is handled via onTouchStart/onTouchEnd so vertical scrolling
                   // isn't swallowed; only handle mouse/pen here.
-                  if (e.pointerТип === "touch") return;
-                  handleАвтоcompletePress(e, option);
+                  if (e.pointerType === "touch") return;
+                  handleAutocompletePress(e, option);
                 }}
-                onMouseDown={(e) => handleАвтоcompletePress(e, option)}
-                onTouchНачать={handleАвтоcompleteTouchНачать}
-                onTouchMove={handleАвтоcompleteTouchMove}
-                onTouchEnd={(e) => handleАвтоcompleteTouchEnd(e, option)}
+                onMouseDown={(e) => handleAutocompletePress(e, option)}
+                onTouchStart={handleAutocompleteTouchStart}
+                onTouchMove={handleAutocompleteTouchMove}
+                onTouchEnd={(e) => handleAutocompleteTouchEnd(e, option)}
                 onMouseEnter={() => {
                   if (mentionStateRef.current?.trigger === "skill") {
                     skillEnterArmedRef.current = true;
@@ -1257,34 +1257,34 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
                 }}
               >
                 {option.kind === "skill" ? (
-                  <Boxes classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <Boxes className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 ) : option.kind === "project" && option.projectId ? (
                   <span
-                    classИмя="inline-flex h-2 w-2 rounded-full border border-border/50"
+                    className="inline-flex h-2 w-2 rounded-full border border-border/50"
                     style={{ backgroundColor: option.projectColor ?? "#64748b" }}
                   />
                 ) : option.kind === "user" ? (
-                  <User classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 ) : (
-                  <АгентIcon
+                  <AgentIcon
                     icon={option.agentIcon}
-                    classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
                   />
                 )}
                 <span>{option.kind === "skill" ? `/${option.slug}` : option.name}</span>
                 {option.kind === "project" && option.projectId && (
-                  <span classИмя="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
                     Project
                   </span>
                 )}
                 {option.kind === "user" && (
-                  <span classИмя="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
                     User
                   </span>
                 )}
                 {option.kind === "skill" && (
-                  <span classИмя="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Навык
+                  <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Skill
                   </span>
                 )}
               </button>
@@ -1295,7 +1295,7 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
 
       {isDragOver && canDropFile && (
         <div
-          classИмя={cn(
+          className={cn(
             "pointer-events-none absolute inset-1 z-40 flex items-center justify-center rounded-md border border-dashed border-primary/80 bg-primary/10 text-xs font-medium text-primary",
             !bordered && "inset-0 rounded-sm",
           )}
@@ -1303,8 +1303,8 @@ export const MarkdownИзменитьor = forwardRef<MarkdownИзменитьorR
           Drop {onDropFile ? "file" : "image"} to upload
         </div>
       )}
-      {uploadОшибка && (
-        <p classИмя="px-3 pb-2 text-xs text-destructive">{uploadОшибка}</p>
+      {uploadError && (
+        <p className="px-3 pb-2 text-xs text-destructive">{uploadError}</p>
       )}
     </div>
   );

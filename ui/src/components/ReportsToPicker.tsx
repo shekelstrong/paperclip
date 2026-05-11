@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Агент } from "@paperclipai/shared";
+import type { Agent } from "@paperclipai/shared";
 import {
   Popover,
   PopoverContent,
@@ -7,28 +7,28 @@ import {
 } from "@/components/ui/popover";
 import { User } from "lucide-react";
 import { cn } from "../lib/utils";
-import { roleЯрлыки } from "./agent-config-primitives";
-import { АгентIcon } from "./АгентIconPicker";
+import { roleLabels } from "./agent-config-primitives";
+import { AgentIcon } from "./AgentIconPicker";
 
-export function РепозиторийrtsToPicker({
+export function ReportsToPicker({
   agents,
   value,
   onChange,
   disabled = false,
-  excludeАгентIds = [],
-  disabledEmptyLabel = "Репозиторийrts to: N/A (CEO)",
-  chooseLabel = "Репозиторийrts to...",
+  excludeAgentIds = [],
+  disabledEmptyLabel = "Reports to: N/A (CEO)",
+  chooseLabel = "Reports to...",
 }: {
-  agents: Агент[];
+  agents: Agent[];
   value: string | null;
   onChange: (id: string | null) => void;
   disabled?: boolean;
-  excludeАгентIds?: string[];
+  excludeAgentIds?: string[];
   disabledEmptyLabel?: string;
   chooseLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const exclude = new Set(excludeАгентIds);
+  const exclude = new Set(excludeAgentIds);
   const rows = agents.filter(
     (a) => a.status !== "terminated" && !exclude.has(a.id),
   );
@@ -41,7 +41,7 @@ export function РепозиторийrtsToPicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          classИмя={cn(
+          className={cn(
             "inline-flex max-w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors",
             terminatedManager && "border-amber-600/45 bg-amber-500/5",
             disabled && "opacity-60 cursor-not-allowed",
@@ -50,35 +50,35 @@ export function РепозиторийrtsToPicker({
         >
           {unknownManager ? (
             <>
-              <User classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
-              <span classИмя="min-w-0 truncate text-muted-foreground">Неизвестно manager (stale ID)</span>
+              <User className="h-3 w-3 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 truncate text-muted-foreground">Unknown manager (stale ID)</span>
             </>
           ) : current ? (
             <>
-              <АгентIcon icon={current.icon} classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
+              <AgentIcon icon={current.icon} className="h-3 w-3 shrink-0 text-muted-foreground" />
               <span
-                classИмя={cn(
+                className={cn(
                   "min-w-0 truncate",
                   terminatedManager && "text-amber-900 dark:text-amber-200",
                 )}
               >
-                {`Репозиторийrts to ${current.name}${terminatedManager ? " (terminated)" : ""}`}
+                {`Reports to ${current.name}${terminatedManager ? " (terminated)" : ""}`}
               </span>
             </>
           ) : (
             <>
-              <User classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
-              <span classИмя="min-w-0 truncate">
+              <User className="h-3 w-3 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 truncate">
                 {disabled ? disabledEmptyLabel : chooseLabel}
               </span>
             </>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent classИмя="w-48 p-1" align="start">
+      <PopoverContent className="w-48 p-1" align="start">
         <button
           type="button"
-          classИмя={cn(
+          className={cn(
             "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
             value === null && "bg-accent",
           )}
@@ -87,26 +87,26 @@ export function РепозиторийrtsToPicker({
             setOpen(false);
           }}
         >
-          Нет manager
+          No manager
         </button>
         {terminatedManager && (
-          <div classИмя="flex min-w-0 items-center gap-2 overflow-hidden px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
-            <АгентIcon icon={current.icon} classИмя="shrink-0 h-3 w-3" />
-            <span classИмя="min-w-0 truncate">
+          <div className="flex min-w-0 items-center gap-2 overflow-hidden px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
+            <AgentIcon icon={current.icon} className="shrink-0 h-3 w-3" />
+            <span className="min-w-0 truncate">
               Current: {current.name} (terminated)
             </span>
           </div>
         )}
         {unknownManager && (
-          <div classИмя="px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
-            Сохранитьd manager is missing from this company. Choose a new manager or clear.
+          <div className="px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
+            Saved manager is missing from this company. Choose a new manager or clear.
           </div>
         )}
         {rows.map((a) => (
           <button
             type="button"
             key={a.id}
-            classИмя={cn(
+            className={cn(
               "flex items-center gap-2 w-full min-w-0 px-2 py-1.5 text-xs rounded hover:bg-accent/50 overflow-hidden",
               a.id === value && "bg-accent",
             )}
@@ -115,9 +115,9 @@ export function РепозиторийrtsToPicker({
               setOpen(false);
             }}
           >
-            <АгентIcon icon={a.icon} classИмя="shrink-0 h-3 w-3 text-muted-foreground" />
-            <span classИмя="min-w-0 truncate">{a.name}</span>
-            <span classИмя="text-muted-foreground ml-auto shrink-0">{roleЯрлыки[a.role] ?? a.role}</span>
+            <AgentIcon icon={a.icon} className="shrink-0 h-3 w-3 text-muted-foreground" />
+            <span className="min-w-0 truncate">{a.name}</span>
+            <span className="text-muted-foreground ml-auto shrink-0">{roleLabels[a.role] ?? a.role}</span>
           </button>
         ))}
       </PopoverContent>

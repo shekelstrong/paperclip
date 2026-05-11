@@ -1,9 +1,9 @@
-import type { СоздатьConfigЗначениеs } from "@paperclipai/adapter-utils";
+import type { CreateConfigValues } from "@paperclipai/adapter-utils";
 
-export const defaultСоздатьЗначениеs: СоздатьConfigЗначениеs = {
-  adapterТип: "claude_local",
+export const defaultCreateValues: CreateConfigValues = {
+  adapterType: "claude_local",
   cwd: "",
-  instructionsFileПуть: "",
+  instructionsFilePath: "",
   promptTemplate: "",
   model: "",
   thinkingEffort: "",
@@ -20,12 +20,12 @@ export const defaultСоздатьЗначениеs: СоздатьConfigЗна�
   url: "",
   bootstrapPrompt: "",
   payloadTemplateJson: "",
-  workspaceStrategyТип: "project_primary",
+  workspaceStrategyType: "project_primary",
   workspaceBaseRef: "",
-  workspaceВеткаTemplate: "",
-  worktreeРодительDir: "",
+  workspaceBranchTemplate: "",
+  worktreeParentDir: "",
   runtimeServicesJson: "",
-  maxTurnsPerЗапустить: 1000,
-  heartbeatВключитьd: false,
+  maxTurnsPerRun: 1000,
+  heartbeatEnabled: false,
   intervalSec: 300,
 };

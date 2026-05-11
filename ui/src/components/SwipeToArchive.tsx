@@ -1,26 +1,26 @@
-import { useEffect, useRef, useState, type ReactНетde } from "react";
-import { Архивировать } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Archive } from "lucide-react";
 import { cn } from "../lib/utils";
 
-interface SwipeToАрхивироватьProps {
-  children: ReactНетde;
-  onАрхивировать: () => void;
+interface SwipeToArchiveProps {
+  children: ReactNode;
+  onArchive: () => void;
   disabled?: boolean;
   selected?: boolean;
-  classИмя?: string;
+  className?: string;
 }
 
 const COMMIT_THRESHOLD = 0.32;
 const MAX_SWIPE = 0.88;
 const COMMIT_DELAY_MS = 140;
 
-export function SwipeToАрхивировать({
+export function SwipeToArchive({
   children,
-  onАрхивировать,
+  onArchive,
   disabled = false,
   selected = false,
-  classИмя,
-}: SwipeToАрхивироватьProps) {
+  className,
+}: SwipeToArchiveProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const startPointRef = useRef<{ x: number; y: number } | null>(null);
   const widthRef = useRef(0);
@@ -45,10 +45,10 @@ export function SwipeToАрхивировать({
     setOffsetX(0);
   };
 
-  const commitАрхивировать = () => {
+  const commitArchive = () => {
     const node = containerRef.current;
     if (!node) {
-      onАрхивировать();
+      onArchive();
       return;
     }
     setIsDragging(false);
@@ -60,11 +60,11 @@ export function SwipeToАрхивировать({
       });
     });
     timeoutRef.current = window.setTimeout(() => {
-      onАрхивировать();
+      onArchive();
     }, COMMIT_DELAY_MS);
   };
 
-  const handleTouchНачать = (event: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     if (disabled || event.touches.length !== 1) return;
     const touch = event.touches[0];
     const node = containerRef.current;
@@ -94,14 +94,14 @@ export function SwipeToАрхивировать({
     }
 
     if (deltaX >= 0) {
-      event.preventПо умолчанию();
+      event.preventDefault();
       setIsDragging(true);
       setOffsetX(0);
       return;
     }
 
     const maxSwipe = widthRef.current > 0 ? widthRef.current * MAX_SWIPE : Number.POSITIVE_INFINITY;
-    event.preventПо умолчанию();
+    event.preventDefault();
     setIsDragging(true);
     setOffsetX(Math.max(deltaX, -maxSwipe));
   };
@@ -111,7 +111,7 @@ export function SwipeToАрхивировать({
     const shouldCommit =
       widthRef.current > 0 && Math.abs(offsetX) >= widthRef.current * COMMIT_THRESHOLD;
     if (shouldCommit) {
-      commitАрхивировать();
+      commitArchive();
       return;
     }
     reset();
@@ -122,36 +122,36 @@ export function SwipeToАрхивировать({
   return (
     <div
       ref={containerRef}
-      classИмя={cn("relative overflow-hidden touch-pan-y", classИмя)}
+      className={cn("relative overflow-hidden touch-pan-y", className)}
       style={{
         height: lockedHeight === null ? undefined : isCollapsing ? 0 : lockedHeight,
         opacity: isCollapsing ? 0 : 1,
         transition: isCollapsing ? "height 200ms ease, opacity 200ms ease" : undefined,
       }}
-      onTouchНачать={handleTouchНачать}
+      onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onTouchОтмена={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       onClickCapture={(event) => {
         if (!suppressClickRef.current) return;
-        event.preventПо умолчанию();
+        event.preventDefault();
         event.stopPropagation();
         suppressClickRef.current = false;
       }}
     >
       <div
         aria-hidden="true"
-        classИмя="pointer-events-none absolute inset-0 flex items-center justify-end bg-emerald-600 px-4 text-white"
+        className="pointer-events-none absolute inset-0 flex items-center justify-end bg-emerald-600 px-4 text-white"
         style={{ opacity: Math.max(archiveReveal, 0.2) }}
       >
-        <span classИмя="inline-flex items-center gap-2 text-sm font-medium">
-          <Архивировать classИмя="h-4 w-4" />
-          Архивировать
+        <span className="inline-flex items-center gap-2 text-sm font-medium">
+          <Archive className="h-4 w-4" />
+          Archive
         </span>
       </div>
       <div
         data-inbox-row-surface
-        classИмя={cn(
+        className={cn(
           "relative will-change-transform",
           selected ? "bg-zinc-100 dark:bg-zinc-800" : "bg-background",
         )}

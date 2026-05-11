@@ -1,7 +1,7 @@
-import type { ЗадачаExecutionPolicy, ЗадачаExecutionStageParticipant, ЗадачаExecutionStagePrincipal } from "@paperclipai/shared";
-import { parseИсполнительЗначение } from "./assignees";
+import type { IssueExecutionPolicy, IssueExecutionStageParticipant, IssueExecutionStagePrincipal } from "@paperclipai/shared";
+import { parseAssigneeValue } from "./assignees";
 
-type StageТип = "review" | "approval";
+type StageType = "review" | "approval";
 
 function newId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -10,14 +10,14 @@ function newId() {
   return `stage-${Math.random().toString(36).slice(2)}`;
 }
 
-function principalКлюч(principal: ЗадачаExecutionStagePrincipal | ЗадачаExecutionStageParticipant) {
+function principalKey(principal: IssueExecutionStagePrincipal | IssueExecutionStageParticipant) {
   return principal.type === "agent" ? `agent:${principal.agentId}` : `user:${principal.userId}`;
 }
 
-export function principalFromSelectionЗначение(value: string): ЗадачаExecutionStagePrincipal | null {
-  const selection = parseИсполнительЗначение(value);
-  if (selection.assigneeАгентId) {
-    return { type: "agent", agentId: selection.assigneeАгентId, userId: null };
+export function principalFromSelectionValue(value: string): IssueExecutionStagePrincipal | null {
+  const selection = parseAssigneeValue(value);
+  if (selection.assigneeAgentId) {
+    return { type: "agent", agentId: selection.assigneeAgentId, userId: null };
   }
   if (selection.assigneeUserId) {
     return { type: "user", userId: selection.assigneeUserId, agentId: null };
@@ -25,26 +25,26 @@ export function principalFromSelectionЗначение(value: string): Зада�
   return null;
 }
 
-export function selectionЗначениеFromPrincipal(principal: ЗадачаExecutionStagePrincipal | ЗадачаExecutionStageParticipant): string {
+export function selectionValueFromPrincipal(principal: IssueExecutionStagePrincipal | IssueExecutionStageParticipant): string {
   return principal.type === "agent" ? `agent:${principal.agentId}` : `user:${principal.userId}`;
 }
 
-export function stageParticipantЗначениеs(policy: ЗадачаExecutionPolicy | null | undefined, stageТип: StageТип): string[] {
-  const stage = policy?.stages.find((candidate) => candidate.type === stageТип);
-  return stage?.participants.map((participant) => selectionЗначениеFromPrincipal(participant)) ?? [];
+export function stageParticipantValues(policy: IssueExecutionPolicy | null | undefined, stageType: StageType): string[] {
+  const stage = policy?.stages.find((candidate) => candidate.type === stageType);
+  return stage?.participants.map((participant) => selectionValueFromPrincipal(participant)) ?? [];
 }
 
 function mergeParticipants(
-  existing: ЗадачаExecutionStageParticipant[] | undefined,
+  existing: IssueExecutionStageParticipant[] | undefined,
   values: string[],
-): ЗадачаExecutionStageParticipant[] {
-  const existingByКлюч = new Map((existing ?? []).map((participant) => [principalКлюч(participant), participant]));
-  const participants: ЗадачаExecutionStageParticipant[] = [];
+): IssueExecutionStageParticipant[] {
+  const existingByKey = new Map((existing ?? []).map((participant) => [principalKey(participant), participant]));
+  const participants: IssueExecutionStageParticipant[] = [];
   for (const value of values) {
-    const principal = principalFromSelectionЗначение(value);
+    const principal = principalFromSelectionValue(value);
     if (!principal) continue;
-    const key = principalКлюч(principal);
-    const previous = existingByКлюч.get(key);
+    const key = principalKey(principal);
+    const previous = existingByKey.get(key);
     participants.push({
       id: previous?.id ?? newId(),
       type: principal.type,
@@ -56,16 +56,16 @@ function mergeParticipants(
 }
 
 export function buildExecutionPolicy(input: {
-  existingPolicy?: ЗадачаExecutionPolicy | null;
-  reviewerЗначениеs: string[];
-  approverЗначениеs: string[];
-}): ЗадачаExecutionPolicy | null {
+  existingPolicy?: IssueExecutionPolicy | null;
+  reviewerValues: string[];
+  approverValues: string[];
+}): IssueExecutionPolicy | null {
   const mode = input.existingPolicy?.mode ?? "normal";
-  const stages: ЗадачаExecutionPolicy["stages"] = [];
+  const stages: IssueExecutionPolicy["stages"] = [];
   const monitor = input.existingPolicy?.monitor ?? null;
 
   const existingReviewStage = input.existingPolicy?.stages.find((stage) => stage.type === "review");
-  const reviewParticipants = mergeParticipants(existingReviewStage?.participants, input.reviewerЗначениеs);
+  const reviewParticipants = mergeParticipants(existingReviewStage?.participants, input.reviewerValues);
   if (reviewParticipants.length > 0) {
     stages.push({
       id: existingReviewStage?.id ?? newId(),
@@ -75,11 +75,11 @@ export function buildExecutionPolicy(input: {
     });
   }
 
-  const existingСогласованиеStage = input.existingPolicy?.stages.find((stage) => stage.type === "approval");
-  const approvalParticipants = mergeParticipants(existingСогласованиеStage?.participants, input.approverЗначениеs);
+  const existingApprovalStage = input.existingPolicy?.stages.find((stage) => stage.type === "approval");
+  const approvalParticipants = mergeParticipants(existingApprovalStage?.participants, input.approverValues);
   if (approvalParticipants.length > 0) {
     stages.push({
-      id: existingСогласованиеStage?.id ?? newId(),
+      id: existingApprovalStage?.id ?? newId(),
       type: "approval" as const,
       approvalsNeeded: 1 as const,
       participants: approvalParticipants,
@@ -90,7 +90,7 @@ export function buildExecutionPolicy(input: {
 
   return {
     mode,
-    commentОбязательно: true,
+    commentRequired: true,
     stages,
     ...(monitor ? { monitor } : {}),
   };

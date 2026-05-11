@@ -1,48 +1,48 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, КлючRound, Loader2, Plus, X } from "lucide-react";
-import type { КомпанияСекрет, СекретВерсияSelector } from "@paperclipai/shared";
+import { AlertCircle, KeyRound, Loader2, Plus, X } from "lucide-react";
+import type { CompanySecret, SecretVersionSelector } from "@paperclipai/shared";
 import { secretsApi } from "../api/secrets";
-import { queryКлючs } from "../lib/queryКлючs";
-import { useКомпания } from "../context/КомпанияContext";
+import { queryKeys } from "../lib/queryKeys";
+import { useCompany } from "../context/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogНазвание } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "../lib/utils";
 
-export interface СекретBindingЗначение {
+export interface SecretBindingValue {
   secretId: string;
-  version?: СекретВерсияSelector;
+  version?: SecretVersionSelector;
 }
 
-interface СекретBindingPickerProps {
-  value: СекретBindingЗначение | null;
-  onChange: (next: СекретBindingЗначение | null) => void;
+interface SecretBindingPickerProps {
+  value: SecretBindingValue | null;
+  onChange: (next: SecretBindingValue | null) => void;
   label?: string;
   placeholder?: string;
-  allowВерсияSelector?: boolean;
+  allowVersionSelector?: boolean;
   emptyHint?: string;
-  classИмя?: string;
+  className?: string;
   disabled?: boolean;
   /**
-   * Опционально whitelist of secret statuses to show. По умолчаниюs to "active".
+   * Optional whitelist of secret statuses to show. Defaults to "active".
    * Pass null to disable the filter and show every secret in the company.
    */
-  statusФильтр?: Array<КомпанияСекрет["status"]> | null;
+  statusFilter?: Array<CompanySecret["status"]> | null;
 }
 
-const VERSION_LATEST: СекретВерсияSelector = "latest";
+const VERSION_LATEST: SecretVersionSelector = "latest";
 
-function describeСекрет(secret: КомпанияСекрет): string {
-  const provider = secret.provider.replaceВсе("_", " ");
+function describeSecret(secret: CompanySecret): string {
+  const provider = secret.provider.replaceAll("_", " ");
   if (secret.managedMode === "external_reference") {
     return `External · ${provider}`;
   }
   return provider;
 }
 
-function statusTone(status: КомпанияСекрет["status"]): string {
+function statusTone(status: CompanySecret["status"]): string {
   switch (status) {
     case "active":
       return "text-emerald-600 dark:text-emerald-400";
@@ -57,94 +57,94 @@ function statusTone(status: КомпанияСекрет["status"]): string {
   }
 }
 
-export function СекретBindingPicker({
+export function SecretBindingPicker({
   value,
   onChange,
-  label = "Секрет",
+  label = "Secret",
   placeholder = "Select secret",
-  allowВерсияSelector = true,
-  emptyHint = "Нет matching secrets. Создать задачу to bind it here.",
-  classИмя,
+  allowVersionSelector = true,
+  emptyHint = "No matching secrets. Create one to bind it here.",
+  className,
   disabled,
-  statusФильтр = ["active"],
-}: СекретBindingPickerProps) {
+  statusFilter = ["active"],
+}: SecretBindingPickerProps) {
   const queryClient = useQueryClient();
-  const { selectedКомпанияId } = useКомпания();
-  const [createOpen, setСоздатьOpen] = useState(false);
-  const [createИмя, setСоздатьИмя] = useState("");
-  const [createЗначение, setСоздатьЗначение] = useState("");
-  const [createОписание, setСоздатьОписание] = useState("");
-  const [createОшибка, setСоздатьОшибка] = useState<string | null>(null);
+  const { selectedCompanyId } = useCompany();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [createValue, setCreateValue] = useState("");
+  const [createDescription, setCreateDescription] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const secretsQuery = useQuery({
-    queryКлюч: selectedКомпанияId
-      ? queryКлючs.secrets.list(selectedКомпанияId)
+    queryKey: selectedCompanyId
+      ? queryKeys.secrets.list(selectedCompanyId)
       : ["secrets", "__disabled__"],
-    queryFn: () => secretsApi.list(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+    queryFn: () => secretsApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
   });
 
-  const filteredСекреты = useMemo(() => {
+  const filteredSecrets = useMemo(() => {
     const all = secretsQuery.data ?? [];
-    if (statusФильтр === null) return all;
-    return all.filter((secret) => statusФильтр.includes(secret.status));
-  }, [secretsQuery.data, statusФильтр]);
+    if (statusFilter === null) return all;
+    return all.filter((secret) => statusFilter.includes(secret.status));
+  }, [secretsQuery.data, statusFilter]);
 
-  const selectedСекрет = useMemo(() => {
+  const selectedSecret = useMemo(() => {
     if (!value) return null;
     return (secretsQuery.data ?? []).find((secret) => secret.id === value.secretId) ?? null;
   }, [secretsQuery.data, value]);
 
-  const selectedMissing = Boolean(value && !selectedСекрет);
+  const selectedMissing = Boolean(value && !selectedSecret);
 
   const createMutation = useMutation({
     mutationFn: () =>
-      secretsApi.create(selectedКомпанияId!, {
-        name: createИмя.trim(),
-        value: createЗначение,
-        description: createОписание.trim() || null,
+      secretsApi.create(selectedCompanyId!, {
+        name: createName.trim(),
+        value: createValue,
+        description: createDescription.trim() || null,
       }),
-    onУспешно: (created) => {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.secrets.list(selectedКомпанияId!) });
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.secrets.list(selectedCompanyId!) });
       onChange({ secretId: created.id, version: VERSION_LATEST });
-      setСоздатьOpen(false);
-      setСоздатьИмя("");
-      setСоздатьЗначение("");
-      setСоздатьОписание("");
-      setСоздатьОшибка(null);
+      setCreateOpen(false);
+      setCreateName("");
+      setCreateValue("");
+      setCreateDescription("");
+      setCreateError(null);
     },
-    onОшибка: (error) => {
-      setСоздатьОшибка(error instanceof Ошибка ? error.message : "Ошибка to create secret");
+    onError: (error) => {
+      setCreateError(error instanceof Error ? error.message : "Failed to create secret");
     },
   });
 
-  const versionDisplay = (selector: СекретВерсияSelector | undefined) => {
+  const versionDisplay = (selector: SecretVersionSelector | undefined) => {
     if (selector === undefined || selector === VERSION_LATEST) return "latest";
     return `v${selector}`;
   };
 
   return (
-    <div classИмя={cn("space-y-1.5", classИмя)}>
+    <div className={cn("space-y-1.5", className)}>
       {label ? (
-        <div classИмя="flex items-center justify-between text-xs font-medium text-foreground/80">
+        <div className="flex items-center justify-between text-xs font-medium text-foreground/80">
           <span>{label}</span>
           {value ? (
             <button
               type="button"
-              classИмя="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+              className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
               onClick={() => onChange(null)}
               disabled={disabled}
             >
-              <X classИмя="h-3 w-3" /> Очистить
+              <X className="h-3 w-3" /> Clear
             </button>
           ) : null}
         </div>
       ) : null}
-      <div classИмя="flex items-center gap-1.5">
-        <div classИмя="relative flex-1">
-          <КлючRound classИмя="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <div className="flex items-center gap-1.5">
+        <div className="relative flex-1">
+          <KeyRound className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <select
-            classИмя={cn(
+            className={cn(
               "h-9 w-full rounded-md border border-border bg-background pl-7 pr-2 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60",
               selectedMissing && "border-destructive text-destructive",
             )}
@@ -157,36 +157,36 @@ export function СекретBindingPicker({
               }
               onChange({ secretId: next, version: value?.version ?? VERSION_LATEST });
             }}
-            disabled={disabled || secretsQuery.isОжидание}
+            disabled={disabled || secretsQuery.isPending}
           >
-            <option value="">{secretsQuery.isОжидание ? "Загрузка…" : placeholder}</option>
+            <option value="">{secretsQuery.isPending ? "Loading…" : placeholder}</option>
             {selectedMissing && value ? (
               <option value={value.secretId}>Missing secret ({value.secretId.slice(0, 8)}…)</option>
             ) : null}
-            {filteredСекреты.map((secret) => (
+            {filteredSecrets.map((secret) => (
               <option key={secret.id} value={secret.id}>
-                {secret.name} — {describeСекрет(secret)}
+                {secret.name} — {describeSecret(secret)}
               </option>
             ))}
           </select>
         </div>
-        {allowВерсияSelector ? (
+        {allowVersionSelector ? (
           <select
-            classИмя="h-9 rounded-md border border-border bg-background px-2 text-xs outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-9 rounded-md border border-border bg-background px-2 text-xs outline-none disabled:cursor-not-allowed disabled:opacity-60"
             value={value?.version === undefined ? VERSION_LATEST : String(value.version)}
             onChange={(event) => {
               if (!value) return;
               const raw = event.target.value;
-              const next: СекретВерсияSelector = raw === VERSION_LATEST ? VERSION_LATEST : Number.parseInt(raw, 10);
+              const next: SecretVersionSelector = raw === VERSION_LATEST ? VERSION_LATEST : Number.parseInt(raw, 10);
               onChange({ ...value, version: next });
             }}
-            disabled={disabled || !value || !selectedСекрет}
-            aria-label="Версия"
+            disabled={disabled || !value || !selectedSecret}
+            aria-label="Version"
           >
             <option value={VERSION_LATEST}>latest</option>
-            {selectedСекрет
-              ? Array.from({ length: Math.max(0, selectedСекрет.latestВерсия) }, (_, index) => {
-                  const version = selectedСекрет.latestВерсия - index;
+            {selectedSecret
+              ? Array.from({ length: Math.max(0, selectedSecret.latestVersion) }, (_, index) => {
+                  const version = selectedSecret.latestVersion - index;
                   if (version <= 0) return null;
                   return (
                     <option key={version} value={version}>
@@ -201,78 +201,78 @@ export function СекретBindingPicker({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => setСоздатьOpen(true)}
-          disabled={disabled || !selectedКомпанияId}
-          aria-label="Создать секрет"
+          onClick={() => setCreateOpen(true)}
+          disabled={disabled || !selectedCompanyId}
+          aria-label="Create secret"
         >
-          <Plus classИмя="h-3.5 w-3.5" />
+          <Plus className="h-3.5 w-3.5" />
         </Button>
       </div>
 
-      {selectedСекрет ? (
-        <p classИмя={cn("text-[11px] text-muted-foreground", statusTone(selectedСекрет.status))}>
-          {selectedСекрет.status !== "active" ? `Статус: ${selectedСекрет.status}. ` : null}
-          Bound to {versionDisplay(value?.version)} · {selectedСекрет.key}
+      {selectedSecret ? (
+        <p className={cn("text-[11px] text-muted-foreground", statusTone(selectedSecret.status))}>
+          {selectedSecret.status !== "active" ? `Status: ${selectedSecret.status}. ` : null}
+          Bound to {versionDisplay(value?.version)} · {selectedSecret.key}
         </p>
       ) : selectedMissing ? (
-        <p classИмя="text-[11px] text-destructive flex items-center gap-1">
-          <AlertCircle classИмя="h-3 w-3" />
+        <p className="text-[11px] text-destructive flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
           The previously selected secret is no longer available. Pick another or remove the binding.
         </p>
-      ) : (filteredСекреты.length === 0 && !secretsQuery.isОжидание) ? (
-        <p classИмя="text-[11px] text-muted-foreground">{emptyHint}</p>
+      ) : (filteredSecrets.length === 0 && !secretsQuery.isPending) ? (
+        <p className="text-[11px] text-muted-foreground">{emptyHint}</p>
       ) : null}
 
-      <Dialog open={createOpen} onOpenChange={setСоздатьOpen}>
-        <DialogContent classИмя="sm:max-w-md">
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogНазвание>Создать new secret</DialogНазвание>
+            <DialogTitle>Create new secret</DialogTitle>
           </DialogHeader>
-          <div classИмя="space-y-3">
+          <div className="space-y-3">
             <div>
-              <label classИмя="text-xs font-medium text-foreground/80" htmlFor="secret-name">Имя</label>
+              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-name">Name</label>
               <Input
                 id="secret-name"
-                value={createИмя}
-                onChange={(event) => setСоздатьИмя(event.target.value)}
+                value={createName}
+                onChange={(event) => setCreateName(event.target.value)}
                 placeholder="OPENAI_API_KEY"
                 autoFocus
               />
             </div>
             <div>
-              <label classИмя="text-xs font-medium text-foreground/80" htmlFor="secret-value">Значение</label>
+              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-value">Value</label>
               <Textarea
                 id="secret-value"
-                value={createЗначение}
-                onChange={(event) => setСоздатьЗначение(event.target.value)}
+                value={createValue}
+                onChange={(event) => setCreateValue(event.target.value)}
                 rows={3}
                 placeholder="Paste the secret value"
-                classИмя="font-mono text-xs"
+                className="font-mono text-xs"
               />
-              <p classИмя="text-[11px] text-muted-foreground mt-1">
+              <p className="text-[11px] text-muted-foreground mt-1">
                 The value is stored once and never re-displayed. Rotate to replace.
               </p>
             </div>
             <div>
-              <label classИмя="text-xs font-medium text-foreground/80" htmlFor="secret-description">Описание</label>
+              <label className="text-xs font-medium text-foreground/80" htmlFor="secret-description">Description</label>
               <Input
                 id="secret-description"
-                value={createОписание}
-                onChange={(event) => setСоздатьОписание(event.target.value)}
-                placeholder="Опционально notes (no values)"
+                value={createDescription}
+                onChange={(event) => setCreateDescription(event.target.value)}
+                placeholder="Optional notes (no values)"
               />
             </div>
-            {createОшибка ? <p classИмя="text-xs text-destructive">{createОшибка}</p> : null}
+            {createError ? <p className="text-xs text-destructive">{createError}</p> : null}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setСоздатьOpen(false)}>Отмена</Button>
+            <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
             <Button
               type="button"
               onClick={() => createMutation.mutate()}
-              disabled={!createИмя.trim() || !createЗначение || createMutation.isОжидание}
+              disabled={!createName.trim() || !createValue || createMutation.isPending}
             >
-              {createMutation.isОжидание ? <Loader2 classИмя="h-3.5 w-3.5 animate-spin" /> : null}
-              Создать &amp; bind
+              {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              Create &amp; bind
             </Button>
           </DialogFooter>
         </DialogContent>

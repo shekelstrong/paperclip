@@ -2,33 +2,33 @@ import { useEffect, useMemo, useState, type SVGProps } from "react";
 import { Link, useNavigate, useParams } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-  КомпанияНавыкСоздатьRequest,
-  КомпанияНавыкDetail,
-  КомпанияНавыкFileDetail,
-  КомпанияНавыкFileInventoryEntry,
-  КомпанияНавыкListItem,
-  КомпанияНавыкProjectScanResult,
-  КомпанияНавыкSourceBadge,
-  КомпанияНавыкОбновитьСтатус,
+  CompanySkillCreateRequest,
+  CompanySkillDetail,
+  CompanySkillFileDetail,
+  CompanySkillFileInventoryEntry,
+  CompanySkillListItem,
+  CompanySkillProjectScanResult,
+  CompanySkillSourceBadge,
+  CompanySkillUpdateStatus,
 } from "@paperclipai/shared";
-import { companyНавыкиApi } from "../api/companyНавыки";
-import { useКомпания } from "../context/КомпанияContext";
+import { companySkillsApi } from "../api/companySkills";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToastActions } from "../context/ToastContext";
-import { queryКлючs } from "../lib/queryКлючs";
+import { queryKeys } from "../lib/queryKeys";
 import { EmptyState } from "../components/EmptyState";
 import { MarkdownBody } from "../components/MarkdownBody";
-import { MarkdownИзменитьor } from "../components/MarkdownИзменитьor";
+import { MarkdownEditor } from "../components/MarkdownEditor";
 import { PageSkeleton } from "../components/PageSkeleton";
-import { КопироватьText } from "../components/КопироватьText";
+import { CopyText } from "../components/CopyText";
 import { Identity } from "../components/Identity";
 import {
   Dialog,
   DialogContent,
-  DialogОписание,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogНазвание,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "../lib/utils";
@@ -43,27 +43,27 @@ import {
   Eye,
   FileCode2,
   FileText,
-  Папка,
-  ПапкаOpen,
+  Folder,
+  FolderOpen,
   Github,
   Link2,
   ExternalLink,
   Paperclip,
   Pencil,
   Plus,
-  Копировать,
-  ОбновитьCw,
-  Сохранить,
-  Поиск,
+  Copy,
+  RefreshCw,
+  Save,
+  Search,
   Trash2,
 } from "lucide-react";
 
-type НавыкTreeНетde = {
+type SkillTreeNode = {
   name: string;
   path: string | null;
   kind: "dir" | "file";
-  fileKind?: КомпанияНавыкFileInventoryEntry["kind"];
-  children: НавыкTreeНетde[];
+  fileKind?: CompanySkillFileInventoryEntry["kind"];
+  children: SkillTreeNode[];
 };
 
 const SKILL_TREE_BASE_INDENT = 16;
@@ -97,7 +97,7 @@ function splitFrontmatter(markdown: string): { frontmatter: string | null; body:
   }
   return {
     frontmatter: normalized.slice(4, closing).trim(),
-    body: normalized.slice(closing + 5).trimНачать(),
+    body: normalized.slice(closing + 5).trimStart(),
   };
 }
 
@@ -107,21 +107,21 @@ function mergeFrontmatter(markdown: string, body: string) {
   return ["---", parsed.frontmatter, "---", "", body].join("\n");
 }
 
-function buildTree(entries: КомпанияНавыкFileInventoryEntry[]) {
-  const root: НавыкTreeНетde = { name: "", path: null, kind: "dir", children: [] };
+function buildTree(entries: CompanySkillFileInventoryEntry[]) {
+  const root: SkillTreeNode = { name: "", path: null, kind: "dir", children: [] };
 
   for (const entry of entries) {
     const segments = entry.path.split("/").filter(Boolean);
     let current = root;
-    let currentПуть = "";
+    let currentPath = "";
     for (const [index, segment] of segments.entries()) {
-      currentПуть = currentПуть ? `${currentПуть}/${segment}` : segment;
+      currentPath = currentPath ? `${currentPath}/${segment}` : segment;
       const isLeaf = index === segments.length - 1;
       let next = current.children.find((child) => child.name === segment);
       if (!next) {
         next = {
           name: segment,
-          path: isLeaf ? entry.path : currentПуть,
+          path: isLeaf ? entry.path : currentPath,
           kind: isLeaf ? "file" : "dir",
           fileKind: isLeaf ? entry.kind : undefined,
           children: [],
@@ -132,36 +132,36 @@ function buildTree(entries: КомпанияНавыкFileInventoryEntry[]) {
     }
   }
 
-  function sortНетde(node: НавыкTreeНетde) {
+  function sortNode(node: SkillTreeNode) {
     node.children.sort((left, right) => {
       if (left.kind !== right.kind) return left.kind === "dir" ? -1 : 1;
       if (left.name === "SKILL.md") return -1;
       if (right.name === "SKILL.md") return 1;
       return left.name.localeCompare(right.name);
     });
-    node.children.forEach(sortНетde);
+    node.children.forEach(sortNode);
   }
 
-  sortНетde(root);
+  sortNode(root);
   return root.children;
 }
 
-function sourceMeta(sourceBadge: КомпанияНавыкSourceBadge, sourceLabel: string | null) {
-  const normalizedLabel = sourceLabel?.toНизкийerCase() ?? "";
-  const isНавыкиShManaged =
+function sourceMeta(sourceBadge: CompanySkillSourceBadge, sourceLabel: string | null) {
+  const normalizedLabel = sourceLabel?.toLowerCase() ?? "";
+  const isSkillsShManaged =
     normalizedLabel.includes("skills.sh") || normalizedLabel.includes("vercel-labs/skills");
 
   switch (sourceBadge) {
     case "skills_sh":
       return { icon: VercelMark, label: sourceLabel ?? "skills.sh", managedLabel: "skills.sh managed" };
     case "github":
-      return isНавыкиShManaged
+      return isSkillsShManaged
         ? { icon: VercelMark, label: sourceLabel ?? "skills.sh", managedLabel: "skills.sh managed" }
         : { icon: Github, label: sourceLabel ?? "GitHub", managedLabel: "GitHub managed" };
     case "url":
       return { icon: Link2, label: sourceLabel ?? "URL", managedLabel: "URL managed" };
     case "local":
-      return { icon: Папка, label: sourceLabel ?? "Папка", managedLabel: "Папка managed" };
+      return { icon: Folder, label: sourceLabel ?? "Folder", managedLabel: "Folder managed" };
     case "paperclip":
       return { icon: Paperclip, label: sourceLabel ?? "Paperclip", managedLabel: "Paperclip managed" };
     default:
@@ -180,7 +180,7 @@ function middleTruncate(value: string, maxLength = 72) {
   return `${value.slice(0, edgeLength)}...${value.slice(value.length - edgeLength)}`;
 }
 
-function formatProjectScanSummary(result: КомпанияНавыкProjectScanResult) {
+function formatProjectScanSummary(result: CompanySkillProjectScanResult) {
   const parts = [
     `${result.discovered} found`,
     `${result.imported.length} imported`,
@@ -188,21 +188,21 @@ function formatProjectScanSummary(result: КомпанияНавыкProjectScanR
   ];
   if (result.conflicts.length > 0) parts.push(`${result.conflicts.length} conflicts`);
   if (result.skipped.length > 0) parts.push(`${result.skipped.length} skipped`);
-  return `${parts.join(", ")} across ${result.scannedРабочие области} workspace${result.scannedРабочие области === 1 ? "" : "s"}.`;
+  return `${parts.join(", ")} across ${result.scannedWorkspaces} workspace${result.scannedWorkspaces === 1 ? "" : "s"}.`;
 }
 
-function fileIcon(kind: КомпанияНавыкFileInventoryEntry["kind"]) {
+function fileIcon(kind: CompanySkillFileInventoryEntry["kind"]) {
   if (kind === "script" || kind === "reference") return FileCode2;
   return FileText;
 }
 
-function encodeНавыкFileПуть(fileПуть: string) {
-  return fileПуть.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+function encodeSkillFilePath(filePath: string) {
+  return filePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
 }
 
-function decodeНавыкFileПуть(fileПуть: string | undefined) {
-  if (!fileПуть) return "SKILL.md";
-  return fileПуть
+function decodeSkillFilePath(filePath: string | undefined) {
+  if (!filePath) return "SKILL.md";
+  return filePath
     .split("/")
     .filter(Boolean)
     .map((segment) => {
@@ -215,34 +215,34 @@ function decodeНавыкFileПуть(fileПуть: string | undefined) {
     .join("/");
 }
 
-function parseНавыкRoute(routeПуть: string | undefined) {
-  const segments = (routeПуть ?? "").split("/").filter(Boolean);
+function parseSkillRoute(routePath: string | undefined) {
+  const segments = (routePath ?? "").split("/").filter(Boolean);
   if (segments.length === 0) {
-    return { skillId: null, fileПуть: "SKILL.md" };
+    return { skillId: null, filePath: "SKILL.md" };
   }
 
-  const [rawНавыкId, rawMode, ...rest] = segments;
-  const skillId = rawНавыкId ? decodeURIComponent(rawНавыкId) : null;
+  const [rawSkillId, rawMode, ...rest] = segments;
+  const skillId = rawSkillId ? decodeURIComponent(rawSkillId) : null;
   if (!skillId) {
-    return { skillId: null, fileПуть: "SKILL.md" };
+    return { skillId: null, filePath: "SKILL.md" };
   }
 
   if (rawMode === "files") {
     return {
       skillId,
-      fileПуть: decodeНавыкFileПуть(rest.join("/")),
+      filePath: decodeSkillFilePath(rest.join("/")),
     };
   }
 
-  return { skillId, fileПуть: "SKILL.md" };
+  return { skillId, filePath: "SKILL.md" };
 }
 
-function skillRoute(skillId: string, fileПуть?: string | null) {
-  return fileПуть ? `/skills/${skillId}/files/${encodeНавыкFileПуть(fileПуть)}` : `/skills/${skillId}`;
+function skillRoute(skillId: string, filePath?: string | null) {
+  return filePath ? `/skills/${skillId}/files/${encodeSkillFilePath(filePath)}` : `/skills/${skillId}`;
 }
 
-function parentDirectoryПутьs(fileПуть: string) {
-  const segments = fileПуть.split("/").filter(Boolean);
+function parentDirectoryPaths(filePath: string) {
+  const segments = filePath.split("/").filter(Boolean);
   const parents: string[] = [];
   for (let index = 0; index < segments.length - 1; index += 1) {
     parents.push(segments.slice(0, index + 1).join("/"));
@@ -250,50 +250,50 @@ function parentDirectoryПутьs(fileПуть: string) {
   return parents;
 }
 
-function NewНавыкForm({
-  onСоздать,
-  isОжидание,
-  onОтмена,
+function NewSkillForm({
+  onCreate,
+  isPending,
+  onCancel,
 }: {
-  onСоздать: (payload: КомпанияНавыкСоздатьRequest) => void;
-  isОжидание: boolean;
-  onОтмена: () => void;
+  onCreate: (payload: CompanySkillCreateRequest) => void;
+  isPending: boolean;
+  onCancel: () => void;
 }) {
-  const [name, setИмя] = useState("");
+  const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [description, setОписание] = useState("");
+  const [description, setDescription] = useState("");
 
   return (
-    <div classИмя="border-b border-border px-4 py-4">
-      <div classИмя="space-y-3">
+    <div className="border-b border-border px-4 py-4">
+      <div className="space-y-3">
         <Input
           value={name}
-          onChange={(event) => setИмя(event.target.value)}
-          placeholder="Название навыка"
-          classИмя="h-9 rounded-none border-0 border-b border-border px-0 shadow-none focus-visible:ring-0"
+          onChange={(event) => setName(event.target.value)}
+          placeholder="Skill name"
+          className="h-9 rounded-none border-0 border-b border-border px-0 shadow-none focus-visible:ring-0"
         />
         <Input
           value={slug}
           onChange={(event) => setSlug(event.target.value)}
           placeholder="optional-shortname"
-          classИмя="h-9 rounded-none border-0 border-b border-border px-0 shadow-none focus-visible:ring-0"
+          className="h-9 rounded-none border-0 border-b border-border px-0 shadow-none focus-visible:ring-0"
         />
         <Textarea
           value={description}
-          onChange={(event) => setОписание(event.target.value)}
+          onChange={(event) => setDescription(event.target.value)}
           placeholder="Short description"
-          classИмя="min-h-20 rounded-none border-0 border-b border-border px-0 shadow-none focus-visible:ring-0"
+          className="min-h-20 rounded-none border-0 border-b border-border px-0 shadow-none focus-visible:ring-0"
         />
-        <div classИмя="flex items-center justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={onОтмена} disabled={isОжидание}>
-            Отмена
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={onCancel} disabled={isPending}>
+            Cancel
           </Button>
           <Button
             size="sm"
-            onClick={() => onСоздать({ name, slug: slug || null, description: description || null })}
-            disabled={isОжидание || name.trim().length === 0}
+            onClick={() => onCreate({ name, slug: slug || null, description: description || null })}
+            disabled={isPending || name.trim().length === 0}
           >
-            {isОжидание ? "Creating..." : "Создать навык"}
+            {isPending ? "Creating..." : "Create skill"}
           </Button>
         </div>
       </div>
@@ -301,21 +301,21 @@ function NewНавыкForm({
   );
 }
 
-function НавыкTree({
+function SkillTree({
   nodes,
   skillId,
-  selectedПуть,
+  selectedPath,
   expandedDirs,
   onToggleDir,
-  onSelectПуть,
+  onSelectPath,
   depth = 0,
 }: {
-  nodes: НавыкTreeНетde[];
+  nodes: SkillTreeNode[];
   skillId: string;
-  selectedПуть: string;
+  selectedPath: string;
   expandedDirs: Set<string>;
   onToggleDir: (path: string) => void;
-  onSelectПуть: (path: string) => void;
+  onSelectPath: (path: string) => void;
   depth?: number;
 }) {
   return (
@@ -326,38 +326,38 @@ function НавыкTree({
           return (
             <div key={node.path ?? node.name}>
               <div
-                classИмя={cn(
+                className={cn(
                   "group grid w-full grid-cols-[minmax(0,1fr)_2.25rem] items-center gap-x-1 pr-3 text-left text-sm text-muted-foreground hover:bg-accent/30 hover:text-foreground",
                   SKILL_TREE_ROW_HEIGHT_CLASS,
                 )}
               >
                 <button
                   type="button"
-                  classИмя="flex min-w-0 items-center gap-2 py-1 text-left"
+                  className="flex min-w-0 items-center gap-2 py-1 text-left"
                   style={{ paddingLeft: `${SKILL_TREE_BASE_INDENT + depth * SKILL_TREE_STEP_INDENT}px` }}
                   onClick={() => node.path && onToggleDir(node.path)}
                 >
-                  <span classИмя="flex h-4 w-4 shrink-0 items-center justify-center">
-                    {expanded ? <ПапкаOpen classИмя="h-3.5 w-3.5" /> : <Папка classИмя="h-3.5 w-3.5" />}
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                    {expanded ? <FolderOpen className="h-3.5 w-3.5" /> : <Folder className="h-3.5 w-3.5" />}
                   </span>
-                  <span classИмя="truncate">{node.name}</span>
+                  <span className="truncate">{node.name}</span>
                 </button>
                 <button
                   type="button"
-                  classИмя="flex h-9 w-9 items-center justify-center self-center rounded-sm text-muted-foreground opacity-70 transition-[background-color,color,opacity] hover:bg-accent hover:text-foreground group-hover:opacity-100"
+                  className="flex h-9 w-9 items-center justify-center self-center rounded-sm text-muted-foreground opacity-70 transition-[background-color,color,opacity] hover:bg-accent hover:text-foreground group-hover:opacity-100"
                   onClick={() => node.path && onToggleDir(node.path)}
                 >
-                  {expanded ? <ChevronDown classИмя="h-3.5 w-3.5" /> : <ChevronRight classИмя="h-3.5 w-3.5" />}
+                  {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                 </button>
               </div>
               {expanded && (
-                <НавыкTree
+                <SkillTree
                   nodes={node.children}
                   skillId={skillId}
-                  selectedПуть={selectedПуть}
+                  selectedPath={selectedPath}
                   expandedDirs={expandedDirs}
                   onToggleDir={onToggleDir}
-                  onSelectПуть={onSelectПуть}
+                  onSelectPath={onSelectPath}
                   depth={depth + 1}
                 />
               )}
@@ -369,19 +369,19 @@ function НавыкTree({
         return (
           <Link
             key={node.path ?? node.name}
-            classИмя={cn(
+            className={cn(
               "flex w-full items-center gap-2 pr-3 text-left text-sm text-muted-foreground hover:bg-accent/30 hover:text-foreground",
               SKILL_TREE_ROW_HEIGHT_CLASS,
-              node.path === selectedПуть && "text-foreground",
+              node.path === selectedPath && "text-foreground",
             )}
-            style={{ paddingInlineНачать: `${SKILL_TREE_BASE_INDENT + depth * SKILL_TREE_STEP_INDENT}px` }}
+            style={{ paddingInlineStart: `${SKILL_TREE_BASE_INDENT + depth * SKILL_TREE_STEP_INDENT}px` }}
             to={skillRoute(skillId, node.path)}
-            onClick={() => node.path && onSelectПуть(node.path)}
+            onClick={() => node.path && onSelectPath(node.path)}
           >
-            <span classИмя="flex h-4 w-4 shrink-0 items-center justify-center">
-              <FileIcon classИмя="h-3.5 w-3.5" />
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+              <FileIcon className="h-3.5 w-3.5" />
             </span>
-            <span classИмя="truncate">{node.name}</span>
+            <span className="truncate">{node.name}</span>
           </Link>
         );
       })}
@@ -389,102 +389,102 @@ function НавыкTree({
   );
 }
 
-function НавыкList({
+function SkillList({
   skills,
-  selectedНавыкId,
-  skillФильтр,
-  expandedНавыкId,
+  selectedSkillId,
+  skillFilter,
+  expandedSkillId,
   expandedDirs,
-  selectedПутьs,
-  onToggleНавык,
+  selectedPaths,
+  onToggleSkill,
   onToggleDir,
-  onSelectНавык,
-  onSelectПуть,
+  onSelectSkill,
+  onSelectPath,
 }: {
-  skills: КомпанияНавыкListItem[];
-  selectedНавыкId: string | null;
-  skillФильтр: string;
-  expandedНавыкId: string | null;
+  skills: CompanySkillListItem[];
+  selectedSkillId: string | null;
+  skillFilter: string;
+  expandedSkillId: string | null;
   expandedDirs: Record<string, Set<string>>;
-  selectedПутьs: Record<string, string>;
-  onToggleНавык: (skillId: string) => void;
+  selectedPaths: Record<string, string>;
+  onToggleSkill: (skillId: string) => void;
   onToggleDir: (skillId: string, path: string) => void;
-  onSelectНавык: (skillId: string) => void;
-  onSelectПуть: (skillId: string, path: string) => void;
+  onSelectSkill: (skillId: string) => void;
+  onSelectPath: (skillId: string, path: string) => void;
 }) {
-  const filteredНавыки = skills.filter((skill) => {
-    const haystack = `${skill.name} ${skill.key} ${skill.slug} ${skill.sourceLabel ?? ""}`.toНизкийerCase();
-    return haystack.includes(skillФильтр.toНизкийerCase());
+  const filteredSkills = skills.filter((skill) => {
+    const haystack = `${skill.name} ${skill.key} ${skill.slug} ${skill.sourceLabel ?? ""}`.toLowerCase();
+    return haystack.includes(skillFilter.toLowerCase());
   });
 
-  if (filteredНавыки.length === 0) {
+  if (filteredSkills.length === 0) {
     return (
-      <div classИмя="px-4 py-6 text-sm text-muted-foreground">
-        Нет skills match this filter.
+      <div className="px-4 py-6 text-sm text-muted-foreground">
+        No skills match this filter.
       </div>
     );
   }
 
   return (
     <div>
-      {filteredНавыки.map((skill) => {
-        const expanded = expandedНавыкId === skill.id;
+      {filteredSkills.map((skill) => {
+        const expanded = expandedSkillId === skill.id;
         const tree = buildTree(skill.fileInventory);
         const source = sourceMeta(skill.sourceBadge, skill.sourceLabel);
         const SourceIcon = source.icon;
 
         return (
-          <div key={skill.id} classИмя="border-b border-border">
+          <div key={skill.id} className="border-b border-border">
             <div
-              classИмя={cn(
+              className={cn(
                 "group grid grid-cols-[minmax(0,1fr)_2.25rem] items-center gap-x-1 px-3 py-1.5 hover:bg-accent/30",
-                skill.id === selectedНавыкId && "text-foreground",
+                skill.id === selectedSkillId && "text-foreground",
               )}
             >
               <Link
                 to={skillRoute(skill.id)}
-                classИмя="flex min-w-0 items-center self-stretch pr-2 text-left no-underline"
-                onClick={() => onSelectНавык(skill.id)}
+                className="flex min-w-0 items-center self-stretch pr-2 text-left no-underline"
+                onClick={() => onSelectSkill(skill.id)}
               >
-                <span classИмя="flex min-w-0 items-center gap-2 self-center">
+                <span className="flex min-w-0 items-center gap-2 self-center">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span classИмя="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground opacity-75 transition-opacity group-hover:opacity-100">
-                        <SourceIcon classИмя="h-3.5 w-3.5" />
-                        <span classИмя="sr-only">{source.managedLabel}</span>
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground opacity-75 transition-opacity group-hover:opacity-100">
+                        <SourceIcon className="h-3.5 w-3.5" />
+                        <span className="sr-only">{source.managedLabel}</span>
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">{source.managedLabel}</TooltipContent>
                   </Tooltip>
-                  <span classИмя="min-w-0 overflow-hidden text-[13px] font-medium leading-5 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]">
+                  <span className="min-w-0 overflow-hidden text-[13px] font-medium leading-5 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]">
                     {skill.name}
                   </span>
                 </span>
               </Link>
               <button
                 type="button"
-                classИмя="flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-sm text-muted-foreground opacity-80 transition-[background-color,color,opacity] hover:bg-accent hover:text-foreground group-hover:opacity-100"
-                onClick={() => onToggleНавык(skill.id)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-sm text-muted-foreground opacity-80 transition-[background-color,color,opacity] hover:bg-accent hover:text-foreground group-hover:opacity-100"
+                onClick={() => onToggleSkill(skill.id)}
                 aria-label={expanded ? `Collapse ${skill.name}` : `Expand ${skill.name}`}
               >
-                {expanded ? <ChevronDown classИмя="h-3.5 w-3.5" /> : <ChevronRight classИмя="h-3.5 w-3.5" />}
+                {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
               </button>
             </div>
             <div
               aria-hidden={!expanded}
-              classИмя={cn(
+              className={cn(
                 "grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
                 expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
               )}
             >
-              <div classИмя="min-h-0 overflow-hidden">
-                <НавыкTree
+              <div className="min-h-0 overflow-hidden">
+                <SkillTree
                   nodes={tree}
                   skillId={skill.id}
-                  selectedПуть={selectedПутьs[skill.id] ?? "SKILL.md"}
+                  selectedPath={selectedPaths[skill.id] ?? "SKILL.md"}
                   expandedDirs={expandedDirs[skill.id] ?? new Set<string>()}
                   onToggleDir={(path) => onToggleDir(skill.id, path)}
-                  onSelectПуть={(path) => onSelectПуть(skill.id, path)}
+                  onSelectPath={(path) => onSelectPath(skill.id, path)}
                   depth={1}
                 />
               </div>
@@ -496,48 +496,48 @@ function НавыкList({
   );
 }
 
-function НавыкPane({
+function SkillPane({
   loading,
   detail,
   file,
-  fileЗагрузка,
-  updateСтатус,
-  updateСтатусЗагрузка,
+  fileLoading,
+  updateStatus,
+  updateStatusLoading,
   viewMode,
   editMode,
   draft,
   setViewMode,
-  setИзменитьMode,
-  setЧерновик,
-  onCheckОбновитьs,
-  checkОбновитьsОжидание,
-  onInstallОбновить,
-  installОбновитьОжидание,
-  onУдалить,
-  deleteОжидание,
-  onСохранить,
-  saveОжидание,
+  setEditMode,
+  setDraft,
+  onCheckUpdates,
+  checkUpdatesPending,
+  onInstallUpdate,
+  installUpdatePending,
+  onDelete,
+  deletePending,
+  onSave,
+  savePending,
 }: {
   loading: boolean;
-  detail: КомпанияНавыкDetail | null | undefined;
-  file: КомпанияНавыкFileDetail | null | undefined;
-  fileЗагрузка: boolean;
-  updateСтатус: КомпанияНавыкОбновитьСтатус | null | undefined;
-  updateСтатусЗагрузка: boolean;
+  detail: CompanySkillDetail | null | undefined;
+  file: CompanySkillFileDetail | null | undefined;
+  fileLoading: boolean;
+  updateStatus: CompanySkillUpdateStatus | null | undefined;
+  updateStatusLoading: boolean;
   viewMode: "preview" | "code";
   editMode: boolean;
   draft: string;
   setViewMode: (mode: "preview" | "code") => void;
-  setИзменитьMode: (value: boolean) => void;
-  setЧерновик: (value: string) => void;
-  onCheckОбновитьs: () => void;
-  checkОбновитьsОжидание: boolean;
-  onInstallОбновить: () => void;
-  installОбновитьОжидание: boolean;
-  onУдалить: () => void;
-  deleteОжидание: boolean;
-  onСохранить: () => void;
-  saveОжидание: boolean;
+  setEditMode: (value: boolean) => void;
+  setDraft: (value: string) => void;
+  onCheckUpdates: () => void;
+  checkUpdatesPending: boolean;
+  onInstallUpdate: () => void;
+  installUpdatePending: boolean;
+  onDelete: () => void;
+  deletePending: boolean;
+  onSave: () => void;
+  savePending: boolean;
 }) {
   if (!detail) {
     if (loading) {
@@ -553,137 +553,137 @@ function НавыкPane({
 
   const source = sourceMeta(detail.sourceBadge, detail.sourceLabel);
   const SourceIcon = source.icon;
-  const usedBy = detail.usedByАгенты;
+  const usedBy = detail.usedByAgents;
   const body = file?.markdown ? stripFrontmatter(file.content) : file?.content ?? "";
   const currentPin = shortRef(detail.sourceRef);
-  const latestPin = shortRef(updateСтатус?.latestRef);
-  const displaySourceПуть = detail.sourceПуть ? middleTruncate(detail.sourceПуть) : null;
-  const removeЗаблокирован = usedBy.length > 0;
-  const removeОтключитьdReason = removeЗаблокирован
+  const latestPin = shortRef(updateStatus?.latestRef);
+  const displaySourcePath = detail.sourcePath ? middleTruncate(detail.sourcePath) : null;
+  const removeBlocked = usedBy.length > 0;
+  const removeDisabledReason = removeBlocked
     ? "Detach this skill from all agents before removing it."
     : null;
 
   return (
-    <div classИмя="min-w-0">
-      <div classИмя="border-b border-border px-5 py-4">
-        <div classИмя="flex flex-wrap items-start justify-between gap-4">
-          <div classИмя="min-w-0">
-            <h1 classИмя="flex items-center gap-2 truncate text-2xl font-semibold">
-              <SourceIcon classИмя="h-5 w-5 shrink-0 text-muted-foreground" />
+    <div className="min-w-0">
+      <div className="border-b border-border px-5 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="flex items-center gap-2 truncate text-2xl font-semibold">
+              <SourceIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
               {detail.name}
             </h1>
             {detail.description && (
-              <p classИмя="mt-2 max-w-3xl text-sm text-muted-foreground">{detail.description}</p>
+              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{detail.description}</p>
             )}
           </div>
-          <div classИмя="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="ghost"
               size="sm"
-              onClick={onУдалить}
-              disabled={deleteОжидание}
-              title={removeОтключитьdReason ?? undefined}
+              onClick={onDelete}
+              disabled={deletePending}
+              title={removeDisabledReason ?? undefined}
             >
-              <Trash2 classИмя="mr-1.5 h-3.5 w-3.5" />
-              {deleteОжидание ? "Removing..." : "Удалить"}
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              {deletePending ? "Removing..." : "Удалить"}
             </Button>
             {detail.editable ? (
               <button
-                classИмя="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-                onClick={() => setИзменитьMode(!editMode)}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                onClick={() => setEditMode(!editMode)}
               >
-                <Pencil classИмя="h-3.5 w-3.5" />
-                {editMode ? "Остановить editing" : "Изменить"}
+                <Pencil className="h-3.5 w-3.5" />
+                {editMode ? "Stop editing" : "Изменить"}
               </button>
             ) : (
-              <div classИмя="text-sm text-muted-foreground">{detail.editableReason}</div>
+              <div className="text-sm text-muted-foreground">{detail.editableReason}</div>
             )}
           </div>
         </div>
 
-        <div classИмя="mt-4 space-y-3 border-t border-border pt-4 text-sm">
-          <div classИмя="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <div classИмя="flex min-w-0 items-center gap-2">
-              <span classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Source</span>
-              <span classИмя="flex min-w-0 items-center gap-2">
-                <SourceIcon classИмя="h-3.5 w-3.5 text-muted-foreground" />
-                {detail.sourceПуть && displaySourceПуть ? (
+        <div className="mt-4 space-y-3 border-t border-border pt-4 text-sm">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Source</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <SourceIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                {detail.sourcePath && displaySourcePath ? (
                   <>
                     <span
-                      classИмя="block min-w-0 max-w-[min(34rem,55vw)] truncate font-mono text-xs text-muted-foreground"
-                      title={detail.sourceПуть}
+                      className="block min-w-0 max-w-[min(34rem,55vw)] truncate font-mono text-xs text-muted-foreground"
+                      title={detail.sourcePath}
                     >
-                      {displaySourceПуть}
+                      {displaySourcePath}
                     </span>
-                    <КопироватьText
-                      text={detail.sourceПуть}
+                    <CopyText
+                      text={detail.sourcePath}
                       copiedLabel="Copied path"
-                      ariaLabel="Копировать source path"
-                      title="Копировать source path"
-                      classИмя="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      ariaLabel="Copy source path"
+                      title="Copy source path"
+                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
-                      <Копировать classИмя="h-3.5 w-3.5" />
-                    </КопироватьText>
+                      <Copy className="h-3.5 w-3.5" />
+                    </CopyText>
                   </>
                 ) : (
-                  <span classИмя="truncate">{source.label}</span>
+                  <span className="truncate">{source.label}</span>
                 )}
               </span>
             </div>
-            {detail.sourceТип === "github" && (
-              <div classИмя="flex flex-wrap items-center gap-2">
-                <span classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Pin</span>
-                <span classИмя="font-mono text-xs">{currentPin ?? "untracked"}</span>
-                {updateСтатус?.trackingRef && (
-                  <span classИмя="text-xs text-muted-foreground">tracking {updateСтатус.trackingRef}</span>
+            {detail.sourceType === "github" && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Pin</span>
+                <span className="font-mono text-xs">{currentPin ?? "untracked"}</span>
+                {updateStatus?.trackingRef && (
+                  <span className="text-xs text-muted-foreground">tracking {updateStatus.trackingRef}</span>
                 )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onCheckОбновитьs}
-                  disabled={checkОбновитьsОжидание || updateСтатусЗагрузка}
+                  onClick={onCheckUpdates}
+                  disabled={checkUpdatesPending || updateStatusLoading}
                 >
-                  <ОбновитьCw classИмя={cn("mr-1.5 h-3.5 w-3.5", (checkОбновитьsОжидание || updateСтатусЗагрузка) && "animate-spin")} />
+                  <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", (checkUpdatesPending || updateStatusLoading) && "animate-spin")} />
                   Check for updates
                 </Button>
-                {updateСтатус?.supported && updateСтатус.hasОбновить && (
+                {updateStatus?.supported && updateStatus.hasUpdate && (
                   <Button
                     size="sm"
-                    onClick={onInstallОбновить}
-                    disabled={installОбновитьОжидание}
+                    onClick={onInstallUpdate}
+                    disabled={installUpdatePending}
                   >
-                    <ОбновитьCw classИмя={cn("mr-1.5 h-3.5 w-3.5", installОбновитьОжидание && "animate-spin")} />
+                    <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", installUpdatePending && "animate-spin")} />
                     Install update{latestPin ? ` ${latestPin}` : ""}
                   </Button>
                 )}
-                {updateСтатус?.supported && !updateСтатус.hasОбновить && !updateСтатусЗагрузка && (
-                  <span classИмя="text-xs text-muted-foreground">Up to date</span>
+                {updateStatus?.supported && !updateStatus.hasUpdate && !updateStatusLoading && (
+                  <span className="text-xs text-muted-foreground">Up to date</span>
                 )}
-                {!updateСтатус?.supported && updateСтатус?.reason && (
-                  <span classИмя="text-xs text-muted-foreground">{updateСтатус.reason}</span>
+                {!updateStatus?.supported && updateStatus?.reason && (
+                  <span className="text-xs text-muted-foreground">{updateStatus.reason}</span>
                 )}
               </div>
             )}
-            <div classИмя="flex items-center gap-2">
-              <span classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Ключ</span>
-              <span classИмя="font-mono text-xs">{detail.key}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Key</span>
+              <span className="font-mono text-xs">{detail.key}</span>
             </div>
-            <div classИмя="flex items-center gap-2">
-              <span classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Mode</span>
-              <span>{detail.editable ? "Изменитьable" : "Read only"}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Mode</span>
+              <span>{detail.editable ? "Editable" : "Read only"}</span>
             </div>
           </div>
-          <div classИмя="flex flex-wrap items-start gap-x-3 gap-y-1">
-            <span classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Used by</span>
+          <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
+            <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Used by</span>
             {usedBy.length === 0 ? (
-              <span classИмя="text-muted-foreground">Нет agents attached</span>
+              <span className="text-muted-foreground">No agents attached</span>
             ) : (
-              <div classИмя="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {usedBy.map((agent) => (
                   <Link
                     key={agent.id}
-                    to={`/agents/${agent.urlКлюч}/skills`}
-                    classИмя="group rounded-md border border-transparent p-2 no-underline hover:border-border hover:bg-accent/40"
+                    to={`/agents/${agent.urlKey}/skills`}
+                    className="group rounded-md border border-transparent p-2 no-underline hover:border-border hover:bg-accent/40"
                   >
                     <Identity name={agent.name} size="sm" />
                   </Link>
@@ -694,29 +694,29 @@ function НавыкPane({
         </div>
       </div>
 
-      <div classИмя="border-b border-border px-5 py-3">
-        <div classИмя="flex flex-wrap items-center justify-between gap-3">
-          <div classИмя="min-w-0">
-            <div classИмя="truncate font-mono text-sm">{file?.path ?? "SKILL.md"}</div>
+      <div className="border-b border-border px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="truncate font-mono text-sm">{file?.path ?? "SKILL.md"}</div>
           </div>
-          <div classИмя="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {file?.markdown && !editMode && (
-              <div classИмя="flex items-center border border-border">
+              <div className="flex items-center border border-border">
                 <button
-                  classИмя={cn("px-3 py-1.5 text-sm", viewMode === "preview" && "text-foreground", viewMode !== "preview" && "text-muted-foreground")}
+                  className={cn("px-3 py-1.5 text-sm", viewMode === "preview" && "text-foreground", viewMode !== "preview" && "text-muted-foreground")}
                   onClick={() => setViewMode("preview")}
                 >
-                  <span classИмя="flex items-center gap-1.5">
-                    <Eye classИмя="h-3.5 w-3.5" />
+                  <span className="flex items-center gap-1.5">
+                    <Eye className="h-3.5 w-3.5" />
                     View
                   </span>
                 </button>
                 <button
-                  classИмя={cn("border-l border-border px-3 py-1.5 text-sm", viewMode === "code" && "text-foreground", viewMode !== "code" && "text-muted-foreground")}
+                  className={cn("border-l border-border px-3 py-1.5 text-sm", viewMode === "code" && "text-foreground", viewMode !== "code" && "text-muted-foreground")}
                   onClick={() => setViewMode("code")}
                 >
-                  <span classИмя="flex items-center gap-1.5">
-                    <Code2 classИмя="h-3.5 w-3.5" />
+                  <span className="flex items-center gap-1.5">
+                    <Code2 className="h-3.5 w-3.5" />
                     Code
                   </span>
                 </button>
@@ -724,12 +724,12 @@ function НавыкPane({
             )}
             {editMode && file?.editable && (
               <>
-                <Button variant="ghost" size="sm" onClick={() => setИзменитьMode(false)} disabled={saveОжидание}>
-                  Отмена
+                <Button variant="ghost" size="sm" onClick={() => setEditMode(false)} disabled={savePending}>
+                  Cancel
                 </Button>
-                <Button size="sm" onClick={onСохранить} disabled={saveОжидание}>
-                  <Сохранить classИмя="mr-1.5 h-3.5 w-3.5" />
-                  {saveОжидание ? "Saving..." : "Сохранить"}
+                <Button size="sm" onClick={onSave} disabled={savePending}>
+                  <Save className="mr-1.5 h-3.5 w-3.5" />
+                  {savePending ? "Saving..." : "Сохранить"}
                 </Button>
               </>
             )}
@@ -737,30 +737,30 @@ function НавыкPane({
         </div>
       </div>
 
-      <div classИмя="min-h-[560px] px-5 py-5">
-        {fileЗагрузка ? (
+      <div className="min-h-[560px] px-5 py-5">
+        {fileLoading ? (
           <PageSkeleton variant="detail" />
         ) : !file ? (
-          <div classИмя="text-sm text-muted-foreground">Select a file to inspect.</div>
+          <div className="text-sm text-muted-foreground">Select a file to inspect.</div>
         ) : editMode && file.editable ? (
           file.markdown ? (
-            <MarkdownИзменитьor
+            <MarkdownEditor
               value={draft}
-              onChange={setЧерновик}
+              onChange={setDraft}
               bordered={false}
-              classИмя="min-h-[520px]"
+              className="min-h-[520px]"
             />
           ) : (
             <Textarea
               value={draft}
-              onChange={(event) => setЧерновик(event.target.value)}
-              classИмя="min-h-[520px] rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:ring-0"
+              onChange={(event) => setDraft(event.target.value)}
+              className="min-h-[520px] rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:ring-0"
             />
           )
         ) : file.markdown && viewMode === "preview" ? (
-          <MarkdownBody softBreaks={false} linkЗадачаСсылки={false}>{body}</MarkdownBody>
+          <MarkdownBody softBreaks={false} linkIssueReferences={false}>{body}</MarkdownBody>
         ) : (
-          <pre classИмя="overflow-x-auto whitespace-pre-wrap wrap-break-word border-0 bg-transparent p-0 font-mono text-sm text-foreground">
+          <pre className="overflow-x-auto whitespace-pre-wrap wrap-break-word border-0 bg-transparent p-0 font-mono text-sm text-foreground">
             <code>{file.content}</code>
           </pre>
         )}
@@ -769,88 +769,88 @@ function НавыкPane({
   );
 }
 
-export function КомпанияНавыки() {
-  const { "*": routeПуть } = useParams<{ "*": string }>();
+export function CompanySkills() {
+  const { "*": routePath } = useParams<{ "*": string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { selectedКомпанияId } = useКомпания();
+  const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToastActions();
-  const [skillФильтр, setНавыкФильтр] = useState("");
+  const [skillFilter, setSkillFilter] = useState("");
   const [source, setSource] = useState("");
-  const [createOpen, setСоздатьOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [emptySourceHelpOpen, setEmptySourceHelpOpen] = useState(false);
-  const [expandedНавыкId, setExpandedНавыкId] = useState<string | null>(null);
+  const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Record<string, Set<string>>>({});
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
-  const [editMode, setИзменитьMode] = useState(false);
-  const [draft, setЧерновик] = useState("");
-  const [displayedDetail, setDisplayedDetail] = useState<КомпанияНавыкDetail | null>(null);
-  const [displayedFile, setDisplayedFile] = useState<КомпанияНавыкFileDetail | null>(null);
-  const [scanСтатусMessage, setScanСтатусMessage] = useState<string | null>(null);
-  const [deleteOpen, setУдалитьOpen] = useState(false);
-  const [deleteЦельНавыкId, setУдалитьЦельНавыкId] = useState<string | null>(null);
-  const [deleteЦельDetail, setУдалитьЦельDetail] = useState<КомпанияНавыкDetail | null>(null);
-  const parsedRoute = useMemo(() => parseНавыкRoute(routeПуть), [routeПуть]);
-  const routeНавыкId = parsedRoute.skillId;
-  const selectedПуть = parsedRoute.fileПуть;
+  const [editMode, setEditMode] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [displayedDetail, setDisplayedDetail] = useState<CompanySkillDetail | null>(null);
+  const [displayedFile, setDisplayedFile] = useState<CompanySkillFileDetail | null>(null);
+  const [scanStatusMessage, setScanStatusMessage] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteTargetSkillId, setDeleteTargetSkillId] = useState<string | null>(null);
+  const [deleteTargetDetail, setDeleteTargetDetail] = useState<CompanySkillDetail | null>(null);
+  const parsedRoute = useMemo(() => parseSkillRoute(routePath), [routePath]);
+  const routeSkillId = parsedRoute.skillId;
+  const selectedPath = parsedRoute.filePath;
 
   useEffect(() => {
     setBreadcrumbs([
       { label: "Навыки", href: "/skills" },
-      ...(routeНавыкId ? [{ label: "Detail" }] : []),
+      ...(routeSkillId ? [{ label: "Detail" }] : []),
     ]);
-  }, [routeНавыкId, setBreadcrumbs]);
+  }, [routeSkillId, setBreadcrumbs]);
 
   const skillsQuery = useQuery({
-    queryКлюч: queryКлючs.companyНавыки.list(selectedКомпанияId ?? ""),
-    queryFn: () => companyНавыкиApi.list(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+    queryKey: queryKeys.companySkills.list(selectedCompanyId ?? ""),
+    queryFn: () => companySkillsApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
   });
 
-  const selectedНавыкId = useMemo(() => {
-    if (!routeНавыкId) return skillsQuery.data?.[0]?.id ?? null;
-    return routeНавыкId;
-  }, [routeНавыкId, skillsQuery.data]);
+  const selectedSkillId = useMemo(() => {
+    if (!routeSkillId) return skillsQuery.data?.[0]?.id ?? null;
+    return routeSkillId;
+  }, [routeSkillId, skillsQuery.data]);
 
   useEffect(() => {
-    if (routeНавыкId || !selectedНавыкId) return;
-    navigate(skillRoute(selectedНавыкId), { replace: true });
-  }, [navigate, routeНавыкId, selectedНавыкId]);
+    if (routeSkillId || !selectedSkillId) return;
+    navigate(skillRoute(selectedSkillId), { replace: true });
+  }, [navigate, routeSkillId, selectedSkillId]);
 
   const detailQuery = useQuery({
-    queryКлюч: queryКлючs.companyНавыки.detail(selectedКомпанияId ?? "", selectedНавыкId ?? ""),
-    queryFn: () => companyНавыкиApi.detail(selectedКомпанияId!, selectedНавыкId!),
-    enabled: Boolean(selectedКомпанияId && selectedНавыкId),
+    queryKey: queryKeys.companySkills.detail(selectedCompanyId ?? "", selectedSkillId ?? ""),
+    queryFn: () => companySkillsApi.detail(selectedCompanyId!, selectedSkillId!),
+    enabled: Boolean(selectedCompanyId && selectedSkillId),
   });
 
   const fileQuery = useQuery({
-    queryКлюч: queryКлючs.companyНавыки.file(selectedКомпанияId ?? "", selectedНавыкId ?? "", selectedПуть),
-    queryFn: () => companyНавыкиApi.file(selectedКомпанияId!, selectedНавыкId!, selectedПуть),
-    enabled: Boolean(selectedКомпанияId && selectedНавыкId && selectedПуть),
+    queryKey: queryKeys.companySkills.file(selectedCompanyId ?? "", selectedSkillId ?? "", selectedPath),
+    queryFn: () => companySkillsApi.file(selectedCompanyId!, selectedSkillId!, selectedPath),
+    enabled: Boolean(selectedCompanyId && selectedSkillId && selectedPath),
   });
 
-  const updateСтатусQuery = useQuery({
-    queryКлюч: queryКлючs.companyНавыки.updateСтатус(selectedКомпанияId ?? "", selectedНавыкId ?? ""),
-    queryFn: () => companyНавыкиApi.updateСтатус(selectedКомпанияId!, selectedНавыкId!),
+  const updateStatusQuery = useQuery({
+    queryKey: queryKeys.companySkills.updateStatus(selectedCompanyId ?? "", selectedSkillId ?? ""),
+    queryFn: () => companySkillsApi.updateStatus(selectedCompanyId!, selectedSkillId!),
     enabled: Boolean(
-      selectedКомпанияId
-      && selectedНавыкId
-      && (detailQuery.data?.sourceТип === "github" || displayedDetail?.sourceТип === "github"),
+      selectedCompanyId
+      && selectedSkillId
+      && (detailQuery.data?.sourceType === "github" || displayedDetail?.sourceType === "github"),
     ),
     staleTime: 60_000,
   });
 
   useEffect(() => {
-    setExpandedНавыкId(selectedНавыкId);
-  }, [selectedНавыкId]);
+    setExpandedSkillId(selectedSkillId);
+  }, [selectedSkillId]);
 
   useEffect(() => {
-    if (!selectedНавыкId || selectedПуть === "SKILL.md") return;
-    const parents = parentDirectoryПутьs(selectedПуть);
+    if (!selectedSkillId || selectedPath === "SKILL.md") return;
+    const parents = parentDirectoryPaths(selectedPath);
     if (parents.length === 0) return;
     setExpandedDirs((current) => {
-      const next = new Set(current[selectedНавыкId] ?? []);
+      const next = new Set(current[selectedSkillId] ?? []);
       let changed = false;
       for (const parent of parents) {
         if (!next.has(parent)) {
@@ -858,13 +858,13 @@ export function КомпанияНавыки() {
           changed = true;
         }
       }
-      return changed ? { ...current, [selectedНавыкId]: next } : current;
+      return changed ? { ...current, [selectedSkillId]: next } : current;
     });
-  }, [selectedПуть, selectedНавыкId]);
+  }, [selectedPath, selectedSkillId]);
 
   useEffect(() => {
-    setИзменитьMode(false);
-  }, [selectedНавыкId, selectedПуть]);
+    setEditMode(false);
+  }, [selectedSkillId, selectedPath]);
 
   useEffect(() => {
     if (detailQuery.data) {
@@ -875,88 +875,88 @@ export function КомпанияНавыки() {
   useEffect(() => {
     if (fileQuery.data) {
       setDisplayedFile(fileQuery.data);
-      setЧерновик(fileQuery.data.markdown ? splitFrontmatter(fileQuery.data.content).body : fileQuery.data.content);
+      setDraft(fileQuery.data.markdown ? splitFrontmatter(fileQuery.data.content).body : fileQuery.data.content);
     }
   }, [fileQuery.data]);
 
   useEffect(() => {
-    if (selectedНавыкId) return;
+    if (selectedSkillId) return;
     setDisplayedDetail(null);
     setDisplayedFile(null);
-  }, [selectedНавыкId]);
+  }, [selectedSkillId]);
 
   const activeDetail = detailQuery.data ?? displayedDetail;
   const activeFile = fileQuery.data ?? displayedFile;
 
-  function openУдалитьDialog() {
-    setУдалитьЦельНавыкId(selectedНавыкId);
-    setУдалитьЦельDetail(activeDetail ?? null);
-    setУдалитьOpen(true);
+  function openDeleteDialog() {
+    setDeleteTargetSkillId(selectedSkillId);
+    setDeleteTargetDetail(activeDetail ?? null);
+    setDeleteOpen(true);
   }
 
-  function closeУдалитьDialog(open: boolean) {
-    setУдалитьOpen(open);
+  function closeDeleteDialog(open: boolean) {
+    setDeleteOpen(open);
     if (!open) {
-      setУдалитьЦельНавыкId(null);
-      setУдалитьЦельDetail(null);
+      setDeleteTargetSkillId(null);
+      setDeleteTargetDetail(null);
     }
   }
 
-  const importНавык = useMutation({
-    mutationFn: (importSource: string) => companyНавыкиApi.importFromSource(selectedКомпанияId!, importSource),
-    onУспешно: async (result) => {
-      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.list(selectedКомпанияId!) });
+  const importSkill = useMutation({
+    mutationFn: (importSource: string) => companySkillsApi.importFromSource(selectedCompanyId!, importSource),
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(selectedCompanyId!) });
       if (result.imported[0]) navigate(skillRoute(result.imported[0].id));
       pushToast({
         tone: "success",
-        title: "Навыки imported",
+        title: "Skills imported",
         body: `${result.imported.length} skill${result.imported.length === 1 ? "" : "s"} added.`,
       });
       if (result.warnings[0]) {
-        pushToast({ tone: "warn", title: "Импорт warnings", body: result.warnings[0] });
+        pushToast({ tone: "warn", title: "Import warnings", body: result.warnings[0] });
       }
       setSource("");
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Ошибка импорта навыка",
-        body: error instanceof Ошибка ? error.message : "Ошибка to import skill source.",
+        title: "Skill import failed",
+        body: error instanceof Error ? error.message : "Failed to import skill source.",
       });
     },
   });
 
-  const createНавык = useMutation({
-    mutationFn: (payload: КомпанияНавыкСоздатьRequest) => companyНавыкиApi.create(selectedКомпанияId!, payload),
-    onУспешно: async (skill) => {
-      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.list(selectedКомпанияId!) });
+  const createSkill = useMutation({
+    mutationFn: (payload: CompanySkillCreateRequest) => companySkillsApi.create(selectedCompanyId!, payload),
+    onSuccess: async (skill) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(selectedCompanyId!) });
       navigate(skillRoute(skill.id));
-      setСоздатьOpen(false);
+      setCreateOpen(false);
       pushToast({
         tone: "success",
-        title: "Навык создан",
+        title: "Skill created",
         body: `${skill.name} is now editable in the Paperclip workspace.`,
       });
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Ошибка создания навыка",
-        body: error instanceof Ошибка ? error.message : "Ошибка to create skill.",
+        title: "Skill creation failed",
+        body: error instanceof Error ? error.message : "Failed to create skill.",
       });
     },
   });
 
-  const scanПроекты = useMutation({
-    mutationFn: () => companyНавыкиApi.scanПроекты(selectedКомпанияId!),
+  const scanProjects = useMutation({
+    mutationFn: () => companySkillsApi.scanProjects(selectedCompanyId!),
     onMutate: () => {
-      setScanСтатусMessage("Scanning project workspaces for skills...");
+      setScanStatusMessage("Scanning project workspaces for skills...");
     },
-    onУспешно: async (result) => {
-      setScanСтатусMessage("Обновитьing skills list...");
-      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.list(selectedКомпанияId!) });
+    onSuccess: async (result) => {
+      setScanStatusMessage("Refreshing skills list...");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(selectedCompanyId!) });
       const summary = formatProjectScanSummary(result);
-      setScanСтатусMessage(summary);
+      setScanStatusMessage(summary);
       pushToast({
         tone: "success",
         title: "Project skill scan complete",
@@ -965,7 +965,7 @@ export function КомпанияНавыки() {
       if (result.conflicts[0]) {
         pushToast({
           tone: "warn",
-          title: "Навык conflicts found",
+          title: "Skill conflicts found",
           body: result.conflicts[0].reason,
         });
       } else if (result.warnings[0]) {
@@ -976,165 +976,165 @@ export function КомпанияНавыки() {
         });
       }
     },
-    onОшибка: (error) => {
-      setScanСтатусMessage(null);
+    onError: (error) => {
+      setScanStatusMessage(null);
       pushToast({
         tone: "error",
         title: "Project skill scan failed",
-        body: error instanceof Ошибка ? error.message : "Ошибка to scan project workspaces.",
+        body: error instanceof Error ? error.message : "Failed to scan project workspaces.",
       });
     },
   });
 
   const saveFile = useMutation({
-    mutationFn: () => companyНавыкиApi.updateFile(
-      selectedКомпанияId!,
-      selectedНавыкId!,
-      selectedПуть,
+    mutationFn: () => companySkillsApi.updateFile(
+      selectedCompanyId!,
+      selectedSkillId!,
+      selectedPath,
       activeFile?.markdown ? mergeFrontmatter(activeFile.content, draft) : draft,
     ),
-    onУспешно: async (result) => {
+    onSuccess: async (result) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.list(selectedКомпанияId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.detail(selectedКомпанияId!, selectedНавыкId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.file(selectedКомпанияId!, selectedНавыкId!, selectedПуть) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(selectedCompanyId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.detail(selectedCompanyId!, selectedSkillId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.file(selectedCompanyId!, selectedSkillId!, selectedPath) }),
       ]);
-      setЧерновик(result.markdown ? splitFrontmatter(result.content).body : result.content);
-      setИзменитьMode(false);
+      setDraft(result.markdown ? splitFrontmatter(result.content).body : result.content);
+      setEditMode(false);
       pushToast({
         tone: "success",
-        title: "Навык сохранён",
+        title: "Skill saved",
         body: result.path,
       });
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Ошибка сохранения",
-        body: error instanceof Ошибка ? error.message : "Ошибка to save skill file.",
+        title: "Save failed",
+        body: error instanceof Error ? error.message : "Failed to save skill file.",
       });
     },
   });
 
-  const installОбновить = useMutation({
-    mutationFn: () => companyНавыкиApi.installОбновить(selectedКомпанияId!, selectedНавыкId!),
-    onУспешно: async (skill) => {
+  const installUpdate = useMutation({
+    mutationFn: () => companySkillsApi.installUpdate(selectedCompanyId!, selectedSkillId!),
+    onSuccess: async (skill) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.list(selectedКомпанияId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.detail(selectedКомпанияId!, selectedНавыкId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.updateСтатус(selectedКомпанияId!, selectedНавыкId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.file(selectedКомпанияId!, selectedНавыкId!, selectedПуть) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(selectedCompanyId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.detail(selectedCompanyId!, selectedSkillId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.updateStatus(selectedCompanyId!, selectedSkillId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.file(selectedCompanyId!, selectedSkillId!, selectedPath) }),
       ]);
-      navigate(skillRoute(skill.id, selectedПуть));
+      navigate(skillRoute(skill.id, selectedPath));
       pushToast({
         tone: "success",
-        title: "Навык обновлён",
+        title: "Skill updated",
         body: skill.sourceRef ? `Pinned to ${shortRef(skill.sourceRef)}` : skill.name,
       });
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Ошибка обновления",
-        body: error instanceof Ошибка ? error.message : "Ошибка to install skill update.",
+        title: "Update failed",
+        body: error instanceof Error ? error.message : "Failed to install skill update.",
       });
     },
   });
 
-  const deleteНавык = useMutation({
-    mutationFn: () => companyНавыкиApi.delete(selectedКомпанияId!, deleteЦельНавыкId!),
-    onУспешно: async (skill) => {
-      closeУдалитьDialog(false);
+  const deleteSkill = useMutation({
+    mutationFn: () => companySkillsApi.delete(selectedCompanyId!, deleteTargetSkillId!),
+    onSuccess: async (skill) => {
+      closeDeleteDialog(false);
       setDisplayedDetail(null);
       setDisplayedFile(null);
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.list(selectedКомпанияId!) }),
-        ...(deleteЦельНавыкId ? [
-          queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.detail(selectedКомпанияId!, deleteЦельНавыкId) }),
-          queryClient.invalidateQueries({ queryКлюч: queryКлючs.companyНавыки.updateСтатус(selectedКомпанияId!, deleteЦельНавыкId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(selectedCompanyId!) }),
+        ...(deleteTargetSkillId ? [
+          queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.detail(selectedCompanyId!, deleteTargetSkillId) }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.updateStatus(selectedCompanyId!, deleteTargetSkillId) }),
         ] : []),
-        ...(deleteЦельНавыкId ? [
+        ...(deleteTargetSkillId ? [
           queryClient.invalidateQueries({
-            queryКлюч: queryКлючs.companyНавыки.file(selectedКомпанияId!, deleteЦельНавыкId, selectedПуть),
+            queryKey: queryKeys.companySkills.file(selectedCompanyId!, deleteTargetSkillId, selectedPath),
           }),
         ] : []),
       ]);
       await queryClient.refetchQueries({
-        queryКлюч: queryКлючs.companyНавыки.list(selectedКомпанияId!),
+        queryKey: queryKeys.companySkills.list(selectedCompanyId!),
         type: "active",
       });
       navigate("/skills", { replace: true });
       pushToast({
         tone: "success",
-        title: "Навык удалён",
+        title: "Skill removed",
         body: `${skill.name} was removed from the company skill library.`,
       });
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Удалить failed",
-        body: error instanceof Ошибка ? error.message : "Ошибка to remove skill.",
+        title: "Remove failed",
+        body: error instanceof Error ? error.message : "Failed to remove skill.",
       });
     },
   });
 
-  if (!selectedКомпанияId) {
+  if (!selectedCompanyId) {
     return <EmptyState icon={Boxes} message="Select a company to manage skills." />;
   }
 
-  function handleДобавитьНавыкSource() {
+  function handleAddSkillSource() {
     const trimmedSource = source.trim();
     if (trimmedSource.length === 0) {
       setEmptySourceHelpOpen(true);
       return;
     }
-    importНавык.mutate(trimmedSource);
+    importSkill.mutate(trimmedSource);
   }
 
   return (
     <>
-      <Dialog open={deleteOpen} onOpenChange={closeУдалитьDialog}>
-        <DialogContent classИмя="sm:max-w-md">
+      <Dialog open={deleteOpen} onOpenChange={closeDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogНазвание>Удалить навык</DialogНазвание>
-            <DialogОписание>
-              Удалить this skill from the company library. If any agents still use it, removal will be blocked until it is detached.
-            </DialogОписание>
+            <DialogTitle>Remove skill</DialogTitle>
+            <DialogDescription>
+              Remove this skill from the company library. If any agents still use it, removal will be blocked until it is detached.
+            </DialogDescription>
           </DialogHeader>
-          <div classИмя="space-y-3 text-sm">
+          <div className="space-y-3 text-sm">
             <p>
-              {deleteЦельDetail
-                ? `You are about to remove ${deleteЦельDetail.name}.`
+              {deleteTargetDetail
+                ? `You are about to remove ${deleteTargetDetail.name}.`
                 : "You are about to remove this skill."}
             </p>
-            {deleteЦельDetail?.usedByАгенты?.length ? (
-              <div classИмя="rounded-md border border-border px-3 py-3 text-muted-foreground">
-                Currently used by {deleteЦельDetail.usedByАгенты.map((agent) => agent.name).join(", ")}.
+            {deleteTargetDetail?.usedByAgents?.length ? (
+              <div className="rounded-md border border-border px-3 py-3 text-muted-foreground">
+                Currently used by {deleteTargetDetail.usedByAgents.map((agent) => agent.name).join(", ")}.
               </div>
             ) : null}
-            {(deleteЦельDetail?.usedByАгенты.length ?? 0) > 0 ? (
-              <p classИмя="text-muted-foreground">
+            {(deleteTargetDetail?.usedByAgents.length ?? 0) > 0 ? (
+              <p className="text-muted-foreground">
                 Detach this skill from all agents to enable removal.
               </p>
             ) : null}
           </div>
           <DialogFooter>
-            {(deleteЦельDetail?.usedByАгенты.length ?? 0) > 0 ? (
-              <Button variant="ghost" onClick={() => closeУдалитьDialog(false)}>
-                Закрыть
+            {(deleteTargetDetail?.usedByAgents.length ?? 0) > 0 ? (
+              <Button variant="ghost" onClick={() => closeDeleteDialog(false)}>
+                Close
               </Button>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => closeУдалитьDialog(false)} disabled={deleteНавык.isОжидание}>
-                  Отмена
+                <Button variant="ghost" onClick={() => closeDeleteDialog(false)} disabled={deleteSkill.isPending}>
+                  Cancel
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={() => deleteНавык.mutate()}
-                  disabled={deleteНавык.isОжидание || !deleteЦельНавыкId}
+                  onClick={() => deleteSkill.mutate()}
+                  disabled={deleteSkill.isPending || !deleteTargetSkillId}
                 >
-                  {deleteНавык.isОжидание ? "Removing..." : "Удалить навык"}
+                  {deleteSkill.isPending ? "Removing..." : "Remove skill"}
                 </Button>
               </>
             )}
@@ -1143,167 +1143,167 @@ export function КомпанияНавыки() {
       </Dialog>
 
       <Dialog open={emptySourceHelpOpen} onOpenChange={setEmptySourceHelpOpen}>
-        <DialogContent classИмя="sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogНазвание>Добавить a skill source</DialogНазвание>
-            <DialogОписание>
+            <DialogTitle>Add a skill source</DialogTitle>
+            <DialogDescription>
               Paste a local path, GitHub URL, or `skills.sh` command into the field first.
-            </DialogОписание>
+            </DialogDescription>
           </DialogHeader>
-          <div classИмя="space-y-3 text-sm">
+          <div className="space-y-3 text-sm">
             <a
               href="https://skills.sh"
               target="_blank"
               rel="noreferrer"
-              classИмя="flex items-start justify-between rounded-md border border-border px-3 py-3 text-foreground no-underline transition-colors hover:bg-accent/40"
+              className="flex items-start justify-between rounded-md border border-border px-3 py-3 text-foreground no-underline transition-colors hover:bg-accent/40"
             >
               <span>
-                <span classИмя="block font-medium">Browse skills.sh</span>
-                <span classИмя="mt-1 block text-muted-foreground">
+                <span className="block font-medium">Browse skills.sh</span>
+                <span className="mt-1 block text-muted-foreground">
                   Find install commands and paste one here.
                 </span>
               </span>
-              <ExternalLink classИмя="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             </a>
             <a
               href="https://github.com/search?q=SKILL.md&type=code"
               target="_blank"
               rel="noreferrer"
-              classИмя="flex items-start justify-between rounded-md border border-border px-3 py-3 text-foreground no-underline transition-colors hover:bg-accent/40"
+              className="flex items-start justify-between rounded-md border border-border px-3 py-3 text-foreground no-underline transition-colors hover:bg-accent/40"
             >
               <span>
-                <span classИмя="block font-medium">Поиск GitHub</span>
-                <span classИмя="mt-1 block text-muted-foreground">
+                <span className="block font-medium">Search GitHub</span>
+                <span className="mt-1 block text-muted-foreground">
                   Look for repositories with `SKILL.md`, then paste the repo URL here.
                 </span>
               </span>
-              <ExternalLink classИмя="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             </a>
           </div>
-          <DialogFooter showЗакрытьButton />
+          <DialogFooter showCloseButton />
         </DialogContent>
       </Dialog>
 
-      <div classИмя="grid min-h-[calc(100vh-12rem)] gap-0 xl:grid-cols-[19rem_minmax(0,1fr)]">
-        <aside classИмя="border-r border-border">
-          <div classИмя="border-b border-border px-4 py-3">
-            <div classИмя="flex items-center justify-between gap-2">
+      <div className="grid min-h-[calc(100vh-12rem)] gap-0 xl:grid-cols-[19rem_minmax(0,1fr)]">
+        <aside className="border-r border-border">
+          <div className="border-b border-border px-4 py-3">
+            <div className="flex items-center justify-between gap-2">
               <div>
-                <h1 classИмя="text-base font-semibold">Навыки</h1>
-                <p classИмя="text-xs text-muted-foreground">
+                <h1 className="text-base font-semibold">Skills</h1>
+                <p className="text-xs text-muted-foreground">
                   {skillsQuery.data?.length ?? 0} available
                 </p>
               </div>
-              <div classИмя="flex items-center gap-1">
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => scanПроекты.mutate()}
-                  disabled={scanПроекты.isОжидание}
+                  onClick={() => scanProjects.mutate()}
+                  disabled={scanProjects.isPending}
                   title="Scan project workspaces for skills"
                 >
-                  <ОбновитьCw classИмя={cn("h-4 w-4", scanПроекты.isОжидание && "animate-spin")} />
+                  <RefreshCw className={cn("h-4 w-4", scanProjects.isPending && "animate-spin")} />
                 </Button>
-                <Button variant="ghost" size="icon-sm" onClick={() => setСоздатьOpen((value) => !value)}>
-                  <Plus classИмя="h-4 w-4" />
+                <Button variant="ghost" size="icon-sm" onClick={() => setCreateOpen((value) => !value)}>
+                  <Plus className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            <div classИмя="mt-3 flex items-center gap-2 border-b border-border pb-2">
-              <Поиск classИмя="h-4 w-4 text-muted-foreground" />
+            <div className="mt-3 flex items-center gap-2 border-b border-border pb-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
               <input
-                value={skillФильтр}
-                onChange={(event) => setНавыкФильтр(event.target.value)}
-                placeholder="Фильтр навыков"
-                classИмя="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                value={skillFilter}
+                onChange={(event) => setSkillFilter(event.target.value)}
+                placeholder="Filter skills"
+                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
             </div>
 
-            <div classИмя="mt-3 flex items-center gap-2 border-b border-border pb-2">
+            <div className="mt-3 flex items-center gap-2 border-b border-border pb-2">
               <input
                 value={source}
                 onChange={(event) => setSource(event.target.value)}
                 placeholder="Paste path, GitHub URL, or skills.sh command"
-                classИмя="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={handleДобавитьНавыкSource}
-                disabled={importНавык.isОжидание}
+                onClick={handleAddSkillSource}
+                disabled={importSkill.isPending}
               >
-                {importНавык.isОжидание ? <ОбновитьCw classИмя="h-4 w-4 animate-spin" /> : "Добавить"}
+                {importSkill.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : "Добавить"}
               </Button>
             </div>
-            {scanСтатусMessage && (
-              <p classИмя="mt-3 text-xs text-muted-foreground">
-                {scanСтатусMessage}
+            {scanStatusMessage && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                {scanStatusMessage}
               </p>
             )}
           </div>
 
           {createOpen && (
-            <NewНавыкForm
-              onСоздать={(payload) => createНавык.mutate(payload)}
-              isОжидание={createНавык.isОжидание}
-              onОтмена={() => setСоздатьOpen(false)}
+            <NewSkillForm
+              onCreate={(payload) => createSkill.mutate(payload)}
+              isPending={createSkill.isPending}
+              onCancel={() => setCreateOpen(false)}
             />
           )}
 
-          {skillsQuery.isЗагрузка ? (
+          {skillsQuery.isLoading ? (
             <PageSkeleton variant="list" />
           ) : skillsQuery.error ? (
-            <div classИмя="px-4 py-6 text-sm text-destructive">{skillsQuery.error.message}</div>
+            <div className="px-4 py-6 text-sm text-destructive">{skillsQuery.error.message}</div>
           ) : (
-            <НавыкList
+            <SkillList
               skills={skillsQuery.data ?? []}
-              selectedНавыкId={selectedНавыкId}
-              skillФильтр={skillФильтр}
-              expandedНавыкId={expandedНавыкId}
+              selectedSkillId={selectedSkillId}
+              skillFilter={skillFilter}
+              expandedSkillId={expandedSkillId}
               expandedDirs={expandedDirs}
-              selectedПутьs={selectedНавыкId ? { [selectedНавыкId]: selectedПуть } : {}}
-              onToggleНавык={(currentНавыкId) =>
-                setExpandedНавыкId((current) => current === currentНавыкId ? null : currentНавыкId)
+              selectedPaths={selectedSkillId ? { [selectedSkillId]: selectedPath } : {}}
+              onToggleSkill={(currentSkillId) =>
+                setExpandedSkillId((current) => current === currentSkillId ? null : currentSkillId)
               }
-              onToggleDir={(currentНавыкId, path) => {
+              onToggleDir={(currentSkillId, path) => {
                 setExpandedDirs((current) => {
-                  const next = new Set(current[currentНавыкId] ?? []);
+                  const next = new Set(current[currentSkillId] ?? []);
                   if (next.has(path)) next.delete(path);
                   else next.add(path);
-                  return { ...current, [currentНавыкId]: next };
+                  return { ...current, [currentSkillId]: next };
                 });
               }}
-              onSelectНавык={(currentНавыкId) => setExpandedНавыкId(currentНавыкId)}
-              onSelectПуть={() => {}}
+              onSelectSkill={(currentSkillId) => setExpandedSkillId(currentSkillId)}
+              onSelectPath={() => {}}
             />
           )}
         </aside>
 
-        <div classИмя="min-w-0 pl-6">
-          <НавыкPane
-            loading={skillsQuery.isЗагрузка || detailQuery.isЗагрузка}
+        <div className="min-w-0 pl-6">
+          <SkillPane
+            loading={skillsQuery.isLoading || detailQuery.isLoading}
             detail={activeDetail}
             file={activeFile}
-            fileЗагрузка={fileQuery.isЗагрузка && !activeFile}
-            updateСтатус={updateСтатусQuery.data}
-            updateСтатусЗагрузка={updateСтатусQuery.isЗагрузка}
+            fileLoading={fileQuery.isLoading && !activeFile}
+            updateStatus={updateStatusQuery.data}
+            updateStatusLoading={updateStatusQuery.isLoading}
             viewMode={viewMode}
             editMode={editMode}
             draft={draft}
             setViewMode={setViewMode}
-            setИзменитьMode={setИзменитьMode}
-            setЧерновик={setЧерновик}
-            onCheckОбновитьs={() => {
-              void updateСтатусQuery.refetch();
+            setEditMode={setEditMode}
+            setDraft={setDraft}
+            onCheckUpdates={() => {
+              void updateStatusQuery.refetch();
             }}
-            checkОбновитьsОжидание={updateСтатусQuery.isFetching}
-            onInstallОбновить={() => installОбновить.mutate()}
-            installОбновитьОжидание={installОбновить.isОжидание}
-            onУдалить={openУдалитьDialog}
-            deleteОжидание={deleteНавык.isОжидание}
-            onСохранить={() => saveFile.mutate()}
-            saveОжидание={saveFile.isОжидание}
+            checkUpdatesPending={updateStatusQuery.isFetching}
+            onInstallUpdate={() => installUpdate.mutate()}
+            installUpdatePending={installUpdate.isPending}
+            onDelete={openDeleteDialog}
+            deletePending={deleteSkill.isPending}
+            onSave={() => saveFile.mutate()}
+            savePending={saveFile.isPending}
           />
         </div>
       </div>

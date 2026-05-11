@@ -1,13 +1,13 @@
-import type { СоздатьConfigЗначениеs } from "../components/АгентConfigForm";
-import { buildNewАгентЗапуститьtimeConfig } from "./new-agent-runtime-config";
+import type { CreateConfigValues } from "../components/AgentConfigForm";
+import { buildNewAgentRuntimeConfig } from "./new-agent-runtime-config";
 
-export function buildNewАгентHirePayload(input: {
+export function buildNewAgentHirePayload(input: {
   name: string;
   effectiveRole: string;
   title?: string;
   reportsTo?: string | null;
-  selectedНавыкКлючs?: string[];
-  configЗначениеs: СоздатьConfigЗначениеs;
+  selectedSkillKeys?: string[];
+  configValues: CreateConfigValues;
   adapterConfig: Record<string, unknown>;
 }) {
   const {
@@ -15,8 +15,8 @@ export function buildNewАгентHirePayload(input: {
     effectiveRole,
     title,
     reportsTo,
-    selectedНавыкКлючs = [],
-    configЗначениеs,
+    selectedSkillKeys = [],
+    configValues,
     adapterConfig,
   } = input;
 
@@ -25,15 +25,15 @@ export function buildNewАгентHirePayload(input: {
     role: effectiveRole,
     ...(title?.trim() ? { title: title.trim() } : {}),
     ...(reportsTo ? { reportsTo } : {}),
-    ...(selectedНавыкКлючs.length > 0 ? { desiredНавыки: selectedНавыкКлючs } : {}),
-    adapterТип: configЗначениеs.adapterТип,
-    defaultОкружениеId: configЗначениеs.defaultОкружениеId ?? null,
+    ...(selectedSkillKeys.length > 0 ? { desiredSkills: selectedSkillKeys } : {}),
+    adapterType: configValues.adapterType,
+    defaultEnvironmentId: configValues.defaultEnvironmentId ?? null,
     adapterConfig,
-    runtimeConfig: buildNewАгентЗапуститьtimeConfig({
-      heartbeatВключитьd: configЗначениеs.heartbeatВключитьd,
-      intervalSec: configЗначениеs.intervalSec,
-      cheapМодель: configЗначениеs.cheapМодель,
-      cheapМодельВключитьd: configЗначениеs.cheapМодельВключитьd,
+    runtimeConfig: buildNewAgentRuntimeConfig({
+      heartbeatEnabled: configValues.heartbeatEnabled,
+      intervalSec: configValues.intervalSec,
+      cheapModel: configValues.cheapModel,
+      cheapModelEnabled: configValues.cheapModelEnabled,
     }),
     budgetMonthlyCents: 0,
   };

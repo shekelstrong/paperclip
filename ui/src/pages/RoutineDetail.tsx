@@ -1,54 +1,53 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Активность as АктивностьIcon,
+  Activity as ActivityIcon,
   ChevronDown,
   ChevronRight,
   Clock3,
-  Копировать,
-  История as ИсторияIcon,
+  Copy,
+  History as HistoryIcon,
   Play,
-  Plus,
+  RefreshCw,
   Repeat,
-  Сохранить,
-  SlidersHorizontal,
+  Save,
+  Trash2,
+  Webhook,
+  Zap,
 } from "lucide-react";
-import { ApiОшибка } from "../api/client";
-import { routinesApi, type ПроцедураTriggerResponse, type RotateПроцедураTriggerResponse, type RestoreПроцедураRevisionResponse } from "../api/routines";
-import { TriggerListCard } from "../components/TriggerListCard";
-import { TriggerDialog } from "../components/TriggerDialog";
-import { ПодтвердитьDialog } from "../components/ПодтвердитьDialog";
+import { ApiError } from "../api/client";
+import { routinesApi, type RoutineTriggerResponse, type RotateRoutineTriggerResponse, type RestoreRoutineRevisionResponse } from "../api/routines";
 import {
-  ПроцедураИсторияTab,
-  type ПроцедураИсторияDirtyFieldDescriptor,
-} from "../components/ПроцедураИсторияTab";
+  RoutineHistoryTab,
+  type RoutineHistoryDirtyFieldDescriptor,
+} from "../components/RoutineHistoryTab";
 import { heartbeatsApi } from "../api/heartbeats";
-import { LiveЗапуститьWidget } from "../components/LiveЗапуститьWidget";
+import { LiveRunWidget } from "../components/LiveRunWidget";
 import { agentsApi } from "../api/agents";
 import { projectsApi } from "../api/projects";
 import { accessApi } from "../api/access";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { usePanel } from "../context/PanelContext";
 import { useToastActions } from "../context/ToastContext";
-import { cn } from "../lib/utils";
-import { queryКлючs } from "../lib/queryКлючs";
+import { queryKeys } from "../lib/queryKeys";
+import { buildRoutineTriggerPatch } from "../lib/routine-trigger-patch";
 import { buildMarkdownMentionOptions } from "../lib/company-members";
 import { timeAgo } from "../lib/timeAgo";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { EmptyState } from "../components/EmptyState";
 import { PageSkeleton } from "../components/PageSkeleton";
-import { АгентIcon } from "../components/АгентIconPicker";
+import { AgentIcon } from "../components/AgentIconPicker";
 import { InlineEntitySelector, type InlineEntityOption } from "../components/InlineEntitySelector";
-import { MarkdownИзменитьor, type MarkdownИзменитьorRef, type MentionOption } from "../components/MarkdownИзменитьor";
+import { MarkdownEditor, type MarkdownEditorRef, type MentionOption } from "../components/MarkdownEditor";
 import {
-  ПроцедураЗапуститьVariablesDialog,
-  type ПроцедураЗапуститьDialogОтправитьData,
-} from "../components/ПроцедураЗапуститьVariablesDialog";
-import { ПроцедураVariablesИзменитьor, ПроцедураVariablesHint } from "../components/ПроцедураVariablesИзменитьor";
-import { ЗапуститьButton } from "../components/АгентActionButtons";
-import { getRecentИсполнительIds, sortАгентыByRecency, trackRecentИсполнитель } from "../lib/recent-assignees";
+  RoutineRunVariablesDialog,
+  type RoutineRunDialogSubmitData,
+} from "../components/RoutineRunVariablesDialog";
+import { RoutineVariablesEditor, RoutineVariablesHint } from "../components/RoutineVariablesEditor";
+import { ScheduleEditor, describeSchedule } from "../components/ScheduleEditor";
+import { RunButton } from "../components/AgentActionButtons";
+import { getRecentAssigneeIds, sortAgentsByRecency, trackRecentAssignee } from "../lib/recent-assignees";
 import { getRecentProjectIds, trackRecentProject } from "../lib/recent-projects";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -60,32 +59,41 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectЗначение,
+  SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import type { ПроцедураDetail as ПроцедураDetailТип, ПроцедураTrigger, ПроцедураVariable } from "@paperclipai/shared";
+import type { RoutineDetail as RoutineDetailType, RoutineTrigger, RoutineVariable } from "@paperclipai/shared";
 
 const concurrencyPolicies = ["coalesce_if_active", "always_enqueue", "skip_if_active"];
 const catchUpPolicies = ["skip_missed", "enqueue_missed_with_cap"];
+const triggerKinds = ["schedule", "webhook"];
+const signingModes = ["bearer", "hmac_sha256", "github_hmac", "none"];
 const routineTabs = ["triggers", "runs", "activity", "history"] as const;
-const concurrencyPolicyОписаниеs: Record<string, string> = {
+const concurrencyPolicyDescriptions: Record<string, string> = {
   coalesce_if_active: "Keep one follow-up run queued while an active run is still working.",
   always_enqueue: "Queue every trigger occurrence, even if several runs stack up.",
   skip_if_active: "Drop overlapping trigger occurrences while the routine is already active.",
 };
-const catchUpPolicyОписаниеs: Record<string, string> = {
+const catchUpPolicyDescriptions: Record<string, string> = {
   skip_missed: "Ignore schedule windows that were missed while the routine or scheduler was paused.",
   enqueue_missed_with_cap: "Catch up missed schedule windows in capped batches after recovery.",
 };
+const signingModeDescriptions: Record<string, string> = {
+  bearer: "Expect a shared bearer token in the Authorization header.",
+  hmac_sha256: "Expect an HMAC SHA-256 signature over the request using the shared secret.",
+  github_hmac: "Accept GitHub-style X-Hub-Signature-256 header (HMAC over raw body, no timestamp).",
+  none: "No authentication — the webhook URL itself acts as a shared secret.",
+};
+const SIGNING_MODES_WITHOUT_REPLAY_WINDOW = new Set(["github_hmac", "none"]);
 
-type ПроцедураTab = (typeof routineTabs)[number];
+type RoutineTab = (typeof routineTabs)[number];
 
-type СекретMessage = {
+type SecretMessage = {
   title: string;
   entries: Array<{
     webhookUrl: string;
-    webhookСекрет: string;
+    webhookSecret: string;
   }>;
 };
 
@@ -95,20 +103,20 @@ function autoResizeTextarea(element: HTMLTextAreaElement | null) {
   element.style.height = `${element.scrollHeight}px`;
 }
 
-function isПроцедураTab(value: string | null): value is ПроцедураTab {
-  return value !== null && routineTabs.includes(value as ПроцедураTab);
+function isRoutineTab(value: string | null): value is RoutineTab {
+  return value !== null && routineTabs.includes(value as RoutineTab);
 }
 
-function getПроцедураTabFromПоиск(search: string): ПроцедураTab {
-  const tab = new URLПоискParams(search).get("tab");
-  return isПроцедураTab(tab) ? tab : "triggers";
+function getRoutineTabFromSearch(search: string): RoutineTab {
+  const tab = new URLSearchParams(search).get("tab");
+  return isRoutineTab(tab) ? tab : "triggers";
 }
 
-function formatАктивностьDetailЗначение(value: unknown): string {
+function formatActivityDetailValue(value: unknown): string {
   if (value === null) return "null";
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (Array.isArray(value)) return value.length === 0 ? "[]" : value.map((item) => formatАктивностьDetailЗначение(item)).join(", ");
+  if (Array.isArray(value)) return value.length === 0 ? "[]" : value.map((item) => formatActivityDetailValue(item)).join(", ");
   try {
     return JSON.stringify(value);
   } catch {
@@ -124,126 +132,249 @@ function getLocalTimezone(): string {
   }
 }
 
-function buildПроцедураMutationPayload(input: {
+function buildRoutineMutationPayload(input: {
   title: string;
   description: string;
   projectId: string;
-  assigneeАгентId: string;
+  assigneeAgentId: string;
   priority: string;
   concurrencyPolicy: string;
   catchUpPolicy: string;
-  variables: ПроцедураVariable[];
+  variables: RoutineVariable[];
 }) {
   return {
     ...input,
     description: input.description.trim() || null,
     projectId: input.projectId || null,
-    assigneeАгентId: input.assigneeАгентId || null,
+    assigneeAgentId: input.assigneeAgentId || null,
   };
 }
 
-export function ПроцедураDetail() {
+function TriggerEditor({
+  trigger,
+  onSave,
+  onRotate,
+  onDelete,
+}: {
+  trigger: RoutineTrigger;
+  onSave: (id: string, patch: Record<string, unknown>) => void;
+  onRotate: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [draft, setDraft] = useState({
+    label: trigger.label ?? "",
+    cronExpression: trigger.cronExpression ?? "",
+    signingMode: trigger.signingMode ?? "bearer",
+    replayWindowSec: String(trigger.replayWindowSec ?? 300),
+  });
+
+  useEffect(() => {
+    setDraft({
+      label: trigger.label ?? "",
+      cronExpression: trigger.cronExpression ?? "",
+      signingMode: trigger.signingMode ?? "bearer",
+      replayWindowSec: String(trigger.replayWindowSec ?? 300),
+    });
+  }, [trigger]);
+
+  return (
+    <div className="rounded-lg border border-border p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          {trigger.kind === "schedule" ? <Clock3 className="h-3.5 w-3.5" /> : trigger.kind === "webhook" ? <Webhook className="h-3.5 w-3.5" /> : <Zap className="h-3.5 w-3.5" />}
+          {trigger.label ?? trigger.kind}
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {trigger.kind === "schedule" && trigger.nextRunAt
+            ? `Next: ${new Date(trigger.nextRunAt).toLocaleString()}`
+            : trigger.kind === "webhook"
+              ? "Webhook"
+              : "API"}
+        </span>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Label</Label>
+          <Input
+            value={draft.label}
+            onChange={(event) => setDraft((current) => ({ ...current, label: event.target.value }))}
+          />
+        </div>
+        {trigger.kind === "schedule" && (
+          <div className="md:col-span-2 space-y-1.5">
+            <Label className="text-xs">Schedule</Label>
+            <ScheduleEditor
+              value={draft.cronExpression}
+              onChange={(cronExpression) => setDraft((current) => ({ ...current, cronExpression }))}
+            />
+          </div>
+        )}
+        {trigger.kind === "webhook" && (
+          <>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Signing mode</Label>
+              <Select
+                value={draft.signingMode}
+                onValueChange={(signingMode) => setDraft((current) => ({ ...current, signingMode }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {signingModes.map((mode) => (
+                    <SelectItem key={mode} value={mode}>{mode}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {!SIGNING_MODES_WITHOUT_REPLAY_WINDOW.has(draft.signingMode) && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Replay window (seconds)</Label>
+                <Input
+                  value={draft.replayWindowSec}
+                  onChange={(event) => setDraft((current) => ({ ...current, replayWindowSec: event.target.value }))}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {trigger.lastResult && <span className="text-xs text-muted-foreground">Last: {trigger.lastResult}</span>}
+        <div className="ml-auto flex items-center gap-2">
+          {trigger.kind === "webhook" && (
+            <Button variant="outline" size="sm" onClick={() => onRotate(trigger.id)}>
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+              Rotate secret
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onSave(trigger.id, buildRoutineTriggerPatch(trigger, draft, getLocalTimezone()))}
+          >
+            <Save className="mr-1.5 h-3.5 w-3.5" />
+            Save trigger
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive"
+            onClick={() => onDelete(trigger.id)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function RoutineDetail() {
   const { routineId } = useParams<{ routineId: string }>();
-  const { selectedКомпанияId } = useКомпания();
+  const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const { pushToast } = useToastActions();
-  const { openPanel, closePanel, panelVisible, setPanelVisible } = usePanel();
-  const hydratedПроцедураIdRef = useRef<string | null>(null);
+  const hydratedRoutineIdRef = useRef<string | null>(null);
   const titleInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const descriptionИзменитьorRef = useRef<MarkdownИзменитьorRef>(null);
+  const descriptionEditorRef = useRef<MarkdownEditorRef>(null);
   const assigneeSelectorRef = useRef<HTMLButtonElement | null>(null);
   const projectSelectorRef = useRef<HTMLButtonElement | null>(null);
-  const [secretMessage, setСекретMessage] = useState<СекретMessage | null>(null);
-  const [advancedOpen, setДополнительноOpen] = useState(false);
-  const [saveConflict, setСохранитьConflict] = useState(false);
-  const [runVariablesOpen, setЗапуститьVariablesOpen] = useState(false);
-  const [triggerDialogOpen, setTriggerDialogOpen] = useState(false);
-  const [editingTrigger, setИзменитьingTrigger] = useState<ПроцедураTrigger | null>(null);
-  const [triggerОжиданиеУдалить, setTriggerОжиданиеУдалить] = useState<ПроцедураTrigger | null>(null);
-  const [togglingTriggerId, setTogglingTriggerId] = useState<string | null>(null);
-  const [editЧерновик, setИзменитьЧерновик] = useState<{
+  const [secretMessage, setSecretMessage] = useState<SecretMessage | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [saveConflict, setSaveConflict] = useState(false);
+  const [runVariablesOpen, setRunVariablesOpen] = useState(false);
+  const [newTrigger, setNewTrigger] = useState({
+    kind: "schedule",
+    cronExpression: "0 10 * * *",
+    signingMode: "bearer",
+    replayWindowSec: "300",
+  });
+  const [editDraft, setEditDraft] = useState<{
     title: string;
     description: string;
     projectId: string;
-    assigneeАгентId: string;
+    assigneeAgentId: string;
     priority: string;
     concurrencyPolicy: string;
     catchUpPolicy: string;
-    variables: ПроцедураVariable[];
+    variables: RoutineVariable[];
   }>({
     title: "",
     description: "",
     projectId: "",
-    assigneeАгентId: "",
+    assigneeAgentId: "",
     priority: "medium",
     concurrencyPolicy: "coalesce_if_active",
     catchUpPolicy: "skip_missed",
     variables: [],
   });
-  const activeTab = useMemo(() => getПроцедураTabFromПоиск(location.search), [location.search]);
+  const activeTab = useMemo(() => getRoutineTabFromSearch(location.search), [location.search]);
 
-  const { data: routine, isЗагрузка, error } = useQuery({
-    queryКлюч: queryКлючs.routines.detail(routineId!),
+  const { data: routine, isLoading, error } = useQuery({
+    queryKey: queryKeys.routines.detail(routineId!),
     queryFn: () => routinesApi.get(routineId!),
     enabled: !!routineId,
   });
-  const activeЗадачаId = routine?.activeЗадача?.id;
-  const { data: liveЗапуститьs } = useQuery({
-    queryКлюч: queryКлючs.issues.liveЗапуститьs(activeЗадачаId!),
-    queryFn: () => heartbeatsApi.liveЗапуститьsForЗадача(activeЗадачаId!),
-    enabled: !!activeЗадачаId,
+  const activeIssueId = routine?.activeIssue?.id;
+  const { data: liveRuns } = useQuery({
+    queryKey: queryKeys.issues.liveRuns(activeIssueId!),
+    queryFn: () => heartbeatsApi.liveRunsForIssue(activeIssueId!),
+    enabled: !!activeIssueId,
     refetchInterval: 3000,
   });
-  const hasLiveЗапустить = (liveЗапуститьs ?? []).length > 0;
-  const { data: routineЗапуститьs } = useQuery({
-    queryКлюч: queryКлючs.routines.runs(routineId!),
-    queryFn: () => routinesApi.listЗапуститьs(routineId!),
+  const hasLiveRun = (liveRuns ?? []).length > 0;
+  const { data: routineRuns } = useQuery({
+    queryKey: queryKeys.routines.runs(routineId!),
+    queryFn: () => routinesApi.listRuns(routineId!),
     enabled: !!routineId,
-    refetchInterval: hasLiveЗапустить ? 3000 : false,
+    refetchInterval: hasLiveRun ? 3000 : false,
   });
-  const relatedАктивностьIds = useMemo(
+  const relatedActivityIds = useMemo(
     () => ({
       triggerIds: routine?.triggers.map((trigger) => trigger.id) ?? [],
-      runIds: routineЗапуститьs?.map((run) => run.id) ?? [],
+      runIds: routineRuns?.map((run) => run.id) ?? [],
     }),
-    [routine?.triggers, routineЗапуститьs],
+    [routine?.triggers, routineRuns],
   );
   const { data: activity } = useQuery({
-    queryКлюч: [
-      ...queryКлючs.routines.activity(selectedКомпанияId!, routineId!),
-      relatedАктивностьIds.triggerIds.join(","),
-      relatedАктивностьIds.runIds.join(","),
+    queryKey: [
+      ...queryKeys.routines.activity(selectedCompanyId!, routineId!),
+      relatedActivityIds.triggerIds.join(","),
+      relatedActivityIds.runIds.join(","),
     ],
-    queryFn: () => routinesApi.activity(selectedКомпанияId!, routineId!, relatedАктивностьIds),
-    enabled: !!selectedКомпанияId && !!routineId && !!routine,
+    queryFn: () => routinesApi.activity(selectedCompanyId!, routineId!, relatedActivityIds),
+    enabled: !!selectedCompanyId && !!routineId && !!routine,
   });
   const { data: agents } = useQuery({
-    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
-    queryFn: () => agentsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.agents.list(selectedCompanyId!),
+    queryFn: () => agentsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
   const { data: projects } = useQuery({
-    queryКлюч: queryКлючs.projects.list(selectedКомпанияId!),
-    queryFn: () => projectsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.projects.list(selectedCompanyId!),
+    queryFn: () => projectsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
   const { data: companyMembers } = useQuery({
-    queryКлюч: queryКлючs.access.companyUserDirectory(selectedКомпанияId!),
-    queryFn: () => accessApi.listUserDirectory(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.access.companyUserDirectory(selectedCompanyId!),
+    queryFn: () => accessApi.listUserDirectory(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
 
-  const routineПо умолчаниюs = useMemo(
+  const routineDefaults = useMemo(
     () =>
       routine
         ? {
             title: routine.title,
             description: routine.description ?? "",
             projectId: routine.projectId ?? "",
-            assigneeАгентId: routine.assigneeАгентId ?? "",
+            assigneeAgentId: routine.assigneeAgentId ?? "",
             priority: routine.priority,
             concurrencyPolicy: routine.concurrencyPolicy,
             catchUpPolicy: routine.catchUpPolicy,
@@ -252,67 +383,67 @@ export function ПроцедураDetail() {
         : null,
     [routine],
   );
-  const dirtyFields = useMemo<ПроцедураИсторияDirtyFieldDescriptor[]>(() => {
-    if (!routineПо умолчаниюs) return [];
-    const result: ПроцедураИсторияDirtyFieldDescriptor[] = [];
-    if (editЧерновик.title !== routineПо умолчаниюs.title) result.push({ key: "title", label: "the title" });
-    if (editЧерновик.description !== routineПо умолчаниюs.description) {
+  const dirtyFields = useMemo<RoutineHistoryDirtyFieldDescriptor[]>(() => {
+    if (!routineDefaults) return [];
+    const result: RoutineHistoryDirtyFieldDescriptor[] = [];
+    if (editDraft.title !== routineDefaults.title) result.push({ key: "title", label: "the title" });
+    if (editDraft.description !== routineDefaults.description) {
       result.push({ key: "description", label: "the description" });
     }
-    if (editЧерновик.projectId !== routineПо умолчаниюs.projectId) {
+    if (editDraft.projectId !== routineDefaults.projectId) {
       result.push({ key: "projectId", label: "the project" });
     }
-    if (editЧерновик.assigneeАгентId !== routineПо умолчаниюs.assigneeАгентId) {
-      result.push({ key: "assigneeАгентId", label: "the default agent" });
+    if (editDraft.assigneeAgentId !== routineDefaults.assigneeAgentId) {
+      result.push({ key: "assigneeAgentId", label: "the default agent" });
     }
-    if (editЧерновик.priority !== routineПо умолчаниюs.priority) {
+    if (editDraft.priority !== routineDefaults.priority) {
       result.push({ key: "priority", label: "the priority" });
     }
-    if (editЧерновик.concurrencyPolicy !== routineПо умолчаниюs.concurrencyPolicy) {
+    if (editDraft.concurrencyPolicy !== routineDefaults.concurrencyPolicy) {
       result.push({ key: "concurrencyPolicy", label: "the concurrency policy" });
     }
-    if (editЧерновик.catchUpPolicy !== routineПо умолчаниюs.catchUpPolicy) {
+    if (editDraft.catchUpPolicy !== routineDefaults.catchUpPolicy) {
       result.push({ key: "catchUpPolicy", label: "the catch-up policy" });
     }
-    if (JSON.stringify(editЧерновик.variables) !== JSON.stringify(routineПо умолчаниюs.variables)) {
+    if (JSON.stringify(editDraft.variables) !== JSON.stringify(routineDefaults.variables)) {
       result.push({ key: "variables", label: "the variables" });
     }
     return result;
-  }, [editЧерновик, routineПо умолчаниюs]);
-  const isИзменитьDirty = dirtyFields.length > 0;
+  }, [editDraft, routineDefaults]);
+  const isEditDirty = dirtyFields.length > 0;
 
   useEffect(() => {
     if (!routine) return;
     setBreadcrumbs([{ label: "Процедуры", href: "/routines" }, { label: routine.title }]);
-    if (!routineПо умолчаниюs) return;
+    if (!routineDefaults) return;
 
-    const changedПроцедура = hydratedПроцедураIdRef.current !== routine.id;
-    if (changedПроцедура || !isИзменитьDirty) {
-      setИзменитьЧерновик(routineПо умолчаниюs);
-      hydratedПроцедураIdRef.current = routine.id;
+    const changedRoutine = hydratedRoutineIdRef.current !== routine.id;
+    if (changedRoutine || !isEditDirty) {
+      setEditDraft(routineDefaults);
+      hydratedRoutineIdRef.current = routine.id;
     }
-  }, [routine, routineПо умолчаниюs, isИзменитьDirty, setBreadcrumbs]);
+  }, [routine, routineDefaults, isEditDirty, setBreadcrumbs]);
 
   useEffect(() => {
     autoResizeTextarea(titleInputRef.current);
-  }, [editЧерновик.title, routine?.id]);
+  }, [editDraft.title, routine?.id]);
 
-  const copyСекретЗначение = async (label: string, value: string) => {
+  const copySecretValue = async (label: string, value: string) => {
     try {
       await navigator.clipboard.writeText(value);
       pushToast({ title: `${label} copied`, tone: "success" });
     } catch (error) {
       pushToast({
-        title: `Ошибка to copy ${label.toНизкийerCase()}`,
-        body: error instanceof Ошибка ? error.message : "Clipboard access was denied.",
+        title: `Failed to copy ${label.toLowerCase()}`,
+        body: error instanceof Error ? error.message : "Clipboard access was denied.",
         tone: "error",
       });
     }
   };
 
-  const setАктивенTab = useCallback((value: string) => {
-    if (!routineId || !isПроцедураTab(value)) return;
-    const params = new URLПоискParams(location.search);
+  const setActiveTab = (value: string) => {
+    if (!routineId || !isRoutineTab(value)) return;
+    const params = new URLSearchParams(location.search);
     if (value === "triggers") {
       params.delete("tab");
     } else {
@@ -326,129 +457,125 @@ export function ПроцедураDetail() {
       },
       { replace: true },
     );
-  }, [location.pathname, location.search, navigate, routineId]);
+  };
 
-  const saveПроцедура = useMutation({
+  const saveRoutine = useMutation({
     mutationFn: () => {
-      const payload = buildПроцедураMutationPayload(editЧерновик);
+      const payload = buildRoutineMutationPayload(editDraft);
       const baseRevisionId = routine?.latestRevisionId ?? null;
       return routinesApi.update(routineId!, {
         ...payload,
         ...(baseRevisionId ? { baseRevisionId } : {}),
       });
     },
-    onУспешно: async () => {
-      setСохранитьConflict(false);
+    onSuccess: async () => {
+      setSaveConflict(false);
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(routineId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(selectedКомпанияId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.activity(selectedКомпанияId!, routineId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.revisions(routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.activity(selectedCompanyId!, routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.revisions(routineId!) }),
       ]);
     },
-    onОшибка: (error) => {
-      if (error instanceof ApiОшибка && error.status === 409) {
-        setСохранитьConflict(true);
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 409) {
+        setSaveConflict(true);
         pushToast({
-          title: "Процедура changed",
+          title: "Routine changed",
           body: "Someone else updated this routine. Reload to see the latest revision.",
           tone: "warn",
         });
         return;
       }
       pushToast({
-        title: "Ошибка to save routine",
-        body: error instanceof Ошибка ? error.message : "Paperclip could not save the routine.",
+        title: "Failed to save routine",
+        body: error instanceof Error ? error.message : "Paperclip could not save the routine.",
         tone: "error",
       });
     },
   });
-  const saveПроцедураRef = useRef(saveПроцедура);
 
-  useEffect(() => {
-    saveПроцедураRef.current = saveПроцедура;
-  }, [saveПроцедура]);
-
-  const runПроцедура = useMutation({
-    mutationFn: (data?: ПроцедураЗапуститьDialogОтправитьData) =>
+  const runRoutine = useMutation({
+    mutationFn: (data?: RoutineRunDialogSubmitData) =>
       routinesApi.run(routineId!, {
         ...(data?.variables && Object.keys(data.variables).length > 0 ? { variables: data.variables } : {}),
-        ...(data?.assigneeАгентId !== undefined ? { assigneeАгентId: data.assigneeАгентId } : {}),
+        ...(data?.assigneeAgentId !== undefined ? { assigneeAgentId: data.assigneeAgentId } : {}),
         ...(data?.projectId !== undefined ? { projectId: data.projectId } : {}),
-        ...(data?.executionРабочая областьId !== undefined ? { executionРабочая областьId: data.executionРабочая областьId } : {}),
-        ...(data?.executionРабочая областьPreference !== undefined
-          ? { executionРабочая областьPreference: data.executionРабочая областьPreference }
+        ...(data?.executionWorkspaceId !== undefined ? { executionWorkspaceId: data.executionWorkspaceId } : {}),
+        ...(data?.executionWorkspacePreference !== undefined
+          ? { executionWorkspacePreference: data.executionWorkspacePreference }
           : {}),
-        ...(data?.executionРабочая областьНастройки !== undefined
-          ? { executionРабочая областьНастройки: data.executionРабочая областьНастройки }
+        ...(data?.executionWorkspaceSettings !== undefined
+          ? { executionWorkspaceSettings: data.executionWorkspaceSettings }
           : {}),
       }),
-    onУспешно: async () => {
-      pushToast({ title: "Запуск процедуры начат", tone: "success" });
-      setЗапуститьVariablesOpen(false);
-      setАктивенTab("runs");
+    onSuccess: async () => {
+      pushToast({ title: "Routine run started", tone: "success" });
+      setRunVariablesOpen(false);
+      setActiveTab("runs");
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(routineId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.runs(routineId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(selectedКомпанияId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.activity(selectedКомпанияId!, routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.runs(routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.activity(selectedCompanyId!, routineId!) }),
       ]);
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Запуск процедуры не удался",
-        body: error instanceof Ошибка ? error.message : "Paperclip could not start the routine run.",
+        title: "Routine run failed",
+        body: error instanceof Error ? error.message : "Paperclip could not start the routine run.",
         tone: "error",
       });
     },
   });
 
-  const updateПроцедураСтатус = useMutation({
+  const updateRoutineStatus = useMutation({
     mutationFn: (status: string) => routinesApi.update(routineId!, { status }),
-    onУспешно: async (_data, status) => {
+    onSuccess: async (_data, status) => {
       pushToast({
-        title: "Процедура сохранена",
-        body: status === "paused" ? "Автоmation paused." : "Автоmation enabled.",
+        title: "Routine saved",
+        body: status === "paused" ? "Automation paused." : "Automation enabled.",
         tone: "success",
       });
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(routineId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(selectedКомпанияId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) }),
       ]);
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Ошибка to update routine",
-        body: error instanceof Ошибка ? error.message : "Paperclip could not update the routine.",
+        title: "Failed to update routine",
+        body: error instanceof Error ? error.message : "Paperclip could not update the routine.",
         tone: "error",
       });
     },
   });
 
   const createTrigger = useMutation({
-    mutationFn: async (body: Record<string, unknown>): Promise<ПроцедураTriggerResponse> => {
-      // Авто-label when the caller didn't provide one (e.g. dialog left the
-      // Label field blank). Keeps the existing "schedule-2"-style numbering
-      // behaviour so existing routines keep unique-ish labels.
-      const kind = String(body.kind ?? "schedule");
-      const trimmedLabel = typeof body.label === "string" ? body.label.trim() : "";
-      let finalLabel: string;
-      if (trimmedLabel.length > 0 && trimmedLabel !== kind) {
-        finalLabel = trimmedLabel;
-      } else {
-        const existingOfKind = (routine?.triggers ?? []).filter((t) => t.kind === kind).length;
-        finalLabel = existingOfKind > 0 ? `${kind}-${existingOfKind + 1}` : kind;
-      }
-      return routinesApi.createTrigger(routineId!, { ...body, label: finalLabel });
+    mutationFn: async (): Promise<RoutineTriggerResponse> => {
+      const existingOfKind = (routine?.triggers ?? []).filter((t) => t.kind === newTrigger.kind).length;
+      const autoLabel = existingOfKind > 0 ? `${newTrigger.kind}-${existingOfKind + 1}` : newTrigger.kind;
+      return routinesApi.createTrigger(routineId!, {
+        kind: newTrigger.kind,
+        label: autoLabel,
+        ...(newTrigger.kind === "schedule"
+          ? { cronExpression: newTrigger.cronExpression.trim(), timezone: getLocalTimezone() }
+          : {}),
+        ...(newTrigger.kind === "webhook"
+          ? {
+            signingMode: newTrigger.signingMode,
+            replayWindowSec: Number(newTrigger.replayWindowSec || "300"),
+          }
+          : {}),
+      });
     },
-    onУспешно: async (result) => {
-      setTriggerDialogOpen(false);
+    onSuccess: async (result) => {
       if (result.secretMaterial) {
-        setСекретMessage({
+        setSecretMessage({
           title: "Webhook trigger created",
           entries: [{
             webhookUrl: result.secretMaterial.webhookUrl,
-            webhookСекрет: result.secretMaterial.webhookСекрет,
+            webhookSecret: result.secretMaterial.webhookSecret,
           }],
         });
       } else {
@@ -459,15 +586,15 @@ export function ПроцедураDetail() {
         });
       }
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(routineId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(selectedКомпанияId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.activity(selectedКомпанияId!, routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.activity(selectedCompanyId!, routineId!) }),
       ]);
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Ошибка to add trigger",
-        body: error instanceof Ошибка ? error.message : "Paperclip could not create the trigger.",
+        title: "Failed to add trigger",
+        body: error instanceof Error ? error.message : "Paperclip could not create the trigger.",
         tone: "error",
       });
     },
@@ -475,73 +602,68 @@ export function ПроцедураDetail() {
 
   const updateTrigger = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Record<string, unknown> }) => routinesApi.updateTrigger(id, patch),
-    onУспешно: async () => {
+    onSuccess: async () => {
       pushToast({
         title: "Trigger saved",
+        body: "The routine cadence update was saved.",
         tone: "success",
       });
-      setTriggerDialogOpen(false);
-      setИзменитьingTrigger(null);
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(routineId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(selectedКомпанияId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.activity(selectedКомпанияId!, routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.activity(selectedCompanyId!, routineId!) }),
       ]);
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Ошибка to update trigger",
-        body: error instanceof Ошибка ? error.message : "Paperclip could not update the trigger.",
+        title: "Failed to update trigger",
+        body: error instanceof Error ? error.message : "Paperclip could not update the trigger.",
         tone: "error",
       });
-    },
-    onSettled: () => {
-      setTogglingTriggerId(null);
     },
   });
 
   const deleteTrigger = useMutation({
     mutationFn: (id: string) => routinesApi.deleteTrigger(id),
-    onУспешно: async () => {
+    onSuccess: async () => {
       pushToast({
         title: "Trigger deleted",
         tone: "success",
       });
-      setTriggerОжиданиеУдалить(null);
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(routineId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(selectedКомпанияId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.activity(selectedКомпанияId!, routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.activity(selectedCompanyId!, routineId!) }),
       ]);
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Ошибка to delete trigger",
-        body: error instanceof Ошибка ? error.message : "Paperclip could not delete the trigger.",
+        title: "Failed to delete trigger",
+        body: error instanceof Error ? error.message : "Paperclip could not delete the trigger.",
         tone: "error",
       });
     },
   });
 
   const rotateTrigger = useMutation({
-    mutationFn: (id: string): Promise<RotateПроцедураTriggerResponse> => routinesApi.rotateTriggerСекрет(id),
-    onУспешно: async (result) => {
-      setСекретMessage({
+    mutationFn: (id: string): Promise<RotateRoutineTriggerResponse> => routinesApi.rotateTriggerSecret(id),
+    onSuccess: async (result) => {
+      setSecretMessage({
         title: "Webhook secret rotated",
         entries: [{
           webhookUrl: result.secretMaterial.webhookUrl,
-          webhookСекрет: result.secretMaterial.webhookСекрет,
+          webhookSecret: result.secretMaterial.webhookSecret,
         }],
       });
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(routineId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.activity(selectedКомпанияId!, routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(routineId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.activity(selectedCompanyId!, routineId!) }),
       ]);
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Ошибка to rotate webhook secret",
-        body: error instanceof Ошибка ? error.message : "Paperclip could not rotate the webhook secret.",
+        title: "Failed to rotate webhook secret",
+        body: error instanceof Error ? error.message : "Paperclip could not rotate the webhook secret.",
         tone: "error",
       });
     },
@@ -555,19 +677,19 @@ export function ПроцедураDetail() {
     () => new Map((projects ?? []).map((project) => [project.id, project])),
     [projects],
   );
-  const recentИсполнительIds = useMemo(() => getRecentИсполнительIds(), [routine?.id]);
+  const recentAssigneeIds = useMemo(() => getRecentAssigneeIds(), [routine?.id]);
   const recentProjectIds = useMemo(() => getRecentProjectIds(), [routine?.id]);
   const assigneeOptions = useMemo<InlineEntityOption[]>(
     () =>
-      sortАгентыByRecency(
+      sortAgentsByRecency(
         (agents ?? []).filter((agent) => agent.status !== "terminated"),
-        recentИсполнительIds,
+        recentAssigneeIds,
       ).map((agent) => ({
         id: agent.id,
         label: agent.name,
         searchText: `${agent.name} ${agent.role} ${agent.title ?? ""}`,
       })),
-    [agents, recentИсполнительIds],
+    [agents, recentAssigneeIds],
   );
   const projectOptions = useMemo<InlineEntityOption[]>(
     () =>
@@ -585,305 +707,67 @@ export function ПроцедураDetail() {
       members: companyMembers?.users,
     });
   }, [agents, companyMembers?.users, projects]);
-  const currentИсполнитель = editЧерновик.assigneeАгентId ? agentById.get(editЧерновик.assigneeАгентId) ?? null : null;
-  const currentProject = editЧерновик.projectId ? projectById.get(editЧерновик.projectId) ?? null : null;
+  const currentAssignee = editDraft.assigneeAgentId ? agentById.get(editDraft.assigneeAgentId) ?? null : null;
+  const currentProject = editDraft.projectId ? projectById.get(editDraft.projectId) ?? null : null;
 
-  const activityTabsPanel = useMemo(() => {
-    if (!routine) return null;
-    return (
-      <Tabs value={activeTab} onЗначениеChange={setАктивенTab} classИмя="space-y-3 min-w-0">
-        <TabsList variant="line" classИмя="w-full justify-start gap-1 overflow-x-auto">
-          <TabsTrigger value="triggers" classИмя="gap-1.5 flex-none px-2">
-            <Clock3 classИмя="h-3.5 w-3.5" />
-            Триггеры
-          </TabsTrigger>
-          <TabsTrigger value="runs" classИмя="gap-1.5 flex-none px-2">
-            <Play classИмя="h-3.5 w-3.5" />
-            Запуститьs
-            {hasLiveЗапустить && <span classИмя="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />}
-          </TabsTrigger>
-          <TabsTrigger value="activity" classИмя="gap-1.5 flex-none px-2">
-            <АктивностьIcon classИмя="h-3.5 w-3.5" />
-            Активность
-          </TabsTrigger>
-          <TabsTrigger value="history" classИмя="gap-1.5 flex-none px-2">
-            <ИсторияIcon classИмя="h-3.5 w-3.5" />
-            История
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="triggers" classИмя="space-y-4">
-          <Button
-            size="sm"
-            classИмя="w-full"
-            onClick={() => {
-              setИзменитьingTrigger(null);
-              setTriggerDialogOpen(true);
-            }}
-          >
-            <Plus classИмя="h-3.5 w-3.5 mr-1.5" />
-            Добавить триггер
-          </Button>
-
-          {routine.triggers.length === 0 ? (
-            <div classИмя="rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center">
-              <p classИмя="text-sm font-medium">Нет triggers yet</p>
-              <p classИмя="text-xs text-muted-foreground mt-1 mb-4">
-                Триггеры fire this routine on a schedule or via webhook.
-              </p>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setИзменитьingTrigger(null);
-                  setTriggerDialogOpen(true);
-                }}
-              >
-                <Plus classИмя="h-3.5 w-3.5 mr-1.5" />
-                Добавить your first trigger
-              </Button>
-            </div>
-          ) : (
-            <div classИмя="space-y-3">
-              {routine.triggers.map((trigger) => (
-                <TriggerListCard
-                  key={trigger.id}
-                  trigger={trigger}
-                  onИзменить={() => {
-                    setИзменитьingTrigger(trigger);
-                    setTriggerDialogOpen(true);
-                  }}
-                  onУдалить={() => setTriggerОжиданиеУдалить(trigger)}
-                  onToggleВключитьd={(enabled) => {
-                    setTogglingTriggerId(trigger.id);
-                    updateTrigger.mutate({ id: trigger.id, patch: { enabled } });
-                  }}
-                  onRotateСекрет={
-                    trigger.kind === "webhook"
-                      ? () => rotateTrigger.mutate(trigger.id)
-                      : undefined
-                  }
-                  toggleОжидание={togglingTriggerId === trigger.id}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="runs" classИмя="space-y-4">
-          {hasLiveЗапустить && activeЗадачаId && routine && (
-            <LiveЗапуститьWidget issueId={activeЗадачаId} companyId={routine.companyId} />
-          )}
-          {(routineЗапуститьs ?? []).length === 0 ? (
-            <p classИмя="text-xs text-muted-foreground">Нет runs yet.</p>
-          ) : (
-            <div classИмя="border border-border rounded-lg divide-y divide-border">
-              {(routineЗапуститьs ?? []).map((run) => (
-                <div key={run.id} classИмя="flex flex-col gap-1.5 px-3 py-2 text-sm min-w-0">
-                  <div classИмя="flex items-center gap-1.5 flex-wrap">
-                    <Badge variant="outline" classИмя="text-[11px]">{run.source}</Badge>
-                    <Badge variant={run.status === "failed" ? "destructive" : "secondary"} classИмя="text-[11px]">
-                      {run.status.replaceВсе("_", " ")}
-                    </Badge>
-                  </div>
-                  {(run.trigger || run.linkedЗадача) && (
-                    <div classИмя="flex items-center gap-1.5 flex-wrap text-xs min-w-0">
-                      {run.trigger && (
-                        <span classИмя="text-muted-foreground truncate">{run.trigger.label ?? run.trigger.kind}</span>
-                      )}
-                      {run.linkedЗадача && (
-                        <Link to={`/issues/${run.linkedЗадача.identifier ?? run.linkedЗадача.id}`} classИмя="text-muted-foreground hover:underline truncate">
-                          {run.linkedЗадача.identifier ?? run.linkedЗадача.id.slice(0, 8)}
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                  <span classИмя="text-[11px] text-muted-foreground">{timeAgo(run.triggeredAt)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="activity">
-          {(activity ?? []).length === 0 ? (
-            <p classИмя="text-xs text-muted-foreground">Нет activity yet.</p>
-          ) : (
-            <div classИмя="border border-border rounded-lg divide-y divide-border">
-              {(activity ?? []).map((event) => (
-                <div key={event.id} classИмя="flex flex-col gap-1 px-3 py-2 text-xs min-w-0">
-                  <span classИмя="font-medium text-foreground/90">{event.action.replaceВсе(".", " ")}</span>
-                  {event.details && Object.keys(event.details).length > 0 && (
-                    <div classИмя="text-muted-foreground break-words">
-                      {Object.entries(event.details).slice(0, 3).map(([key, value], i) => (
-                        <span key={key}>
-                          {i > 0 && <span classИмя="mx-1 text-border">·</span>}
-                          <span classИмя="text-muted-foreground/70">{key.replaceВсе("_", " ")}:</span>{" "}
-                          {formatАктивностьDetailЗначение(value)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <span classИмя="text-muted-foreground/60">{timeAgo(event.createdAt)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="history">
-          <ПроцедураИсторияTab
-            routine={routine}
-            isИзменитьDirty={isИзменитьDirty}
-            dirtyFields={dirtyFields}
-            onDiscardИзменитьs={() => {
-              if (routineПо умолчаниюs) setИзменитьЧерновик(routineПо умолчаниюs);
-            }}
-            onСохранитьИзменитьs={() => {
-              const currentСохранить = saveПроцедураRef.current;
-              if (!currentСохранить.isОжидание && editЧерновик.title.trim()) {
-                currentСохранить.mutate();
-              }
-            }}
-            agents={agentById}
-            projects={projectById}
-            onRestoreСекретMaterials={(response: RestoreПроцедураRevisionResponse) => {
-              if (response.secretMaterials.length > 0) {
-                setСекретMessage({
-                  title: response.secretMaterials.length === 1
-                    ? "Webhook trigger restored"
-                    : `${response.secretMaterials.length} webhook triggers restored`,
-                  entries: response.secretMaterials.map((recreated) => ({
-                    webhookUrl: recreated.webhookUrl,
-                    webhookСекрет: recreated.webhookСекрет,
-                  })),
-                });
-              }
-            }}
-            onRestored={(response: RestoreПроцедураRevisionResponse) => {
-              setСохранитьConflict(false);
-              queryClient.setQueryData<ПроцедураDetailТип | undefined>(
-                queryКлючs.routines.detail(routineId!),
-                (prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        ...response.routine,
-                        latestRevisionId: response.revision.id,
-                        latestRevisionNumber: response.revision.revisionNumber,
-                      }
-                    : prev,
-              );
-              setИзменитьЧерновик({
-                title: response.routine.title,
-                description: response.routine.description ?? "",
-                projectId: response.routine.projectId ?? "",
-                assigneeАгентId: response.routine.assigneeАгентId ?? "",
-                priority: response.routine.priority,
-                concurrencyPolicy: response.routine.concurrencyPolicy,
-                catchUpPolicy: response.routine.catchUpPolicy,
-                variables: response.routine.variables,
-              });
-              hydratedПроцедураIdRef.current = response.routine.id;
-            }}
-          />
-        </TabsContent>
-      </Tabs>
-    );
-  }, [
-    activeЗадачаId,
-    activeTab,
-    activity,
-    agentById,
-    dirtyFields,
-    editЧерновик.title,
-    hasLiveЗапустить,
-    isИзменитьDirty,
-    projectById,
-    queryClient,
-    rotateTrigger.mutate,
-    routine,
-    routineПо умолчаниюs,
-    routineЗапуститьs,
-    routineId,
-    setАктивенTab,
-    togglingTriggerId,
-    updateTrigger.mutate,
-  ]);
-
-  useEffect(() => {
-    if (!activityTabsPanel) {
-      closePanel();
-      return;
-    }
-    openPanel(activityTabsPanel, {
-      storageКлюч: "paperclip.properties.width.routines",
-      defaultWidth: 400,
-      minWidth: 320,
-      maxWidth: 640,
-      compactBelowViewport: 1024,
-      compactMaxWidth: 320,
-    });
-    return () => closePanel();
-  }, [activityTabsPanel, closePanel, openPanel]);
-
-  if (!selectedКомпанияId) {
+  if (!selectedCompanyId) {
     return <EmptyState icon={Repeat} message="Select a company to view routines." />;
   }
 
-  if (isЗагрузка) {
+  if (isLoading) {
     return <PageSkeleton variant="issues-list" />;
   }
 
   if (error || !routine) {
     return (
-      <p classИмя="pt-6 text-sm text-destructive">
-        {error instanceof Ошибка ? error.message : "Процедура not found"}
+      <p className="pt-6 text-sm text-destructive">
+        {error instanceof Error ? error.message : "Routine not found"}
       </p>
     );
   }
 
-  const automationВключитьd = routine.status === "active";
+  const automationEnabled = routine.status === "active";
   const selectedProject = routine.projectId ? (projects?.find((project) => project.id === routine.projectId) ?? null) : null;
-  const automationToggleОтключитьd = updateПроцедураСтатус.isОжидание || routine.status === "archived";
+  const automationToggleDisabled = updateRoutineStatus.isPending || routine.status === "archived";
   const automationLabel = routine.status === "archived"
-    ? "Архивирован"
-    : !routine.assigneeАгентId
+    ? "Архивировано"
+    : !routine.assigneeAgentId
       ? "Черновик"
-      : automationВключитьd
+      : automationEnabled
         ? "Активен"
-        : "Приостановлен";
-  const automationLabelClassИмя = routine.status === "archived"
+        : "Приостановлено";
+  const automationLabelClassName = routine.status === "archived"
     ? "text-muted-foreground"
-    : automationВключитьd
+    : automationEnabled
       ? "text-emerald-400"
       : "text-muted-foreground";
 
   return (
-    <div classИмя="max-w-2xl space-y-6">
+    <div className="max-w-2xl space-y-6">
       {/* Header: editable title + actions */}
-      <div classИмя="flex flex-col items-stretch gap-3 min-[1120px]:flex-row min-[1120px]:items-start min-[1120px]:gap-4">
-        <div classИмя="min-w-0 flex-1 space-y-2">
+      <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1 space-y-2">
           <textarea
             ref={titleInputRef}
-            classИмя="w-full resize-none overflow-hidden bg-transparent text-xl font-bold outline-none placeholder:text-muted-foreground/50"
-            placeholder="Процедура title"
+            className="w-full resize-none overflow-hidden bg-transparent text-xl font-bold outline-none placeholder:text-muted-foreground/50"
+            placeholder="Routine title"
             rows={1}
-            value={editЧерновик.title}
+            value={editDraft.title}
             onChange={(event) => {
-              setИзменитьЧерновик((current) => ({ ...current, title: event.target.value }));
+              setEditDraft((current) => ({ ...current, title: event.target.value }));
               autoResizeTextarea(event.target);
             }}
-            onКлючDown={(event) => {
-              if (event.key === "Enter" && !event.metaКлюч && !event.ctrlКлюч && !event.nativeEvent.isComposing) {
-                event.preventПо умолчанию();
-                descriptionИзменитьorRef.current?.focus();
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.metaKey && !event.ctrlKey && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                descriptionEditorRef.current?.focus();
                 return;
               }
-              if (event.key === "Tab" && !event.shiftКлюч) {
-                event.preventПо умолчанию();
-                if (editЧерновик.assigneeАгентId) {
-                  if (editЧерновик.projectId) {
-                    descriptionИзменитьorRef.current?.focus();
+              if (event.key === "Tab" && !event.shiftKey) {
+                event.preventDefault();
+                if (editDraft.assigneeAgentId) {
+                  if (editDraft.projectId) {
+                    descriptionEditorRef.current?.focus();
                   } else {
                     projectSelectorRef.current?.focus();
                   }
@@ -894,82 +778,69 @@ export function ПроцедураDetail() {
             }}
           />
           {routine.managedByPlugin ? (
-            <Badge variant="outline" classИмя="gap-1 text-xs text-muted-foreground">
-              Managed by {routine.managedByPlugin.pluginDisplayИмя}
-              <span classИмя="font-mono text-[10px]">{routine.managedByPlugin.resourceКлюч}</span>
+            <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
+              Managed by {routine.managedByPlugin.pluginDisplayName}
+              <span className="font-mono text-[10px]">{routine.managedByPlugin.resourceKey}</span>
             </Badge>
           ) : null}
         </div>
-        <div classИмя="flex w-full shrink-0 flex-wrap items-center gap-3 pt-1 min-[1120px]:w-auto min-[1120px]:flex-nowrap">
-          <ЗапуститьButton
+        <div className="flex shrink-0 items-center gap-3 pt-1">
+          <RunButton
             onClick={() => {
-              setЗапуститьVariablesOpen(true);
+              setRunVariablesOpen(true);
             }}
-            disabled={runПроцедура.isОжидание}
+            disabled={runRoutine.isPending}
           />
           <ToggleSwitch
             size="lg"
-            checked={automationВключитьd}
+            checked={automationEnabled}
             onCheckedChange={() => {
-              if (!automationВключитьd && !routine.assigneeАгентId) {
+              if (!automationEnabled && !routine.assigneeAgentId) {
                 pushToast({
-                  title: "Требуется агент по умолчанию",
+                  title: "Default agent required",
                   body: "Set a default agent before enabling routine automation.",
                   tone: "warn",
                 });
                 return;
               }
-              updateПроцедураСтатус.mutate(automationВключитьd ? "paused" : "active");
+              updateRoutineStatus.mutate(automationEnabled ? "paused" : "active");
             }}
-            disabled={automationToggleОтключитьd}
-            aria-label={automationВключитьd ? "Пауза automatic triggers" : "Включить automatic triggers"}
+            disabled={automationToggleDisabled}
+            aria-label={automationEnabled ? "Pause automatic triggers" : "Enable automatic triggers"}
           />
-          <span classИмя={`min-w-[3.75rem] text-sm font-medium ${automationLabelClassИмя}`}>
+          <span className={`min-w-[3.75rem] text-sm font-medium ${automationLabelClassName}`}>
             {automationLabel}
           </span>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            classИмя={cn(
-              "hidden md:inline-flex shrink-0 transition-opacity duration-200",
-              panelVisible ? "opacity-0 pointer-events-none w-0 overflow-hidden" : "opacity-100",
-            )}
-            onClick={() => setPanelVisible(true)}
-            aria-label="Show triggers, runs and activity"
-            title="Show triggers, runs and activity"
-          >
-            <SlidersHorizontal classИмя="h-4 w-4" />
-          </Button>
         </div>
       </div>
 
-      {/* Секрет message banner */}
+      {/* Secret message banner */}
       {secretMessage && (
-        <div classИмя="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4 space-y-3 text-sm">
+        <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4 space-y-3 text-sm">
           <div>
-            <p classИмя="font-medium">{secretMessage.title}</p>
-            <p classИмя="text-xs text-muted-foreground">Сохранить this now. Paperclip will not show the secret value again.</p>
+            <p className="font-medium">{secretMessage.title}</p>
+            <p className="text-xs text-muted-foreground">Save this now. Paperclip will not show the secret value again.</p>
           </div>
-          <div classИмя="space-y-3">
+          <div className="space-y-3">
             {secretMessage.entries.map((entry, index) => (
-              <div key={`${entry.webhookUrl}-${index}`} classИмя="space-y-2">
+              <div key={`${entry.webhookUrl}-${index}`} className="space-y-2">
                 {secretMessage.entries.length > 1 && (
-                  <p classИмя="text-xs font-medium text-muted-foreground">
+                  <p className="text-xs font-medium text-muted-foreground">
                     Webhook trigger {index + 1} of {secretMessage.entries.length}
                   </p>
                 )}
-                <div classИмя="flex items-center gap-2">
-                  <Input value={entry.webhookUrl} readOnly classИмя="flex-1" />
-                  <Button variant="outline" size="sm" onClick={() => copyСекретЗначение("Webhook URL", entry.webhookUrl)}>
-                    <Копировать classИмя="h-3.5 w-3.5 mr-1" />
+                <div className="flex items-center gap-2">
+                  <Input value={entry.webhookUrl} readOnly className="flex-1" />
+                  <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook URL", entry.webhookUrl)}>
+                    <Copy className="h-3.5 w-3.5 mr-1" />
                     URL
                   </Button>
                 </div>
-                <div classИмя="flex items-center gap-2">
-                  <Input value={entry.webhookСекрет} readOnly classИмя="flex-1" />
-                  <Button variant="outline" size="sm" onClick={() => copyСекретЗначение("Webhook secret", entry.webhookСекрет)}>
-                    <Копировать classИмя="h-3.5 w-3.5 mr-1" />
-                    Секрет
+                <div className="flex items-center gap-2">
+                  <Input value={entry.webhookSecret} readOnly className="flex-1" />
+                  <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook secret", entry.webhookSecret)}>
+                    <Copy className="h-3.5 w-3.5 mr-1" />
+                    Secret
                   </Button>
                 </div>
               </div>
@@ -978,27 +849,27 @@ export function ПроцедураDetail() {
         </div>
       )}
 
-      {/* Сохранить conflict banner */}
+      {/* Save conflict banner */}
       {saveConflict && (
-        <div classИмя="rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
-          <div classИмя="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div classИмя="space-y-1">
-              <p classИмя="font-medium text-amber-200">Out of date</p>
-              <p classИмя="text-xs text-muted-foreground">
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <p className="font-medium text-amber-200">Out of date</p>
+              <p className="text-xs text-muted-foreground">
                 This routine changed while you were editing. Reload to merge the latest revision before
                 saving again.
               </p>
             </div>
-            <div classИмя="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  setСохранитьConflict(false);
-                  if (routineПо умолчаниюs) {
-                    setИзменитьЧерновик(routineПо умолчаниюs);
+                  setSaveConflict(false);
+                  if (routineDefaults) {
+                    setEditDraft(routineDefaults);
                   }
-                  queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(routineId!) });
+                  queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(routineId!) });
                 }}
               >
                 Reload latest
@@ -1008,57 +879,57 @@ export function ПроцедураDetail() {
         </div>
       )}
 
-      {!routine.assigneeАгентId ? (
-        <div classИмя="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-900 dark:text-amber-200">
-          Требуется агент по умолчанию. This routine can stay as a draft and still run manually, but automation stays paused until you assign a default agent.
+      {!routine.assigneeAgentId ? (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-900 dark:text-amber-200">
+          Default agent required. This routine can stay as a draft and still run manually, but automation stays paused until you assign a default agent.
         </div>
       ) : null}
 
       {/* Assignment row */}
-      <div classИмя="overflow-x-auto overscroll-x-contain">
-        <div classИмя="inline-flex min-w-full flex-wrap items-center gap-2 text-sm text-muted-foreground sm:min-w-max sm:flex-nowrap">
+      <div className="overflow-x-auto overscroll-x-contain">
+        <div className="inline-flex min-w-full flex-wrap items-center gap-2 text-sm text-muted-foreground sm:min-w-max sm:flex-nowrap">
           <span>For</span>
           <InlineEntitySelector
             ref={assigneeSelectorRef}
-            value={editЧерновик.assigneeАгентId}
+            value={editDraft.assigneeAgentId}
             options={assigneeOptions}
-            recentOptionIds={recentИсполнительIds}
+            recentOptionIds={recentAssigneeIds}
             placeholder="Исполнитель"
-            noneLabel="Нет assignee"
-            searchPlaceholder="Поиск assignees..."
-            emptyMessage="Нет assignees found."
-            onChange={(assigneeАгентId) => {
-              if (assigneeАгентId) trackRecentИсполнитель(assigneeАгентId);
-              setИзменитьЧерновик((current) => ({ ...current, assigneeАгентId }));
+            noneLabel="No assignee"
+            searchPlaceholder="Search assignees..."
+            emptyMessage="No assignees found."
+            onChange={(assigneeAgentId) => {
+              if (assigneeAgentId) trackRecentAssignee(assigneeAgentId);
+              setEditDraft((current) => ({ ...current, assigneeAgentId }));
             }}
-            onПодтвердить={() => {
-              if (editЧерновик.projectId) {
-                descriptionИзменитьorRef.current?.focus();
+            onConfirm={() => {
+              if (editDraft.projectId) {
+                descriptionEditorRef.current?.focus();
               } else {
                 projectSelectorRef.current?.focus();
               }
             }}
-            renderTriggerЗначение={(option) =>
+            renderTriggerValue={(option) =>
               option ? (
-                currentИсполнитель ? (
+                currentAssignee ? (
                   <>
-                    <АгентIcon icon={currentИсполнитель.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span classИмя="truncate">{option.label}</span>
+                    <AgentIcon icon={currentAssignee.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{option.label}</span>
                   </>
                 ) : (
-                  <span classИмя="truncate">{option.label}</span>
+                  <span className="truncate">{option.label}</span>
                 )
               ) : (
-                <span classИмя="text-muted-foreground">Исполнитель</span>
+                <span className="text-muted-foreground">Assignee</span>
               )
             }
             renderOption={(option) => {
-              if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+              if (!option.id) return <span className="truncate">{option.label}</span>;
               const assignee = agentById.get(option.id);
               return (
                 <>
-                  {assignee ? <АгентIcon icon={assignee.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
-                  <span classИмя="truncate">{option.label}</span>
+                  {assignee ? <AgentIcon icon={assignee.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                  <span className="truncate">{option.label}</span>
                 </>
               );
             }}
@@ -1066,41 +937,41 @@ export function ПроцедураDetail() {
           <span>in</span>
           <InlineEntitySelector
             ref={projectSelectorRef}
-            value={editЧерновик.projectId}
+            value={editDraft.projectId}
             options={projectOptions}
             recentOptionIds={recentProjectIds}
             placeholder="Project"
-            noneLabel="Нет project"
-            searchPlaceholder="Поиск projects..."
-            emptyMessage="Проекты не найдены."
+            noneLabel="No project"
+            searchPlaceholder="Search projects..."
+            emptyMessage="No projects found."
             onChange={(projectId) => {
               if (projectId) trackRecentProject(projectId);
-              setИзменитьЧерновик((current) => ({ ...current, projectId }));
+              setEditDraft((current) => ({ ...current, projectId }));
             }}
-            onПодтвердить={() => descriptionИзменитьorRef.current?.focus()}
-            renderTriggerЗначение={(option) =>
+            onConfirm={() => descriptionEditorRef.current?.focus()}
+            renderTriggerValue={(option) =>
               option && currentProject ? (
                 <>
                   <span
-                    classИмя="h-3.5 w-3.5 shrink-0 rounded-sm"
+                    className="h-3.5 w-3.5 shrink-0 rounded-sm"
                     style={{ backgroundColor: currentProject.color ?? "#64748b" }}
                   />
-                  <span classИмя="truncate">{option.label}</span>
+                  <span className="truncate">{option.label}</span>
                 </>
               ) : (
-                <span classИмя="text-muted-foreground">Project</span>
+                <span className="text-muted-foreground">Project</span>
               )
             }
             renderOption={(option) => {
-              if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+              if (!option.id) return <span className="truncate">{option.label}</span>;
               const project = projectById.get(option.id);
               return (
                 <>
                   <span
-                    classИмя="h-3.5 w-3.5 shrink-0 rounded-sm"
+                    className="h-3.5 w-3.5 shrink-0 rounded-sm"
                     style={{ backgroundColor: project?.color ?? "#64748b" }}
                   />
-                  <span classИмя="truncate">{option.label}</span>
+                  <span className="truncate">{option.label}</span>
                 </>
               );
             }}
@@ -1109,146 +980,322 @@ export function ПроцедураDetail() {
       </div>
 
       {/* Instructions */}
-      <MarkdownИзменитьor
-        ref={descriptionИзменитьorRef}
-        value={editЧерновик.description}
-        onChange={(description) => setИзменитьЧерновик((current) => ({ ...current, description }))}
-        placeholder="Добавить instructions..."
+      <MarkdownEditor
+        ref={descriptionEditorRef}
+        value={editDraft.description}
+        onChange={(description) => setEditDraft((current) => ({ ...current, description }))}
+        placeholder="Add instructions..."
         bordered={false}
-        contentClassИмя="min-h-[120px] text-[15px] leading-7"
+        contentClassName="min-h-[120px] text-[15px] leading-7"
         mentions={mentionOptions}
-        onОтправить={() => {
-          if (!saveПроцедура.isОжидание && editЧерновик.title.trim()) {
-            saveПроцедура.mutate();
+        onSubmit={() => {
+          if (!saveRoutine.isPending && editDraft.title.trim()) {
+            saveRoutine.mutate();
           }
         }}
       />
-      <ПроцедураVariablesHint />
-      <ПроцедураVariablesИзменитьor
-        title={editЧерновик.title}
-        description={editЧерновик.description}
-        value={editЧерновик.variables}
-        onChange={(variables) => setИзменитьЧерновик((current) => ({ ...current, variables }))}
+      <RoutineVariablesHint />
+      <RoutineVariablesEditor
+        title={editDraft.title}
+        description={editDraft.description}
+        value={editDraft.variables}
+        onChange={(variables) => setEditDraft((current) => ({ ...current, variables }))}
       />
 
-      {/* Дополнительно delivery settings */}
-      <Collapsible open={advancedOpen} onOpenChange={setДополнительноOpen}>
-        <CollapsibleTrigger classИмя="flex w-full items-center justify-between text-left">
-          <span classИмя="text-sm font-medium">Дополнительно delivery settings</span>
-          {advancedOpen ? <ChevronDown classИмя="h-4 w-4 text-muted-foreground" /> : <ChevronRight classИмя="h-4 w-4 text-muted-foreground" />}
+      {/* Advanced delivery settings */}
+      <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
+          <span className="text-sm font-medium">Advanced delivery settings</span>
+          {advancedOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
         </CollapsibleTrigger>
-        <CollapsibleContent classИмя="pt-3">
-          <div classИмя="grid gap-4 md:grid-cols-2">
-            <div classИмя="space-y-2">
-              <p classИмя="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Concurrency</p>
+        <CollapsibleContent className="pt-3">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Concurrency</p>
               <Select
-                value={editЧерновик.concurrencyPolicy}
-                onЗначениеChange={(concurrencyPolicy) => setИзменитьЧерновик((current) => ({ ...current, concurrencyPolicy }))}
+                value={editDraft.concurrencyPolicy}
+                onValueChange={(concurrencyPolicy) => setEditDraft((current) => ({ ...current, concurrencyPolicy }))}
               >
                 <SelectTrigger>
-                  <SelectЗначение />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {concurrencyPolicies.map((value) => (
-                    <SelectItem key={value} value={value}>{value.replaceВсе("_", " ")}</SelectItem>
+                    <SelectItem key={value} value={value}>{value.replaceAll("_", " ")}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p classИмя="text-xs text-muted-foreground">{concurrencyPolicyОписаниеs[editЧерновик.concurrencyPolicy]}</p>
+              <p className="text-xs text-muted-foreground">{concurrencyPolicyDescriptions[editDraft.concurrencyPolicy]}</p>
             </div>
-            <div classИмя="space-y-2">
-              <p classИмя="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Catch-up</p>
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Catch-up</p>
               <Select
-                value={editЧерновик.catchUpPolicy}
-                onЗначениеChange={(catchUpPolicy) => setИзменитьЧерновик((current) => ({ ...current, catchUpPolicy }))}
+                value={editDraft.catchUpPolicy}
+                onValueChange={(catchUpPolicy) => setEditDraft((current) => ({ ...current, catchUpPolicy }))}
               >
                 <SelectTrigger>
-                  <SelectЗначение />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {catchUpPolicies.map((value) => (
-                    <SelectItem key={value} value={value}>{value.replaceВсе("_", " ")}</SelectItem>
+                    <SelectItem key={value} value={value}>{value.replaceAll("_", " ")}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p classИмя="text-xs text-muted-foreground">{catchUpPolicyОписаниеs[editЧерновик.catchUpPolicy]}</p>
+              <p className="text-xs text-muted-foreground">{catchUpPolicyDescriptions[editDraft.catchUpPolicy]}</p>
             </div>
           </div>
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Сохранить bar */}
-      <div classИмя="flex items-center justify-between">
-        {isИзменитьDirty ? (
-          <span classИмя="text-xs text-amber-600">Unsaved changes</span>
+      {/* Save bar */}
+      <div className="flex items-center justify-between">
+        {isEditDirty ? (
+          <span className="text-xs text-amber-600">Unsaved changes</span>
         ) : (
           <span />
         )}
         <Button
-          onClick={() => saveПроцедура.mutate()}
-          disabled={saveПроцедура.isОжидание || !editЧерновик.title.trim()}
+          onClick={() => saveRoutine.mutate()}
+          disabled={saveRoutine.isPending || !editDraft.title.trim()}
         >
-          <Сохранить classИмя="mr-2 h-4 w-4" />
-          Сохранить routine
+          <Save className="mr-2 h-4 w-4" />
+          Save routine
         </Button>
       </div>
 
-      <Separator classИмя="md:hidden" />
+      <Separator />
 
-      {/* Tabs (mobile only — desktop renders in the right properties panel) */}
-      <div classИмя="md:hidden">
-        {activityTabsPanel}
-      </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
+        <TabsList variant="line" className="w-full justify-start gap-1">
+          <TabsTrigger value="triggers" className="gap-1.5">
+            <Clock3 className="h-3.5 w-3.5" />
+            Triggers
+          </TabsTrigger>
+          <TabsTrigger value="runs" className="gap-1.5">
+            <Play className="h-3.5 w-3.5" />
+            Runs
+            {hasLiveRun && <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />}
+          </TabsTrigger>
+<TabsTrigger value="activity" className="gap-1.5">
+            <ActivityIcon className="h-3.5 w-3.5" />
+            Activity
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5">
+            <HistoryIcon className="h-3.5 w-3.5" />
+            History
+          </TabsTrigger>
+        </TabsList>
 
-      <ПроцедураЗапуститьVariablesDialog
+        <TabsContent value="triggers" className="space-y-4">
+          {/* Add trigger form */}
+          <div className="rounded-lg border border-border p-4 space-y-3">
+            <p className="text-sm font-medium">Add trigger</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Kind</Label>
+                <Select value={newTrigger.kind} onValueChange={(kind) => setNewTrigger((current) => ({ ...current, kind }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {triggerKinds.map((kind) => (
+                      <SelectItem key={kind} value={kind} disabled={kind === "webhook"}>
+                        {kind}{kind === "webhook" ? " — COMING SOON" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {newTrigger.kind === "schedule" && (
+                <div className="md:col-span-2 space-y-1.5">
+                  <Label className="text-xs">Schedule</Label>
+                  <ScheduleEditor
+                    value={newTrigger.cronExpression}
+                    onChange={(cronExpression) => setNewTrigger((current) => ({ ...current, cronExpression }))}
+                  />
+                </div>
+              )}
+              {newTrigger.kind === "webhook" && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Signing mode</Label>
+                    <Select value={newTrigger.signingMode} onValueChange={(signingMode) => setNewTrigger((current) => ({ ...current, signingMode }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {signingModes.map((mode) => (
+                          <SelectItem key={mode} value={mode}>{mode}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">{signingModeDescriptions[newTrigger.signingMode]}</p>
+                  </div>
+                  {!SIGNING_MODES_WITHOUT_REPLAY_WINDOW.has(newTrigger.signingMode) && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Replay window (seconds)</Label>
+                      <Input value={newTrigger.replayWindowSec} onChange={(event) => setNewTrigger((current) => ({ ...current, replayWindowSec: event.target.value }))} />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="flex items-center justify-end">
+              <Button size="sm" onClick={() => createTrigger.mutate()} disabled={createTrigger.isPending}>
+                {createTrigger.isPending ? "Adding..." : "Add trigger"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Existing triggers */}
+          {routine.triggers.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No triggers configured yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {routine.triggers.map((trigger) => (
+                <TriggerEditor
+                  key={trigger.id}
+                  trigger={trigger}
+                  onSave={(id, patch) => updateTrigger.mutate({ id, patch })}
+                  onRotate={(id) => rotateTrigger.mutate(id)}
+                  onDelete={(id) => deleteTrigger.mutate(id)}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="runs" className="space-y-4">
+          {hasLiveRun && activeIssueId && routine && (
+            <LiveRunWidget issueId={activeIssueId} companyId={routine.companyId} />
+          )}
+          {(routineRuns ?? []).length === 0 ? (
+            <p className="text-xs text-muted-foreground">No runs yet.</p>
+          ) : (
+            <div className="border border-border rounded-lg divide-y divide-border">
+              {(routineRuns ?? []).map((run) => (
+                <div key={run.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Badge variant="outline" className="shrink-0">{run.source}</Badge>
+                    <Badge variant={run.status === "failed" ? "destructive" : "secondary"} className="shrink-0">
+                      {run.status.replaceAll("_", " ")}
+                    </Badge>
+                    {run.trigger && (
+                      <span className="text-muted-foreground truncate">{run.trigger.label ?? run.trigger.kind}</span>
+                    )}
+                    {run.linkedIssue && (
+                      <Link to={`/issues/${run.linkedIssue.identifier ?? run.linkedIssue.id}`} className="text-muted-foreground hover:underline truncate">
+                        {run.linkedIssue.identifier ?? run.linkedIssue.id.slice(0, 8)}
+                      </Link>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0 ml-2">{timeAgo(run.triggeredAt)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="activity">
+          {(activity ?? []).length === 0 ? (
+            <p className="text-xs text-muted-foreground">No activity yet.</p>
+          ) : (
+            <div className="border border-border rounded-lg divide-y divide-border">
+              {(activity ?? []).map((event) => (
+                <div key={event.id} className="flex items-center justify-between px-3 py-2 text-xs gap-4">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium text-foreground/90 shrink-0">{event.action.replaceAll(".", " ")}</span>
+                    {event.details && Object.keys(event.details).length > 0 && (
+                      <span className="text-muted-foreground truncate">
+                        {Object.entries(event.details).slice(0, 3).map(([key, value], i) => (
+                          <span key={key}>
+                            {i > 0 && <span className="mx-1 text-border">·</span>}
+                            <span className="text-muted-foreground/70">{key.replaceAll("_", " ")}:</span>{" "}
+                            {formatActivityDetailValue(value)}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-muted-foreground/60 shrink-0">{timeAgo(event.createdAt)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="history">
+          <RoutineHistoryTab
+            routine={routine}
+            isEditDirty={isEditDirty}
+            dirtyFields={dirtyFields}
+            onDiscardEdits={() => {
+              if (routineDefaults) setEditDraft(routineDefaults);
+            }}
+            onSaveEdits={() => {
+              if (!saveRoutine.isPending && editDraft.title.trim()) {
+                saveRoutine.mutate();
+              }
+            }}
+            agents={agentById}
+            projects={projectById}
+            onRestoreSecretMaterials={(response: RestoreRoutineRevisionResponse) => {
+              if (response.secretMaterials.length > 0) {
+                setSecretMessage({
+                  title: response.secretMaterials.length === 1
+                    ? "Webhook trigger restored"
+                    : `${response.secretMaterials.length} webhook triggers restored`,
+                  entries: response.secretMaterials.map((recreated) => ({
+                    webhookUrl: recreated.webhookUrl,
+                    webhookSecret: recreated.webhookSecret,
+                  })),
+                });
+              }
+            }}
+            onRestored={(response: RestoreRoutineRevisionResponse) => {
+              setSaveConflict(false);
+              queryClient.setQueryData<RoutineDetailType | undefined>(
+                queryKeys.routines.detail(routineId!),
+                (prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        ...response.routine,
+                        latestRevisionId: response.revision.id,
+                        latestRevisionNumber: response.revision.revisionNumber,
+                      }
+                    : prev,
+              );
+              setEditDraft({
+                title: response.routine.title,
+                description: response.routine.description ?? "",
+                projectId: response.routine.projectId ?? "",
+                assigneeAgentId: response.routine.assigneeAgentId ?? "",
+                priority: response.routine.priority,
+                concurrencyPolicy: response.routine.concurrencyPolicy,
+                catchUpPolicy: response.routine.catchUpPolicy,
+                variables: response.routine.variables,
+              });
+              hydratedRoutineIdRef.current = response.routine.id;
+            }}
+          />
+        </TabsContent>
+      </Tabs>
+
+      <RoutineRunVariablesDialog
         open={runVariablesOpen}
-        onOpenChange={setЗапуститьVariablesOpen}
+        onOpenChange={setRunVariablesOpen}
         companyId={routine.companyId}
-        routineИмя={routine.title}
+        routineName={routine.title}
         agents={agents ?? []}
         projects={projects ?? []}
         defaultProjectId={routine.projectId}
-        defaultИсполнительАгентId={routine.assigneeАгентId}
+        defaultAssigneeAgentId={routine.assigneeAgentId}
         variables={routine.variables ?? []}
-        isОжидание={runПроцедура.isОжидание}
-        onОтправить={(data) => runПроцедура.mutate(data)}
-      />
-
-      <TriggerDialog
-        open={triggerDialogOpen}
-        onOpenChange={(next) => {
-          setTriggerDialogOpen(next);
-          if (!next) setИзменитьingTrigger(null);
-        }}
-        trigger={editingTrigger}
-        fallbackTimezone={getLocalTimezone()}
-        submitting={createTrigger.isОжидание || updateTrigger.isОжидание}
-        onОтправить={({ id, body }) => {
-          if (id) {
-            updateTrigger.mutate({ id, patch: body });
-          } else {
-            createTrigger.mutate(body);
-          }
-        }}
-      />
-
-      <ПодтвердитьDialog
-        open={!!triggerОжиданиеУдалить}
-        onOpenChange={(next) => {
-          if (!next) setTriggerОжиданиеУдалить(null);
-        }}
-        title="Удалить trigger?"
-        description={
-          triggerОжиданиеУдалить
-            ? `"${triggerОжиданиеУдалить.label ?? triggerОжиданиеУдалить.kind}" will be removed. This can't be undone.`
-            : undefined
-        }
-        confirmLabel="Удалить"
-        destructive
-        busy={deleteTrigger.isОжидание}
-        onПодтвердить={() => {
-          if (triggerОжиданиеУдалить) deleteTrigger.mutate(triggerОжиданиеУдалить.id);
-        }}
+        isPending={runRoutine.isPending}
+        onSubmit={(data) => runRoutine.mutate(data)}
       />
     </div>
   );

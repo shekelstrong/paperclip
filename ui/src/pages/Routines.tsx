@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useПоискParams } from "@/lib/router";
+import { Link, useNavigate, useSearchParams } from "@/lib/router";
 import { ArrowUpDown, Check, ChevronDown, ChevronRight, Layers, Plus, Repeat } from "lucide-react";
 import { routinesApi } from "../api/routines";
 import { agentsApi } from "../api/agents";
@@ -8,29 +8,29 @@ import { projectsApi } from "../api/projects";
 import { issuesApi } from "../api/issues";
 import { heartbeatsApi } from "../api/heartbeats";
 import { accessApi } from "../api/access";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToastActions } from "../context/ToastContext";
 import { buildMarkdownMentionOptions } from "../lib/company-members";
-import { queryКлючs } from "../lib/queryКлючs";
+import { queryKeys } from "../lib/queryKeys";
 import { groupBy } from "../lib/groupBy";
-import { createЗадачаDetailLocationState } from "../lib/issueDetailBreadcrumb";
-import { collectLiveЗадачаIds } from "../lib/liveЗадачаIds";
-import { getRecentИсполнительIds, sortАгентыByRecency, trackRecentИсполнитель } from "../lib/recent-assignees";
+import { createIssueDetailLocationState } from "../lib/issueDetailBreadcrumb";
+import { collectLiveIssueIds } from "../lib/liveIssueIds";
+import { getRecentAssigneeIds, sortAgentsByRecency, trackRecentAssignee } from "../lib/recent-assignees";
 import { getRecentProjectIds, trackRecentProject } from "../lib/recent-projects";
 import { EmptyState } from "../components/EmptyState";
-import { ЗадачиList } from "../components/ЗадачиList";
+import { IssuesList } from "../components/IssuesList";
 import { PageSkeleton } from "../components/PageSkeleton";
 import { PageTabBar } from "../components/PageTabBar";
-import { АгентIcon } from "../components/АгентIconPicker";
+import { AgentIcon } from "../components/AgentIconPicker";
 import { InlineEntitySelector, type InlineEntityOption } from "../components/InlineEntitySelector";
-import { MarkdownИзменитьor, type MarkdownИзменитьorRef, type MentionOption } from "../components/MarkdownИзменитьor";
-import { ПроцедураListRow, nextПроцедураСтатус } from "../components/ПроцедураList";
+import { MarkdownEditor, type MarkdownEditorRef, type MentionOption } from "../components/MarkdownEditor";
+import { RoutineListRow, nextRoutineStatus } from "../components/RoutineList";
 import {
-  ПроцедураЗапуститьVariablesDialog,
-  type ПроцедураЗапуститьDialogОтправитьData,
-} from "../components/ПроцедураЗапуститьVariablesDialog";
-import { ПроцедураVariablesИзменитьor, ПроцедураVariablesHint } from "../components/ПроцедураVariablesИзменитьor";
+  RoutineRunVariablesDialog,
+  type RoutineRunDialogSubmitData,
+} from "../components/RoutineRunVariablesDialog";
+import { RoutineVariablesEditor, RoutineVariablesHint } from "../components/RoutineVariablesEditor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -41,19 +41,19 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectЗначение,
+  SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import type { ПроцедураListItem, ПроцедураVariable } from "@paperclipai/shared";
+import type { RoutineListItem, RoutineVariable } from "@paperclipai/shared";
 
 const concurrencyPolicies = ["coalesce_if_active", "always_enqueue", "skip_if_active"];
 const catchUpPolicies = ["skip_missed", "enqueue_missed_with_cap"];
-const concurrencyPolicyОписаниеs: Record<string, string> = {
+const concurrencyPolicyDescriptions: Record<string, string> = {
   coalesce_if_active: "If a run is already active, keep just one follow-up run queued.",
   always_enqueue: "Queue every trigger occurrence, even if the routine is already running.",
   skip_if_active: "Drop new trigger occurrences while a run is still active.",
 };
-const catchUpPolicyОписаниеs: Record<string, string> = {
+const catchUpPolicyDescriptions: Record<string, string> = {
   skip_missed: "Ignore windows that were missed while the scheduler or routine was paused.",
   enqueue_missed_with_cap: "Catch up missed schedule windows in capped batches after recovery.",
 };
@@ -64,46 +64,46 @@ function autoResizeTextarea(element: HTMLTextAreaElement | null) {
   element.style.height = `${element.scrollHeight}px`;
 }
 
-type ПроцедурыTab = "routines" | "runs";
-type ПроцедураGroupBy = "none" | "project" | "assignee";
-type ПроцедураСортировкаField = "updated" | "created" | "title" | "lastЗапустить";
-type ПроцедураСортировкаDir = "asc" | "desc";
+type RoutinesTab = "routines" | "runs";
+type RoutineGroupBy = "none" | "project" | "assignee";
+type RoutineSortField = "updated" | "created" | "title" | "lastRun";
+type RoutineSortDir = "asc" | "desc";
 
-type ПроцедураViewState = {
-  sortField: ПроцедураСортировкаField;
-  sortDir: ПроцедураСортировкаDir;
-  groupBy: ПроцедураGroupBy;
+type RoutineViewState = {
+  sortField: RoutineSortField;
+  sortDir: RoutineSortDir;
+  groupBy: RoutineGroupBy;
   collapsedGroups: string[];
 };
 
-type ПроцедураGroup = {
+type RoutineGroup = {
   key: string;
   label: string | null;
-  items: ПроцедураListItem[];
+  items: RoutineListItem[];
 };
 
-const defaultПроцедураViewState: ПроцедураViewState = {
+const defaultRoutineViewState: RoutineViewState = {
   sortField: "updated",
   sortDir: "desc",
   groupBy: "none",
   collapsedGroups: [],
 };
 
-function getПроцедураViewState(key: string): ПроцедураViewState {
+function getRoutineViewState(key: string): RoutineViewState {
   try {
     const raw = localStorage.getItem(key);
-    if (raw) return { ...defaultПроцедураViewState, ...JSON.parse(raw) };
+    if (raw) return { ...defaultRoutineViewState, ...JSON.parse(raw) };
   } catch {
     // Ignore malformed local state and fall back to defaults.
   }
-  return { ...defaultПроцедураViewState };
+  return { ...defaultRoutineViewState };
 }
 
-function saveПроцедураViewState(key: string, state: ПроцедураViewState) {
+function saveRoutineViewState(key: string, state: RoutineViewState) {
   localStorage.setItem(key, JSON.stringify(state));
 }
 
-function timestampЗначение(value: Date | string | null | undefined) {
+function timestampValue(value: Date | string | null | undefined) {
   if (!value) return Number.NEGATIVE_INFINITY;
   const timestamp = new Date(value).getTime();
   return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
@@ -113,68 +113,68 @@ function compareNullableText(left: string | null | undefined, right: string | nu
   return (left ?? "").localeCompare(right ?? "", undefined, { sensitivity: "base" });
 }
 
-function buildПроцедураMutationPayload(input: {
+function buildRoutineMutationPayload(input: {
   title: string;
   description: string;
   projectId: string;
-  assigneeАгентId: string;
+  assigneeAgentId: string;
   priority: string;
   concurrencyPolicy: string;
   catchUpPolicy: string;
-  variables: ПроцедураVariable[];
+  variables: RoutineVariable[];
 }) {
   return {
     ...input,
     description: input.description.trim() || null,
     projectId: input.projectId || null,
-    assigneeАгентId: input.assigneeАгентId || null,
+    assigneeAgentId: input.assigneeAgentId || null,
   };
 }
 
-export function buildПроцедураGroups(
-  routines: ПроцедураListItem[],
-  groupByЗначение: ПроцедураGroupBy,
+export function buildRoutineGroups(
+  routines: RoutineListItem[],
+  groupByValue: RoutineGroupBy,
   projectById: Map<string, { name: string }>,
   agentById: Map<string, { name: string }>,
-): ПроцедураGroup[] {
-  if (groupByЗначение === "none") {
+): RoutineGroup[] {
+  if (groupByValue === "none") {
     return [{ key: "__all", label: null, items: routines }];
   }
 
-  if (groupByЗначение === "project") {
+  if (groupByValue === "project") {
     const groups = groupBy(routines, (routine) => routine.projectId ?? "__no_project");
     return Object.keys(groups)
       .sort((left, right) => {
-        const leftLabel = left === "__no_project" ? "Нет project" : (projectById.get(left)?.name ?? "Неизвестно project");
-        const rightLabel = right === "__no_project" ? "Нет project" : (projectById.get(right)?.name ?? "Неизвестно project");
+        const leftLabel = left === "__no_project" ? "No project" : (projectById.get(left)?.name ?? "Unknown project");
+        const rightLabel = right === "__no_project" ? "No project" : (projectById.get(right)?.name ?? "Unknown project");
         return leftLabel.localeCompare(rightLabel);
       })
       .map((key) => ({
         key,
-        label: key === "__no_project" ? "Нет project" : (projectById.get(key)?.name ?? "Неизвестно project"),
+        label: key === "__no_project" ? "No project" : (projectById.get(key)?.name ?? "Unknown project"),
         items: groups[key]!,
       }));
   }
 
-  const groups = groupBy(routines, (routine) => routine.assigneeАгентId ?? "__unassigned");
+  const groups = groupBy(routines, (routine) => routine.assigneeAgentId ?? "__unassigned");
   return Object.keys(groups)
     .sort((left, right) => {
-      const leftLabel = left === "__unassigned" ? "Не назначен" : (agentById.get(left)?.name ?? "Неизвестно agent");
-      const rightLabel = right === "__unassigned" ? "Не назначен" : (agentById.get(right)?.name ?? "Неизвестно agent");
+      const leftLabel = left === "__unassigned" ? "Не назначен" : (agentById.get(left)?.name ?? "Unknown agent");
+      const rightLabel = right === "__unassigned" ? "Не назначен" : (agentById.get(right)?.name ?? "Unknown agent");
       return leftLabel.localeCompare(rightLabel);
     })
     .map((key) => ({
       key,
-      label: key === "__unassigned" ? "Не назначен" : (agentById.get(key)?.name ?? "Неизвестно agent"),
+      label: key === "__unassigned" ? "Не назначен" : (agentById.get(key)?.name ?? "Unknown agent"),
       items: groups[key]!,
     }));
 }
 
-export function sortПроцедуры(
-  routines: ПроцедураListItem[],
-  sortField: ПроцедураСортировкаField,
-  sortDir: ПроцедураСортировкаDir,
-): ПроцедураListItem[] {
+export function sortRoutines(
+  routines: RoutineListItem[],
+  sortField: RoutineSortField,
+  sortDir: RoutineSortDir,
+): RoutineListItem[] {
   const direction = sortDir === "asc" ? 1 : -1;
   return [...routines].sort((left, right) => {
     let result = 0;
@@ -182,12 +182,12 @@ export function sortПроцедуры(
     if (sortField === "title") {
       result = compareNullableText(left.title, right.title);
     } else if (sortField === "created") {
-      result = timestampЗначение(left.createdAt) - timestampЗначение(right.createdAt);
-    } else if (sortField === "lastЗапустить") {
-      result = timestampЗначение(left.lastЗапустить?.triggeredAt ?? left.lastTriggeredAt) -
-        timestampЗначение(right.lastЗапустить?.triggeredAt ?? right.lastTriggeredAt);
+      result = timestampValue(left.createdAt) - timestampValue(right.createdAt);
+    } else if (sortField === "lastRun") {
+      result = timestampValue(left.lastRun?.triggeredAt ?? left.lastTriggeredAt) -
+        timestampValue(right.lastRun?.triggeredAt ?? right.lastTriggeredAt);
     } else {
-      result = timestampЗначение(left.updatedAt) - timestampЗначение(right.updatedAt);
+      result = timestampValue(left.updatedAt) - timestampValue(right.updatedAt);
     }
 
     if (result !== 0) return result * direction;
@@ -195,88 +195,88 @@ export function sortПроцедуры(
   });
 }
 
-function buildПроцедурыTabHref(tab: ПроцедурыTab) {
+function buildRoutinesTabHref(tab: RoutinesTab) {
   return tab === "runs" ? "/routines?tab=runs" : "/routines";
 }
 
-export function Процедуры() {
-  const { selectedКомпанияId } = useКомпания();
+export function Routines() {
+  const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [searchParams] = useПоискParams();
+  const [searchParams] = useSearchParams();
   const { pushToast } = useToastActions();
-  const descriptionИзменитьorRef = useRef<MarkdownИзменитьorRef>(null);
+  const descriptionEditorRef = useRef<MarkdownEditorRef>(null);
   const titleInputRef = useRef<HTMLTextAreaElement | null>(null);
   const assigneeSelectorRef = useRef<HTMLButtonElement | null>(null);
   const projectSelectorRef = useRef<HTMLButtonElement | null>(null);
-  const [runningПроцедураId, setВыполняетсяПроцедураId] = useState<string | null>(null);
-  const [statusMutationПроцедураId, setСтатусMutationПроцедураId] = useState<string | null>(null);
-  const [runDialogПроцедура, setЗапуститьDialogПроцедура] = useState<ПроцедураListItem | null>(null);
+  const [runningRoutineId, setRunningRoutineId] = useState<string | null>(null);
+  const [statusMutationRoutineId, setStatusMutationRoutineId] = useState<string | null>(null);
+  const [runDialogRoutine, setRunDialogRoutine] = useState<RoutineListItem | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
-  const [advancedOpen, setДополнительноOpen] = useState(false);
-  const activeTab: ПроцедурыTab = searchParams.get("tab") === "runs" ? "runs" : "routines";
-  const [draft, setЧерновик] = useState<{
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const activeTab: RoutinesTab = searchParams.get("tab") === "runs" ? "runs" : "routines";
+  const [draft, setDraft] = useState<{
     title: string;
     description: string;
     projectId: string;
-    assigneeАгентId: string;
+    assigneeAgentId: string;
     priority: string;
     concurrencyPolicy: string;
     catchUpPolicy: string;
-    variables: ПроцедураVariable[];
+    variables: RoutineVariable[];
   }>({
     title: "",
     description: "",
     projectId: "",
-    assigneeАгентId: "",
+    assigneeAgentId: "",
     priority: "medium",
     concurrencyPolicy: "coalesce_if_active",
     catchUpPolicy: "skip_missed",
     variables: [],
   });
-  const routineViewStateКлюч = selectedКомпанияId
-    ? `paperclip:routines-view:${selectedКомпанияId}`
+  const routineViewStateKey = selectedCompanyId
+    ? `paperclip:routines-view:${selectedCompanyId}`
     : "paperclip:routines-view";
-  const [routineViewState, setПроцедураViewState] = useState<ПроцедураViewState>(() => getПроцедураViewState(routineViewStateКлюч));
+  const [routineViewState, setRoutineViewState] = useState<RoutineViewState>(() => getRoutineViewState(routineViewStateKey));
 
   useEffect(() => {
     setBreadcrumbs([{ label: "Процедуры" }]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
-    setПроцедураViewState(getПроцедураViewState(routineViewStateКлюч));
-  }, [routineViewStateКлюч]);
+    setRoutineViewState(getRoutineViewState(routineViewStateKey));
+  }, [routineViewStateKey]);
 
-  const { data: routines, isЗагрузка, error } = useQuery({
-    queryКлюч: queryКлючs.routines.list(selectedКомпанияId!),
-    queryFn: () => routinesApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+  const { data: routines, isLoading, error } = useQuery({
+    queryKey: queryKeys.routines.list(selectedCompanyId!),
+    queryFn: () => routinesApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
   const { data: agents } = useQuery({
-    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
-    queryFn: () => agentsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.agents.list(selectedCompanyId!),
+    queryFn: () => agentsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
   const { data: projects } = useQuery({
-    queryКлюч: queryКлючs.projects.list(selectedКомпанияId!),
-    queryFn: () => projectsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.projects.list(selectedCompanyId!),
+    queryFn: () => projectsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
   const { data: companyMembers } = useQuery({
-    queryКлюч: queryКлючs.access.companyUserDirectory(selectedКомпанияId!),
-    queryFn: () => accessApi.listUserDirectory(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.access.companyUserDirectory(selectedCompanyId!),
+    queryFn: () => accessApi.listUserDirectory(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
-  const { data: routineExecutionЗадачи, isЗагрузка: recentЗапуститьsЗагрузка, error: recentЗапуститьsОшибка } = useQuery({
-    queryКлюч: [...queryКлючs.issues.list(selectedКомпанияId!), "routine-executions"],
-    queryFn: () => issuesApi.list(selectedКомпанияId!, { originKind: "routine_execution" }),
-    enabled: !!selectedКомпанияId && activeTab === "runs",
+  const { data: routineExecutionIssues, isLoading: recentRunsLoading, error: recentRunsError } = useQuery({
+    queryKey: [...queryKeys.issues.list(selectedCompanyId!), "routine-executions"],
+    queryFn: () => issuesApi.list(selectedCompanyId!, { originKind: "routine_execution" }),
+    enabled: !!selectedCompanyId && activeTab === "runs",
   });
-  const { data: liveЗапуститьs } = useQuery({
-    queryКлюч: queryКлючs.liveЗапуститьs(selectedКомпанияId!),
-    queryFn: () => heartbeatsApi.liveЗапуститьsForКомпания(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId && activeTab === "runs",
+  const { data: liveRuns } = useQuery({
+    queryKey: queryKeys.liveRuns(selectedCompanyId!),
+    queryFn: () => heartbeatsApi.liveRunsForCompany(selectedCompanyId!),
+    enabled: !!selectedCompanyId && activeTab === "runs",
     refetchInterval: 5000,
   });
 
@@ -292,112 +292,112 @@ export function Процедуры() {
     });
   }, [agents, companyMembers?.users, projects]);
 
-  const createПроцедура = useMutation({
+  const createRoutine = useMutation({
     mutationFn: () =>
-      routinesApi.create(selectedКомпанияId!, buildПроцедураMutationPayload(draft)),
-    onУспешно: async (routine) => {
-      setЧерновик({
+      routinesApi.create(selectedCompanyId!, buildRoutineMutationPayload(draft)),
+    onSuccess: async (routine) => {
+      setDraft({
         title: "",
         description: "",
         projectId: "",
-        assigneeАгентId: "",
+        assigneeAgentId: "",
         priority: "medium",
         concurrencyPolicy: "coalesce_if_active",
         catchUpPolicy: "skip_missed",
         variables: [],
       });
       setComposerOpen(false);
-      setДополнительноOpen(false);
-      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(selectedКомпанияId!) });
+      setAdvancedOpen(false);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) });
       pushToast({
-        title: "Процедура создана",
-        body: routine.assigneeАгентId
-          ? "Добавить the first trigger to turn it into a live workflow."
-          : "Черновик saved. Добавить a default agent before enabling automation.",
+        title: "Routine created",
+        body: routine.assigneeAgentId
+          ? "Add the first trigger to turn it into a live workflow."
+          : "Draft saved. Add a default agent before enabling automation.",
         tone: "success",
       });
       navigate(`/routines/${routine.id}?tab=triggers`);
     },
   });
-  const updateЗадача = useMutation({
+  const updateIssue = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       issuesApi.update(id, data),
-    onУспешно: async () => {
-      await queryClient.invalidateQueries({ queryКлюч: [...queryКлючs.issues.list(selectedКомпанияId!), "routine-executions"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: [...queryKeys.issues.list(selectedCompanyId!), "routine-executions"] });
     },
   });
 
-  const updateПроцедураСтатус = useMutation({
+  const updateRoutineStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => routinesApi.update(id, { status }),
     onMutate: ({ id }) => {
-      setСтатусMutationПроцедураId(id);
+      setStatusMutationRoutineId(id);
     },
-    onУспешно: async (_, variables) => {
+    onSuccess: async (_, variables) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(selectedКомпанияId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(variables.id) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(variables.id) }),
       ]);
     },
     onSettled: () => {
-      setСтатусMutationПроцедураId(null);
+      setStatusMutationRoutineId(null);
     },
-    onОшибка: (mutationОшибка) => {
+    onError: (mutationError) => {
       pushToast({
-        title: "Ошибка to update routine",
-        body: mutationОшибка instanceof Ошибка ? mutationОшибка.message : "Paperclip could not update the routine.",
+        title: "Failed to update routine",
+        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not update the routine.",
         tone: "error",
       });
     },
   });
 
-  const runПроцедура = useMutation({
-    mutationFn: ({ id, data }: { id: string; data?: ПроцедураЗапуститьDialogОтправитьData }) => routinesApi.run(id, {
+  const runRoutine = useMutation({
+    mutationFn: ({ id, data }: { id: string; data?: RoutineRunDialogSubmitData }) => routinesApi.run(id, {
       ...(data?.variables && Object.keys(data.variables).length > 0 ? { variables: data.variables } : {}),
-      ...(data?.assigneeАгентId !== undefined ? { assigneeАгентId: data.assigneeАгентId } : {}),
+      ...(data?.assigneeAgentId !== undefined ? { assigneeAgentId: data.assigneeAgentId } : {}),
       ...(data?.projectId !== undefined ? { projectId: data.projectId } : {}),
-      ...(data?.executionРабочая областьId !== undefined ? { executionРабочая областьId: data.executionРабочая областьId } : {}),
-      ...(data?.executionРабочая областьPreference !== undefined
-        ? { executionРабочая областьPreference: data.executionРабочая областьPreference }
+      ...(data?.executionWorkspaceId !== undefined ? { executionWorkspaceId: data.executionWorkspaceId } : {}),
+      ...(data?.executionWorkspacePreference !== undefined
+        ? { executionWorkspacePreference: data.executionWorkspacePreference }
         : {}),
-      ...(data?.executionРабочая областьНастройки !== undefined
-        ? { executionРабочая областьНастройки: data.executionРабочая областьНастройки }
+      ...(data?.executionWorkspaceSettings !== undefined
+        ? { executionWorkspaceSettings: data.executionWorkspaceSettings }
         : {}),
     }),
     onMutate: ({ id }) => {
-      setВыполняетсяПроцедураId(id);
+      setRunningRoutineId(id);
     },
-    onУспешно: async (_, { id }) => {
-      setЗапуститьDialogПроцедура(null);
+    onSuccess: async (_, { id }) => {
+      setRunDialogRoutine(null);
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(selectedКомпанияId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(id) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(id) }),
       ]);
     },
     onSettled: () => {
-      setВыполняетсяПроцедураId(null);
+      setRunningRoutineId(null);
     },
-    onОшибка: (mutationОшибка) => {
+    onError: (mutationError) => {
       pushToast({
-        title: "Запуск процедуры не удался",
-        body: mutationОшибка instanceof Ошибка ? mutationОшибка.message : "Paperclip could not start the routine run.",
+        title: "Routine run failed",
+        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not start the routine run.",
         tone: "error",
       });
     },
   });
 
-  const recentИсполнительIds = useMemo(() => getRecentИсполнительIds(), [composerOpen]);
+  const recentAssigneeIds = useMemo(() => getRecentAssigneeIds(), [composerOpen]);
   const recentProjectIds = useMemo(() => getRecentProjectIds(), [composerOpen]);
   const assigneeOptions = useMemo<InlineEntityOption[]>(
     () =>
-      sortАгентыByRecency(
+      sortAgentsByRecency(
         (agents ?? []).filter((agent) => agent.status !== "terminated"),
-        recentИсполнительIds,
+        recentAssigneeIds,
       ).map((agent) => ({
         id: agent.id,
         label: agent.name,
         searchText: `${agent.name} ${agent.role} ${agent.title ?? ""}`,
       })),
-    [agents, recentИсполнительIds],
+    [agents, recentAssigneeIds],
   );
   const projectOptions = useMemo<InlineEntityOption[]>(
     () =>
@@ -416,31 +416,31 @@ export function Процедуры() {
     () => new Map((projects ?? []).map((project) => [project.id, project])),
     [projects],
   );
-  const liveЗадачаIds = useMemo(() => collectLiveЗадачаIds(liveЗапуститьs), [liveЗапуститьs]);
-  const sortedПроцедуры = useMemo(
-    () => sortПроцедуры(routines ?? [], routineViewState.sortField, routineViewState.sortDir),
+  const liveIssueIds = useMemo(() => collectLiveIssueIds(liveRuns), [liveRuns]);
+  const sortedRoutines = useMemo(
+    () => sortRoutines(routines ?? [], routineViewState.sortField, routineViewState.sortDir),
     [routineViewState.sortDir, routineViewState.sortField, routines],
   );
   const routineGroups = useMemo(
-    () => buildПроцедураGroups(sortedПроцедуры, routineViewState.groupBy, projectById, agentById),
-    [agentById, projectById, routineViewState.groupBy, sortedПроцедуры],
+    () => buildRoutineGroups(sortedRoutines, routineViewState.groupBy, projectById, agentById),
+    [agentById, projectById, routineViewState.groupBy, sortedRoutines],
   );
-  const recentЗапуститьsЗадачаLinkState = useMemo(
+  const recentRunsIssueLinkState = useMemo(
     () =>
-      createЗадачаDetailLocationState(
-        "Недавние запуски",
-        buildПроцедурыTabHref("runs"),
+      createIssueDetailLocationState(
+        "Recent Runs",
+        buildRoutinesTabHref("runs"),
         "issues",
       ),
     [],
   );
-  const currentИсполнитель = draft.assigneeАгентId ? agentById.get(draft.assigneeАгентId) ?? null : null;
+  const currentAssignee = draft.assigneeAgentId ? agentById.get(draft.assigneeAgentId) ?? null : null;
   const currentProject = draft.projectId ? projectById.get(draft.projectId) ?? null : null;
 
-  function updateПроцедураView(patch: Partial<ПроцедураViewState>) {
-    setПроцедураViewState((current) => {
+  function updateRoutineView(patch: Partial<RoutineViewState>) {
+    setRoutineViewState((current) => {
       const next = { ...current, ...patch };
-      saveПроцедураViewState(routineViewStateКлюч, next);
+      saveRoutineViewState(routineViewStateKey, next);
       return next;
     });
   }
@@ -448,101 +448,101 @@ export function Процедуры() {
   function handleTabChange(tab: string) {
     const nextTab = tab === "runs" ? "runs" : "routines";
     startTransition(() => {
-      navigate(buildПроцедурыTabHref(nextTab));
+      navigate(buildRoutinesTabHref(nextTab));
     });
   }
 
-  function handleЗапуститьСейчас(routine: ПроцедураListItem) {
-    setЗапуститьDialogПроцедура(routine);
+  function handleRunNow(routine: RoutineListItem) {
+    setRunDialogRoutine(routine);
   }
 
-  function handleToggleВключитьd(routine: ПроцедураListItem, enabled: boolean) {
-    if (!enabled && !routine.assigneeАгентId) {
+  function handleToggleEnabled(routine: RoutineListItem, enabled: boolean) {
+    if (!enabled && !routine.assigneeAgentId) {
       pushToast({
-        title: "Требуется агент по умолчанию",
+        title: "Default agent required",
         body: "Set a default agent before enabling routine automation.",
         tone: "warn",
       });
       return;
     }
-    updateПроцедураСтатус.mutate({
+    updateRoutineStatus.mutate({
       id: routine.id,
-      status: nextПроцедураСтатус(routine.status, !enabled),
+      status: nextRoutineStatus(routine.status, !enabled),
     });
   }
 
-  function handleToggleАрхивирован(routine: ПроцедураListItem) {
-    updateПроцедураСтатус.mutate({
+  function handleToggleArchived(routine: RoutineListItem) {
+    updateRoutineStatus.mutate({
       id: routine.id,
       status: routine.status === "archived" ? "active" : "archived",
     });
   }
 
-  if (!selectedКомпанияId) {
+  if (!selectedCompanyId) {
     return <EmptyState icon={Repeat} message="Select a company to view routines." />;
   }
 
-  if (isЗагрузка) {
+  if (isLoading) {
     return <PageSkeleton variant="issues-list" />;
   }
 
   return (
-    <div classИмя="space-y-6">
-      <div classИмя="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div classИмя="space-y-1">
-          <h1 classИмя="text-2xl font-semibold tracking-tight">
-            Процедуры
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Routines
           </h1>
-          <p classИмя="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Recurring work definitions that materialize into auditable execution issues.
           </p>
         </div>
         <Button onClick={() => setComposerOpen(true)}>
-          <Plus classИмя="mr-2 h-4 w-4" />
-          Создать routine
+          <Plus className="mr-2 h-4 w-4" />
+          Create routine
         </Button>
       </div>
 
-      <Tabs value={activeTab} onЗначениеChange={handleTabChange}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <PageTabBar
           align="start"
           value={activeTab}
-          onЗначениеChange={handleTabChange}
+          onValueChange={handleTabChange}
           items={[
             { value: "routines", label: "Процедуры" },
-            { value: "runs", label: "Недавние запуски" },
+            { value: "runs", label: "Recent Runs" },
           ]}
         />
-        <TabsContent value="routines" classИмя="space-y-4">
-          <div classИмя="flex items-center justify-between gap-3">
-            <p classИмя="text-sm text-muted-foreground">
+        <TabsContent value="routines" className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
               {(routines ?? []).length} routine{(routines ?? []).length === 1 ? "" : "s"}
             </p>
-            <div classИмя="flex items-center gap-1">
+            <div className="flex items-center gap-1">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" classИмя="text-xs" title="Сортировка">
-                    <ArrowUpDown classИмя="h-3.5 w-3.5 sm:h-3 sm:w-3 sm:mr-1" />
-                    <span classИмя="hidden sm:inline">Сортировка</span>
+                  <Button variant="ghost" size="sm" className="text-xs" title="Сортировка">
+                    <ArrowUpDown className="h-3.5 w-3.5 sm:h-3 sm:w-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Sort</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" classИмя="w-44 p-0">
-                  <div classИмя="p-2 space-y-0.5">
+                <PopoverContent align="end" className="w-44 p-0">
+                  <div className="p-2 space-y-0.5">
                     {([
-                      ["updated", "Обновлено"],
-                      ["created", "Создано"],
-                      ["lastЗапустить", "Last run"],
+                      ["updated", "Updated"],
+                      ["created", "Created"],
+                      ["lastRun", "Last run"],
                       ["title", "Название"],
                     ] as const).map(([field, label]) => (
                       <button
                         key={field}
-                        classИмя={`flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm ${
+                        className={`flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm ${
                           routineViewState.sortField === field
                             ? "bg-accent/50 text-foreground"
                             : "text-muted-foreground hover:bg-accent/50"
                         }`}
                         onClick={() => {
-                          updateПроцедураView(
+                          updateRoutineView(
                             routineViewState.sortField === field
                               ? { sortDir: routineViewState.sortDir === "asc" ? "desc" : "asc" }
                               : { sortField: field, sortDir: field === "title" ? "asc" : "desc" },
@@ -551,7 +551,7 @@ export function Процедуры() {
                       >
                         <span>{label}</span>
                         {routineViewState.sortField === field ? (
-                          <span classИмя="text-xs text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {routineViewState.sortDir === "asc" ? "Asc" : "Desc"}
                           </span>
                         ) : null}
@@ -562,13 +562,13 @@ export function Процедуры() {
               </Popover>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" classИмя="text-xs" title="Group">
-                    <Layers classИмя="h-3.5 w-3.5 sm:h-3 sm:w-3 sm:mr-1" />
-                    <span classИмя="hidden sm:inline">Group</span>
+                  <Button variant="ghost" size="sm" className="text-xs" title="Group">
+                    <Layers className="h-3.5 w-3.5 sm:h-3 sm:w-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Group</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" classИмя="w-44 p-0">
-                  <div classИмя="p-2 space-y-0.5">
+                <PopoverContent align="end" className="w-44 p-0">
+                  <div className="p-2 space-y-0.5">
                     {([
                       ["project", "Project"],
                       ["assignee", "Агент"],
@@ -576,15 +576,15 @@ export function Процедуры() {
                     ] as const).map(([value, label]) => (
                       <button
                         key={value}
-                        classИмя={`flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm ${
+                        className={`flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm ${
                           routineViewState.groupBy === value
                             ? "bg-accent/50 text-foreground"
                             : "text-muted-foreground hover:bg-accent/50"
                         }`}
-                        onClick={() => updateПроцедураView({ groupBy: value, collapsedGroups: [] })}
+                        onClick={() => updateRoutineView({ groupBy: value, collapsedGroups: [] })}
                       >
                         <span>{label}</span>
-                        {routineViewState.groupBy === value ? <Check classИмя="h-3.5 w-3.5" /> : null}
+                        {routineViewState.groupBy === value ? <Check className="h-3.5 w-3.5" /> : null}
                       </button>
                     ))}
                   </div>
@@ -594,16 +594,16 @@ export function Процедуры() {
           </div>
         </TabsContent>
         <TabsContent value="runs">
-          <ЗадачиList
-            issues={routineExecutionЗадачи ?? []}
-            isЗагрузка={recentЗапуститьsЗагрузка}
-            error={recentЗапуститьsОшибка as Ошибка | null}
+          <IssuesList
+            issues={routineExecutionIssues ?? []}
+            isLoading={recentRunsLoading}
+            error={recentRunsError as Error | null}
             agents={agents}
             projects={projects}
-            liveЗадачаIds={liveЗадачаIds}
-            viewStateКлюч="paperclip:routine-recent-runs-view"
-            issueLinkState={recentЗапуститьsЗадачаLinkState}
-            onОбновитьЗадача={(id, data) => updateЗадача.mutate({ id, data })}
+            liveIssueIds={liveIssueIds}
+            viewStateKey="paperclip:routine-recent-runs-view"
+            issueLinkState={recentRunsIssueLinkState}
+            onUpdateIssue={(id, data) => updateIssue.mutate({ id, data })}
           />
         </TabsContent>
       </Tabs>
@@ -611,20 +611,20 @@ export function Процедуры() {
       <Dialog
         open={composerOpen}
         onOpenChange={(open) => {
-          if (!createПроцедура.isОжидание) {
+          if (!createRoutine.isPending) {
             setComposerOpen(open);
           }
         }}
       >
         <DialogContent
-          showЗакрытьButton={false}
-          classИмя="flex max-h-[calc(100dvh-2rem)] max-w-3xl flex-col gap-0 overflow-hidden p-0"
+          showCloseButton={false}
+          className="flex max-h-[calc(100dvh-2rem)] max-w-3xl flex-col gap-0 overflow-hidden p-0"
         >
-          <div classИмя="shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-3">
+          <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-3">
             <div>
-              <p classИмя="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Новая процедура</p>
-              <p classИмя="text-sm text-muted-foreground">
-                Define the recurring work first. По умолчанию project and agent are optional for draft routines.
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">New routine</p>
+              <p className="text-sm text-muted-foreground">
+                Define the recurring work first. Default project and agent are optional for draft routines.
               </p>
             </div>
             <Button
@@ -632,37 +632,37 @@ export function Процедуры() {
               size="sm"
               onClick={() => {
                 setComposerOpen(false);
-                setДополнительноOpen(false);
+                setAdvancedOpen(false);
               }}
-              disabled={createПроцедура.isОжидание}
+              disabled={createRoutine.isPending}
             >
-              Отмена
+              Cancel
             </Button>
           </div>
 
-          <div classИмя="min-h-0 flex-1 overflow-y-auto">
-            <div classИмя="px-5 pt-5 pb-3">
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="px-5 pt-5 pb-3">
               <textarea
                 ref={titleInputRef}
-                classИмя="w-full resize-none overflow-hidden bg-transparent text-xl font-semibold outline-none placeholder:text-muted-foreground/50"
-                placeholder="Процедура title"
+                className="w-full resize-none overflow-hidden bg-transparent text-xl font-semibold outline-none placeholder:text-muted-foreground/50"
+                placeholder="Routine title"
                 rows={1}
                 value={draft.title}
                 onChange={(event) => {
-                  setЧерновик((current) => ({ ...current, title: event.target.value }));
+                  setDraft((current) => ({ ...current, title: event.target.value }));
                   autoResizeTextarea(event.target);
                 }}
-                onКлючDown={(event) => {
-                  if (event.key === "Enter" && !event.metaКлюч && !event.ctrlКлюч && !event.nativeEvent.isComposing) {
-                    event.preventПо умолчанию();
-                    descriptionИзменитьorRef.current?.focus();
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.metaKey && !event.ctrlKey && !event.nativeEvent.isComposing) {
+                    event.preventDefault();
+                    descriptionEditorRef.current?.focus();
                     return;
                   }
-                  if (event.key === "Tab" && !event.shiftКлюч) {
-                    event.preventПо умолчанию();
-                    if (draft.assigneeАгентId) {
+                  if (event.key === "Tab" && !event.shiftKey) {
+                    event.preventDefault();
+                    if (draft.assigneeAgentId) {
                       if (draft.projectId) {
-                        descriptionИзменитьorRef.current?.focus();
+                        descriptionEditorRef.current?.focus();
                       } else {
                         projectSelectorRef.current?.focus();
                       }
@@ -675,51 +675,51 @@ export function Процедуры() {
               />
             </div>
 
-            <div classИмя="px-5 pb-3">
-              <div classИмя="overflow-x-auto overscroll-x-contain">
-                <div classИмя="inline-flex min-w-full flex-wrap items-center gap-2 text-sm text-muted-foreground sm:min-w-max sm:flex-nowrap">
+            <div className="px-5 pb-3">
+              <div className="overflow-x-auto overscroll-x-contain">
+                <div className="inline-flex min-w-full flex-wrap items-center gap-2 text-sm text-muted-foreground sm:min-w-max sm:flex-nowrap">
                   <span>For</span>
                   <InlineEntitySelector
                     ref={assigneeSelectorRef}
-                    value={draft.assigneeАгентId}
+                    value={draft.assigneeAgentId}
                     options={assigneeOptions}
-                    recentOptionIds={recentИсполнительIds}
+                    recentOptionIds={recentAssigneeIds}
                     placeholder="Исполнитель"
-                    noneLabel="Нет assignee"
-                    searchPlaceholder="Поиск assignees..."
-                    emptyMessage="Нет assignees found."
-                    onChange={(assigneeАгентId) => {
-                      if (assigneeАгентId) trackRecentИсполнитель(assigneeАгентId);
-                      setЧерновик((current) => ({ ...current, assigneeАгентId }));
+                    noneLabel="No assignee"
+                    searchPlaceholder="Search assignees..."
+                    emptyMessage="No assignees found."
+                    onChange={(assigneeAgentId) => {
+                      if (assigneeAgentId) trackRecentAssignee(assigneeAgentId);
+                      setDraft((current) => ({ ...current, assigneeAgentId }));
                     }}
-                    onПодтвердить={() => {
+                    onConfirm={() => {
                       if (draft.projectId) {
-                        descriptionИзменитьorRef.current?.focus();
+                        descriptionEditorRef.current?.focus();
                       } else {
                         projectSelectorRef.current?.focus();
                       }
                     }}
-                    renderTriggerЗначение={(option) =>
+                    renderTriggerValue={(option) =>
                       option ? (
-                        currentИсполнитель ? (
+                        currentAssignee ? (
                           <>
-                            <АгентIcon icon={currentИсполнитель.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                            <span classИмя="truncate">{option.label}</span>
+                            <AgentIcon icon={currentAssignee.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <span className="truncate">{option.label}</span>
                           </>
                         ) : (
-                          <span classИмя="truncate">{option.label}</span>
+                          <span className="truncate">{option.label}</span>
                         )
                       ) : (
-                        <span classИмя="text-muted-foreground">Исполнитель</span>
+                        <span className="text-muted-foreground">Assignee</span>
                       )
                     }
                     renderOption={(option) => {
-                      if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+                      if (!option.id) return <span className="truncate">{option.label}</span>;
                       const assignee = agentById.get(option.id);
                       return (
                         <>
-                          {assignee ? <АгентIcon icon={assignee.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
-                          <span classИмя="truncate">{option.label}</span>
+                          {assignee ? <AgentIcon icon={assignee.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                          <span className="truncate">{option.label}</span>
                         </>
                       );
                     }}
@@ -731,37 +731,37 @@ export function Процедуры() {
                     options={projectOptions}
                     recentOptionIds={recentProjectIds}
                     placeholder="Project"
-                    noneLabel="Нет project"
-                    searchPlaceholder="Поиск projects..."
-                    emptyMessage="Проекты не найдены."
+                    noneLabel="No project"
+                    searchPlaceholder="Search projects..."
+                    emptyMessage="No projects found."
                     onChange={(projectId) => {
                       if (projectId) trackRecentProject(projectId);
-                      setЧерновик((current) => ({ ...current, projectId }));
+                      setDraft((current) => ({ ...current, projectId }));
                     }}
-                    onПодтвердить={() => descriptionИзменитьorRef.current?.focus()}
-                    renderTriggerЗначение={(option) =>
+                    onConfirm={() => descriptionEditorRef.current?.focus()}
+                    renderTriggerValue={(option) =>
                       option && currentProject ? (
                         <>
                           <span
-                            classИмя="h-3.5 w-3.5 shrink-0 rounded-sm"
+                            className="h-3.5 w-3.5 shrink-0 rounded-sm"
                             style={{ backgroundColor: currentProject.color ?? "#64748b" }}
                           />
-                          <span classИмя="truncate">{option.label}</span>
+                          <span className="truncate">{option.label}</span>
                         </>
                       ) : (
-                        <span classИмя="text-muted-foreground">Project</span>
+                        <span className="text-muted-foreground">Project</span>
                       )
                     }
                     renderOption={(option) => {
-                      if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+                      if (!option.id) return <span className="truncate">{option.label}</span>;
                       const project = projectById.get(option.id);
                       return (
                         <>
                           <span
-                            classИмя="h-3.5 w-3.5 shrink-0 rounded-sm"
+                            className="h-3.5 w-3.5 shrink-0 rounded-sm"
                             style={{ backgroundColor: project?.color ?? "#64748b" }}
                           />
-                          <span classИмя="truncate">{option.label}</span>
+                          <span className="truncate">{option.label}</span>
                         </>
                       );
                     }}
@@ -770,67 +770,67 @@ export function Процедуры() {
               </div>
             </div>
 
-            <div classИмя="border-t border-border/60 px-5 py-4">
-              <MarkdownИзменитьor
-                ref={descriptionИзменитьorRef}
+            <div className="border-t border-border/60 px-5 py-4">
+              <MarkdownEditor
+                ref={descriptionEditorRef}
                 value={draft.description}
-                onChange={(description) => setЧерновик((current) => ({ ...current, description }))}
-                placeholder="Добавить instructions..."
+                onChange={(description) => setDraft((current) => ({ ...current, description }))}
+                placeholder="Add instructions..."
                 bordered={false}
-                contentClassИмя="min-h-[160px] text-sm text-muted-foreground"
+                contentClassName="min-h-[160px] text-sm text-muted-foreground"
                 mentions={mentionOptions}
-                onОтправить={() => {
-                  if (!createПроцедура.isОжидание && draft.title.trim() && draft.projectId && draft.assigneeАгентId) {
-                    createПроцедура.mutate();
+                onSubmit={() => {
+                  if (!createRoutine.isPending && draft.title.trim() && draft.projectId && draft.assigneeAgentId) {
+                    createRoutine.mutate();
                   }
                 }}
               />
             </div>
 
-            <div classИмя="border-t border-border/60 px-5 py-3">
-              <Collapsible open={advancedOpen} onOpenChange={setДополнительноOpen}>
-                <CollapsibleTrigger classИмя="flex w-full items-center justify-between text-left">
+            <div className="border-t border-border/60 px-5 py-3">
+              <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
                   <div>
-                    <p classИмя="text-sm font-medium">Дополнительно delivery settings</p>
-                    <p classИмя="text-sm text-muted-foreground">Keep policy controls secondary to the work definition.</p>
+                    <p className="text-sm font-medium">Advanced delivery settings</p>
+                    <p className="text-sm text-muted-foreground">Keep policy controls secondary to the work definition.</p>
                   </div>
-                  {advancedOpen ? <ChevronDown classИмя="h-4 w-4 text-muted-foreground" /> : <ChevronRight classИмя="h-4 w-4 text-muted-foreground" />}
+                  {advancedOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                 </CollapsibleTrigger>
-                <CollapsibleContent classИмя="pt-3">
-                  <div classИмя="grid gap-4 md:grid-cols-2">
-                    <div classИмя="space-y-2">
-                      <p classИмя="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Concurrency</p>
+                <CollapsibleContent className="pt-3">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Concurrency</p>
                       <Select
                         value={draft.concurrencyPolicy}
-                        onЗначениеChange={(concurrencyPolicy) => setЧерновик((current) => ({ ...current, concurrencyPolicy }))}
+                        onValueChange={(concurrencyPolicy) => setDraft((current) => ({ ...current, concurrencyPolicy }))}
                       >
                         <SelectTrigger>
-                          <SelectЗначение />
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {concurrencyPolicies.map((value) => (
-                            <SelectItem key={value} value={value}>{value.replaceВсе("_", " ")}</SelectItem>
+                            <SelectItem key={value} value={value}>{value.replaceAll("_", " ")}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <p classИмя="text-xs text-muted-foreground">{concurrencyPolicyОписаниеs[draft.concurrencyPolicy]}</p>
+                      <p className="text-xs text-muted-foreground">{concurrencyPolicyDescriptions[draft.concurrencyPolicy]}</p>
                     </div>
-                    <div classИмя="space-y-2">
-                      <p classИмя="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Catch-up</p>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Catch-up</p>
                       <Select
                         value={draft.catchUpPolicy}
-                        onЗначениеChange={(catchUpPolicy) => setЧерновик((current) => ({ ...current, catchUpPolicy }))}
+                        onValueChange={(catchUpPolicy) => setDraft((current) => ({ ...current, catchUpPolicy }))}
                       >
                         <SelectTrigger>
-                          <SelectЗначение />
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {catchUpPolicies.map((value) => (
-                            <SelectItem key={value} value={value}>{value.replaceВсе("_", " ")}</SelectItem>
+                            <SelectItem key={value} value={value}>{value.replaceAll("_", " ")}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <p classИмя="text-xs text-muted-foreground">{catchUpPolicyОписаниеs[draft.catchUpPolicy]}</p>
+                      <p className="text-xs text-muted-foreground">{catchUpPolicyDescriptions[draft.catchUpPolicy]}</p>
                     </div>
                   </div>
                 </CollapsibleContent>
@@ -838,24 +838,24 @@ export function Процедуры() {
             </div>
           </div>
 
-          <div classИмя="shrink-0 flex flex-col gap-3 border-t border-border/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div classИмя="text-sm text-muted-foreground">
-              After creation, Paperclip takes you straight to trigger setup. Черновик routines stay paused until you add a default agent.
+          <div className="shrink-0 flex flex-col gap-3 border-t border-border/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-muted-foreground">
+              After creation, Paperclip takes you straight to trigger setup. Draft routines stay paused until you add a default agent.
             </div>
-            <div classИмя="flex flex-col gap-2 sm:items-end">
+            <div className="flex flex-col gap-2 sm:items-end">
               <Button
-                onClick={() => createПроцедура.mutate()}
+                onClick={() => createRoutine.mutate()}
                 disabled={
-                  createПроцедура.isОжидание ||
+                  createRoutine.isPending ||
                   !draft.title.trim()
                 }
               >
-                <Plus classИмя="mr-2 h-4 w-4" />
-                {createПроцедура.isОжидание ? "Creating..." : "Создать routine"}
+                <Plus className="mr-2 h-4 w-4" />
+                {createRoutine.isPending ? "Creating..." : "Create routine"}
               </Button>
-              {createПроцедура.isОшибка ? (
-                <p classИмя="text-sm text-destructive">
-                  {createПроцедура.error instanceof Ошибка ? createПроцедура.error.message : "Ошибка to create routine"}
+              {createRoutine.isError ? (
+                <p className="text-sm text-destructive">
+                  {createRoutine.error instanceof Error ? createRoutine.error.message : "Failed to create routine"}
                 </p>
               ) : null}
             </div>
@@ -865,8 +865,8 @@ export function Процедуры() {
 
       {error ? (
         <Card>
-          <CardContent classИмя="pt-6 text-sm text-destructive">
-            {error instanceof Ошибка ? error.message : "Ошибка to load routines"}
+          <CardContent className="pt-6 text-sm text-destructive">
+            {error instanceof Error ? error.message : "Failed to load routines"}
           </CardContent>
         </Card>
       ) : null}
@@ -874,20 +874,20 @@ export function Процедуры() {
       {activeTab === "routines" ? (
         <div>
           {(routines ?? []).length === 0 ? (
-            <div classИмя="py-12">
+            <div className="py-12">
               <EmptyState
                 icon={Repeat}
-                message="Пока нет процедур. Use Создать routine to define the first recurring workflow."
+                message="No routines yet. Use Create routine to define the first recurring workflow."
               />
             </div>
           ) : (
-            <div classИмя="rounded-lg border border-border">
+            <div className="rounded-lg border border-border">
               {routineGroups.map((group) => (
                 <Collapsible
                   key={group.key}
                   open={!routineViewState.collapsedGroups.includes(group.key)}
                   onOpenChange={(open) => {
-                    updateПроцедураView({
+                    updateRoutineView({
                       collapsedGroups: open
                         ? routineViewState.collapsedGroups.filter((item) => item !== group.key)
                         : [...routineViewState.collapsedGroups, group.key],
@@ -895,32 +895,32 @@ export function Процедуры() {
                   }}
                 >
                   {group.label ? (
-                    <div classИмя="flex items-center gap-2 border-b border-border px-3 py-2">
-                      <CollapsibleTrigger classИмя="flex items-center gap-1.5">
-                        <ChevronRight classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-90" />
-                        <span classИмя="text-sm font-semibold uppercase tracking-wide">
+                    <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                      <CollapsibleTrigger className="flex items-center gap-1.5">
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-90" />
+                        <span className="text-sm font-semibold uppercase tracking-wide">
                           {group.label}
                         </span>
                       </CollapsibleTrigger>
-                      <span classИмя="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         {group.items.length}
                       </span>
                     </div>
                   ) : null}
                   <CollapsibleContent>
                     {group.items.map((routine) => (
-                      <ПроцедураListRow
+                      <RoutineListRow
                         key={routine.id}
                         routine={routine}
                         projectById={projectById}
                         agentById={agentById}
-                        runningПроцедураId={runningПроцедураId}
-                        statusMutationПроцедураId={statusMutationПроцедураId}
+                        runningRoutineId={runningRoutineId}
+                        statusMutationRoutineId={statusMutationRoutineId}
                         href={`/routines/${routine.id}`}
-                        runСейчасButton
-                        onЗапуститьСейчас={handleЗапуститьСейчас}
-                        onToggleВключитьd={handleToggleВключитьd}
-                        onToggleАрхивирован={handleToggleАрхивирован}
+                        runNowButton
+                        onRunNow={handleRunNow}
+                        onToggleEnabled={handleToggleEnabled}
+                        onToggleArchived={handleToggleArchived}
                       />
                     ))}
                   </CollapsibleContent>
@@ -931,22 +931,22 @@ export function Процедуры() {
         </div>
       ) : null}
 
-      <ПроцедураЗапуститьVariablesDialog
-        open={runDialogПроцедура !== null}
+      <RoutineRunVariablesDialog
+        open={runDialogRoutine !== null}
         onOpenChange={(next) => {
-          if (!next) setЗапуститьDialogПроцедура(null);
+          if (!next) setRunDialogRoutine(null);
         }}
-        companyId={selectedКомпанияId}
-        routineИмя={runDialogПроцедура?.title ?? null}
+        companyId={selectedCompanyId}
+        routineName={runDialogRoutine?.title ?? null}
         agents={agents ?? []}
         projects={projects ?? []}
-        defaultProjectId={runDialogПроцедура?.projectId ?? null}
-        defaultИсполнительАгентId={runDialogПроцедура?.assigneeАгентId ?? null}
-        variables={runDialogПроцедура?.variables ?? []}
-        isОжидание={runПроцедура.isОжидание}
-        onОтправить={(data) => {
-          if (!runDialogПроцедура) return;
-          runПроцедура.mutate({ id: runDialogПроцедура.id, data });
+        defaultProjectId={runDialogRoutine?.projectId ?? null}
+        defaultAssigneeAgentId={runDialogRoutine?.assigneeAgentId ?? null}
+        variables={runDialogRoutine?.variables ?? []}
+        isPending={runRoutine.isPending}
+        onSubmit={(data) => {
+          if (!runDialogRoutine) return;
+          runRoutine.mutate({ id: runDialogRoutine.id, data });
         }}
       />
     </div>

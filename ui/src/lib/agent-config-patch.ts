@@ -1,28 +1,28 @@
-import type { Агент } from "@paperclipai/shared";
+import type { Agent } from "@paperclipai/shared";
 
-export interface АгентМодельПрофильOverlay {
+export interface AgentModelProfileOverlay {
   enabled?: boolean;
   adapterConfig?: Record<string, unknown>;
   /**
    * Mark the cheap profile for clearing. When true, the patch removes
-   * `runtimeConfig.modelПрофильs.cheap` instead of merging into it.
+   * `runtimeConfig.modelProfiles.cheap` instead of merging into it.
    */
   cleared?: boolean;
 }
 
-export interface АгентConfigOverlay {
+export interface AgentConfigOverlay {
   identity: Record<string, unknown>;
-  adapterТип?: string;
+  adapterType?: string;
   adapterConfig: Record<string, unknown>;
   heartbeat: Record<string, unknown>;
   runtime: Record<string, unknown>;
-  modelПрофильs?: { cheap?: АгентМодельПрофильOverlay };
+  modelProfiles?: { cheap?: AgentModelProfileOverlay };
 }
 
 const ADAPTER_AGNOSTIC_KEYS = [
   "env",
   "promptTemplate",
-  "instructionsFileПуть",
+  "instructionsFilePath",
   "cwd",
   "timeoutSec",
   "graceSec",
@@ -31,25 +31,25 @@ const ADAPTER_AGNOSTIC_KEYS = [
 
 function omitUndefinedEntries(value: Record<string, unknown>) {
   return Object.fromEntries(
-    Object.entries(value).filter(([, entryЗначение]) => entryЗначение !== undefined),
+    Object.entries(value).filter(([, entryValue]) => entryValue !== undefined),
   );
 }
 
-export function buildАгентОбновитьPatch(agent: Агент, overlay: АгентConfigOverlay) {
+export function buildAgentUpdatePatch(agent: Agent, overlay: AgentConfigOverlay) {
   const patch: Record<string, unknown> = {};
 
   if (Object.keys(overlay.identity).length > 0) {
     Object.assign(patch, overlay.identity);
   }
 
-  if (overlay.adapterТип !== undefined) {
-    patch.adapterТип = overlay.adapterТип;
+  if (overlay.adapterType !== undefined) {
+    patch.adapterType = overlay.adapterType;
   }
 
-  if (overlay.adapterТип !== undefined || Object.keys(overlay.adapterConfig).length > 0) {
+  if (overlay.adapterType !== undefined || Object.keys(overlay.adapterConfig).length > 0) {
     const existing = (agent.adapterConfig ?? {}) as Record<string, unknown>;
-    const nextАдаптерConfig =
-      overlay.adapterТип !== undefined
+    const nextAdapterConfig =
+      overlay.adapterType !== undefined
         ? {
             ...Object.fromEntries(
               ADAPTER_AGNOSTIC_KEYS
@@ -63,51 +63,51 @@ export function buildАгентОбновитьPatch(agent: Агент, overlay:
             ...overlay.adapterConfig,
           };
 
-    patch.adapterConfig = omitUndefinedEntries(nextАдаптерConfig);
-    patch.replaceАдаптерConfig = true;
+    patch.adapterConfig = omitUndefinedEntries(nextAdapterConfig);
+    patch.replaceAdapterConfig = true;
   }
 
-  const cheapOverlay = overlay.modelПрофильs?.cheap;
-  const hasМодельПрофильChange = cheapOverlay !== undefined;
+  const cheapOverlay = overlay.modelProfiles?.cheap;
+  const hasModelProfileChange = cheapOverlay !== undefined;
 
-  if (Object.keys(overlay.heartbeat).length > 0 || hasМодельПрофильChange) {
+  if (Object.keys(overlay.heartbeat).length > 0 || hasModelProfileChange) {
     const existingRc = (agent.runtimeConfig ?? {}) as Record<string, unknown>;
-    const nextЗапуститьtimeConfig: Record<string, unknown> = (patch.runtimeConfig as Record<string, unknown> | undefined)
+    const nextRuntimeConfig: Record<string, unknown> = (patch.runtimeConfig as Record<string, unknown> | undefined)
       ?? { ...existingRc };
 
     if (Object.keys(overlay.heartbeat).length > 0) {
       const existingHb = (existingRc.heartbeat ?? {}) as Record<string, unknown>;
-      nextЗапуститьtimeConfig.heartbeat = { ...existingHb, ...overlay.heartbeat };
+      nextRuntimeConfig.heartbeat = { ...existingHb, ...overlay.heartbeat };
     }
 
-    if (hasМодельПрофильChange) {
-      const existingПрофильs = ((existingRc.modelПрофильs ?? {}) as Record<string, unknown>);
-      const existingCheap = ((existingПрофильs.cheap ?? {}) as Record<string, unknown>);
-      const nextПрофильs = { ...existingПрофильs };
+    if (hasModelProfileChange) {
+      const existingProfiles = ((existingRc.modelProfiles ?? {}) as Record<string, unknown>);
+      const existingCheap = ((existingProfiles.cheap ?? {}) as Record<string, unknown>);
+      const nextProfiles = { ...existingProfiles };
 
       if (cheapOverlay?.cleared) {
-        delete nextПрофильs.cheap;
+        delete nextProfiles.cheap;
       } else if (cheapOverlay) {
-        const mergedАдаптерConfig = {
+        const mergedAdapterConfig = {
           ...((existingCheap.adapterConfig ?? {}) as Record<string, unknown>),
           ...(cheapOverlay.adapterConfig ?? {}),
         };
         const enabled = cheapOverlay.enabled ?? (existingCheap.enabled !== false);
-        nextПрофильs.cheap = {
+        nextProfiles.cheap = {
           ...existingCheap,
           enabled,
-          adapterConfig: mergedАдаптерConfig,
+          adapterConfig: mergedAdapterConfig,
         };
       }
 
-      if (Object.keys(nextПрофильs).length === 0) {
-        delete nextЗапуститьtimeConfig.modelПрофильs;
+      if (Object.keys(nextProfiles).length === 0) {
+        delete nextRuntimeConfig.modelProfiles;
       } else {
-        nextЗапуститьtimeConfig.modelПрофильs = nextПрофильs;
+        nextRuntimeConfig.modelProfiles = nextProfiles;
       }
     }
 
-    patch.runtimeConfig = nextЗапуститьtimeConfig;
+    patch.runtimeConfig = nextRuntimeConfig;
   }
 
   if (Object.keys(overlay.runtime).length > 0) {

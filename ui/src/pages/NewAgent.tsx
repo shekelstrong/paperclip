@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useПоискParams } from "@/lib/router";
-import { useКомпания } from "../context/КомпанияContext";
+import { useNavigate, useSearchParams } from "@/lib/router";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { agentsApi } from "../api/agents";
-import { companyНавыкиApi } from "../api/companyНавыки";
-import { queryКлючs } from "../lib/queryКлючs";
-import { AGENT_ROLES, type АдаптерОкружениеПроверитьResult } from "@paperclipai/shared";
+import { companySkillsApi } from "../api/companySkills";
+import { queryKeys } from "../lib/queryKeys";
+import { AGENT_ROLES, type AdapterEnvironmentTestResult } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -16,154 +16,154 @@ import {
 } from "@/components/ui/popover";
 import { Shield } from "lucide-react";
 import { cn, agentUrl } from "../lib/utils";
-import { roleЯрлыки } from "../components/agent-config-primitives";
+import { roleLabels } from "../components/agent-config-primitives";
 import {
-  АгентConfigForm,
-  АдаптерОкружениеResult,
-  type СоздатьConfigЗначениеs,
-} from "../components/АгентConfigForm";
-import { defaultСоздатьЗначениеs } from "../components/agent-config-defaults";
-import { getUIАдаптер, listUIАдаптеры } from "../adapters";
-import { useОтключитьdАдаптерыSync } from "../adapters/use-disabled-adapters";
-import { isValidАдаптерТип } from "../adapters/metadata";
-import { РепозиторийrtsToPicker } from "../components/РепозиторийrtsToPicker";
-import { buildNewАгентHirePayload } from "../lib/new-agent-hire-payload";
+  AgentConfigForm,
+  AdapterEnvironmentResult,
+  type CreateConfigValues,
+} from "../components/AgentConfigForm";
+import { defaultCreateValues } from "../components/agent-config-defaults";
+import { getUIAdapter, listUIAdapters } from "../adapters";
+import { useDisabledAdaptersSync } from "../adapters/use-disabled-adapters";
+import { isValidAdapterType } from "../adapters/metadata";
+import { ReportsToPicker } from "../components/ReportsToPicker";
+import { buildNewAgentHirePayload } from "../lib/new-agent-hire-payload";
 import {
   DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX,
   DEFAULT_CODEX_LOCAL_MODEL,
 } from "@paperclipai/adapter-codex-local";
 import { DEFAULT_CURSOR_LOCAL_MODEL } from "@paperclipai/adapter-cursor-local";
 import { DEFAULT_GEMINI_LOCAL_MODEL } from "@paperclipai/adapter-gemini-local";
-import { DEFAULT_OPENCODE_LOCAL_MODEL, isValidOpenCodeМодельId } from "@paperclipai/adapter-opencode-local";
+import { DEFAULT_OPENCODE_LOCAL_MODEL, isValidOpenCodeModelId } from "@paperclipai/adapter-opencode-local";
 
-function createЗначениеsForАдаптерТип(
-  adapterТип: СоздатьConfigЗначениеs["adapterТип"],
-): СоздатьConfigЗначениеs {
-  const { adapterТип: _discard, ...defaults } = defaultСоздатьЗначениеs;
-  const nextЗначениеs: СоздатьConfigЗначениеs = { ...defaults, adapterТип };
-  if (adapterТип === "codex_local") {
-    nextЗначениеs.model = DEFAULT_CODEX_LOCAL_MODEL;
-    nextЗначениеs.dangerouslyBypassSandbox =
+function createValuesForAdapterType(
+  adapterType: CreateConfigValues["adapterType"],
+): CreateConfigValues {
+  const { adapterType: _discard, ...defaults } = defaultCreateValues;
+  const nextValues: CreateConfigValues = { ...defaults, adapterType };
+  if (adapterType === "codex_local") {
+    nextValues.model = DEFAULT_CODEX_LOCAL_MODEL;
+    nextValues.dangerouslyBypassSandbox =
       DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX;
-  } else if (adapterТип === "gemini_local") {
-    nextЗначениеs.model = DEFAULT_GEMINI_LOCAL_MODEL;
-  } else if (adapterТип === "cursor") {
-    nextЗначениеs.model = DEFAULT_CURSOR_LOCAL_MODEL;
-  } else if (adapterТип === "opencode_local") {
-    nextЗначениеs.model = DEFAULT_OPENCODE_LOCAL_MODEL;
+  } else if (adapterType === "gemini_local") {
+    nextValues.model = DEFAULT_GEMINI_LOCAL_MODEL;
+  } else if (adapterType === "cursor") {
+    nextValues.model = DEFAULT_CURSOR_LOCAL_MODEL;
+  } else if (adapterType === "opencode_local") {
+    nextValues.model = DEFAULT_OPENCODE_LOCAL_MODEL;
   }
-  return nextЗначениеs;
+  return nextValues;
 }
 
-export function NewАгент() {
-  const { selectedКомпанияId } = useКомпания();
+export function NewAgent() {
+  const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [searchParams] = useПоискParams();
-  const presetАдаптерТип = searchParams.get("adapterТип");
+  const [searchParams] = useSearchParams();
+  const presetAdapterType = searchParams.get("adapterType");
 
-  const [name, setИмя] = useState("");
-  const [title, setНазвание] = useState("");
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [role, setRole] = useState("general");
-  const [reportsTo, setРепозиторийrtsTo] = useState<string | null>(null);
-  const [configЗначениеs, setConfigЗначениеs] = useState<СоздатьConfigЗначениеs>(defaultСоздатьЗначениеs);
-  const [selectedНавыкКлючs, setSelectedНавыкКлючs] = useState<string[]>([]);
+  const [reportsTo, setReportsTo] = useState<string | null>(null);
+  const [configValues, setConfigValues] = useState<CreateConfigValues>(defaultCreateValues);
+  const [selectedSkillKeys, setSelectedSkillKeys] = useState<string[]>([]);
   const [roleOpen, setRoleOpen] = useState(false);
-  const [formОшибка, setFormОшибка] = useState<string | null>(null);
-  const [testАгентAction, setПроверитьАгентAction] = useState<(() => void) | null>(null);
-  const [testАгентState, setПроверитьАгентState] = useState({ disabled: true, pending: false });
-  const [testАгентFeedback, setПроверитьАгентFeedback] = useState<{
+  const [formError, setFormError] = useState<string | null>(null);
+  const [testAgentAction, setTestAgentAction] = useState<(() => void) | null>(null);
+  const [testAgentState, setTestAgentState] = useState({ disabled: true, pending: false });
+  const [testAgentFeedback, setTestAgentFeedback] = useState<{
     errorMessage: string | null;
-    result: АдаптерОкружениеПроверитьResult | null;
+    result: AdapterEnvironmentTestResult | null;
   }>({
     errorMessage: null,
     result: null,
   });
 
   const { data: agents } = useQuery({
-    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
-    queryFn: () => agentsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.agents.list(selectedCompanyId!),
+    queryFn: () => agentsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
 
-  const { data: companyНавыки } = useQuery({
-    queryКлюч: queryКлючs.companyНавыки.list(selectedКомпанияId ?? ""),
-    queryFn: () => companyНавыкиApi.list(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+  const { data: companySkills } = useQuery({
+    queryKey: queryKeys.companySkills.list(selectedCompanyId ?? ""),
+    queryFn: () => companySkillsApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
   });
 
-  const isFirstАгент = !agents || agents.length === 0;
-  const effectiveRole = isFirstАгент ? "ceo" : role;
+  const isFirstAgent = !agents || agents.length === 0;
+  const effectiveRole = isFirstAgent ? "ceo" : role;
 
   useEffect(() => {
     setBreadcrumbs([
       { label: "Агенты", href: "/agents" },
-      { label: "Новый агент" },
+      { label: "New Agent" },
     ]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
-    if (isFirstАгент) {
-      if (!name) setИмя("CEO");
-      if (!title) setНазвание("CEO");
+    if (isFirstAgent) {
+      if (!name) setName("CEO");
+      if (!title) setTitle("CEO");
     }
-  }, [isFirstАгент]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isFirstAgent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const requested = presetАдаптерТип;
+    const requested = presetAdapterType;
     if (!requested) return;
-    if (!isValidАдаптерТип(requested)) return;
-    setConfigЗначениеs((prev) => {
-      if (prev.adapterТип === requested) return prev;
-      return createЗначениеsForАдаптерТип(requested as СоздатьConfigЗначениеs["adapterТип"]);
+    if (!isValidAdapterType(requested)) return;
+    setConfigValues((prev) => {
+      if (prev.adapterType === requested) return prev;
+      return createValuesForAdapterType(requested as CreateConfigValues["adapterType"]);
     });
-  }, [presetАдаптерТип]);
+  }, [presetAdapterType]);
 
-  const createАгент = useMutation({
+  const createAgent = useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      agentsApi.hire(selectedКомпанияId!, data),
-    onУспешно: (result) => {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.list(selectedКомпанияId!) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.list(selectedКомпанияId!) });
+      agentsApi.hire(selectedCompanyId!, data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(selectedCompanyId!) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list(selectedCompanyId!) });
       navigate(agentUrl(result.agent));
     },
-    onОшибка: (error) => {
-      setFormОшибка(error instanceof Ошибка ? error.message : "Ошибка to create agent");
+    onError: (error) => {
+      setFormError(error instanceof Error ? error.message : "Failed to create agent");
     },
   });
 
-  function buildАдаптерConfig() {
-    const adapter = getUIАдаптер(configЗначениеs.adapterТип);
-    return adapter.buildАдаптерConfig(configЗначениеs);
+  function buildAdapterConfig() {
+    const adapter = getUIAdapter(configValues.adapterType);
+    return adapter.buildAdapterConfig(configValues);
   }
 
-  function handleОтправить() {
-    if (!selectedКомпанияId || !name.trim()) return;
-    setFormОшибка(null);
-    if (configЗначениеs.adapterТип === "opencode_local") {
-      if (!isValidOpenCodeМодельId(configЗначениеs.model)) {
-        setFormОшибка("OpenCode requires an explicit model in provider/model format.");
+  function handleSubmit() {
+    if (!selectedCompanyId || !name.trim()) return;
+    setFormError(null);
+    if (configValues.adapterType === "opencode_local") {
+      if (!isValidOpenCodeModelId(configValues.model)) {
+        setFormError("OpenCode requires an explicit model in provider/model format.");
         return;
       }
     }
-    createАгент.mutate(
-      buildNewАгентHirePayload({
+    createAgent.mutate(
+      buildNewAgentHirePayload({
         name,
         effectiveRole,
         title,
         reportsTo,
-        selectedНавыкКлючs,
-        configЗначениеs,
-        adapterConfig: buildАдаптерConfig(),
+        selectedSkillKeys,
+        configValues,
+        adapterConfig: buildAdapterConfig(),
       }),
     );
   }
 
-  const availableНавыки = (companyНавыки ?? []).filter((skill) => !skill.key.startsWith("paperclipai/paperclip/"));
+  const availableSkills = (companySkills ?? []).filter((skill) => !skill.key.startsWith("paperclipai/paperclip/"));
 
-  function toggleНавык(key: string, checked: boolean) {
-    setSelectedНавыкКлючs((prev) => {
+  function toggleSkill(key: string, checked: boolean) {
+    setSelectedSkillKeys((prev) => {
       if (checked) {
         return prev.includes(key) ? prev : [...prev, key];
       }
@@ -171,128 +171,128 @@ export function NewАгент() {
     });
   }
 
-  const handleПроверитьАгентActionChange = useCallback((fn: (() => void) | null) => {
-    setПроверитьАгентAction(() => fn);
+  const handleTestAgentActionChange = useCallback((fn: (() => void) | null) => {
+    setTestAgentAction(() => fn);
   }, []);
 
-  const handleПроверитьАгентStateChange = useCallback((state: { disabled: boolean; pending: boolean }) => {
-    setПроверитьАгентState(state);
+  const handleTestAgentStateChange = useCallback((state: { disabled: boolean; pending: boolean }) => {
+    setTestAgentState(state);
   }, []);
 
-  const handleПроверитьАгентFeedbackChange = useCallback((feedback: {
+  const handleTestAgentFeedbackChange = useCallback((feedback: {
     errorMessage: string | null;
-    result: АдаптерОкружениеПроверитьResult | null;
+    result: AdapterEnvironmentTestResult | null;
   }) => {
-    setПроверитьАгентFeedback(feedback);
+    setTestAgentFeedback(feedback);
   }, []);
 
   return (
-    <div classИмя="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 classИмя="text-lg font-semibold">Новый агент</h1>
-        <p classИмя="text-sm text-muted-foreground mt-1">
-          Дополнительно agent configuration
+        <h1 className="text-lg font-semibold">New Agent</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Advanced agent configuration
         </p>
       </div>
 
-      <div classИмя="border border-border">
-        {/* Имя */}
-        <div classИмя="px-4 pt-4 pb-2">
+      <div className="border border-border">
+        {/* Name */}
+        <div className="px-4 pt-4 pb-2">
           <input
-            classИмя="w-full text-lg font-semibold bg-transparent outline-none placeholder:text-muted-foreground/50"
-            placeholder="Агент name"
+            className="w-full text-lg font-semibold bg-transparent outline-none placeholder:text-muted-foreground/50"
+            placeholder="Agent name"
             value={name}
-            onChange={(e) => setИмя(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             autoFocus
           />
         </div>
 
-        {/* Название */}
-        <div classИмя="px-4 pb-2">
+        {/* Title */}
+        <div className="px-4 pb-2">
           <input
-            classИмя="w-full bg-transparent outline-none text-sm text-muted-foreground placeholder:text-muted-foreground/40"
-            placeholder="Название (e.g. VP of Инженерing)"
+            className="w-full bg-transparent outline-none text-sm text-muted-foreground placeholder:text-muted-foreground/40"
+            placeholder="Title (e.g. VP of Engineering)"
             value={title}
-            onChange={(e) => setНазвание(e.target.value)}
+            onChange={(e) => setTitle(e.target.value)}
           />
         </div>
 
-        {/* Property chips: Role + Репозиторийrts To */}
-        <div classИмя="flex items-center gap-1.5 px-4 py-2 border-t border-border flex-wrap">
+        {/* Property chips: Role + Reports To */}
+        <div className="flex items-center gap-1.5 px-4 py-2 border-t border-border flex-wrap">
           <Popover open={roleOpen} onOpenChange={setRoleOpen}>
             <PopoverTrigger asChild>
               <button
-                classИмя={cn(
+                className={cn(
                   "inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors",
-                  isFirstАгент && "opacity-60 cursor-not-allowed"
+                  isFirstAgent && "opacity-60 cursor-not-allowed"
                 )}
-                disabled={isFirstАгент}
+                disabled={isFirstAgent}
               >
-                <Shield classИмя="h-3 w-3 text-muted-foreground" />
-                {roleЯрлыки[effectiveRole] ?? effectiveRole}
+                <Shield className="h-3 w-3 text-muted-foreground" />
+                {roleLabels[effectiveRole] ?? effectiveRole}
               </button>
             </PopoverTrigger>
-            <PopoverContent classИмя="w-36 p-1" align="start">
+            <PopoverContent className="w-36 p-1" align="start">
               {AGENT_ROLES.map((r) => (
                 <button
                   key={r}
-                  classИмя={cn(
+                  className={cn(
                     "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
                     r === role && "bg-accent"
                   )}
                   onClick={() => { setRole(r); setRoleOpen(false); }}
                 >
-                  {roleЯрлыки[r] ?? r}
+                  {roleLabels[r] ?? r}
                 </button>
               ))}
             </PopoverContent>
           </Popover>
 
-          <РепозиторийrtsToPicker
+          <ReportsToPicker
             agents={agents ?? []}
             value={reportsTo}
-            onChange={setРепозиторийrtsTo}
-            disabled={isFirstАгент}
+            onChange={setReportsTo}
+            disabled={isFirstAgent}
           />
         </div>
 
         {/* Shared config form */}
-        <АгентConfigForm
+        <AgentConfigForm
           mode="create"
-          values={configЗначениеs}
-          onChange={(patch) => setConfigЗначениеs((prev) => ({ ...prev, ...patch }))}
-          onПроверитьActionChange={handleПроверитьАгентActionChange}
-          onПроверитьActionStateChange={handleПроверитьАгентStateChange}
-          onПроверитьFeedbackChange={handleПроверитьАгентFeedbackChange}
+          values={configValues}
+          onChange={(patch) => setConfigValues((prev) => ({ ...prev, ...patch }))}
+          onTestActionChange={handleTestAgentActionChange}
+          onTestActionStateChange={handleTestAgentStateChange}
+          onTestFeedbackChange={handleTestAgentFeedbackChange}
         />
 
-        <div classИмя="border-t border-border px-4 py-4">
-          <div classИмя="space-y-3">
+        <div className="border-t border-border px-4 py-4">
+          <div className="space-y-3">
             <div>
-              <h2 classИмя="text-sm font-medium">Компания skills</h2>
-              <p classИмя="mt-1 text-xs text-muted-foreground">
-                Опционально skills from the company library. Built-in Paperclip runtime skills are added automatically.
+              <h2 className="text-sm font-medium">Company skills</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Optional skills from the company library. Built-in Paperclip runtime skills are added automatically.
               </p>
             </div>
-            {availableНавыки.length === 0 ? (
-              <p classИмя="text-xs text-muted-foreground">
-                Нет optional company skills installed yet.
+            {availableSkills.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No optional company skills installed yet.
               </p>
             ) : (
-              <div classИмя="space-y-3">
-                {availableНавыки.map((skill) => {
+              <div className="space-y-3">
+                {availableSkills.map((skill) => {
                   const inputId = `skill-${skill.id}`;
-                  const checked = selectedНавыкКлючs.includes(skill.key);
+                  const checked = selectedSkillKeys.includes(skill.key);
                   return (
-                    <div key={skill.id} classИмя="flex items-start gap-3">
+                    <div key={skill.id} className="flex items-start gap-3">
                       <Checkbox
                         id={inputId}
                         checked={checked}
-                        onCheckedChange={(next) => toggleНавык(skill.key, next === true)}
+                        onCheckedChange={(next) => toggleSkill(skill.key, next === true)}
                       />
-                      <label htmlFor={inputId} classИмя="grid gap-1 leading-none">
-                        <span classИмя="text-sm font-medium">{skill.name}</span>
-                        <span classИмя="text-xs text-muted-foreground">
+                      <label htmlFor={inputId} className="grid gap-1 leading-none">
+                        <span className="text-sm font-medium">{skill.name}</span>
+                        <span className="text-xs text-muted-foreground">
                           {skill.description ?? skill.key}
                         </span>
                       </label>
@@ -305,42 +305,42 @@ export function NewАгент() {
         </div>
 
         {/* Footer */}
-        <div classИмя="border-t border-border px-4 py-3">
-          {isFirstАгент && (
-            <p classИмя="text-xs text-muted-foreground mb-2">This will be the CEO</p>
+        <div className="border-t border-border px-4 py-3">
+          {isFirstAgent && (
+            <p className="text-xs text-muted-foreground mb-2">This will be the CEO</p>
           )}
-          {formОшибка && (
-            <p classИмя="text-xs text-destructive mb-2">{formОшибка}</p>
+          {formError && (
+            <p className="text-xs text-destructive mb-2">{formError}</p>
           )}
-          <div classИмя="space-y-3">
-            {testАгентFeedback.errorMessage && (
-              <div classИмя="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                {testАгентFeedback.errorMessage}
+          <div className="space-y-3">
+            {testAgentFeedback.errorMessage && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                {testAgentFeedback.errorMessage}
               </div>
             )}
-            {testАгентFeedback.result && (
-              <АдаптерОкружениеResult result={testАгентFeedback.result} />
+            {testAgentFeedback.result && (
+              <AdapterEnvironmentResult result={testAgentFeedback.result} />
             )}
-            <div classИмя="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <Button variant="outline" size="sm" onClick={() => navigate("/agents")}>
-                Отмена
+                Cancel
               </Button>
-              <div classИмя="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={testАгентState.disabled}
-                  onClick={() => testАгентAction?.()}
+                  disabled={testAgentState.disabled}
+                  onClick={() => testAgentAction?.()}
                 >
-                  {testАгентState.pending ? "Проверитьing..." : "Проверить Агент"}
+                  {testAgentState.pending ? "Testing..." : "Test Agent"}
                 </Button>
                 <Button
                   size="sm"
-                  disabled={!name.trim() || createАгент.isОжидание}
-                  onClick={handleОтправить}
+                  disabled={!name.trim() || createAgent.isPending}
+                  onClick={handleSubmit}
                 >
-                  {createАгент.isОжидание ? "Creating…" : "Создать agent"}
+                  {createAgent.isPending ? "Creating…" : "Create agent"}
                 </Button>
               </div>
             </div>

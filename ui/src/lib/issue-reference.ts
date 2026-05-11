@@ -1,15 +1,15 @@
-type MarkdownНетde = {
+type MarkdownNode = {
   type: string;
   value?: string;
   url?: string;
-  children?: MarkdownНетde[];
+  children?: MarkdownNode[];
 };
 
 const BARE_ISSUE_IDENTIFIER_RE = /^[A-Z][A-Z0-9]*-\d+$/i;
 const ISSUE_SCHEME_RE = /^issue:\/\/:?([^?#\s]+)(?:[?#].*)?$/i;
 const ISSUE_REFERENCE_TOKEN_RE = /issue:\/\/:?[^\s<>()]+|https?:\/\/[^\s<>()]+|\/(?:[^\s<>()/]+\/)*issues\/[A-Z][A-Z0-9]*-\d+(?=$|[\s<>)\],.;!?:])|\b[A-Z][A-Z0-9]*-\d+\b/gi;
 
-export function parseЗадачаПутьIdFromПуть(pathOrUrl: string | null | undefined): string | null {
+export function parseIssuePathIdFromPath(pathOrUrl: string | null | undefined): string | null {
   if (!pathOrUrl) return null;
   const pathname = pathOrUrl.trim();
   if (!pathname) return null;
@@ -18,27 +18,27 @@ export function parseЗадачаПутьIdFromПуть(pathOrUrl: string | null
   const segments = pathname.split("/").filter(Boolean);
   const issueIndex = segments.findIndex((segment) => segment === "issues");
   if (issueIndex === -1 || issueIndex === segments.length - 1) return null;
-  const issueПутьId = decodeURIComponent(segments[issueIndex + 1] ?? "");
-  if (!issueПутьId || issueПутьId.startsWith(":")) return null;
-  return BARE_ISSUE_IDENTIFIER_RE.test(issueПутьId) ? issueПутьId.toUpperCase() : issueПутьId;
+  const issuePathId = decodeURIComponent(segments[issueIndex + 1] ?? "");
+  if (!issuePathId || issuePathId.startsWith(":")) return null;
+  return BARE_ISSUE_IDENTIFIER_RE.test(issuePathId) ? issuePathId.toUpperCase() : issuePathId;
 }
 
-export function parseЗадачаReferenceFromHref(href: string | null | undefined) {
+export function parseIssueReferenceFromHref(href: string | null | undefined) {
   if (!href) return null;
   const trimmed = href.trim();
   const issueSchemeMatch = trimmed.match(ISSUE_SCHEME_RE);
   if (issueSchemeMatch?.[1]) {
-    const issueПутьId = decodeURIComponent(issueSchemeMatch[1]);
+    const issuePathId = decodeURIComponent(issueSchemeMatch[1]);
     return {
-      issueПутьId,
-      href: `/issues/${encodeURIComponent(issueПутьId)}`,
+      issuePathId,
+      href: `/issues/${encodeURIComponent(issuePathId)}`,
     };
   }
 
-  const pathId = parseЗадачаПутьIdFromПуть(href);
+  const pathId = parseIssuePathIdFromPath(href);
   if (pathId) {
     return {
-      issueПутьId: pathId,
+      issuePathId: pathId,
       href: `/issues/${encodeURIComponent(pathId)}`,
     };
   }
@@ -46,7 +46,7 @@ export function parseЗадачаReferenceFromHref(href: string | null | undefin
   if (!BARE_ISSUE_IDENTIFIER_RE.test(trimmed)) return null;
   const normalized = trimmed.toUpperCase();
   return {
-    issueПутьId: normalized,
+    issuePathId: normalized,
     href: `/issues/${encodeURIComponent(normalized)}`,
   };
 }
@@ -75,34 +75,34 @@ function splitTrailingPunctuation(token: string) {
   return { core, trailing };
 }
 
-function createЗадачаLinkНетde(value: string, href: string, childТип: "text" | "inlineCode" = "text"): MarkdownНетde {
+function createIssueLinkNode(value: string, href: string, childType: "text" | "inlineCode" = "text"): MarkdownNode {
   return {
     type: "link",
     url: href,
-    children: [{ type: childТип, value }],
+    children: [{ type: childType, value }],
   };
 }
 
-function linkifyЗадачаСсылкиInText(value: string): MarkdownНетde[] | null {
-  const nodes: MarkdownНетde[] = [];
+function linkifyIssueReferencesInText(value: string): MarkdownNode[] | null {
+  const nodes: MarkdownNode[] = [];
   let cursor = 0;
   let matched = false;
 
-  for (const match of value.matchВсе(ISSUE_REFERENCE_TOKEN_RE)) {
+  for (const match of value.matchAll(ISSUE_REFERENCE_TOKEN_RE)) {
     const raw = match[0];
     if (!raw) continue;
 
     const start = match.index ?? 0;
     const end = start + raw.length;
     const { core, trailing } = splitTrailingPunctuation(raw);
-    const issueRef = parseЗадачаReferenceFromHref(core);
+    const issueRef = parseIssueReferenceFromHref(core);
     if (!issueRef) continue;
 
     matched = true;
     if (start > cursor) {
       nodes.push({ type: "text", value: value.slice(cursor, start) });
     }
-    nodes.push(createЗадачаLinkНетde(core, issueRef.href));
+    nodes.push(createIssueLinkNode(core, issueRef.href));
     if (trailing) {
       nodes.push({ type: "text", value: trailing });
     }
@@ -116,24 +116,24 @@ function linkifyЗадачаСсылкиInText(value: string): MarkdownНетde[
   return nodes;
 }
 
-function rewriteMarkdownTree(node: MarkdownНетde) {
+function rewriteMarkdownTree(node: MarkdownNode) {
   if (!Array.isArray(node.children) || node.children.length === 0) return;
   if (node.type === "link" || node.type === "linkReference" || node.type === "code" || node.type === "definition" || node.type === "html") {
     return;
   }
 
-  const nextChildren: MarkdownНетde[] = [];
+  const nextChildren: MarkdownNode[] = [];
   for (const child of node.children) {
     if (child.type === "inlineCode" && typeof child.value === "string") {
-      const issueRef = parseЗадачаReferenceFromHref(child.value);
+      const issueRef = parseIssueReferenceFromHref(child.value);
       if (issueRef) {
-        nextChildren.push(createЗадачаLinkНетde(child.value, issueRef.href, "inlineCode"));
+        nextChildren.push(createIssueLinkNode(child.value, issueRef.href, "inlineCode"));
         continue;
       }
     }
 
     if (child.type === "text" && typeof child.value === "string") {
-      const linked = linkifyЗадачаСсылкиInText(child.value);
+      const linked = linkifyIssueReferencesInText(child.value);
       if (linked) {
         nextChildren.push(...linked);
         continue;
@@ -146,8 +146,8 @@ function rewriteMarkdownTree(node: MarkdownНетde) {
   node.children = nextChildren;
 }
 
-export function remarkLinkЗадачаСсылки() {
-  return (tree: MarkdownНетde) => {
+export function remarkLinkIssueReferences() {
+  return (tree: MarkdownNode) => {
     rewriteMarkdownTree(tree);
   };
 }

@@ -16,28 +16,28 @@ function SheetTrigger({
   return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
 }
 
-function SheetЗакрыть({
+function SheetClose({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Закрыть>) {
-  return <SheetPrimitive.Закрыть data-slot="sheet-close" {...props} />
+}: React.ComponentProps<typeof SheetPrimitive.Close>) {
+  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
 }
 
-function SheetПортal({
+function SheetPortal({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Портal>) {
-  return <SheetPrimitive.Портal data-slot="sheet-portal" {...props} />
+}: React.ComponentProps<typeof SheetPrimitive.Portal>) {
+  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
 }
 
 function SheetOverlay({
-  classИмя,
+  className,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
   return (
     <SheetPrimitive.Overlay
       data-slot="sheet-overlay"
-      classИмя={cn(
+      className={cn(
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
-        classИмя
+        className
       )}
       {...props}
     />
@@ -45,21 +45,21 @@ function SheetOverlay({
 }
 
 function SheetContent({
-  classИмя,
+  className,
   children,
   side = "right",
-  showЗакрытьButton = true,
+  showCloseButton = true,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
-  showЗакрытьButton?: boolean
+  showCloseButton?: boolean
 }) {
   return (
-    <SheetПортal>
+    <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
-        classИмя={cn(
+        className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
           side === "right" &&
             "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
@@ -69,63 +69,63 @@ function SheetContent({
             "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b",
           side === "bottom" &&
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
-          classИмя
+          className
         )}
         {...props}
       >
         {children}
-        {showЗакрытьButton && (
-          <SheetPrimitive.Закрыть classИмя="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
-            <XIcon classИмя="size-4" />
-            <span classИмя="sr-only">Закрыть</span>
-          </SheetPrimitive.Закрыть>
+        {showCloseButton && (
+          <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
+            <XIcon className="size-4" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Content>
-    </SheetПортal>
+    </SheetPortal>
   )
 }
 
-function SheetHeader({ classИмя, ...props }: React.ComponentProps<"div">) {
+function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-header"
-      classИмя={cn("flex flex-col gap-1.5 p-4", classИмя)}
+      className={cn("flex flex-col gap-1.5 p-4", className)}
       {...props}
     />
   )
 }
 
-function SheetFooter({ classИмя, ...props }: React.ComponentProps<"div">) {
+function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-footer"
-      classИмя={cn("mt-auto flex flex-col gap-2 p-4", classИмя)}
+      className={cn("mt-auto flex flex-col gap-2 p-4", className)}
       {...props}
     />
   )
 }
 
-function SheetНазвание({
-  classИмя,
+function SheetTitle({
+  className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Название>) {
+}: React.ComponentProps<typeof SheetPrimitive.Title>) {
   return (
-    <SheetPrimitive.Название
+    <SheetPrimitive.Title
       data-slot="sheet-title"
-      classИмя={cn("text-foreground font-semibold", classИмя)}
+      className={cn("text-foreground font-semibold", className)}
       {...props}
     />
   )
 }
 
-function SheetОписание({
-  classИмя,
+function SheetDescription({
+  className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Описание>) {
+}: React.ComponentProps<typeof SheetPrimitive.Description>) {
   return (
-    <SheetPrimitive.Описание
+    <SheetPrimitive.Description
       data-slot="sheet-description"
-      classИмя={cn("text-muted-foreground text-sm", classИмя)}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   )
@@ -134,10 +134,10 @@ function SheetОписание({
 export {
   Sheet,
   SheetTrigger,
-  SheetЗакрыть,
+  SheetClose,
   SheetContent,
   SheetHeader,
   SheetFooter,
-  SheetНазвание,
-  SheetОписание,
+  SheetTitle,
+  SheetDescription,
 }

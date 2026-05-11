@@ -1,28 +1,28 @@
 import type { TranscriptEntry } from "../adapters";
 
-export interface ЗапуститьTranscriptFixtureMeta {
-  sourceЗапуститьId: string;
+export interface RunTranscriptFixtureMeta {
+  sourceRunId: string;
   fixtureLabel: string;
-  agentИмя: string;
+  agentName: string;
   agentId: string;
   issueIdentifier: string;
-  issueНазвание: string;
+  issueTitle: string;
   startedAt: string;
   finishedAt: string | null;
 }
 
-export const runTranscriptFixtureMeta: ЗапуститьTranscriptFixtureMeta = {
-  sourceЗапуститьId: "65a79d5d-5f85-4392-a5cc-8fb48beb9e71",
+export const runTranscriptFixtureMeta: RunTranscriptFixtureMeta = {
+  sourceRunId: "65a79d5d-5f85-4392-a5cc-8fb48beb9e71",
   fixtureLabel: "Sanitized development fixture",
-  agentИмя: "CodexCoder",
+  agentName: "CodexCoder",
   agentId: "codexcoder-fixture",
   issueIdentifier: "PAP-473",
-  issueНазвание: "Человекize run transcripts across run detail and live surfaces",
+  issueTitle: "Humanize run transcripts across run detail and live surfaces",
   startedAt: "2026-03-11T15:21:05.948Z",
   finishedAt: null,
 };
 
-// Sanitized from a real development run. Путьs, secrets, env vars, and user-local identifiers
+// Sanitized from a real development run. Paths, secrets, env vars, and user-local identifiers
 // are replaced with safe placeholders while preserving the interaction shape.
 export const runTranscriptFixtureEntries: TranscriptEntry[] = [
   {
@@ -71,14 +71,14 @@ export const runTranscriptFixtureEntries: TranscriptEntry[] = [
     ts: "2026-03-11T15:21:19.034Z",
     toolUseId: "item_1",
     content: "command: sed -n '1,220p' doc/GOAL.md\nstatus: completed\nexit_code: 0\n\n# Paperclip\n\nPaperclip is the backbone of the autonomous economy.",
-    isОшибка: false,
+    isError: false,
   },
   {
     kind: "tool_result",
     ts: "2026-03-11T15:21:19.035Z",
     toolUseId: "item_2",
     content: "command: sed -n '1,320p' doc/SPEC-implementation.md\nstatus: completed\nexit_code: 0\n\n# Paperclip V1 Implementation Spec\n\nPaperclip V1 must provide a full control-plane loop for autonomous agents.",
-    isОшибка: false,
+    isError: false,
   },
   {
     kind: "assistant",
@@ -96,7 +96,7 @@ export const runTranscriptFixtureEntries: TranscriptEntry[] = [
     name: "command_execution",
     toolUseId: "item_3",
     input: {
-      command: "rg -n \"LiveЗапуститьWidget|АктивенАгентыPanel|buildTranscript|TranscriptEntry|transcript\" ui/src server/src packages",
+      command: "rg -n \"LiveRunWidget|ActiveAgentsPanel|buildTranscript|TranscriptEntry|transcript\" ui/src server/src packages",
       cwd: "/workspace/paperclip",
     },
   },
@@ -104,8 +104,8 @@ export const runTranscriptFixtureEntries: TranscriptEntry[] = [
     kind: "tool_result",
     ts: "2026-03-11T15:22:15.982Z",
     toolUseId: "item_3",
-    content: "command: rg -n ...\nstatus: completed\nexit_code: 0\n\nui/src/components/АктивенАгентыPanel.tsx\nui/src/components/LiveЗапуститьWidget.tsx\nui/src/pages/АгентDetail.tsx",
-    isОшибка: false,
+    content: "command: rg -n ...\nstatus: completed\nexit_code: 0\n\nui/src/components/ActiveAgentsPanel.tsx\nui/src/components/LiveRunWidget.tsx\nui/src/pages/AgentDetail.tsx",
+    isError: false,
   },
   {
     kind: "system",
@@ -136,13 +136,13 @@ export const runTranscriptFixtureEntries: TranscriptEntry[] = [
     kind: "tool_result",
     ts: "2026-03-11T15:23:26.903Z",
     toolUseId: "item_4",
-    content: "command: pnpm -r typecheck\nstatus: completed\nexit_code: 0\n\npackages/adapter-utils typecheck: Готово\nserver typecheck: Готово\nui typecheck: Готово\ncli typecheck: Готово",
-    isОшибка: false,
+    content: "command: pnpm -r typecheck\nstatus: completed\nexit_code: 0\n\npackages/adapter-utils typecheck: Done\nserver typecheck: Done\nui typecheck: Done\ncli typecheck: Done",
+    isError: false,
   },
   {
     kind: "assistant",
     ts: "2026-03-11T15:23:34.102Z",
-    text: "Типcheck is clean. I’m running the remaining repo checks now so the transcript work is verified under the full workspace build, not just the UI package.",
+    text: "Typecheck is clean. I’m running the remaining repo checks now so the transcript work is verified under the full workspace build, not just the UI package.",
   },
   {
     kind: "tool_call",
@@ -158,8 +158,8 @@ export const runTranscriptFixtureEntries: TranscriptEntry[] = [
     kind: "tool_result",
     ts: "2026-03-11T15:23:56.944Z",
     toolUseId: "item_5",
-    content: "command: pnpm test:run\nstatus: failed\nexit_code: 1\n\nFAIL packages/db/src/runtime-config.test.ts\nFAIL src/__tests__/worktree.test.ts\n\nВсе transcript-adapter tests passed after snapshot updates.",
-    isОшибка: true,
+    content: "command: pnpm test:run\nstatus: failed\nexit_code: 1\n\nFAIL packages/db/src/runtime-config.test.ts\nFAIL src/__tests__/worktree.test.ts\n\nAll transcript-adapter tests passed after snapshot updates.",
+    isError: true,
   },
   {
     kind: "thinking",
@@ -185,8 +185,8 @@ export const runTranscriptFixtureEntries: TranscriptEntry[] = [
     kind: "tool_result",
     ts: "2026-03-11T15:24:44.030Z",
     toolUseId: "item_6",
-    content: "command: pnpm build\nstatus: completed\nexit_code: 0\n\nui build: built successfully\ncli build: Готово",
-    isОшибка: false,
+    content: "command: pnpm build\nstatus: completed\nexit_code: 0\n\nui build: built successfully\ncli build: Done",
+    isError: false,
   },
   {
     kind: "tool_call",
@@ -194,7 +194,7 @@ export const runTranscriptFixtureEntries: TranscriptEntry[] = [
     name: "command_execution",
     toolUseId: "item_7",
     input: {
-      command: "git commit -m \"Человекize run transcripts across run detail and live surfaces\"",
+      command: "git commit -m \"Humanize run transcripts across run detail and live surfaces\"",
       cwd: "/workspace/paperclip",
     },
   },
@@ -202,8 +202,8 @@ export const runTranscriptFixtureEntries: TranscriptEntry[] = [
     kind: "tool_result",
     ts: "2026-03-11T15:24:53.104Z",
     toolUseId: "item_7",
-    content: "command: git commit ...\nstatus: completed\nexit_code: 0\n\n87b8e21 Человекize run transcripts across run detail and live surfaces",
-    isОшибка: false,
+    content: "command: git commit ...\nstatus: completed\nexit_code: 0\n\n87b8e21 Humanize run transcripts across run detail and live surfaces",
+    isError: false,
   },
   {
     kind: "assistant",
@@ -214,12 +214,12 @@ export const runTranscriptFixtureEntries: TranscriptEntry[] = [
     kind: "result",
     ts: "2026-03-11T15:25:05.440Z",
     text: "Transcript rollout complete with shared nice/raw rendering and compact live variants.",
-    inputТокенs: 11240,
-    outputТокенs: 3460,
-    cachedТокенs: 520,
+    inputTokens: 11240,
+    outputTokens: 3460,
+    cachedTokens: 520,
     costUsd: 0.048121,
     subtype: "success",
-    isОшибка: false,
+    isError: false,
     errors: [],
   },
 ];

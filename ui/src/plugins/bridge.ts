@@ -2,7 +2,7 @@
  * Plugin UI bridge runtime — concrete implementations of the bridge hooks.
  *
  * Plugin UI bundles import `usePluginData`, `usePluginAction`, and
- * `useХостContext` from `@paperclipai/plugin-sdk/ui`.  Those are type-only
+ * `useHostContext` from `@paperclipai/plugin-sdk/ui`.  Those are type-only
  * declarations in the SDK package. The host provides the real implementations
  * by injecting this bridge runtime into the plugin's module scope.
  *
@@ -16,38 +16,38 @@
  *    `createPluginBridge(pluginId)`.
  * 2. The bridge's hook implementations are registered in a global bridge
  *    registry keyed by `pluginId`.
- * 3. The "ambient" hooks (`usePluginData`, `usePluginAction`, `useХостContext`)
+ * 3. The "ambient" hooks (`usePluginData`, `usePluginAction`, `useHostContext`)
  *    look up the current plugin context from a React context provider and
  *    delegate to the appropriate bridge instance.
  *
  * @see PLUGIN_SPEC.md §13.8 — `getData`
  * @see PLUGIN_SPEC.md §13.9 — `performAction`
- * @see PLUGIN_SPEC.md §19.7 — Ошибка Propagation Through The Bridge
+ * @see PLUGIN_SPEC.md §19.7 — Error Propagation Through The Bridge
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useLocation as useRouterLocation, useNavigate as useRouterNavigate, type NavigateOptions } from "react-router-dom";
 import type {
-  PluginBridgeОшибкаCode,
+  PluginBridgeErrorCode,
   PluginLauncherBounds,
   PluginLauncherRenderContextSnapshot,
-  PluginLauncherRenderОкружение,
+  PluginLauncherRenderEnvironment,
 } from "@paperclipai/shared";
 import { pluginsApi } from "@/api/plugins";
-import { ApiОшибка } from "@/api/client";
+import { ApiError } from "@/api/client";
 import { useToastActions, type ToastInput } from "@/context/ToastContext";
 import { useSidebar } from "@/context/SidebarContext";
-import { isGlobalПуть, normalizeКомпанияPrefix } from "@/lib/company-routes";
+import { isGlobalPath, normalizeCompanyPrefix } from "@/lib/company-routes";
 
 // ---------------------------------------------------------------------------
-// Bridge error type (mirrors the SDK's PluginBridgeОшибка)
+// Bridge error type (mirrors the SDK's PluginBridgeError)
 // ---------------------------------------------------------------------------
 
 /**
- * Structured error from the bridge, matching the SDK's `PluginBridgeОшибка`.
+ * Structured error from the bridge, matching the SDK's `PluginBridgeError`.
  */
-export interface PluginBridgeОшибка {
-  code: PluginBridgeОшибкаCode;
+export interface PluginBridgeError {
+  code: PluginBridgeErrorCode;
   message: string;
   details?: unknown;
 }
@@ -59,37 +59,37 @@ export interface PluginBridgeОшибка {
 export interface PluginDataResult<T = unknown> {
   data: T | null;
   loading: boolean;
-  error: PluginBridgeОшибка | null;
+  error: PluginBridgeError | null;
   refresh(): void;
 }
 
 export type PluginToastInput = ToastInput;
 export type PluginToastFn = (input: PluginToastInput) => string | null;
 
-export interface ХостNavigationOptions {
+export interface HostNavigationOptions {
   replace?: boolean;
   state?: unknown;
 }
 
-export interface ХостNavigationLinkOptions extends ХостNavigationOptions {
+export interface HostNavigationLinkOptions extends HostNavigationOptions {
   target?: string;
   rel?: string;
 }
 
-export interface ХостNavigationLinkProps {
+export interface HostNavigationLinkProps {
   href: string;
   target?: string;
   rel?: string;
   onClick(event: ReactMouseEvent<HTMLAnchorElement>): void;
 }
 
-export interface ХостNavigation {
+export interface HostNavigation {
   resolveHref(to: string): string;
-  navigate(to: string, options?: ХостNavigationOptions): void;
-  linkProps(to: string, options?: ХостNavigationLinkOptions): ХостNavigationLinkProps;
+  navigate(to: string, options?: HostNavigationOptions): void;
+  linkProps(to: string, options?: HostNavigationLinkOptions): HostNavigationLinkProps;
 }
 
-export interface ХостLocation {
+export interface HostLocation {
   pathname: string;
   search: string;
   hash: string;
@@ -97,18 +97,18 @@ export interface ХостLocation {
 }
 
 // ---------------------------------------------------------------------------
-// Хост context type (mirrors the SDK's PluginХостContext)
+// Host context type (mirrors the SDK's PluginHostContext)
 // ---------------------------------------------------------------------------
 
-export interface PluginХостContext {
+export interface PluginHostContext {
   companyId: string | null;
   companyPrefix: string | null;
   projectId: string | null;
   entityId: string | null;
-  entityТип: string | null;
+  entityType: string | null;
   parentEntityId?: string | null;
   userId: string | null;
-  renderОкружение?: PluginRenderОкружениеContext | null;
+  renderEnvironment?: PluginRenderEnvironmentContext | null;
 }
 
 export interface PluginModalBoundsRequest {
@@ -121,9 +121,9 @@ export interface PluginModalBoundsRequest {
   maxHeight?: number;
 }
 
-export interface PluginRenderЗакрытьEvent {
+export interface PluginRenderCloseEvent {
   reason:
-    | "escapeКлюч"
+    | "escapeKey"
     | "backdrop"
     | "hostNavigation"
     | "programmatic"
@@ -132,37 +132,37 @@ export interface PluginRenderЗакрытьEvent {
   nativeEvent?: unknown;
 }
 
-export type PluginRenderЗакрытьHandler = (
-  event: PluginRenderЗакрытьEvent,
+export type PluginRenderCloseHandler = (
+  event: PluginRenderCloseEvent,
 ) => void | Promise<void>;
 
-export interface PluginRenderЗакрытьLifecycle {
-  onBeforeЗакрыть?(handler: PluginRenderЗакрытьHandler): () => void;
-  onЗакрыть?(handler: PluginRenderЗакрытьHandler): () => void;
+export interface PluginRenderCloseLifecycle {
+  onBeforeClose?(handler: PluginRenderCloseHandler): () => void;
+  onClose?(handler: PluginRenderCloseHandler): () => void;
 }
 
-export interface PluginRenderОкружениеContext {
-  environment: PluginLauncherRenderОкружение | null;
+export interface PluginRenderEnvironmentContext {
+  environment: PluginLauncherRenderEnvironment | null;
   launcherId: string | null;
   bounds: PluginLauncherBounds | null;
   requestModalBounds?(request: PluginModalBoundsRequest): Promise<void>;
-  closeLifecycle?: PluginRenderЗакрытьLifecycle | null;
+  closeLifecycle?: PluginRenderCloseLifecycle | null;
 }
 
 // ---------------------------------------------------------------------------
 // Bridge context — React context for plugin identity and host scope
 // ---------------------------------------------------------------------------
 
-export type PluginBridgeContextЗначение = {
+export type PluginBridgeContextValue = {
   pluginId: string;
-  hostContext: PluginХостContext;
+  hostContext: PluginHostContext;
 };
 
 /**
  * React context that carries the active plugin identity and host scope.
  *
- * The slot/launcher mount wraps plugin components in a Провайдер so that
- * bridge hooks (`usePluginData`, `usePluginAction`, `useХостContext`) can
+ * The slot/launcher mount wraps plugin components in a Provider so that
+ * bridge hooks (`usePluginData`, `usePluginAction`, `useHostContext`) can
  * resolve the current plugin without ambient mutable globals.
  *
  * Because plugin bundles share the host's React instance (via the bridge
@@ -170,36 +170,36 @@ export type PluginBridgeContextЗначение = {
  * works correctly across the host/plugin boundary.
  */
 export const PluginBridgeContext =
-  createContext<PluginBridgeContextЗначение | null>(null);
+  createContext<PluginBridgeContextValue | null>(null);
 
-function usePluginBridgeContext(): PluginBridgeContextЗначение {
+function usePluginBridgeContext(): PluginBridgeContextValue {
   const ctx = useContext(PluginBridgeContext);
   if (!ctx) {
-    throw new Ошибка(
-      "Plugin bridge hook called outside of a <PluginBridgeContext.Провайдер>. " +
-        "Ensure the plugin component is rendered within a PluginBridgeОбласть.",
+    throw new Error(
+      "Plugin bridge hook called outside of a <PluginBridgeContext.Provider>. " +
+        "Ensure the plugin component is rendered within a PluginBridgeScope.",
     );
   }
   return ctx;
 }
 
 // ---------------------------------------------------------------------------
-// Ошибка extraction helpers
+// Error extraction helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Attempt to extract a structured PluginBridgeОшибка from an API error.
+ * Attempt to extract a structured PluginBridgeError from an API error.
  *
  * The bridge proxy endpoints return error bodies shaped as
- * `{ code: PluginBridgeОшибкаCode, message: string, details?: unknown }`.
- * This helper extracts that structure from the ApiОшибка thrown by the client.
+ * `{ code: PluginBridgeErrorCode, message: string, details?: unknown }`.
+ * This helper extracts that structure from the ApiError thrown by the client.
  */
-function extractBridgeОшибка(err: unknown): PluginBridgeОшибка {
-  if (err instanceof ApiОшибка && err.body && typeof err.body === "object") {
+function extractBridgeError(err: unknown): PluginBridgeError {
+  if (err instanceof ApiError && err.body && typeof err.body === "object") {
     const body = err.body as Record<string, unknown>;
     if (typeof body.code === "string" && typeof body.message === "string") {
       return {
-        code: body.code as PluginBridgeОшибкаCode,
+        code: body.code as PluginBridgeErrorCode,
         message: body.message,
         details: body.details,
       };
@@ -215,7 +215,7 @@ function extractBridgeОшибка(err: unknown): PluginBridgeОшибка {
 
   return {
     code: "UNKNOWN",
-    message: err instanceof Ошибка ? err.message : String(err),
+    message: err instanceof Error ? err.message : String(err),
   };
 }
 
@@ -236,24 +236,24 @@ function serializeParams(params?: Record<string, unknown>): string {
   }
 }
 
-function serializeRenderОкружение(
-  renderОкружение?: PluginRenderОкружениеContext | null,
+function serializeRenderEnvironment(
+  renderEnvironment?: PluginRenderEnvironmentContext | null,
 ): PluginLauncherRenderContextSnapshot | null {
-  if (!renderОкружение) return null;
+  if (!renderEnvironment) return null;
   return {
-    environment: renderОкружение.environment,
-    launcherId: renderОкружение.launcherId,
-    bounds: renderОкружение.bounds,
+    environment: renderEnvironment.environment,
+    launcherId: renderEnvironment.launcherId,
+    bounds: renderEnvironment.bounds,
   };
 }
 
-function serializeRenderОкружениеSnapshot(
+function serializeRenderEnvironmentSnapshot(
   snapshot: PluginLauncherRenderContextSnapshot | null,
 ): string {
   return snapshot ? JSON.stringify(snapshot) : "";
 }
 
-function splitПуть(path: string): { pathname: string; search: string; hash: string } {
+function splitPath(path: string): { pathname: string; search: string; hash: string } {
   const match = path.match(/^([^?#]*)(\?[^#]*)?(#.*)?$/);
   return {
     pathname: match?.[1] ?? path,
@@ -262,7 +262,7 @@ function splitПуть(path: string): { pathname: string; search: string; hash: 
   };
 }
 
-function sameOriginПутьFromHref(href: string): string | null {
+function sameOriginPathFromHref(href: string): string | null {
   if (!/^[a-z][a-z\d+.-]*:/i.test(href) && !href.startsWith("//")) {
     return href;
   }
@@ -276,9 +276,9 @@ function sameOriginПутьFromHref(href: string): string | null {
   }
 }
 
-function hasКомпанияPrefix(pathname: string, companyPrefix: string): boolean {
+function hasCompanyPrefix(pathname: string, companyPrefix: string): boolean {
   const [firstSegment] = pathname.split("/").filter(Boolean);
-  return firstSegment?.toUpperCase() === normalizeКомпанияPrefix(companyPrefix);
+  return firstSegment?.toUpperCase() === normalizeCompanyPrefix(companyPrefix);
 }
 
 /**
@@ -287,45 +287,45 @@ function hasКомпанияPrefix(pathname: string, companyPrefix: string): boo
  * This intentionally handles plugin page roots such as `/wiki`, which cannot
  * be listed in the host router's static board-route table ahead of time.
  */
-export function resolveХостNavigationHref(
+export function resolveHostNavigationHref(
   to: string,
   companyPrefix: string | null | undefined,
 ): string {
-  const sameOriginПуть = sameOriginПутьFromHref(to);
-  if (sameOriginПуть === null) return to;
+  const sameOriginPath = sameOriginPathFromHref(to);
+  if (sameOriginPath === null) return to;
 
-  const { pathname, search, hash } = splitПуть(sameOriginПуть);
-  if (!pathname.startsWith("/") || isGlobalПуть(pathname) || !companyPrefix) {
-    return sameOriginПуть;
+  const { pathname, search, hash } = splitPath(sameOriginPath);
+  if (!pathname.startsWith("/") || isGlobalPath(pathname) || !companyPrefix) {
+    return sameOriginPath;
   }
 
-  if (hasКомпанияPrefix(pathname, companyPrefix)) {
-    return sameOriginПуть;
+  if (hasCompanyPrefix(pathname, companyPrefix)) {
+    return sameOriginPath;
   }
 
-  return `/${normalizeКомпанияPrefix(companyPrefix)}${pathname}${search}${hash}`;
+  return `/${normalizeCompanyPrefix(companyPrefix)}${pathname}${search}${hash}`;
 }
 
 function isPlainLeftClick(event: ReactMouseEvent<HTMLAnchorElement>): boolean {
   return (
     !event.defaultPrevented &&
     event.button === 0 &&
-    !event.metaКлюч &&
-    !event.altКлюч &&
-    !event.ctrlКлюч &&
-    !event.shiftКлюч
+    !event.metaKey &&
+    !event.altKey &&
+    !event.ctrlKey &&
+    !event.shiftKey
   );
 }
 
-export function shouldHandleХостNavigationClick(
+export function shouldHandleHostNavigationClick(
   event: ReactMouseEvent<HTMLAnchorElement>,
   href: string,
   target?: string,
 ): boolean {
   if (!isPlainLeftClick(event)) return false;
   if (target && target !== "_self") return false;
-  if (event.currentЦель.hasAttribute("download")) return false;
-  return sameOriginПутьFromHref(href) !== null;
+  if (event.currentTarget.hasAttribute("download")) return false;
+  return sameOriginPathFromHref(href) !== null;
 }
 
 /**
@@ -343,24 +343,24 @@ export function usePluginData<T = unknown>(
 ): PluginDataResult<T> {
   const { pluginId, hostContext } = usePluginBridgeContext();
   const companyId = hostContext.companyId;
-  const renderОкружениеSnapshot = serializeRenderОкружение(hostContext.renderОкружение);
-  const renderОкружениеКлюч = serializeRenderОкружениеSnapshot(renderОкружениеSnapshot);
+  const renderEnvironmentSnapshot = serializeRenderEnvironment(hostContext.renderEnvironment);
+  const renderEnvironmentKey = serializeRenderEnvironmentSnapshot(renderEnvironmentSnapshot);
 
   const [data, setData] = useState<T | null>(null);
-  const [loading, setЗагрузка] = useState(true);
-  const [error, setОшибка] = useState<PluginBridgeОшибка | null>(null);
-  const [refreshCounter, setОбновитьCounter] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<PluginBridgeError | null>(null);
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
   // Stable serialization for params change detection
-  const paramsКлюч = serializeParams(params);
+  const paramsKey = serializeParams(params);
 
   useEffect(() => {
     let cancelled = false;
-    let retryTimer: ReturnТип<typeof setTimeout> | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let retryCount = 0;
-    const maxПовторитьCount = 2;
-    const retryableCodes: PluginBridgeОшибкаCode[] = ["WORKER_UNAVAILABLE", "TIMEOUT"];
-    setЗагрузка(true);
+    const maxRetryCount = 2;
+    const retryableCodes: PluginBridgeErrorCode[] = ["WORKER_UNAVAILABLE", "TIMEOUT"];
+    setLoading(true);
     const request = () => {
       pluginsApi
         .bridgeGetData(
@@ -368,20 +368,20 @@ export function usePluginData<T = unknown>(
           key,
           params,
           companyId,
-          renderОкружениеSnapshot,
+          renderEnvironmentSnapshot,
         )
         .then((response) => {
           if (!cancelled) {
             setData(response.data as T);
-            setОшибка(null);
-            setЗагрузка(false);
+            setError(null);
+            setLoading(false);
           }
         })
         .catch((err: unknown) => {
           if (cancelled) return;
 
-          const bridgeОшибка = extractBridgeОшибка(err);
-          if (retryableCodes.includes(bridgeОшибка.code) && retryCount < maxПовторитьCount) {
+          const bridgeError = extractBridgeError(err);
+          if (retryableCodes.includes(bridgeError.code) && retryCount < maxRetryCount) {
             retryCount += 1;
             retryTimer = setTimeout(() => {
               retryTimer = null;
@@ -390,9 +390,9 @@ export function usePluginData<T = unknown>(
             return;
           }
 
-          setОшибка(bridgeОшибка);
+          setError(bridgeError);
           setData(null);
-          setЗагрузка(false);
+          setLoading(false);
         });
     };
 
@@ -403,10 +403,10 @@ export function usePluginData<T = unknown>(
       if (retryTimer) clearTimeout(retryTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pluginId, key, paramsКлюч, refreshCounter, companyId, renderОкружениеКлюч]);
+  }, [pluginId, key, paramsKey, refreshCounter, companyId, renderEnvironmentKey]);
 
   const refresh = useCallback(() => {
-    setОбновитьCounter((c) => c + 1);
+    setRefreshCounter((c) => c + 1);
   }, []);
 
   return { data, loading, error, refresh };
@@ -427,7 +427,7 @@ export type PluginActionFn = (params?: Record<string, unknown>) => Promise<unkno
  * Returns a stable async function that, when called, sends a POST to
  * `/api/plugins/:pluginId/actions/:key` and returns the worker result.
  *
- * On failure, the function throws a `PluginBridgeОшибка`.
+ * On failure, the function throws a `PluginBridgeError`.
  */
 export function usePluginAction(key: string): PluginActionFn {
   const bridgeContext = usePluginBridgeContext();
@@ -438,7 +438,7 @@ export function usePluginAction(key: string): PluginActionFn {
     async (params?: Record<string, unknown>): Promise<unknown> => {
       const { pluginId, hostContext } = contextRef.current;
       const companyId = hostContext.companyId;
-      const renderОкружение = serializeRenderОкружение(hostContext.renderОкружение);
+      const renderEnvironment = serializeRenderEnvironment(hostContext.renderEnvironment);
 
       try {
         const response = await pluginsApi.bridgePerformAction(
@@ -446,11 +446,11 @@ export function usePluginAction(key: string): PluginActionFn {
           key,
           params,
           companyId,
-          renderОкружение,
+          renderEnvironment,
         );
         return response.data;
       } catch (err) {
-        throw extractBridgeОшибка(err);
+        throw extractBridgeError(err);
       }
     },
     [key],
@@ -458,44 +458,44 @@ export function usePluginAction(key: string): PluginActionFn {
 }
 
 // ---------------------------------------------------------------------------
-// useХостContext — concrete implementation
+// useHostContext — concrete implementation
 // ---------------------------------------------------------------------------
 
 /**
- * Concrete implementation of `useХостContext()`.
+ * Concrete implementation of `useHostContext()`.
  *
  * Returns the current host context (company, project, entity, user)
- * from the enclosing `PluginBridgeContext.Провайдер`.
+ * from the enclosing `PluginBridgeContext.Provider`.
  */
-export function useХостContext(): PluginХостContext {
+export function useHostContext(): PluginHostContext {
   const { hostContext } = usePluginBridgeContext();
   return hostContext;
 }
 
 // ---------------------------------------------------------------------------
-// useХостNavigation — concrete implementation
+// useHostNavigation — concrete implementation
 // ---------------------------------------------------------------------------
 
-export function useХостNavigation(): ХостNavigation {
+export function useHostNavigation(): HostNavigation {
   const { hostContext } = usePluginBridgeContext();
   const routerNavigate = useRouterNavigate();
   const { isMobile, setSidebarOpen } = useSidebar();
   const companyPrefix = hostContext.companyPrefix;
 
   const resolveHref = useCallback(
-    (to: string) => resolveХостNavigationHref(to, companyPrefix),
+    (to: string) => resolveHostNavigationHref(to, companyPrefix),
     [companyPrefix],
   );
 
   const navigate = useCallback(
-    (to: string, options?: ХостNavigationOptions) => {
+    (to: string, options?: HostNavigationOptions) => {
       const href = resolveHref(to);
-      const sameOriginПуть = sameOriginПутьFromHref(href);
-      if (sameOriginПуть === null) {
+      const sameOriginPath = sameOriginPathFromHref(href);
+      if (sameOriginPath === null) {
         window.location.assign(href);
         return;
       }
-      routerNavigate(sameOriginПуть, options as NavigateOptions | undefined);
+      routerNavigate(sameOriginPath, options as NavigateOptions | undefined);
       // Mirror host sidebar behavior: tapping a link inside the mobile drawer
       // dismisses the drawer so the user can see the destination page.
       if (isMobile) setSidebarOpen(false);
@@ -504,15 +504,15 @@ export function useХостNavigation(): ХостNavigation {
   );
 
   const linkProps = useCallback(
-    (to: string, options?: ХостNavigationLinkOptions): ХостNavigationLinkProps => {
+    (to: string, options?: HostNavigationLinkOptions): HostNavigationLinkProps => {
       const href = resolveHref(to);
       return {
         href,
         target: options?.target,
         rel: options?.rel,
         onClick: (event) => {
-          if (!shouldHandleХостNavigationClick(event, href, options?.target)) return;
-          event.preventПо умолчанию();
+          if (!shouldHandleHostNavigationClick(event, href, options?.target)) return;
+          event.preventDefault();
           navigate(href, options);
         },
       };
@@ -531,10 +531,10 @@ export function useХостNavigation(): ХостNavigation {
 }
 
 // ---------------------------------------------------------------------------
-// useХостLocation — concrete implementation
+// useHostLocation — concrete implementation
 // ---------------------------------------------------------------------------
 
-export function useХостLocation(): ХостLocation {
+export function useHostLocation(): HostLocation {
   const location = useRouterLocation();
   return useMemo(
     () => ({
@@ -568,7 +568,7 @@ export interface PluginStreamResult<T = unknown> {
   lastEvent: T | null;
   connecting: boolean;
   connected: boolean;
-  error: Ошибка | null;
+  error: Error | null;
   close(): void;
 }
 
@@ -577,12 +577,12 @@ export function usePluginStream<T = unknown>(
   options?: { companyId?: string },
 ): PluginStreamResult<T> {
   const { pluginId, hostContext } = usePluginBridgeContext();
-  const effectiveКомпанияId = options?.companyId ?? hostContext.companyId ?? undefined;
+  const effectiveCompanyId = options?.companyId ?? hostContext.companyId ?? undefined;
   const [events, setEvents] = useState<T[]>([]);
   const [lastEvent, setLastEvent] = useState<T | null>(null);
-  const [connecting, setConnecting] = useState<boolean>(Boolean(effectiveКомпанияId));
+  const [connecting, setConnecting] = useState<boolean>(Boolean(effectiveCompanyId));
   const [connected, setConnected] = useState(false);
-  const [error, setОшибка] = useState<Ошибка | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const sourceRef = useRef<EventSource | null>(null);
 
   const close = useCallback(() => {
@@ -595,14 +595,14 @@ export function usePluginStream<T = unknown>(
   useEffect(() => {
     setEvents([]);
     setLastEvent(null);
-    setОшибка(null);
+    setError(null);
 
-    if (!effectiveКомпанияId) {
+    if (!effectiveCompanyId) {
       close();
       return;
     }
 
-    const params = new URLПоискParams({ companyId: effectiveКомпанияId });
+    const params = new URLSearchParams({ companyId: effectiveCompanyId });
     const source = new EventSource(
       `/api/plugins/${encodeURIComponent(pluginId)}/bridge/stream/${encodeURIComponent(channel)}?${params.toString()}`,
       { withCredentials: true },
@@ -614,7 +614,7 @@ export function usePluginStream<T = unknown>(
     source.onopen = () => {
       setConnecting(false);
       setConnected(true);
-      setОшибка(null);
+      setError(null);
     };
 
     source.onmessage = (event) => {
@@ -622,8 +622,8 @@ export function usePluginStream<T = unknown>(
         const parsed = JSON.parse(event.data) as T;
         setEvents((current) => [...current, parsed]);
         setLastEvent(parsed);
-      } catch (nextОшибка) {
-        setОшибка(nextОшибка instanceof Ошибка ? nextОшибка : new Ошибка(String(nextОшибка)));
+      } catch (nextError) {
+        setError(nextError instanceof Error ? nextError : new Error(String(nextError)));
       }
     };
 
@@ -639,7 +639,7 @@ export function usePluginStream<T = unknown>(
     source.onerror = () => {
       setConnecting(false);
       setConnected(false);
-      setОшибка(new Ошибка(`Ошибка to connect to plugin stream "${channel}"`));
+      setError(new Error(`Failed to connect to plugin stream "${channel}"`));
       source.close();
       if (sourceRef.current === source) {
         sourceRef.current = null;
@@ -652,7 +652,7 @@ export function usePluginStream<T = unknown>(
         sourceRef.current = null;
       }
     };
-  }, [channel, close, effectiveКомпанияId, pluginId]);
+  }, [channel, close, effectiveCompanyId, pluginId]);
 
   return { events, lastEvent, connecting, connected, error, close };
 }

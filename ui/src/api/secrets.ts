@@ -1,40 +1,40 @@
 import type {
-  КомпанияСекрет,
-  КомпанияСекретИспользованиеBinding,
-  КомпанияСекретПровайдерConfig,
-  RemoteСекретИмпортПредпросмотрResult,
-  RemoteСекретИмпортResult,
-  СекретДоступEvent,
-  СекретManagedMode,
-  СекретПровайдер,
-  СекретПровайдерConfigСтатус,
-  СекретПровайдерConfigHealthResponse,
-  СекретПровайдерDescriptor,
-  СекретСтатус,
+  CompanySecret,
+  CompanySecretUsageBinding,
+  CompanySecretProviderConfig,
+  RemoteSecretImportPreviewResult,
+  RemoteSecretImportResult,
+  SecretAccessEvent,
+  SecretManagedMode,
+  SecretProvider,
+  SecretProviderConfigStatus,
+  SecretProviderConfigHealthResponse,
+  SecretProviderDescriptor,
+  SecretStatus,
 } from "@paperclipai/shared";
 import { api } from "./client";
 
-export interface СекретИспользованиеResponse {
+export interface SecretUsageResponse {
   secretId: string;
-  bindings: КомпанияСекретИспользованиеBinding[];
+  bindings: CompanySecretUsageBinding[];
 }
 
-export interface СоздатьСекретInput {
+export interface CreateSecretInput {
   name: string;
   key?: string;
-  provider?: СекретПровайдер;
-  managedMode?: СекретManagedMode;
+  provider?: SecretProvider;
+  managedMode?: SecretManagedMode;
   value?: string | null;
   description?: string | null;
   externalRef?: string | null;
-  providerВерсияRef?: string | null;
+  providerVersionRef?: string | null;
   providerConfigId?: string | null;
   providerMetadata?: Record<string, unknown> | null;
 }
 
-export interface СекретПровайдерHealthResponse {
+export interface SecretProviderHealthResponse {
   providers: Array<{
-    provider: СекретПровайдер;
+    provider: SecretProvider;
     status: "ok" | "warn" | "error";
     message: string;
     warnings?: string[];
@@ -43,96 +43,96 @@ export interface СекретПровайдерHealthResponse {
   }>;
 }
 
-export interface ОбновитьСекретInput {
+export interface UpdateSecretInput {
   name?: string;
   key?: string;
-  status?: СекретСтатус;
+  status?: SecretStatus;
   description?: string | null;
   externalRef?: string | null;
   providerMetadata?: Record<string, unknown> | null;
 }
 
-export interface RotateСекретInput {
+export interface RotateSecretInput {
   value?: string | null;
   externalRef?: string | null;
-  providerВерсияRef?: string | null;
+  providerVersionRef?: string | null;
   providerConfigId?: string | null;
 }
 
-export interface СоздатьСекретПровайдерConfigInput {
-  provider: СекретПровайдер;
-  displayИмя: string;
-  status?: СекретПровайдерConfigСтатус;
-  isПо умолчанию?: boolean;
+export interface CreateSecretProviderConfigInput {
+  provider: SecretProvider;
+  displayName: string;
+  status?: SecretProviderConfigStatus;
+  isDefault?: boolean;
   config?: Record<string, unknown>;
 }
 
-export interface ОбновитьСекретПровайдерConfigInput {
-  displayИмя?: string;
-  status?: СекретПровайдерConfigСтатус;
-  isПо умолчанию?: boolean;
+export interface UpdateSecretProviderConfigInput {
+  displayName?: string;
+  status?: SecretProviderConfigStatus;
+  isDefault?: boolean;
   config?: Record<string, unknown>;
 }
 
-export interface RemoteИмпортПредпросмотрInput {
+export interface RemoteImportPreviewInput {
   providerConfigId: string;
   query?: string | null;
-  nextТокен?: string | null;
+  nextToken?: string | null;
   pageSize?: number;
 }
 
-export interface RemoteИмпортSelectionInput {
+export interface RemoteImportSelectionInput {
   externalRef: string;
   name?: string | null;
   key?: string | null;
   description?: string | null;
-  providerВерсияRef?: string | null;
+  providerVersionRef?: string | null;
   providerMetadata?: Record<string, unknown> | null;
 }
 
-export interface RemoteИмпортInput {
+export interface RemoteImportInput {
   providerConfigId: string;
-  secrets: RemoteИмпортSelectionInput[];
+  secrets: RemoteImportSelectionInput[];
 }
 
 export const secretsApi = {
-  list: (companyId: string) => api.get<КомпанияСекрет[]>(`/companies/${companyId}/secrets`),
+  list: (companyId: string) => api.get<CompanySecret[]>(`/companies/${companyId}/secrets`),
   providers: (companyId: string) =>
-    api.get<СекретПровайдерDescriptor[]>(`/companies/${companyId}/secret-providers`),
+    api.get<SecretProviderDescriptor[]>(`/companies/${companyId}/secret-providers`),
   providerHealth: (companyId: string) =>
-    api.get<СекретПровайдерHealthResponse>(`/companies/${companyId}/secret-providers/health`),
+    api.get<SecretProviderHealthResponse>(`/companies/${companyId}/secret-providers/health`),
   providerConfigs: (companyId: string) =>
-    api.get<КомпанияСекретПровайдерConfig[]>(`/companies/${companyId}/secret-provider-configs`),
-  createПровайдерConfig: (companyId: string, data: СоздатьСекретПровайдерConfigInput) =>
-    api.post<КомпанияСекретПровайдерConfig>(`/companies/${companyId}/secret-provider-configs`, data),
-  updateПровайдерConfig: (id: string, data: ОбновитьСекретПровайдерConfigInput) =>
-    api.patch<КомпанияСекретПровайдерConfig>(`/secret-provider-configs/${id}`, data),
-  disableПровайдерConfig: (id: string) =>
-    api.delete<КомпанияСекретПровайдерConfig>(`/secret-provider-configs/${id}`),
-  setПо умолчаниюПровайдерConfig: (id: string) =>
-    api.post<КомпанияСекретПровайдерConfig>(`/secret-provider-configs/${id}/default`, {}),
-  checkПровайдерConfigHealth: (id: string) =>
-    api.post<СекретПровайдерConfigHealthResponse>(`/secret-provider-configs/${id}/health`, {}),
-  create: (companyId: string, data: СоздатьСекретInput) =>
-    api.post<КомпанияСекрет>(`/companies/${companyId}/secrets`, data),
-  update: (id: string, data: ОбновитьСекретInput) =>
-    api.patch<КомпанияСекрет>(`/secrets/${id}`, data),
-  rotate: (id: string, data: RotateСекретInput) =>
-    api.post<КомпанияСекрет>(`/secrets/${id}/rotate`, data),
+    api.get<CompanySecretProviderConfig[]>(`/companies/${companyId}/secret-provider-configs`),
+  createProviderConfig: (companyId: string, data: CreateSecretProviderConfigInput) =>
+    api.post<CompanySecretProviderConfig>(`/companies/${companyId}/secret-provider-configs`, data),
+  updateProviderConfig: (id: string, data: UpdateSecretProviderConfigInput) =>
+    api.patch<CompanySecretProviderConfig>(`/secret-provider-configs/${id}`, data),
+  disableProviderConfig: (id: string) =>
+    api.delete<CompanySecretProviderConfig>(`/secret-provider-configs/${id}`),
+  setDefaultProviderConfig: (id: string) =>
+    api.post<CompanySecretProviderConfig>(`/secret-provider-configs/${id}/default`, {}),
+  checkProviderConfigHealth: (id: string) =>
+    api.post<SecretProviderConfigHealthResponse>(`/secret-provider-configs/${id}/health`, {}),
+  create: (companyId: string, data: CreateSecretInput) =>
+    api.post<CompanySecret>(`/companies/${companyId}/secrets`, data),
+  update: (id: string, data: UpdateSecretInput) =>
+    api.patch<CompanySecret>(`/secrets/${id}`, data),
+  rotate: (id: string, data: RotateSecretInput) =>
+    api.post<CompanySecret>(`/secrets/${id}/rotate`, data),
   disable: (id: string) =>
-    api.patch<КомпанияСекрет>(`/secrets/${id}`, { status: "disabled" satisfies СекретСтатус }),
+    api.patch<CompanySecret>(`/secrets/${id}`, { status: "disabled" satisfies SecretStatus }),
   enable: (id: string) =>
-    api.patch<КомпанияСекрет>(`/secrets/${id}`, { status: "active" satisfies СекретСтатус }),
+    api.patch<CompanySecret>(`/secrets/${id}`, { status: "active" satisfies SecretStatus }),
   archive: (id: string) =>
-    api.patch<КомпанияСекрет>(`/secrets/${id}`, { status: "archived" satisfies СекретСтатус }),
+    api.patch<CompanySecret>(`/secrets/${id}`, { status: "archived" satisfies SecretStatus }),
   remove: (id: string) => api.delete<{ ok: true }>(`/secrets/${id}`),
-  usage: (id: string) => api.get<СекретИспользованиеResponse>(`/secrets/${id}/usage`),
-  accessEvents: (id: string) => api.get<СекретДоступEvent[]>(`/secrets/${id}/access-events`),
-  remoteИмпортПредпросмотр: (companyId: string, data: RemoteИмпортПредпросмотрInput) =>
-    api.post<RemoteСекретИмпортПредпросмотрResult>(
+  usage: (id: string) => api.get<SecretUsageResponse>(`/secrets/${id}/usage`),
+  accessEvents: (id: string) => api.get<SecretAccessEvent[]>(`/secrets/${id}/access-events`),
+  remoteImportPreview: (companyId: string, data: RemoteImportPreviewInput) =>
+    api.post<RemoteSecretImportPreviewResult>(
       `/companies/${companyId}/secrets/remote-import/preview`,
       data,
     ),
-  remoteИмпорт: (companyId: string, data: RemoteИмпортInput) =>
-    api.post<RemoteСекретИмпортResult>(`/companies/${companyId}/secrets/remote-import`, data),
+  remoteImport: (companyId: string, data: RemoteImportInput) =>
+    api.post<RemoteSecretImportResult>(`/companies/${companyId}/secrets/remote-import`, data),
 };

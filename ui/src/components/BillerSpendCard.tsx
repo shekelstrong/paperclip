@@ -1,83 +1,83 @@
 import { useMemo } from "react";
-import type { CostByBiller, CostByПровайдерМодель } from "@paperclipai/shared";
-import { Card, CardContent, CardHeader, CardНазвание, CardОписание } from "@/components/ui/card";
+import type { CostByBiller, CostByProviderModel } from "@paperclipai/shared";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { QuotaBar } from "./QuotaBar";
-import { billingТипDisplayИмя, formatCents, formatТокенs, providerDisplayИмя } from "@/lib/utils";
+import { billingTypeDisplayName, formatCents, formatTokens, providerDisplayName } from "@/lib/utils";
 
 interface BillerSpendCardProps {
   row: CostByBiller;
   weekSpendCents: number;
   budgetMonthlyCents: number;
-  totalКомпанияSpendCents: number;
-  providerRows: CostByПровайдерМодель[];
+  totalCompanySpendCents: number;
+  providerRows: CostByProviderModel[];
 }
 
 export function BillerSpendCard({
   row,
   weekSpendCents,
   budgetMonthlyCents,
-  totalКомпанияSpendCents,
+  totalCompanySpendCents,
   providerRows,
 }: BillerSpendCardProps) {
   const providerBreakdown = useMemo(() => {
-    const map = new Map<string, { provider: string; costCents: number; inputТокенs: number; outputТокенs: number }>();
+    const map = new Map<string, { provider: string; costCents: number; inputTokens: number; outputTokens: number }>();
     for (const entry of providerRows) {
       const current = map.get(entry.provider) ?? {
         provider: entry.provider,
         costCents: 0,
-        inputТокенs: 0,
-        outputТокенs: 0,
+        inputTokens: 0,
+        outputTokens: 0,
       };
       current.costCents += entry.costCents;
-      current.inputТокенs += entry.inputТокенs + entry.cachedInputТокенs;
-      current.outputТокенs += entry.outputТокенs;
+      current.inputTokens += entry.inputTokens + entry.cachedInputTokens;
+      current.outputTokens += entry.outputTokens;
       map.set(entry.provider, current);
     }
     return Array.from(map.values()).sort((a, b) => b.costCents - a.costCents);
   }, [providerRows]);
 
-  const billingТипBreakdown = useMemo(() => {
+  const billingTypeBreakdown = useMemo(() => {
     const map = new Map<string, number>();
     for (const entry of providerRows) {
-      map.set(entry.billingТип, (map.get(entry.billingТип) ?? 0) + entry.costCents);
+      map.set(entry.billingType, (map.get(entry.billingType) ?? 0) + entry.costCents);
     }
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
   }, [providerRows]);
 
-  const providerБюджетShare =
-    budgetMonthlyCents > 0 && totalКомпанияSpendCents > 0
-      ? (row.costCents / totalКомпанияSpendCents) * budgetMonthlyCents
+  const providerBudgetShare =
+    budgetMonthlyCents > 0 && totalCompanySpendCents > 0
+      ? (row.costCents / totalCompanySpendCents) * budgetMonthlyCents
       : budgetMonthlyCents;
   const budgetPct =
-    providerБюджетShare > 0
-      ? Math.min(100, (row.costCents / providerБюджетShare) * 100)
+    providerBudgetShare > 0
+      ? Math.min(100, (row.costCents / providerBudgetShare) * 100)
       : 0;
 
   return (
     <Card>
-      <CardHeader classИмя="px-4 pt-4 pb-0 gap-1">
-        <div classИмя="flex items-start justify-between gap-3">
-          <div classИмя="min-w-0">
-            <CardНазвание classИмя="text-sm font-semibold">
-              {providerDisplayИмя(row.biller)}
-            </CardНазвание>
-            <CardОписание classИмя="text-xs mt-0.5">
-              <span classИмя="font-mono">{formatТокенs(row.inputТокенs + row.cachedInputТокенs)}</span> in
+      <CardHeader className="px-4 pt-4 pb-0 gap-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="text-sm font-semibold">
+              {providerDisplayName(row.biller)}
+            </CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              <span className="font-mono">{formatTokens(row.inputTokens + row.cachedInputTokens)}</span> in
               {" · "}
-              <span classИмя="font-mono">{formatТокенs(row.outputТокенs)}</span> out
+              <span className="font-mono">{formatTokens(row.outputTokens)}</span> out
               {" · "}
               {row.providerCount} provider{row.providerCount === 1 ? "" : "s"}
               {" · "}
               {row.modelCount} model{row.modelCount === 1 ? "" : "s"}
-            </CardОписание>
+            </CardDescription>
           </div>
-          <span classИмя="text-xl font-bold tabular-nums shrink-0">
+          <span className="text-xl font-bold tabular-nums shrink-0">
             {formatCents(row.costCents)}
           </span>
         </div>
       </CardHeader>
 
-      <CardContent classИмя="px-4 pb-4 pt-3 space-y-4">
+      <CardContent className="px-4 pb-4 pt-3 space-y-4">
         {budgetMonthlyCents > 0 && (
           <QuotaBar
             label="Period spend"
@@ -87,28 +87,28 @@ export function BillerSpendCard({
           />
         )}
 
-        <div classИмя="text-xs text-muted-foreground">
-          {row.apiЗапуститьCount > 0 ? `${row.apiЗапуститьCount} metered run${row.apiЗапуститьCount === 1 ? "" : "s"}` : "0 metered runs"}
+        <div className="text-xs text-muted-foreground">
+          {row.apiRunCount > 0 ? `${row.apiRunCount} metered run${row.apiRunCount === 1 ? "" : "s"}` : "0 metered runs"}
           {" · "}
-          {row.subscriptionЗапуститьCount > 0
-            ? `${row.subscriptionЗапуститьCount} subscription run${row.subscriptionЗапуститьCount === 1 ? "" : "s"}`
+          {row.subscriptionRunCount > 0
+            ? `${row.subscriptionRunCount} subscription run${row.subscriptionRunCount === 1 ? "" : "s"}`
             : "0 subscription runs"}
           {" · "}
           {formatCents(weekSpendCents)} this week
         </div>
 
-        {billingТипBreakdown.length > 0 && (
+        {billingTypeBreakdown.length > 0 && (
           <>
-            <div classИмя="border-t border-border" />
-            <div classИмя="space-y-2">
-              <p classИмя="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Биллинг types
+            <div className="border-t border-border" />
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Billing types
               </p>
-              <div classИмя="space-y-1.5">
-                {billingТипBreakdown.map(([billingТип, costCents]) => (
-                  <div key={billingТип} classИмя="flex items-center justify-between gap-2 text-xs">
-                    <span classИмя="text-muted-foreground">{billingТипDisplayИмя(billingТип as any)}</span>
-                    <span classИмя="font-medium tabular-nums">{formatCents(costCents)}</span>
+              <div className="space-y-1.5">
+                {billingTypeBreakdown.map(([billingType, costCents]) => (
+                  <div key={billingType} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-muted-foreground">{billingTypeDisplayName(billingType as any)}</span>
+                    <span className="font-medium tabular-nums">{formatCents(costCents)}</span>
                   </div>
                 ))}
               </div>
@@ -118,19 +118,19 @@ export function BillerSpendCard({
 
         {providerBreakdown.length > 0 && (
           <>
-            <div classИмя="border-t border-border" />
-            <div classИмя="space-y-2">
-              <p classИмя="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            <div className="border-t border-border" />
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Upstream providers
               </p>
-              <div classИмя="space-y-1.5">
+              <div className="space-y-1.5">
                 {providerBreakdown.map((entry) => (
-                  <div key={entry.provider} classИмя="flex items-center justify-between gap-2 text-xs">
-                    <span classИмя="text-muted-foreground">{providerDisplayИмя(entry.provider)}</span>
-                    <div classИмя="text-right tabular-nums">
-                      <div classИмя="font-medium">{formatCents(entry.costCents)}</div>
-                      <div classИмя="text-muted-foreground">
-                        {formatТокенs(entry.inputТокенs + entry.outputТокенs)} tok
+                  <div key={entry.provider} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-muted-foreground">{providerDisplayName(entry.provider)}</span>
+                    <div className="text-right tabular-nums">
+                      <div className="font-medium">{formatCents(entry.costCents)}</div>
+                      <div className="text-muted-foreground">
+                        {formatTokens(entry.inputTokens + entry.outputTokens)} tok
                       </div>
                     </div>
                   </div>

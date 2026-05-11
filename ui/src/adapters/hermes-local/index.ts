@@ -1,12 +1,12 @@
-import type { UIАдаптерModule } from "../types";
+import type { UIAdapterModule } from "../types";
 import { parseHermesStdoutLine } from "hermes-paperclip-adapter/ui";
 import { buildHermesConfig } from "hermes-paperclip-adapter/ui";
 import { SchemaConfigFields } from "../schema-config-fields";
 
-export const hermesLocalUIАдаптер: UIАдаптерModule = {
+export const hermesLocalUIAdapter: UIAdapterModule = {
   type: "hermes_local",
-  label: "Hermes Агент",
+  label: "Hermes Agent",
   parseStdoutLine: parseHermesStdoutLine,
   ConfigFields: SchemaConfigFields,
-  buildАдаптерConfig: buildHermesConfig,
+  buildAdapterConfig: buildHermesConfig,
 };

@@ -1,21 +1,21 @@
 import { cn } from "../lib/utils";
 
 interface OpenCodeLogoIconProps {
-  classИмя?: string;
+  className?: string;
 }
 
-export function OpenCodeLogoIcon({ classИмя }: OpenCodeLogoIconProps) {
+export function OpenCodeLogoIcon({ className }: OpenCodeLogoIconProps) {
   return (
     <>
       <img
         src="/brands/opencode-logo-light-square.svg"
         alt="OpenCode"
-        classИмя={cn("dark:hidden", classИмя)}
+        className={cn("dark:hidden", className)}
       />
       <img
         src="/brands/opencode-logo-dark-square.svg"
         alt="OpenCode"
-        classИмя={cn("hidden dark:block", classИмя)}
+        className={cn("hidden dark:block", className)}
       />
     </>
   );

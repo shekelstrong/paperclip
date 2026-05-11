@@ -3,15 +3,15 @@ import { Tabs } from "@/components/ui/tabs";
 import { useLocation, useNavigate } from "@/lib/router";
 
 const items = [
-  { value: "general", label: "Общие", href: "/company/settings" },
-  { value: "environments", label: "Окружения", href: "/company/settings/environments" },
-  { value: "access", label: "Доступ", href: "/company/settings/access" },
+  { value: "general", label: "General", href: "/company/settings" },
+  { value: "environments", label: "Environments", href: "/company/settings/environments" },
+  { value: "access", label: "Access", href: "/company/settings/access" },
   { value: "invites", label: "Invites", href: "/company/settings/invites" },
 ] as const;
 
-type КомпанияНастройкиTab = (typeof items)[number]["value"];
+type CompanySettingsTab = (typeof items)[number]["value"];
 
-export function getКомпанияНастройкиTab(pathname: string): КомпанияНастройкиTab {
+export function getCompanySettingsTab(pathname: string): CompanySettingsTab {
   if (pathname.includes("/company/settings/environments")) {
     return "environments";
   }
@@ -27,10 +27,10 @@ export function getКомпанияНастройкиTab(pathname: string): Ко
   return "general";
 }
 
-export function КомпанияНастройкиNav() {
+export function CompanySettingsNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const activeTab = getКомпанияНастройкиTab(location.pathname);
+  const activeTab = getCompanySettingsTab(location.pathname);
 
   function handleTabChange(value: string) {
     const nextTab = items.find((item) => item.value === value);
@@ -39,11 +39,11 @@ export function КомпанияНастройкиNav() {
   }
 
   return (
-    <Tabs value={activeTab} onЗначениеChange={handleTabChange}>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
       <PageTabBar
         items={items.map(({ value, label }) => ({ value, label }))}
         value={activeTab}
-        onЗначениеChange={handleTabChange}
+        onValueChange={handleTabChange}
         align="start"
       />
     </Tabs>

@@ -3,9 +3,9 @@ import { Link } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { cn, formatDateTime } from "@/lib/utils";
 import { formatMonitorOffset } from "@/lib/issue-monitor";
-import { formatПовторитьReason } from "@/lib/runПовторитьState";
-import type { ЗадачаРасписаниеdПовторить } from "@paperclipai/shared";
-import { useПовторитьСейчасMutation, type ПовторитьСейчасОшибка } from "../hooks/useПовторитьСейчасMutation";
+import { formatRetryReason } from "@/lib/runRetryState";
+import type { IssueScheduledRetry } from "@paperclipai/shared";
+import { useRetryNowMutation, type RetryNowError } from "../hooks/useRetryNowMutation";
 
 const MAX_TURN_CONTINUATION = "max_turns_continuation";
 
@@ -13,42 +13,42 @@ function isContinuationReason(reason: string | null | undefined) {
   return reason === MAX_TURN_CONTINUATION;
 }
 
-function shortЗапуститьId(runId: string | null | undefined) {
+function shortRunId(runId: string | null | undefined) {
   return typeof runId === "string" && runId.length >= 8 ? runId.slice(0, 8) : runId ?? "";
 }
 
-interface ЗадачаРасписаниеdПовторитьCardProps {
+interface IssueScheduledRetryCardProps {
   issueId: string | null | undefined;
-  scheduledПовторить: ЗадачаРасписаниеdПовторить | null | undefined;
+  scheduledRetry: IssueScheduledRetry | null | undefined;
 }
 
-export function ЗадачаРасписаниеdПовторитьCard({
+export function IssueScheduledRetryCard({
   issueId,
-  scheduledПовторить,
-}: ЗадачаРасписаниеdПовторитьCardProps) {
-  const retryСейчас = useПовторитьСейчасMutation(issueId);
+  scheduledRetry,
+}: IssueScheduledRetryCardProps) {
+  const retryNow = useRetryNowMutation(issueId);
 
-  if (!scheduledПовторить || !issueId) return null;
-  if (scheduledПовторить.status !== "scheduled_retry") return null;
+  if (!scheduledRetry || !issueId) return null;
+  if (scheduledRetry.status !== "scheduled_retry") return null;
 
-  const continuation = isContinuationReason(scheduledПовторить.scheduledПовторитьReason);
-  const dueAtIso = scheduledПовторить.scheduledПовторитьAt
-    ? new Date(scheduledПовторить.scheduledПовторитьAt).toISOString()
+  const continuation = isContinuationReason(scheduledRetry.scheduledRetryReason);
+  const dueAtIso = scheduledRetry.scheduledRetryAt
+    ? new Date(scheduledRetry.scheduledRetryAt).toISOString()
     : null;
   const relative = dueAtIso ? formatMonitorOffset(dueAtIso) : null;
-  const absolute = scheduledПовторить.scheduledПовторитьAt
-    ? formatDateTime(scheduledПовторить.scheduledПовторитьAt)
+  const absolute = scheduledRetry.scheduledRetryAt
+    ? formatDateTime(scheduledRetry.scheduledRetryAt)
     : null;
-  const reason = formatПовторитьReason(scheduledПовторить.scheduledПовторитьReason);
+  const reason = formatRetryReason(scheduledRetry.scheduledRetryReason);
   const attempt =
-    typeof scheduledПовторить.scheduledПовторитьAttempt === "number"
-    && Number.isFinite(scheduledПовторить.scheduledПовторитьAttempt)
-    && scheduledПовторить.scheduledПовторитьAttempt > 0
-      ? scheduledПовторить.scheduledПовторитьAttempt
+    typeof scheduledRetry.scheduledRetryAttempt === "number"
+    && Number.isFinite(scheduledRetry.scheduledRetryAttempt)
+    && scheduledRetry.scheduledRetryAttempt > 0
+      ? scheduledRetry.scheduledRetryAttempt
       : null;
 
-  const badgeLabel = continuation ? "Continuation scheduled" : "Повторить scheduled";
-  const titleAction = continuation ? "Автоmatic continuation" : "Автоmatic retry";
+  const badgeLabel = continuation ? "Continuation scheduled" : "Retry scheduled";
+  const titleAction = continuation ? "Automatic continuation" : "Automatic retry";
   let titleSuffix: string;
   if (relative === "now") {
     titleSuffix = "due now";
@@ -62,94 +62,94 @@ export function ЗадачаРасписаниеdПовторитьCard({
   const helperIdle = continuation
     ? "Pulls continuation forward immediately"
     : "Pulls retry forward immediately";
-  const isОшибка = retryСейчас.isОшибка || retryСейчас.lastОшибка !== null;
-  const isУспешноTransient = retryСейчас.isУспешно
-    && (retryСейчас.data?.outcome === "promoted" || retryСейчас.data?.outcome === "already_promoted");
+  const isError = retryNow.isError || retryNow.lastError !== null;
+  const isSuccessTransient = retryNow.isSuccess
+    && (retryNow.data?.outcome === "promoted" || retryNow.data?.outcome === "already_promoted");
 
   return (
     <div
       data-testid="issue-scheduled-retry-card"
-      classИмя="mb-3 rounded-lg border border-cyan-500/30 bg-cyan-500/5 px-3 py-3"
+      className="mb-3 rounded-lg border border-cyan-500/30 bg-cyan-500/5 px-3 py-3"
     >
-      <div classИмя="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div classИмя="min-w-0 flex-1">
-          <div classИмя="flex flex-wrap items-center gap-2 text-xs">
-            <span classИмя="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 font-medium text-cyan-700 dark:text-cyan-300">
-              <Clock classИмя="h-3 w-3" aria-hidden="true" />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 font-medium text-cyan-700 dark:text-cyan-300">
+              <Clock className="h-3 w-3" aria-hidden="true" />
               {badgeLabel}
             </span>
             {attempt !== null ? (
-              <span classИмя="text-muted-foreground">Attempt {attempt}</span>
+              <span className="text-muted-foreground">Attempt {attempt}</span>
             ) : null}
             {reason ? (
-              <span classИмя="text-muted-foreground">{reason}</span>
+              <span className="text-muted-foreground">{reason}</span>
             ) : null}
           </div>
-          <div classИмя="mt-1 text-sm font-medium text-foreground">{title}</div>
-          {(absolute || scheduledПовторить.retryOfЗапуститьId) ? (
-            <div classИмя="mt-0.5 text-xs text-muted-foreground">
+          <div className="mt-1 text-sm font-medium text-foreground">{title}</div>
+          {(absolute || scheduledRetry.retryOfRunId) ? (
+            <div className="mt-0.5 text-xs text-muted-foreground">
               {absolute ? <span>{absolute}</span> : null}
-              {absolute && scheduledПовторить.retryOfЗапуститьId ? <span>{" · "}</span> : null}
-              {scheduledПовторить.retryOfЗапуститьId ? (
+              {absolute && scheduledRetry.retryOfRunId ? <span>{" · "}</span> : null}
+              {scheduledRetry.retryOfRunId ? (
                 <span>
                   Replaces run{" "}
                   <Link
-                    to={`/agents/${scheduledПовторить.agentId}/runs/${scheduledПовторить.retryOfЗапуститьId}`}
-                    classИмя="font-mono text-foreground hover:underline"
+                    to={`/agents/${scheduledRetry.agentId}/runs/${scheduledRetry.retryOfRunId}`}
+                    className="font-mono text-foreground hover:underline"
                   >
-                    {shortЗапуститьId(scheduledПовторить.retryOfЗапуститьId)}
+                    {shortRunId(scheduledRetry.retryOfRunId)}
                   </Link>
                 </span>
               ) : null}
             </div>
           ) : null}
-          {scheduledПовторить.error ? (
-            <div classИмя="mt-1 text-xs text-muted-foreground">
-              Last attempt failed: {scheduledПовторить.error}. Paperclip will retry automatically.
+          {scheduledRetry.error ? (
+            <div className="mt-1 text-xs text-muted-foreground">
+              Last attempt failed: {scheduledRetry.error}. Paperclip will retry automatically.
             </div>
           ) : null}
-          {isОшибка ? (
-            <ПовторитьОшибкаBand
-              error={retryСейчас.lastОшибка}
-              onПовторить={() => {
-                retryСейчас.reset();
-                retryСейчас.mutate();
+          {isError ? (
+            <RetryErrorBand
+              error={retryNow.lastError}
+              onRetry={() => {
+                retryNow.reset();
+                retryNow.mutate();
               }}
             />
           ) : null}
         </div>
-        <div classИмя="flex flex-col items-stretch gap-1 sm:items-end">
+        <div className="flex flex-col items-stretch gap-1 sm:items-end">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            classИмя="shrink-0 shadow-none"
-            onClick={() => retryСейчас.mutate()}
-            disabled={retryСейчас.isОжидание || isУспешноTransient}
+            className="shrink-0 shadow-none"
+            onClick={() => retryNow.mutate()}
+            disabled={retryNow.isPending || isSuccessTransient}
             data-testid="issue-scheduled-retry-card-retry-now"
           >
-            {retryСейчас.isОжидание ? (
-              <span classИмя="inline-flex items-center gap-1.5">
-                <Loader2 classИмя="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                Повторитьing…
+            {retryNow.isPending ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                Retrying…
               </span>
-            ) : isУспешноTransient ? (
-              <span classИмя="inline-flex items-center gap-1.5">
-                <CheckCircle2 classИмя="h-3.5 w-3.5" aria-hidden="true" />
-                {retryСейчас.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
+            ) : isSuccessTransient ? (
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                {retryNow.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
               </span>
             ) : (
-              <span classИмя="inline-flex items-center gap-1.5">
-                <RotateCcw classИмя="h-3.5 w-3.5" aria-hidden="true" />
-                Повторить now
+              <span className="inline-flex items-center gap-1.5">
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                Retry now
               </span>
             )}
           </Button>
-          <span classИмя="text-right text-xs text-muted-foreground sm:max-w-[12rem]">
-            {retryСейчас.isОжидание
+          <span className="text-right text-xs text-muted-foreground sm:max-w-[12rem]">
+            {retryNow.isPending
               ? "Promoting scheduled retry"
-              : isУспешноTransient
-                ? retryСейчас.data?.outcome === "already_promoted"
+              : isSuccessTransient
+                ? retryNow.data?.outcome === "already_promoted"
                   ? "Already promoted — run starting"
                   : "Promoted — run starting"
                 : helperIdle}
@@ -160,34 +160,34 @@ export function ЗадачаРасписаниеdПовторитьCard({
   );
 }
 
-interface ПовторитьОшибкаBandProps {
-  error: ПовторитьСейчасОшибка | null;
-  onПовторить: () => void;
-  classИмя?: string;
+interface RetryErrorBandProps {
+  error: RetryNowError | null;
+  onRetry: () => void;
+  className?: string;
 }
 
-export function ПовторитьОшибкаBand({ error, onПовторить, classИмя }: ПовторитьОшибкаBandProps) {
+export function RetryErrorBand({ error, onRetry, className }: RetryErrorBandProps) {
   if (!error) return null;
   return (
     <div
-      classИмя={cn(
+      className={cn(
         "mt-2 flex items-start gap-2 rounded-md border border-rose-500/30 bg-rose-500/5 px-2 py-1.5 text-xs text-rose-700 dark:text-rose-300",
-        classИмя,
+        className,
       )}
       role="alert"
       data-testid="issue-scheduled-retry-error-band"
     >
-      <AlertCircle classИмя="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      <div classИмя="min-w-0 flex-1">
-        <div classИмя="font-medium">Couldn't retry now</div>
-        <div classИмя="mt-0.5 text-muted-foreground">{error.message}</div>
+      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <div className="font-medium">Couldn't retry now</div>
+        <div className="mt-0.5 text-muted-foreground">{error.message}</div>
       </div>
       <button
         type="button"
-        onClick={onПовторить}
-        classИмя="shrink-0 font-medium text-rose-700 hover:underline dark:text-rose-300"
+        onClick={onRetry}
+        className="shrink-0 font-medium text-rose-700 hover:underline dark:text-rose-300"
       >
-        Попробовать снова
+        Try again
       </button>
     </div>
   );

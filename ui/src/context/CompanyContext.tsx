@@ -5,77 +5,77 @@ import {
   useEffect,
   useMemo,
   useState,
-  type ReactНетde,
+  type ReactNode,
 } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Компания } from "@paperclipai/shared";
+import type { Company } from "@paperclipai/shared";
 import { companiesApi } from "../api/companies";
-import { ApiОшибка } from "../api/client";
-import { queryКлючs } from "../lib/queryКлючs";
-import type { КомпанияSelectionSource } from "../lib/company-selection";
-type КомпанияSelectionOptions = { source?: КомпанияSelectionSource };
-type КомпанияListResult = { companies: Компания[]; unauthorized: boolean };
+import { ApiError } from "../api/client";
+import { queryKeys } from "../lib/queryKeys";
+import type { CompanySelectionSource } from "../lib/company-selection";
+type CompanySelectionOptions = { source?: CompanySelectionSource };
+type CompanyListResult = { companies: Company[]; unauthorized: boolean };
 
-interface КомпанияContextЗначение {
-  companies: Компания[];
-  selectedКомпанияId: string | null;
-  selectedКомпания: Компания | null;
-  selectionSource: КомпанияSelectionSource;
+interface CompanyContextValue {
+  companies: Company[];
+  selectedCompanyId: string | null;
+  selectedCompany: Company | null;
+  selectionSource: CompanySelectionSource;
   loading: boolean;
-  error: Ошибка | null;
-  setSelectedКомпанияId: (companyId: string, options?: КомпанияSelectionOptions) => void;
-  reloadКомпании: () => Promise<void>;
-  createКомпания: (data: {
+  error: Error | null;
+  setSelectedCompanyId: (companyId: string, options?: CompanySelectionOptions) => void;
+  reloadCompanies: () => Promise<void>;
+  createCompany: (data: {
     name: string;
     description?: string | null;
     budgetMonthlyCents?: number;
-  }) => Promise<Компания>;
+  }) => Promise<Company>;
 }
 
-const STORAGE_KEY = "paperclip.selectedКомпанияId";
+const STORAGE_KEY = "paperclip.selectedCompanyId";
 
-const КомпанияContext = createContext<КомпанияContextЗначение | null>(null);
+const CompanyContext = createContext<CompanyContextValue | null>(null);
 
-export function resolveBootstrapКомпанияSelection(input: {
-  companies: Array<Pick<Компания, "id">>;
-  sidebarКомпании: Array<Pick<Компания, "id">>;
-  selectedКомпанияId: string | null;
-  storedКомпанияId: string | null;
+export function resolveBootstrapCompanySelection(input: {
+  companies: Array<Pick<Company, "id">>;
+  sidebarCompanies: Array<Pick<Company, "id">>;
+  selectedCompanyId: string | null;
+  storedCompanyId: string | null;
 }) {
   if (input.companies.length === 0) return null;
 
-  const selectableКомпании = input.sidebarКомпании.length > 0
-    ? input.sidebarКомпании
+  const selectableCompanies = input.sidebarCompanies.length > 0
+    ? input.sidebarCompanies
     : input.companies;
-  if (input.selectedКомпанияId && selectableКомпании.some((company) => company.id === input.selectedКомпанияId)) {
-    return input.selectedКомпанияId;
+  if (input.selectedCompanyId && selectableCompanies.some((company) => company.id === input.selectedCompanyId)) {
+    return input.selectedCompanyId;
   }
-  if (input.storedКомпанияId && selectableКомпании.some((company) => company.id === input.storedКомпанияId)) {
-    return input.storedКомпанияId;
+  if (input.storedCompanyId && selectableCompanies.some((company) => company.id === input.storedCompanyId)) {
+    return input.storedCompanyId;
   }
-  return selectableКомпании[0]?.id ?? null;
+  return selectableCompanies[0]?.id ?? null;
 }
 
-export function shouldОчиститьStoredКомпанияSelection(input: {
-  companies: Array<Pick<Компания, "id">>;
-  isЗагрузка: boolean;
+export function shouldClearStoredCompanySelection(input: {
+  companies: Array<Pick<Company, "id">>;
+  isLoading: boolean;
   unauthorized: boolean;
 }) {
-  return !input.isЗагрузка && !input.unauthorized && input.companies.length === 0;
+  return !input.isLoading && !input.unauthorized && input.companies.length === 0;
 }
 
-export function КомпанияПровайдер({ children }: { children: ReactНетde }) {
+export function CompanyProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [selectionSource, setSelectionSource] = useState<КомпанияSelectionSource>("bootstrap");
-  const [selectedКомпанияId, setSelectedКомпанияIdState] = useState<string | null>(null);
+  const [selectionSource, setSelectionSource] = useState<CompanySelectionSource>("bootstrap");
+  const [selectedCompanyId, setSelectedCompanyIdState] = useState<string | null>(null);
 
-  const { data: companiesResult = { companies: [], unauthorized: false }, isЗагрузка, error } = useQuery<КомпанияListResult>({
-    queryКлюч: queryКлючs.companies.all,
+  const { data: companiesResult = { companies: [], unauthorized: false }, isLoading, error } = useQuery<CompanyListResult>({
+    queryKey: queryKeys.companies.all,
     queryFn: async () => {
       try {
         return { companies: await companiesApi.list(), unauthorized: false };
       } catch (err) {
-        if (err instanceof ApiОшибка && err.status === 401) {
+        if (err instanceof ApiError && err.status === 401) {
           return { companies: [], unauthorized: true };
         }
         throw err;
@@ -85,44 +85,44 @@ export function КомпанияПровайдер({ children }: { children: Rea
   });
   const companies = companiesResult.companies;
   const companyListUnauthorized = companiesResult.unauthorized;
-  const sidebarКомпании = useMemo(
+  const sidebarCompanies = useMemo(
     () => companies.filter((company) => company.status !== "archived"),
     [companies],
   );
 
-  // Авто-select first company when list loads
+  // Auto-select first company when list loads
   useEffect(() => {
-    if (isЗагрузка) return;
+    if (isLoading) return;
     if (companies.length === 0) {
-      if (shouldОчиститьStoredКомпанияSelection({ companies, isЗагрузка: false, unauthorized: companyListUnauthorized })) {
-        if (selectedКомпанияId !== null) {
-          setSelectedКомпанияIdState(null);
+      if (shouldClearStoredCompanySelection({ companies, isLoading: false, unauthorized: companyListUnauthorized })) {
+        if (selectedCompanyId !== null) {
+          setSelectedCompanyIdState(null);
         }
         localStorage.removeItem(STORAGE_KEY);
       }
       return;
     }
 
-    const next = resolveBootstrapКомпанияSelection({
+    const next = resolveBootstrapCompanySelection({
       companies,
-      sidebarКомпании,
-      selectedКомпанияId,
-      storedКомпанияId: localStorage.getItem(STORAGE_KEY),
+      sidebarCompanies,
+      selectedCompanyId,
+      storedCompanyId: localStorage.getItem(STORAGE_KEY),
     });
-    if (next === null || next === selectedКомпанияId) return;
-    setSelectedКомпанияIdState(next);
+    if (next === null || next === selectedCompanyId) return;
+    setSelectedCompanyIdState(next);
     setSelectionSource("bootstrap");
     localStorage.setItem(STORAGE_KEY, next);
-  }, [companies, companyListUnauthorized, isЗагрузка, selectedКомпанияId, sidebarКомпании]);
+  }, [companies, companyListUnauthorized, isLoading, selectedCompanyId, sidebarCompanies]);
 
-  const setSelectedКомпанияId = useCallback((companyId: string, options?: КомпанияSelectionOptions) => {
-    setSelectedКомпанияIdState(companyId);
+  const setSelectedCompanyId = useCallback((companyId: string, options?: CompanySelectionOptions) => {
+    setSelectedCompanyIdState(companyId);
     setSelectionSource(options?.source ?? "manual");
     localStorage.setItem(STORAGE_KEY, companyId);
   }, []);
 
-  const reloadКомпании = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
+  const reloadCompanies = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
   }, [queryClient]);
 
   const createMutation = useMutation({
@@ -132,13 +132,13 @@ export function КомпанияПровайдер({ children }: { children: Rea
       budgetMonthlyCents?: number;
     }) =>
       companiesApi.create(data),
-    onУспешно: (company) => {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
-      setSelectedКомпанияId(company.id);
+    onSuccess: (company) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      setSelectedCompanyId(company.id);
     },
   });
 
-  const createКомпания = useCallback(
+  const createCompany = useCallback(
     async (data: {
       name: string;
       description?: string | null;
@@ -149,43 +149,43 @@ export function КомпанияПровайдер({ children }: { children: Rea
     [createMutation],
   );
 
-  const selectedКомпания = useMemo(
-    () => companies.find((company) => company.id === selectedКомпанияId) ?? null,
-    [companies, selectedКомпанияId],
+  const selectedCompany = useMemo(
+    () => companies.find((company) => company.id === selectedCompanyId) ?? null,
+    [companies, selectedCompanyId],
   );
 
   const value = useMemo(
     () => ({
       companies,
-      selectedКомпанияId,
-      selectedКомпания,
+      selectedCompanyId,
+      selectedCompany,
       selectionSource,
-      loading: isЗагрузка,
-      error: error as Ошибка | null,
-      setSelectedКомпанияId,
-      reloadКомпании,
-      createКомпания,
+      loading: isLoading,
+      error: error as Error | null,
+      setSelectedCompanyId,
+      reloadCompanies,
+      createCompany,
     }),
     [
       companies,
-      selectedКомпанияId,
-      selectedКомпания,
+      selectedCompanyId,
+      selectedCompany,
       selectionSource,
-      isЗагрузка,
+      isLoading,
       error,
-      setSelectedКомпанияId,
-      reloadКомпании,
-      createКомпания,
+      setSelectedCompanyId,
+      reloadCompanies,
+      createCompany,
     ],
   );
 
-  return <КомпанияContext.Провайдер value={value}>{children}</КомпанияContext.Провайдер>;
+  return <CompanyContext.Provider value={value}>{children}</CompanyContext.Provider>;
 }
 
-export function useКомпания() {
-  const ctx = useContext(КомпанияContext);
+export function useCompany() {
+  const ctx = useContext(CompanyContext);
   if (!ctx) {
-    throw new Ошибка("useКомпания must be used within КомпанияПровайдер");
+    throw new Error("useCompany must be used within CompanyProvider");
   }
   return ctx;
 }

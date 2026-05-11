@@ -1,26 +1,26 @@
-import type { Цель } from "@paperclipai/shared";
+import type { Goal } from "@paperclipai/shared";
 import { Link } from "@/lib/router";
-import { СтатусBadge } from "./СтатусBadge";
+import { StatusBadge } from "./StatusBadge";
 import { ChevronRight } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useState } from "react";
 
-interface ЦельTreeProps {
-  goals: Цель[];
-  goalLink?: (goal: Цель) => string;
-  onSelect?: (goal: Цель) => void;
+interface GoalTreeProps {
+  goals: Goal[];
+  goalLink?: (goal: Goal) => string;
+  onSelect?: (goal: Goal) => void;
 }
 
-interface ЦельНетdeProps {
-  goal: Цель;
-  children: Цель[];
-  allЦели: Цель[];
+interface GoalNodeProps {
+  goal: Goal;
+  children: Goal[];
+  allGoals: Goal[];
   depth: number;
-  goalLink?: (goal: Цель) => string;
-  onSelect?: (goal: Цель) => void;
+  goalLink?: (goal: Goal) => string;
+  onSelect?: (goal: Goal) => void;
 }
 
-function ЦельНетde({ goal, children, allЦели, depth, goalLink, onSelect }: ЦельНетdeProps) {
+function GoalNode({ goal, children, allGoals, depth, goalLink, onSelect }: GoalNodeProps) {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = children.length > 0;
   const link = goalLink?.(goal);
@@ -29,23 +29,23 @@ function ЦельНетde({ goal, children, allЦели, depth, goalLink, onSele
     <>
       {hasChildren ? (
         <button
-          classИмя="p-0.5"
+          className="p-0.5"
           onClick={(e) => {
-            e.preventПо умолчанию();
+            e.preventDefault();
             e.stopPropagation();
             setExpanded(!expanded);
           }}
         >
           <ChevronRight
-            classИмя={cn("h-3 w-3 transition-transform", expanded && "rotate-90")}
+            className={cn("h-3 w-3 transition-transform", expanded && "rotate-90")}
           />
         </button>
       ) : (
-        <span classИмя="w-4" />
+        <span className="w-4" />
       )}
-      <span classИмя="text-xs text-muted-foreground capitalize">{goal.level}</span>
-      <span classИмя="flex-1 truncate">{goal.title}</span>
-      <СтатусBadge status={goal.status} />
+      <span className="text-xs text-muted-foreground capitalize">{goal.level}</span>
+      <span className="flex-1 truncate">{goal.title}</span>
+      <StatusBadge status={goal.status} />
     </>
   );
 
@@ -58,14 +58,14 @@ function ЦельНетde({ goal, children, allЦели, depth, goalLink, onSele
       {link ? (
         <Link
           to={link}
-          classИмя={cn(classes, "no-underline text-inherit")}
+          className={cn(classes, "no-underline text-inherit")}
           style={{ paddingLeft: `${depth * 16 + 12}px` }}
         >
           {inner}
         </Link>
       ) : (
         <div
-          classИмя={classes}
+          className={classes}
           style={{ paddingLeft: `${depth * 16 + 12}px` }}
           onClick={() => onSelect?.(goal)}
         >
@@ -75,11 +75,11 @@ function ЦельНетde({ goal, children, allЦели, depth, goalLink, onSele
       {hasChildren && expanded && (
         <div>
           {children.map((child) => (
-            <ЦельНетde
+            <GoalNode
               key={child.id}
               goal={child}
-              children={allЦели.filter((g) => g.parentId === child.id)}
-              allЦели={allЦели}
+              children={allGoals.filter((g) => g.parentId === child.id)}
+              allGoals={allGoals}
               depth={depth + 1}
               goalLink={goalLink}
               onSelect={onSelect}
@@ -91,22 +91,22 @@ function ЦельНетde({ goal, children, allЦели, depth, goalLink, onSele
   );
 }
 
-export function ЦельTree({ goals, goalLink, onSelect }: ЦельTreeProps) {
+export function GoalTree({ goals, goalLink, onSelect }: GoalTreeProps) {
   const goalIds = new Set(goals.map((g) => g.id));
   const roots = goals.filter((g) => !g.parentId || !goalIds.has(g.parentId));
 
   if (goals.length === 0) {
-    return <p classИмя="text-sm text-muted-foreground">Нет goals.</p>;
+    return <p className="text-sm text-muted-foreground">No goals.</p>;
   }
 
   return (
-    <div classИмя="border border-border py-1">
+    <div className="border border-border py-1">
       {roots.map((goal) => (
-        <ЦельНетde
+        <GoalNode
           key={goal.id}
           goal={goal}
           children={goals.filter((g) => g.parentId === goal.id)}
-          allЦели={goals}
+          allGoals={goals}
           depth={0}
           goalLink={goalLink}
           onSelect={onSelect}

@@ -7,15 +7,15 @@
  *   filters plugin UI contributions for a given slot type.
  * - `PluginSlotOutlet` — renders all matching slots inline with error
  *   boundary isolation per plugin.
- * - `PluginBridgeОбласть` — wraps each plugin's component tree to inject
+ * - `PluginBridgeScope` — wraps each plugin's component tree to inject
  *   the bridge context (`pluginId`, host context) needed by bridge hooks.
  *
  * Plugin UI modules are loaded via dynamic ESM `import()` from the host's
  * static file server (`/_plugins/:pluginId/ui/:entryFile`). Each module
- * exports named React components that correspond to `ui.slots[].exportИмя`
+ * exports named React components that correspond to `ui.slots[].exportName`
  * in the manifest.
  *
- * @see PLUGIN_SPEC.md §19 — UI Extension Модель
+ * @see PLUGIN_SPEC.md §19 — UI Extension Model
  * @see PLUGIN_SPEC.md §19.0.3 — Bundle Serving
  */
 import {
@@ -25,24 +25,24 @@ import {
   useMemo,
   useRef,
   useState,
-  type ОшибкаInfo,
-  type ReactНетde,
-  type ComponentТип,
+  type ErrorInfo,
+  type ReactNode,
+  type ComponentType,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type {
   PluginLauncherDeclaration,
   PluginUiSlotDeclaration,
-  PluginUiSlotEntityТип,
-  PluginUiSlotТип,
+  PluginUiSlotEntityType,
+  PluginUiSlotType,
 } from "@paperclipai/shared";
 import { pluginsApi, type PluginUiContribution } from "@/api/plugins";
 import { authApi } from "@/api/auth";
-import { queryКлючs } from "@/lib/queryКлючs";
+import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import {
   PluginBridgeContext,
-  type PluginХостContext,
+  type PluginHostContext,
 } from "./bridge";
 
 export type PluginSlotContext = {
@@ -50,17 +50,17 @@ export type PluginSlotContext = {
   companyPrefix?: string | null;
   projectId?: string | null;
   entityId?: string | null;
-  entityТип?: PluginUiSlotEntityТип | null;
-  /** Родитель entity ID for nested slots (e.g. comment annotations within an issue). */
+  entityType?: PluginUiSlotEntityType | null;
+  /** Parent entity ID for nested slots (e.g. comment annotations within an issue). */
   parentEntityId?: string | null;
   projectRef?: string | null;
 };
 
 export type ResolvedPluginSlot = PluginUiSlotDeclaration & {
   pluginId: string;
-  pluginКлюч: string;
-  pluginDisplayИмя: string;
-  pluginВерсия: string;
+  pluginKey: string;
+  pluginDisplayName: string;
+  pluginVersion: string;
 };
 
 /**
@@ -68,21 +68,21 @@ export type ResolvedPluginSlot = PluginUiSlotDeclaration & {
  * for the given route, or `null` if no unambiguous pairing exists.
  *
  * Used to detect when a route is taken over by a plugin's full-page sidebar so
- * host chrome (breadcrumb, in-page Назад) can be suppressed.
+ * host chrome (breadcrumb, in-page Back) can be suppressed.
  */
 export function resolveRouteSidebarSlot(
   slots: ResolvedPluginSlot[],
-  routeПуть: string | null,
+  routePath: string | null,
 ): ResolvedPluginSlot | null {
-  if (!routeПуть) return null;
+  if (!routePath) return null;
 
-  const pageMatches = slots.filter((slot) => slot.type === "page" && slot.routeПуть === routeПуть);
+  const pageMatches = slots.filter((slot) => slot.type === "page" && slot.routePath === routePath);
   if (pageMatches.length !== 1) return null;
 
   const [pageSlot] = pageMatches;
   const sidebarMatches = slots.filter((slot) =>
     slot.type === "routeSidebar"
-    && slot.routeПуть === routeПуть
+    && slot.routePath === routePath
     && slot.pluginId === pageSlot.pluginId,
   );
 
@@ -98,54 +98,54 @@ type PluginSlotComponentProps = {
 export type RegisteredPluginComponent =
   | {
     kind: "react";
-    component: ComponentТип<PluginSlotComponentProps>;
+    component: ComponentType<PluginSlotComponentProps>;
   }
   | {
     kind: "web-component";
-    tagИмя: string;
+    tagName: string;
   };
 
-type SlotФильтрs = {
-  slotТипs: PluginUiSlotТип[];
-  entityТип?: PluginUiSlotEntityТип | null;
+type SlotFilters = {
+  slotTypes: PluginUiSlotType[];
+  entityType?: PluginUiSlotEntityType | null;
   companyId?: string | null;
   enabled?: boolean;
 };
 
 type UsePluginSlotsResult = {
   slots: ResolvedPluginSlot[];
-  isЗагрузка: boolean;
+  isLoading: boolean;
   errorMessage: string | null;
 };
 
 /**
  * In-memory registry for plugin UI exports loaded by the host page.
- * Ключs are `${pluginКлюч}:${exportИмя}` to match manifest slot declarations.
+ * Keys are `${pluginKey}:${exportName}` to match manifest slot declarations.
  */
 const registry = new Map<string, RegisteredPluginComponent>();
 
-function buildRegistryКлюч(pluginКлюч: string, exportИмя: string): string {
-  return `${pluginКлюч}:${exportИмя}`;
+function buildRegistryKey(pluginKey: string, exportName: string): string {
+  return `${pluginKey}:${exportName}`;
 }
 
-function requiresEntityТип(slotТип: PluginUiSlotТип): boolean {
-  return slotТип === "detailTab" || slotТип === "taskDetailView" || slotТип === "contextMenuItem" || slotТип === "commentAnnotation" || slotТип === "commentContextMenuItem" || slotТип === "projectSidebarItem" || slotТип === "toolbarButton";
+function requiresEntityType(slotType: PluginUiSlotType): boolean {
+  return slotType === "detailTab" || slotType === "taskDetailView" || slotType === "contextMenuItem" || slotType === "commentAnnotation" || slotType === "commentContextMenuItem" || slotType === "projectSidebarItem" || slotType === "toolbarButton";
 }
 
-function getОшибкаMessage(error: unknown): string {
-  if (error instanceof Ошибка && error.message) return error.message;
-  return "Неизвестно error";
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  return "Unknown error";
 }
 
 /**
  * Registers a React component export for a plugin UI slot.
  */
 export function registerPluginReactComponent(
-  pluginКлюч: string,
-  exportИмя: string,
-  component: ComponentТип<PluginSlotComponentProps>,
+  pluginKey: string,
+  exportName: string,
+  component: ComponentType<PluginSlotComponentProps>,
 ): void {
-  registry.set(buildRegistryКлюч(pluginКлюч, exportИмя), {
+  registry.set(buildRegistryKey(pluginKey, exportName), {
     kind: "react",
     component,
   });
@@ -155,25 +155,25 @@ export function registerPluginReactComponent(
  * Registers a custom element tag for a plugin UI slot.
  */
 export function registerPluginWebComponent(
-  pluginКлюч: string,
-  exportИмя: string,
-  tagИмя: string,
+  pluginKey: string,
+  exportName: string,
+  tagName: string,
 ): void {
-  registry.set(buildRegistryКлюч(pluginКлюч, exportИмя), {
+  registry.set(buildRegistryKey(pluginKey, exportName), {
     kind: "web-component",
-    tagИмя,
+    tagName,
   });
 }
 
 function resolveRegisteredComponent(slot: ResolvedPluginSlot): RegisteredPluginComponent | null {
-  return registry.get(buildRegistryКлюч(slot.pluginКлюч, slot.exportИмя)) ?? null;
+  return registry.get(buildRegistryKey(slot.pluginKey, slot.exportName)) ?? null;
 }
 
 export function resolveRegisteredPluginComponent(
-  pluginКлюч: string,
-  exportИмя: string,
+  pluginKey: string,
+  exportName: string,
 ): RegisteredPluginComponent | null {
-  return registry.get(buildRegistryКлюч(pluginКлюч, exportИмя)) ?? null;
+  return registry.get(buildRegistryKey(pluginKey, exportName)) ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -194,7 +194,7 @@ const pluginLoadStates = new Map<string, PluginLoadState>();
 /**
  * Promise cache to prevent concurrent duplicate imports for the same plugin.
  */
-const inflightИмпортs = new Map<string, Promise<void>>();
+const inflightImports = new Map<string, Promise<void>>();
 
 /**
  * Build the full URL for a plugin's UI entry module.
@@ -203,7 +203,7 @@ const inflightИмпортs = new Map<string, Promise<void>>();
  * The `uiEntryFile` from the contribution (typically `"index.js"`) is
  * appended to form the complete import path.
  */
-function buildPluginModuleКлюч(contribution: PluginUiContribution): string {
+function buildPluginModuleKey(contribution: PluginUiContribution): string {
   const cacheHint = contribution.updatedAt ?? contribution.version ?? "0";
   return `${contribution.pluginId}:${cacheHint}`;
 }
@@ -214,7 +214,7 @@ function buildPluginUiUrl(contribution: PluginUiContribution): string {
 }
 
 /**
- * Импорт a plugin's UI entry module with bare-specifier rewriting.
+ * Import a plugin's UI entry module with bare-specifier rewriting.
  *
  * Plugin bundles are built with `external: ["@paperclipai/plugin-sdk/ui", "react", "react-dom"]`,
  * so their ESM output contains bare specifier imports like:
@@ -229,14 +229,14 @@ function buildPluginUiUrl(contribution: PluginUiContribution): string {
  * 1. Fetch the module source text
  * 2. Rewrite bare specifier imports to use blob URLs that re-export from the
  *    host's global bridge registry (`globalThis.__paperclipPluginBridge__`)
- * 3. Импорт the rewritten module via a blob URL
+ * 3. Import the rewritten module via a blob URL
  *
  * This approach is compatible with all modern browsers and avoids import map
  * ordering issues.
  */
 const shimBlobUrls: Record<string, string> = {};
 
-function applyJsxЗапуститьtimeКлюч(
+function applyJsxRuntimeKey(
   props: Record<string, unknown> | null | undefined,
   key: string | number | undefined,
 ): Record<string, unknown> {
@@ -266,9 +266,9 @@ function getShimBlobUrl(specifier: "react" | "react-dom" | "react-dom/client" | 
     case "react/jsx-runtime":
       source = `
         const R = globalThis.__paperclipPluginBridge__?.react;
-        const withКлюч = ${applyJsxЗапуститьtimeКлюч.toString()};
-        export const jsx = (type, props, key) => R.createElement(type, withКлюч(props, key));
-        export const jsxs = (type, props, key) => R.createElement(type, withКлюч(props, key));
+        const withKey = ${applyJsxRuntimeKey.toString()};
+        export const jsx = (type, props, key) => R.createElement(type, withKey(props, key));
+        export const jsxs = (type, props, key) => R.createElement(type, withKey(props, key));
         export const Fragment = R.Fragment;
       `;
       break;
@@ -277,8 +277,8 @@ function getShimBlobUrl(specifier: "react" | "react-dom" | "react-dom/client" | 
       source = `
         const RD = globalThis.__paperclipPluginBridge__?.reactDom;
         export default RD;
-        const { createRoot, hydrateRoot, createПортal, flushSync } = RD ?? {};
-        export { createRoot, hydrateRoot, createПортal, flushSync };
+        const { createRoot, hydrateRoot, createPortal, flushSync } = RD ?? {};
+        export { createRoot, hydrateRoot, createPortal, flushSync };
       `;
       break;
     case "sdk-ui":
@@ -286,28 +286,28 @@ function getShimBlobUrl(specifier: "react" | "react-dom" | "react-dom/client" | 
         const SDK = globalThis.__paperclipPluginBridge__?.sdkUi ?? {};
         function missing(name) {
           return function MissingPaperclipSdkUiComponent() {
-            throw new Ошибка('Paperclip plugin UI runtime is not initialized for "' + name + '". Ensure the host loaded the plugin bridge before rendering this UI module.');
+            throw new Error('Paperclip plugin UI runtime is not initialized for "' + name + '". Ensure the host loaded the plugin bridge before rendering this UI module.');
           };
         }
-        const { usePluginData, usePluginAction, useХостContext, useХостLocation, useХостNavigation, usePluginStream, usePluginToast } = SDK;
+        const { usePluginData, usePluginAction, useHostContext, useHostLocation, useHostNavigation, usePluginStream, usePluginToast } = SDK;
         const MetricCard = SDK.MetricCard ?? missing("MetricCard");
-        const СтатусBadge = SDK.СтатусBadge ?? missing("СтатусBadge");
+        const StatusBadge = SDK.StatusBadge ?? missing("StatusBadge");
         const DataTable = SDK.DataTable ?? missing("DataTable");
         const TimeseriesChart = SDK.TimeseriesChart ?? missing("TimeseriesChart");
         const MarkdownBlock = SDK.MarkdownBlock ?? missing("MarkdownBlock");
-        const MarkdownИзменитьor = SDK.MarkdownИзменитьor ?? missing("MarkdownИзменитьor");
-        const КлючЗначениеList = SDK.КлючЗначениеList ?? missing("КлючЗначениеList");
+        const MarkdownEditor = SDK.MarkdownEditor ?? missing("MarkdownEditor");
+        const KeyValueList = SDK.KeyValueList ?? missing("KeyValueList");
         const ActionBar = SDK.ActionBar ?? missing("ActionBar");
         const LogView = SDK.LogView ?? missing("LogView");
         const JsonTree = SDK.JsonTree ?? missing("JsonTree");
         const Spinner = SDK.Spinner ?? missing("Spinner");
-        const ОшибкаBoundary = SDK.ОшибкаBoundary ?? missing("ОшибкаBoundary");
+        const ErrorBoundary = SDK.ErrorBoundary ?? missing("ErrorBoundary");
         const FileTree = SDK.FileTree ?? missing("FileTree");
-        const ЗадачиList = SDK.ЗадачиList ?? missing("ЗадачиList");
-        const ИсполнительPicker = SDK.ИсполнительPicker ?? missing("ИсполнительPicker");
+        const IssuesList = SDK.IssuesList ?? missing("IssuesList");
+        const AssigneePicker = SDK.AssigneePicker ?? missing("AssigneePicker");
         const ProjectPicker = SDK.ProjectPicker ?? missing("ProjectPicker");
-        const ManagedПроцедурыList = SDK.ManagedПроцедурыList ?? missing("ManagedПроцедурыList");
-        export { usePluginData, usePluginAction, useХостContext, useХостLocation, useХостNavigation, usePluginStream, usePluginToast, MetricCard, СтатусBadge, DataTable, TimeseriesChart, MarkdownBlock, MarkdownИзменитьor, КлючЗначениеList, ActionBar, LogView, JsonTree, Spinner, ОшибкаBoundary, FileTree, ЗадачиList, ИсполнительPicker, ProjectPicker, ManagedПроцедурыList };
+        const ManagedRoutinesList = SDK.ManagedRoutinesList ?? missing("ManagedRoutinesList");
+        export { usePluginData, usePluginAction, useHostContext, useHostLocation, useHostNavigation, usePluginStream, usePluginToast, MetricCard, StatusBadge, DataTable, TimeseriesChart, MarkdownBlock, MarkdownEditor, KeyValueList, ActionBar, LogView, JsonTree, Spinner, ErrorBoundary, FileTree, IssuesList, AssigneePicker, ProjectPicker, ManagedRoutinesList };
       `;
       break;
   }
@@ -351,9 +351,9 @@ function rewriteBareSpecifiers(source: string): string {
   for (const [from, to] of Object.entries(rewrites)) {
     // Only rewrite in import/export from contexts, not in arbitrary strings.
     // The regex matches `from "..."` or `from '...'` patterns.
-    result = result.replaceВсе(` from ${from}`, ` from ${to}`);
+    result = result.replaceAll(` from ${from}`, ` from ${to}`);
     // Also handle `import "..."` (side-effect imports)
-    result = result.replaceВсе(`import ${from}`, `import ${to}`);
+    result = result.replaceAll(`import ${from}`, `import ${to}`);
   }
 
   return result;
@@ -376,7 +376,7 @@ async function importPluginModule(url: string): Promise<Record<string, unknown>>
   // Fetch the module source text
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Ошибка(`Ошибка to fetch plugin module: ${response.status} ${response.statusText}`);
+    throw new Error(`Failed to fetch plugin module: ${response.status} ${response.statusText}`);
   }
 
   const source = await response.text();
@@ -384,7 +384,7 @@ async function importPluginModule(url: string): Promise<Record<string, unknown>>
   // Rewrite bare specifier imports to blob URLs
   const rewritten = rewriteBareSpecifiers(source);
 
-  // Создать a blob URL from the rewritten source and import it
+  // Create a blob URL from the rewritten source and import it
   const blob = new Blob([rewritten], { type: "application/javascript" });
   const blobUrl = URL.createObjectURL(blob);
 
@@ -404,41 +404,41 @@ async function importPluginModule(url: string): Promise<Record<string, unknown>>
  *
  * This replaces the previous approach where plugin bundles had to
  * self-register via `window.paperclipPlugins.registerReactComponent()`.
- * Сейчас the host is responsible for importing the module and binding
- * exports to the correct `pluginКлюч:exportИмя` registry keys.
+ * Now the host is responsible for importing the module and binding
+ * exports to the correct `pluginKey:exportName` registry keys.
  *
  * Plugin modules are loaded with bare-specifier rewriting so that imports
  * of `@paperclipai/plugin-sdk/ui`, `react`, and `react-dom` resolve to the
  * host-provided implementations via the bridge registry.
  *
  * Web-component registrations still work: if the module has a named export
- * that matches an `exportИмя` declared in a slot AND that export is a
+ * that matches an `exportName` declared in a slot AND that export is a
  * string (the custom element tag name), it's registered as a web component.
  */
 async function loadPluginModule(contribution: PluginUiContribution): Promise<void> {
-  const { pluginId, pluginКлюч, slots, launchers } = contribution;
-  const moduleКлюч = buildPluginModuleКлюч(contribution);
+  const { pluginId, pluginKey, slots, launchers } = contribution;
+  const moduleKey = buildPluginModuleKey(contribution);
 
   // Already loaded or loading — return early.
-  const state = pluginLoadStates.get(moduleКлюч);
+  const state = pluginLoadStates.get(moduleKey);
   if (state === "loaded" || state === "loading") {
     // If currently loading, wait for the inflight promise.
-    const inflight = inflightИмпортs.get(pluginId);
+    const inflight = inflightImports.get(pluginId);
     if (inflight) await inflight;
     return;
   }
 
   // If another import for this plugin ID is currently in progress, wait for it.
-  const running = inflightИмпортs.get(pluginId);
+  const running = inflightImports.get(pluginId);
   if (running) {
     await running;
-    const recheckedState = pluginLoadStates.get(moduleКлюч);
+    const recheckedState = pluginLoadStates.get(moduleKey);
     if (recheckedState === "loaded") {
       return;
     }
   }
 
-  pluginLoadStates.set(moduleКлюч, "loading");
+  pluginLoadStates.set(moduleKey, "loading");
 
   const url = buildPluginUiUrl(contribution);
 
@@ -450,24 +450,24 @@ async function loadPluginModule(contribution: PluginUiContribution): Promise<voi
 
       // Collect the set of export names declared across all UI contributions so
       // we only register what the manifest advertises (ignore extra exports).
-      const declaredЭкспортs = new Set<string>();
+      const declaredExports = new Set<string>();
       for (const slot of slots) {
-        declaredЭкспортs.add(slot.exportИмя);
+        declaredExports.add(slot.exportName);
       }
       for (const launcher of launchers) {
-        if (launcher.exportИмя) {
-          declaredЭкспортs.add(launcher.exportИмя);
+        if (launcher.exportName) {
+          declaredExports.add(launcher.exportName);
         }
-        if (isLauncherComponentЦель(launcher)) {
-          declaredЭкспортs.add(launcher.action.target);
+        if (isLauncherComponentTarget(launcher)) {
+          declaredExports.add(launcher.action.target);
         }
       }
 
-      for (const exportИмя of declaredЭкспортs) {
-        const exported = mod[exportИмя];
+      for (const exportName of declaredExports) {
+        const exported = mod[exportName];
         if (exported === undefined) {
           console.warn(
-            `Plugin "${pluginКлюч}" declares slot export "${exportИмя}" but the module does not export it.`,
+            `Plugin "${pluginKey}" declares slot export "${exportName}" but the module does not export it.`,
           );
           continue;
         }
@@ -475,34 +475,34 @@ async function loadPluginModule(contribution: PluginUiContribution): Promise<voi
         if (typeof exported === "function") {
           // React component (function component or class component).
           registerPluginReactComponent(
-            pluginКлюч,
-            exportИмя,
-            exported as ComponentТип<PluginSlotComponentProps>,
+            pluginKey,
+            exportName,
+            exported as ComponentType<PluginSlotComponentProps>,
           );
         } else if (typeof exported === "string") {
           // Web component tag name.
-          registerPluginWebComponent(pluginКлюч, exportИмя, exported);
+          registerPluginWebComponent(pluginKey, exportName, exported);
         } else {
           console.warn(
-            `Plugin "${pluginКлюч}" export "${exportИмя}" is neither a function nor a string tag name — skipping.`,
+            `Plugin "${pluginKey}" export "${exportName}" is neither a function nor a string tag name — skipping.`,
           );
         }
       }
 
-      pluginLoadStates.set(moduleКлюч, "loaded");
+      pluginLoadStates.set(moduleKey, "loaded");
     } catch (err) {
-      pluginLoadStates.set(moduleКлюч, "error");
-      console.error(`Ошибка to load UI module for plugin "${pluginКлюч}"`, err);
+      pluginLoadStates.set(moduleKey, "error");
+      console.error(`Failed to load UI module for plugin "${pluginKey}"`, err);
     } finally {
-      inflightИмпортs.delete(pluginId);
+      inflightImports.delete(pluginId);
     }
   })();
 
-  inflightИмпортs.set(pluginId, importPromise);
+  inflightImports.set(pluginId, importPromise);
   await importPromise;
 }
 
-function isLauncherComponentЦель(launcher: PluginLauncherDeclaration): boolean {
+function isLauncherComponentTarget(launcher: PluginLauncherDeclaration): boolean {
   return launcher.action.type === "openModal"
     || launcher.action.type === "openDrawer"
     || launcher.action.type === "openPopover";
@@ -534,7 +534,7 @@ export async function ensurePluginContributionLoaded(
  */
 function aggregateLoadState(contributions: PluginUiContribution[]): "loading" | "loaded" {
   for (const c of contributions) {
-    const state = pluginLoadStates.get(buildPluginModuleКлюч(c));
+    const state = pluginLoadStates.get(buildPluginModuleKey(c));
     if (state === "loading" || state === "idle" || state === undefined) {
       return "loading";
     }
@@ -559,9 +559,9 @@ function usePluginModuleLoader(contributions: PluginUiContribution[] | undefined
   useEffect(() => {
     if (!contributions || contributions.length === 0) return;
 
-    // Фильтр to contributions that haven't been loaded yet.
+    // Filter to contributions that haven't been loaded yet.
     const unloaded = contributions.filter((c) => {
-      const state = pluginLoadStates.get(buildPluginModuleКлюч(c));
+      const state = pluginLoadStates.get(buildPluginModuleKey(c));
       return state !== "loaded" && state !== "loading";
     });
 
@@ -582,43 +582,43 @@ function usePluginModuleLoader(contributions: PluginUiContribution[] | undefined
 /**
  * Resolves and sorts slots across all ready plugin contributions.
  *
- * Фильтрing rules:
- * - `slotТипs` must match one of the caller-requested host slot types.
+ * Filtering rules:
+ * - `slotTypes` must match one of the caller-requested host slot types.
  * - Entity-scoped slot types (`detailTab`, `taskDetailView`, `contextMenuItem`)
- *   require `entityТип` and must include it in `slot.entityТипs`.
+ *   require `entityType` and must include it in `slot.entityTypes`.
  *
- * Автоmatically triggers dynamic import of plugin UI modules for any
+ * Automatically triggers dynamic import of plugin UI modules for any
  * newly-discovered contributions. Components render once loading completes.
  */
-export function usePluginSlots(filters: SlotФильтрs): UsePluginSlotsResult {
-  const queryВключитьd = filters.enabled ?? true;
-  const { data, isЗагрузка: isQueryЗагрузка, error } = useQuery({
-    queryКлюч: queryКлючs.plugins.uiContributions,
+export function usePluginSlots(filters: SlotFilters): UsePluginSlotsResult {
+  const queryEnabled = filters.enabled ?? true;
+  const { data, isLoading: isQueryLoading, error } = useQuery({
+    queryKey: queryKeys.plugins.uiContributions,
     queryFn: () => pluginsApi.listUiContributions(),
-    enabled: queryВключитьd,
+    enabled: queryEnabled,
   });
 
   // Kick off dynamic imports for any new plugin contributions.
   usePluginModuleLoader(data);
 
-  const slotТипsКлюч = useMemo(() => [...filters.slotТипs].sort().join("|"), [filters.slotТипs]);
+  const slotTypesKey = useMemo(() => [...filters.slotTypes].sort().join("|"), [filters.slotTypes]);
 
   const slots = useMemo(() => {
-    const allowedТипs = new Set(slotТипsКлюч.split("|").filter(Boolean) as PluginUiSlotТип[]);
+    const allowedTypes = new Set(slotTypesKey.split("|").filter(Boolean) as PluginUiSlotType[]);
     const rows: ResolvedPluginSlot[] = [];
     for (const contribution of data ?? []) {
       for (const slot of contribution.slots) {
-        if (!allowedТипs.has(slot.type)) continue;
-        if (requiresEntityТип(slot.type)) {
-          if (!filters.entityТип) continue;
-          if (!slot.entityТипs?.includes(filters.entityТип)) continue;
+        if (!allowedTypes.has(slot.type)) continue;
+        if (requiresEntityType(slot.type)) {
+          if (!filters.entityType) continue;
+          if (!slot.entityTypes?.includes(filters.entityType)) continue;
         }
         rows.push({
           ...slot,
           pluginId: contribution.pluginId,
-          pluginКлюч: contribution.pluginКлюч,
-          pluginDisplayИмя: contribution.displayИмя,
-          pluginВерсия: contribution.version,
+          pluginKey: contribution.pluginKey,
+          pluginDisplayName: contribution.displayName,
+          pluginVersion: contribution.version,
         });
       }
     }
@@ -626,45 +626,45 @@ export function usePluginSlots(filters: SlotФильтрs): UsePluginSlotsResult
       const ao = a.order ?? Number.MAX_SAFE_INTEGER;
       const bo = b.order ?? Number.MAX_SAFE_INTEGER;
       if (ao !== bo) return ao - bo;
-      const pluginCmp = a.pluginDisplayИмя.localeCompare(b.pluginDisplayИмя);
+      const pluginCmp = a.pluginDisplayName.localeCompare(b.pluginDisplayName);
       if (pluginCmp !== 0) return pluginCmp;
-      return a.displayИмя.localeCompare(b.displayИмя);
+      return a.displayName.localeCompare(b.displayName);
     });
     return rows;
-  }, [data, filters.entityТип, slotТипsКлюч]);
+  }, [data, filters.entityType, slotTypesKey]);
 
   // Consider loading until both query and module imports are done.
   const modulesLoaded = data ? aggregateLoadState(data) === "loaded" : true;
-  const isЗагрузка = queryВключитьd && (isQueryЗагрузка || !modulesLoaded);
+  const isLoading = queryEnabled && (isQueryLoading || !modulesLoaded);
 
   return {
     slots,
-    isЗагрузка,
-    errorMessage: error ? getОшибкаMessage(error) : null,
+    isLoading,
+    errorMessage: error ? getErrorMessage(error) : null,
   };
 }
 
-type PluginSlotОшибкаBoundaryProps = {
+type PluginSlotErrorBoundaryProps = {
   slot: ResolvedPluginSlot;
-  classИмя?: string;
-  children: ReactНетde;
+  className?: string;
+  children: ReactNode;
 };
 
-type PluginSlotОшибкаBoundaryState = {
-  hasОшибка: boolean;
+type PluginSlotErrorBoundaryState = {
+  hasError: boolean;
 };
 
-class PluginSlotОшибкаBoundary extends Component<PluginSlotОшибкаBoundaryProps, PluginSlotОшибкаBoundaryState> {
-  override state: PluginSlotОшибкаBoundaryState = { hasОшибка: false };
+class PluginSlotErrorBoundary extends Component<PluginSlotErrorBoundaryProps, PluginSlotErrorBoundaryState> {
+  override state: PluginSlotErrorBoundaryState = { hasError: false };
 
-  static getDerivedStateFromОшибка(): PluginSlotОшибкаBoundaryState {
-    return { hasОшибка: true };
+  static getDerivedStateFromError(): PluginSlotErrorBoundaryState {
+    return { hasError: true };
   }
 
-  override componentDidCatch(error: unknown, info: ОшибкаInfo): void {
+  override componentDidCatch(error: unknown, info: ErrorInfo): void {
     // Keep plugin failures isolated while preserving actionable diagnostics.
     console.error("Plugin slot render failed", {
-      pluginКлюч: this.props.slot.pluginКлюч,
+      pluginKey: this.props.slot.pluginKey,
       slotId: this.props.slot.id,
       error,
       info: info.componentStack,
@@ -672,10 +672,10 @@ class PluginSlotОшибкаBoundary extends Component<PluginSlotОшибкаBou
   }
 
   override render() {
-    if (this.state.hasОшибка) {
+    if (this.state.hasError) {
       return (
-        <div classИмя={cn("rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1 text-xs text-destructive", this.props.classИмя)}>
-          {this.props.slot.pluginDisplayИмя}: failed to render
+        <div className={cn("rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1 text-xs text-destructive", this.props.className)}>
+          {this.props.slot.pluginDisplayName}: failed to render
         </div>
       );
     }
@@ -684,15 +684,15 @@ class PluginSlotОшибкаBoundary extends Component<PluginSlotОшибкаBou
 }
 
 function PluginWebComponentMount({
-  tagИмя,
+  tagName,
   slot,
   context,
-  classИмя,
+  className,
 }: {
-  tagИмя: string;
+  tagName: string;
   slot: ResolvedPluginSlot;
   context: PluginSlotContext;
-  classИмя?: string;
+  className?: string;
 }) {
   const ref = useRef<HTMLElement | null>(null);
 
@@ -707,72 +707,72 @@ function PluginWebComponentMount({
     el.pluginContext = context;
   }, [context, slot]);
 
-  return createElement(tagИмя, { ref, classИмя });
+  return createElement(tagName, { ref, className });
 }
 
 type PluginSlotMountProps = {
   slot: ResolvedPluginSlot;
   context: PluginSlotContext;
-  classИмя?: string;
+  className?: string;
   missingBehavior?: "hidden" | "placeholder";
 };
 
 /**
- * Maps the slot's `PluginSlotContext` to a `PluginХостContext` for the bridge.
+ * Maps the slot's `PluginSlotContext` to a `PluginHostContext` for the bridge.
  *
  * The bridge hooks need the full host context shape; the slot context carries
  * the subset available from the rendering location.
  */
-function slotContextToХостContext(
+function slotContextToHostContext(
   pluginSlotContext: PluginSlotContext,
   userId: string | null,
-): PluginХостContext {
+): PluginHostContext {
   return {
     companyId: pluginSlotContext.companyId ?? null,
     companyPrefix: pluginSlotContext.companyPrefix ?? null,
-    projectId: pluginSlotContext.projectId ?? (pluginSlotContext.entityТип === "project" ? pluginSlotContext.entityId ?? null : null),
+    projectId: pluginSlotContext.projectId ?? (pluginSlotContext.entityType === "project" ? pluginSlotContext.entityId ?? null : null),
     entityId: pluginSlotContext.entityId ?? null,
-    entityТип: pluginSlotContext.entityТип ?? null,
+    entityType: pluginSlotContext.entityType ?? null,
     parentEntityId: pluginSlotContext.parentEntityId ?? null,
     userId,
-    renderОкружение: null,
+    renderEnvironment: null,
   };
 }
 
 /**
  * Wrapper component that sets the active bridge context around plugin renders.
  *
- * This ensures that `usePluginData()`, `usePluginAction()`, and `useХостContext()`
+ * This ensures that `usePluginData()`, `usePluginAction()`, and `useHostContext()`
  * have access to the current plugin ID and host context during the render phase.
  */
-function PluginBridgeОбласть({
+function PluginBridgeScope({
   pluginId,
   context,
   children,
 }: {
   pluginId: string;
   context: PluginSlotContext;
-  children: ReactНетde;
+  children: ReactNode;
 }) {
   const { data: session } = useQuery({
-    queryКлюч: queryКлючs.auth.session,
+    queryKey: queryKeys.auth.session,
     queryFn: () => authApi.getSession(),
   });
   const userId = session?.user?.id ?? session?.session?.userId ?? null;
-  const hostContext = useMemo(() => slotContextToХостContext(context, userId), [context, userId]);
+  const hostContext = useMemo(() => slotContextToHostContext(context, userId), [context, userId]);
   const value = useMemo(() => ({ pluginId, hostContext }), [pluginId, hostContext]);
 
   return (
-    <PluginBridgeContext.Провайдер value={value}>
+    <PluginBridgeContext.Provider value={value}>
       {children}
-    </PluginBridgeContext.Провайдер>
+    </PluginBridgeContext.Provider>
   );
 }
 
 export function PluginSlotMount({
   slot,
   context,
-  classИмя,
+  className,
   missingBehavior = "hidden",
 }: PluginSlotMountProps) {
   const [, forceRerender] = useState(0);
@@ -780,7 +780,7 @@ export function PluginSlotMount({
 
   useEffect(() => {
     if (component) return;
-    const inflight = inflightИмпортs.get(slot.pluginId);
+    const inflight = inflightImports.get(slot.pluginId);
     if (!inflight) return;
 
     let cancelled = false;
@@ -798,8 +798,8 @@ export function PluginSlotMount({
   if (!component) {
     if (missingBehavior === "hidden") return null;
     return (
-      <div classИмя={cn("rounded-md border border-dashed border-border px-2 py-1 text-xs text-muted-foreground", classИмя)}>
-        {slot.pluginDisplayИмя}: {slot.displayИмя}
+      <div className={cn("rounded-md border border-dashed border-border px-2 py-1 text-xs text-muted-foreground", className)}>
+        {slot.pluginDisplayName}: {slot.displayName}
       </div>
     );
   }
@@ -807,54 +807,54 @@ export function PluginSlotMount({
   if (component.kind === "react") {
     const node = createElement(component.component, { slot, context });
     return (
-      <PluginSlotОшибкаBoundary slot={slot} classИмя={classИмя}>
-        <PluginBridgeОбласть pluginId={slot.pluginId} context={context}>
-          {classИмя ? <div classИмя={classИмя}>{node}</div> : node}
-        </PluginBridgeОбласть>
-      </PluginSlotОшибкаBoundary>
+      <PluginSlotErrorBoundary slot={slot} className={className}>
+        <PluginBridgeScope pluginId={slot.pluginId} context={context}>
+          {className ? <div className={className}>{node}</div> : node}
+        </PluginBridgeScope>
+      </PluginSlotErrorBoundary>
     );
   }
 
   return (
-    <PluginSlotОшибкаBoundary slot={slot} classИмя={classИмя}>
+    <PluginSlotErrorBoundary slot={slot} className={className}>
       <PluginWebComponentMount
-        tagИмя={component.tagИмя}
+        tagName={component.tagName}
         slot={slot}
         context={context}
-        classИмя={classИмя}
+        className={className}
       />
-    </PluginSlotОшибкаBoundary>
+    </PluginSlotErrorBoundary>
   );
 }
 
 type PluginSlotOutletProps = {
-  slotТипs: PluginUiSlotТип[];
+  slotTypes: PluginUiSlotType[];
   context: PluginSlotContext;
-  entityТип?: PluginUiSlotEntityТип | null;
-  classИмя?: string;
-  itemClassИмя?: string;
-  errorClassИмя?: string;
+  entityType?: PluginUiSlotEntityType | null;
+  className?: string;
+  itemClassName?: string;
+  errorClassName?: string;
   missingBehavior?: "hidden" | "placeholder";
 };
 
 export function PluginSlotOutlet({
-  slotТипs,
+  slotTypes,
   context,
-  entityТип,
-  classИмя,
-  itemClassИмя,
-  errorClassИмя,
+  entityType,
+  className,
+  itemClassName,
+  errorClassName,
   missingBehavior = "hidden",
 }: PluginSlotOutletProps) {
   const { slots, errorMessage } = usePluginSlots({
-    slotТипs,
-    entityТип,
+    slotTypes,
+    entityType,
     companyId: context.companyId,
   });
 
   if (errorMessage) {
     return (
-      <div classИмя={cn("rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1 text-xs text-destructive", errorClassИмя)}>
+      <div className={cn("rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1 text-xs text-destructive", errorClassName)}>
         Plugin extensions unavailable: {errorMessage}
       </div>
     );
@@ -863,13 +863,13 @@ export function PluginSlotOutlet({
   if (slots.length === 0) return null;
 
   return (
-    <div classИмя={classИмя}>
+    <div className={className}>
       {slots.map((slot) => (
         <PluginSlotMount
-          key={`${slot.pluginКлюч}:${slot.id}`}
+          key={`${slot.pluginKey}:${slot.id}`}
           slot={slot}
           context={context}
-          classИмя={itemClassИмя}
+          className={itemClassName}
           missingBehavior={missingBehavior}
         />
       ))}
@@ -878,16 +878,16 @@ export function PluginSlotOutlet({
 }
 
 // ---------------------------------------------------------------------------
-// Проверить helpers — exported for use in test suites only.
+// Test helpers — exported for use in test suites only.
 // ---------------------------------------------------------------------------
 
 /**
- * Сбросить the module loader state. Only use in tests.
+ * Reset the module loader state. Only use in tests.
  * @internal
  */
 export function _resetPluginModuleLoader(): void {
   pluginLoadStates.clear();
-  inflightИмпортs.clear();
+  inflightImports.clear();
   registry.clear();
   if (typeof URL.revokeObjectURL === "function") {
     for (const url of Object.values(shimBlobUrls)) {
@@ -899,5 +899,5 @@ export function _resetPluginModuleLoader(): void {
   }
 }
 
-export const _applyJsxЗапуститьtimeКлючForПроверитьs = applyJsxЗапуститьtimeКлюч;
-export const _rewriteBareSpecifiersForПроверитьs = rewriteBareSpecifiers;
+export const _applyJsxRuntimeKeyForTests = applyJsxRuntimeKey;
+export const _rewriteBareSpecifiersForTests = rewriteBareSpecifiers;

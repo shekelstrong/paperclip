@@ -1,16 +1,16 @@
 import type {
-  ЗадачаCommentMetadata,
-  ЗадачаCommentMetadataRow,
-  ЗадачаCommentPresentation,
+  IssueCommentMetadata,
+  IssueCommentMetadataRow,
+  IssueCommentPresentation,
 } from "@paperclipai/shared";
 import type {
-  SystemНетticeMetadataRow,
-  SystemНетticeMetadataSection,
-  SystemНетticeProps,
-  SystemНетticeTone,
-} from "../components/SystemНетtice";
+  SystemNoticeMetadataRow,
+  SystemNoticeMetadataSection,
+  SystemNoticeProps,
+  SystemNoticeTone,
+} from "../components/SystemNotice";
 
-const TONE_LABEL: Record<SystemНетticeTone, string> = {
+const TONE_LABEL: Record<SystemNoticeTone, string> = {
   neutral: "System notice",
   info: "System notice",
   success: "System notice",
@@ -24,9 +24,9 @@ function metadataRowText(row: { label?: string | null }, fallback: string) {
 }
 
 function mapMetadataRow(
-  row: ЗадачаCommentMetadataRow,
-  ctx: { runАгентId?: string | null },
-): SystemНетticeMetadataRow | null {
+  row: IssueCommentMetadataRow,
+  ctx: { runAgentId?: string | null },
+): SystemNoticeMetadataRow | null {
   switch (row.type) {
     case "text":
       return { kind: "text", label: metadataRowText(row, "Detail"), value: row.text };
@@ -37,11 +37,11 @@ function mapMetadataRow(
     case "issue_link": {
       const identifier = row.identifier ?? null;
       if (!identifier) {
-        return { kind: "text", label: metadataRowText(row, "Задача"), value: row.title ?? "unknown" };
+        return { kind: "text", label: metadataRowText(row, "Issue"), value: row.title ?? "unknown" };
       }
       return {
         kind: "issue",
-        label: metadataRowText(row, "Задача"),
+        label: metadataRowText(row, "Issue"),
         identifier,
         href: `/issues/${identifier}`,
         title: row.title ?? undefined,
@@ -57,8 +57,8 @@ function mapMetadataRow(
       };
     }
     case "run_link": {
-      const runАгентId = ctx.runАгентId ?? null;
-      const href = runАгентId ? `/agents/${runАгентId}/runs/${row.runId}` : undefined;
+      const runAgentId = ctx.runAgentId ?? null;
+      const href = runAgentId ? `/agents/${runAgentId}/runs/${row.runId}` : undefined;
       return {
         kind: "run",
         label: metadataRowText(row, "Запустить"),
@@ -72,53 +72,53 @@ function mapMetadataRow(
   }
 }
 
-export function mapCommentMetadataToSystemНетticeSections(
-  metadata: ЗадачаCommentMetadata | null | undefined,
-  ctx: { runАгентId?: string | null } = {},
-): SystemНетticeMetadataSection[] {
+export function mapCommentMetadataToSystemNoticeSections(
+  metadata: IssueCommentMetadata | null | undefined,
+  ctx: { runAgentId?: string | null } = {},
+): SystemNoticeMetadataSection[] {
   if (!metadata || !Array.isArray(metadata.sections)) return [];
   return metadata.sections
     .map((section) => {
       const rows = section.rows
         .map((row) => mapMetadataRow(row, ctx))
-        .filter((r): r is SystemНетticeMetadataRow => r !== null);
+        .filter((r): r is SystemNoticeMetadataRow => r !== null);
       if (rows.length === 0) return null;
-      const out: SystemНетticeMetadataSection = { rows };
+      const out: SystemNoticeMetadataSection = { rows };
       if (section.title) out.title = section.title;
       return out;
     })
-    .filter((s): s is SystemНетticeMetadataSection => s !== null);
+    .filter((s): s is SystemNoticeMetadataSection => s !== null);
 }
 
-export function systemНетticeLabelForTone(
-  tone: SystemНетticeTone,
-  presentationНазвание?: string | null,
+export function systemNoticeLabelForTone(
+  tone: SystemNoticeTone,
+  presentationTitle?: string | null,
 ): string {
-  const trimmed = presentationНазвание?.trim();
+  const trimmed = presentationTitle?.trim();
   if (trimmed && trimmed.length > 0) return trimmed;
   return TONE_LABEL[tone];
 }
 
-export function buildSystemНетticeProps(input: {
-  presentation: ЗадачаCommentPresentation | null;
-  metadata: ЗадачаCommentMetadata | null;
-  body: import("react").ReactНетde;
+export function buildSystemNoticeProps(input: {
+  presentation: IssueCommentPresentation | null;
+  metadata: IssueCommentMetadata | null;
+  body: import("react").ReactNode;
   timestamp?: string;
-  source?: SystemНетticeProps["source"];
-  runАгентId?: string | null;
-}): SystemНетticeProps {
-  const tone: SystemНетticeTone = input.presentation?.tone ?? "neutral";
-  const label = systemНетticeLabelForTone(tone, input.presentation?.title);
-  const detailsПо умолчаниюOpen = Boolean(input.presentation?.detailsПо умолчаниюOpen);
-  const sections = mapCommentMetadataToSystemНетticeSections(input.metadata, {
-    runАгентId: input.runАгентId ?? null,
+  source?: SystemNoticeProps["source"];
+  runAgentId?: string | null;
+}): SystemNoticeProps {
+  const tone: SystemNoticeTone = input.presentation?.tone ?? "neutral";
+  const label = systemNoticeLabelForTone(tone, input.presentation?.title);
+  const detailsDefaultOpen = Boolean(input.presentation?.detailsDefaultOpen);
+  const sections = mapCommentMetadataToSystemNoticeSections(input.metadata, {
+    runAgentId: input.runAgentId ?? null,
   });
   return {
     tone,
     label,
     body: input.body,
     metadata: sections.length > 0 ? sections : undefined,
-    detailsПо умолчаниюOpen,
+    detailsDefaultOpen,
     timestamp: input.timestamp,
     source: input.source,
   };

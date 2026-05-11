@@ -1,4 +1,4 @@
-export type ЗадачаChatScrollЦель =
+export type IssueChatScrollTarget =
   | { type: "element"; element: HTMLElement }
   | { type: "window" };
 
@@ -6,10 +6,10 @@ export interface ComposerViewportSnapshot {
   composerViewportTop: number;
 }
 
-export function resolveЗадачаChatScrollЦель(
+export function resolveIssueChatScrollTarget(
   doc: Document = document,
   win: Window = window,
-): ЗадачаChatScrollЦель {
+): IssueChatScrollTarget {
   const mainContent = doc.getElementById("main-content");
 
   if (mainContent instanceof HTMLElement) {
@@ -43,7 +43,7 @@ export function shouldPreserveComposerViewport(
   if (!composerElement) return false;
 
   const activeElement = doc.activeElement;
-  if (activeElement instanceof Нетde && composerElement.contains(activeElement)) {
+  if (activeElement instanceof Node && composerElement.contains(activeElement)) {
     return true;
   }
   return false;
@@ -60,7 +60,7 @@ export function restoreComposerViewportSnapshot(
   const delta = composerElement.getBoundingClientRect().top - snapshot.composerViewportTop;
   if (!Number.isFinite(delta) || Math.abs(delta) < 1) return;
 
-  const target = resolveЗадачаChatScrollЦель(doc, win);
+  const target = resolveIssueChatScrollTarget(doc, win);
   if (target.type === "element") {
     target.element.scrollTop += delta;
     return;

@@ -1,33 +1,33 @@
-import type { Агент, FeedbackVote } from "@paperclipai/shared";
-import type { LiveЗапуститьForЗадача } from "../api/heartbeats";
+import type { Agent, FeedbackVote } from "@paperclipai/shared";
+import type { LiveRunForIssue } from "../api/heartbeats";
 import type { InlineEntityOption } from "../components/InlineEntitySelector";
-import type { MentionOption } from "../components/MarkdownИзменитьor";
+import type { MentionOption } from "../components/MarkdownEditor";
 import type {
-  ЗадачаChatComment,
-  ЗадачаChatLinkedЗапустить,
-  ЗадачаChatTranscriptEntry,
+  IssueChatComment,
+  IssueChatLinkedRun,
+  IssueChatTranscriptEntry,
 } from "../lib/issue-chat-messages";
-import type { ЗадачаTimelineEvent } from "../lib/issue-timeline-events";
+import type { IssueTimelineEvent } from "../lib/issue-timeline-events";
 
-function createАгент(
+function createAgent(
   id: string,
   name: string,
   icon: string,
-  urlКлюч: string,
-): Агент {
+  urlKey: string,
+): Agent {
   const now = new Date("2026-04-06T12:00:00.000Z");
   return {
     id,
     companyId: "company-ux",
     name,
-    urlКлюч,
+    urlKey,
     role: "engineer",
     title: null,
     icon,
     status: "active",
     reportsTo: null,
     capabilities: null,
-    adapterТип: "codex_local",
+    adapterType: "codex_local",
     adapterConfig: {},
     runtimeConfig: {},
     budgetMonthlyCents: 0,
@@ -38,17 +38,17 @@ function createАгент(
     updatedAt: now,
     pauseReason: null,
     pausedAt: null,
-    permissions: { canСоздатьАгенты: false },
+    permissions: { canCreateAgents: false },
   };
 }
 
-function createComment(overrides: Partial<ЗадачаChatComment>): ЗадачаChatComment {
-  const merged: ЗадачаChatComment = {
+function createComment(overrides: Partial<IssueChatComment>): IssueChatComment {
+  const merged: IssueChatComment = {
     id: "comment-default",
     companyId: "company-ux",
     issueId: "issue-ux",
-    authorТип: overrides.authorАгентId ? "agent" : "user",
-    authorАгентId: null,
+    authorType: overrides.authorAgentId ? "agent" : "user",
+    authorAgentId: null,
     authorUserId: "user-1",
     body: "",
     presentation: null,
@@ -60,32 +60,32 @@ function createComment(overrides: Partial<ЗадачаChatComment>): Задач�
   return merged;
 }
 
-const primaryАгент = createАгент("agent-1", "CodexCoder", "code", "codexcoder");
-const reviewАгент = createАгент("agent-2", "ClaudeFixer", "sparkles", "claudefixer");
+const primaryAgent = createAgent("agent-1", "CodexCoder", "code", "codexcoder");
+const reviewAgent = createAgent("agent-2", "ClaudeFixer", "sparkles", "claudefixer");
 
-export const issueChatUxАгентMap = new Map<string, Агент>([
-  [primaryАгент.id, primaryАгент],
-  [reviewАгент.id, reviewАгент],
+export const issueChatUxAgentMap = new Map<string, Agent>([
+  [primaryAgent.id, primaryAgent],
+  [reviewAgent.id, reviewAgent],
 ]);
 
 export const issueChatUxMentions: MentionOption[] = [
   {
     id: "mention-agent-1",
-    name: primaryАгент.name,
+    name: primaryAgent.name,
     kind: "agent",
-    agentId: primaryАгент.id,
-    agentIcon: primaryАгент.icon,
+    agentId: primaryAgent.id,
+    agentIcon: primaryAgent.icon,
   },
   {
     id: "mention-agent-2",
-    name: reviewАгент.name,
+    name: reviewAgent.name,
     kind: "agent",
-    agentId: reviewАгент.id,
-    agentIcon: reviewАгент.icon,
+    agentId: reviewAgent.id,
+    agentIcon: reviewAgent.icon,
   },
   {
     id: "mention-project-1",
-    name: "Paperclip Совет UI",
+    name: "Paperclip Board UI",
     kind: "project",
     projectId: "project-1",
     projectColor: "#0f766e",
@@ -94,23 +94,23 @@ export const issueChatUxMentions: MentionOption[] = [
 
 export const issueChatUxReassignOptions: InlineEntityOption[] = [
   {
-    id: `agent:${primaryАгент.id}`,
-    label: primaryАгент.name,
-    searchText: `${primaryАгент.name} codex engineer`,
+    id: `agent:${primaryAgent.id}`,
+    label: primaryAgent.name,
+    searchText: `${primaryAgent.name} codex engineer`,
   },
   {
-    id: `agent:${reviewАгент.id}`,
-    label: reviewАгент.name,
-    searchText: `${reviewАгент.name} claude reviewer`,
+    id: `agent:${reviewAgent.id}`,
+    label: reviewAgent.name,
+    searchText: `${reviewAgent.name} claude reviewer`,
   },
   {
     id: "user:user-1",
-    label: "Совет",
+    label: "Board",
     searchText: "board user",
   },
 ];
 
-export const issueChatUxLiveКомментарии: ЗадачаChatComment[] = [
+export const issueChatUxLiveComments: IssueChatComment[] = [
   createComment({
     id: "comment-live-user",
     body: "Ship the issue page as a real chat. Keep the activity feed, but make the assistant flow feel conversational.",
@@ -119,13 +119,13 @@ export const issueChatUxLiveКомментарии: ЗадачаChatComment[] = 
   }),
   createComment({
     id: "comment-live-agent",
-    authorАгентId: primaryАгент.id,
+    authorAgentId: primaryAgent.id,
     authorUserId: null,
     body: "I swapped the old comment stack for the new assistant-ui thread and kept the existing issue mutations intact.",
     createdAt: new Date("2026-04-06T12:01:00.000Z"),
     updatedAt: new Date("2026-04-06T12:01:00.000Z"),
     runId: "run-history-1",
-    runАгентId: primaryАгент.id,
+    runAgentId: primaryAgent.id,
   }),
   createComment({
     id: "comment-live-queued",
@@ -133,17 +133,17 @@ export const issueChatUxLiveКомментарии: ЗадачаChatComment[] = 
     createdAt: new Date("2026-04-06T12:05:30.000Z"),
     updatedAt: new Date("2026-04-06T12:05:30.000Z"),
     clientId: "client-queued-1",
-    clientСтатус: "queued",
+    clientStatus: "queued",
     queueState: "queued",
-    queueЦельЗапуститьId: "run-live-1",
+    queueTargetRunId: "run-live-1",
   }),
 ];
 
-export const issueChatUxLiveEvents: ЗадачаTimelineEvent[] = [
+export const issueChatUxLiveEvents: IssueTimelineEvent[] = [
   {
     id: "event-live-1",
     createdAt: new Date("2026-04-06T11:54:00.000Z"),
-    actorТип: "user",
+    actorType: "user",
     actorId: "user-1",
     statusChange: {
       from: "done",
@@ -153,16 +153,16 @@ export const issueChatUxLiveEvents: ЗадачаTimelineEvent[] = [
   {
     id: "event-live-2",
     createdAt: new Date("2026-04-06T11:54:30.000Z"),
-    actorТип: "user",
+    actorType: "user",
     actorId: "user-1",
     assigneeChange: {
       from: { agentId: null, userId: null },
-      to: { agentId: primaryАгент.id, userId: null },
+      to: { agentId: primaryAgent.id, userId: null },
     },
   },
 ];
 
-export const issueChatUxLiveЗапуститьs: LiveЗапуститьForЗадача[] = [
+export const issueChatUxLiveRuns: LiveRunForIssue[] = [
   {
     id: "run-live-1",
     status: "running",
@@ -171,18 +171,18 @@ export const issueChatUxLiveЗапуститьs: LiveЗапуститьForЗад
     startedAt: "2026-04-06T12:04:00.000Z",
     finishedAt: null,
     createdAt: "2026-04-06T12:04:00.000Z",
-    agentId: primaryАгент.id,
-    agentИмя: primaryАгент.name,
-    adapterТип: "codex_local",
+    agentId: primaryAgent.id,
+    agentName: primaryAgent.name,
+    adapterType: "codex_local",
     issueId: "issue-ux",
   },
 ];
 
-export const issueChatUxLinkedЗапуститьs: ЗадачаChatLinkedЗапустить[] = [
+export const issueChatUxLinkedRuns: IssueChatLinkedRun[] = [
   {
     runId: "run-history-1",
     status: "succeeded",
-    agentId: primaryАгент.id,
+    agentId: primaryAgent.id,
     createdAt: new Date("2026-04-06T11:58:00.000Z"),
     startedAt: new Date("2026-04-06T11:58:00.000Z"),
     finishedAt: new Date("2026-04-06T12:00:00.000Z"),
@@ -190,14 +190,14 @@ export const issueChatUxLinkedЗапуститьs: ЗадачаChatLinkedЗап�
   {
     runId: "run-review-1",
     status: "failed",
-    agentId: reviewАгент.id,
+    agentId: reviewAgent.id,
     createdAt: new Date("2026-04-06T12:31:00.000Z"),
     startedAt: new Date("2026-04-06T12:31:00.000Z"),
     finishedAt: new Date("2026-04-06T12:33:00.000Z"),
   },
 ];
 
-export const issueChatUxTranscriptsByЗапуститьId = new Map<string, readonly ЗадачаChatTranscriptEntry[]>([
+export const issueChatUxTranscriptsByRunId = new Map<string, readonly IssueChatTranscriptEntry[]>([
   [
     "run-history-1",
     [
@@ -218,7 +218,7 @@ export const issueChatUxTranscriptsByЗапуститьId = new Map<string, read
         ts: "2026-04-06T11:58:11.000Z",
         toolUseId: "tool-history-1",
         content: "Found the run projection path that decides whether transcript output survives after completion.",
-        isОшибка: false,
+        isError: false,
       },
       {
         kind: "assistant",
@@ -245,28 +245,28 @@ export const issueChatUxTranscriptsByЗапуститьId = new Map<string, read
         ts: "2026-04-06T12:04:08.000Z",
         name: "read_file",
         toolUseId: "tool-read-1",
-        input: { path: "ui/src/components/ЗадачаChatThread.tsx" },
+        input: { path: "ui/src/components/IssueChatThread.tsx" },
       },
       {
         kind: "tool_result",
         ts: "2026-04-06T12:04:11.000Z",
         toolUseId: "tool-read-1",
         content: "Loaded the current chat surface and found the max-h viewport constraint.",
-        isОшибка: false,
+        isError: false,
       },
       {
         kind: "tool_call",
         ts: "2026-04-06T12:04:14.000Z",
         name: "apply_patch",
         toolUseId: "tool-edit-1",
-        input: { file: "ui/src/components/ЗадачаChatThread.tsx", action: "remove scroll pane" },
+        input: { file: "ui/src/components/IssueChatThread.tsx", action: "remove scroll pane" },
       },
       {
         kind: "tool_result",
         ts: "2026-04-06T12:04:22.000Z",
         toolUseId: "tool-edit-1",
-        content: "Обновлено layout classes and swapped Jump to latest to page-level scrolling.",
-        isОшибка: false,
+        content: "Updated layout classes and swapped Jump to latest to page-level scrolling.",
+        isError: false,
       },
       {
         kind: "stderr",
@@ -277,7 +277,7 @@ export const issueChatUxTranscriptsByЗапуститьId = new Map<string, read
   ],
 ]);
 
-export const issueChatUxОтправитьtingКомментарии: ЗадачаChatComment[] = [
+export const issueChatUxSubmittingComments: IssueChatComment[] = [
   createComment({
     id: "comment-submitting-user-settled",
     body: "Let me know once the thread layout is locked down.",
@@ -290,11 +290,11 @@ export const issueChatUxОтправитьtingКомментарии: Задач
     createdAt: new Date("2026-04-06T12:42:00.000Z"),
     updatedAt: new Date("2026-04-06T12:42:00.000Z"),
     clientId: "client-pending-1",
-    clientСтатус: "pending",
+    clientStatus: "pending",
   }),
 ];
 
-export const issueChatUxReviewКомментарии: ЗадачаChatComment[] = [
+export const issueChatUxReviewComments: IssueChatComment[] = [
   createComment({
     id: "comment-review-user",
     body: "This looks close. Tighten the spacing and keep the composer grounded to the chat surface.",
@@ -303,19 +303,19 @@ export const issueChatUxReviewКомментарии: ЗадачаChatComment[] 
   }),
   createComment({
     id: "comment-review-agent",
-    authorАгентId: reviewАгент.id,
+    authorAgentId: reviewAgent.id,
     authorUserId: null,
     body: [
       "Adjusted the treatment to feel more like a product conversation.",
       "",
-      "- Удалитьd the count from the heading",
+      "- Removed the count from the heading",
       "- Let the page own scrolling",
-      "- Добавитьed a dedicated `/tests/ux/chat` review page",
+      "- Added a dedicated `/tests/ux/chat` review page",
     ].join("\n"),
     createdAt: new Date("2026-04-06T12:34:00.000Z"),
     updatedAt: new Date("2026-04-06T12:34:00.000Z"),
     runId: "run-review-1",
-    runАгентId: reviewАгент.id,
+    runAgentId: reviewAgent.id,
   }),
   createComment({
     id: "comment-review-user-followup",
@@ -325,15 +325,15 @@ export const issueChatUxReviewКомментарии: ЗадачаChatComment[] 
   }),
 ];
 
-export const issueChatUxReviewEvents: ЗадачаTimelineEvent[] = [
+export const issueChatUxReviewEvents: IssueTimelineEvent[] = [
   {
     id: "event-review-1",
     createdAt: new Date("2026-04-06T12:27:00.000Z"),
-    actorТип: "user",
+    actorType: "user",
     actorId: "user-1",
     assigneeChange: {
-      from: { agentId: primaryАгент.id, userId: null },
-      to: { agentId: reviewАгент.id, userId: null },
+      from: { agentId: primaryAgent.id, userId: null },
+      to: { agentId: reviewAgent.id, userId: null },
     },
   },
 ];
@@ -343,14 +343,14 @@ export const issueChatUxFeedbackVotes: FeedbackVote[] = [
     id: "feedback-1",
     companyId: "company-ux",
     issueId: "issue-ux",
-    targetТип: "issue_comment",
+    targetType: "issue_comment",
     targetId: "comment-review-agent",
     authorUserId: "user-1",
     vote: "up",
     reason: null,
     sharedWithLabs: false,
     sharedAt: null,
-    consentВерсия: null,
+    consentVersion: null,
     redactionSummary: null,
     createdAt: new Date("2026-04-06T12:35:00.000Z"),
     updatedAt: new Date("2026-04-06T12:35:00.000Z"),

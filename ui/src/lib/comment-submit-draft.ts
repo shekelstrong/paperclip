@@ -1,4 +1,4 @@
-export function restoreОтправитьtedCommentЧерновик(params: {
+export function restoreSubmittedCommentDraft(params: {
   currentBody: string;
   submittedBody: string;
 }) {

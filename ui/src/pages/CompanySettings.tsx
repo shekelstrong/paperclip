@@ -4,22 +4,22 @@ import {
   DEFAULT_COMPANY_ATTACHMENT_MAX_BYTES,
   MAX_COMPANY_ATTACHMENT_MAX_BYTES,
 } from "@paperclipai/shared";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { companiesApi } from "../api/companies";
 import { accessApi } from "../api/access";
 import { assetsApi } from "../api/assets";
-import { queryКлючs } from "../lib/queryКлючs";
+import { queryKeys } from "../lib/queryKeys";
 import { Button } from "@/components/ui/button";
-import { Настройки, Check, Скачать, Загрузить } from "lucide-react";
-import { КомпанияPatternIcon } from "../components/КомпанияPatternIcon";
+import { Settings, Check, Download, Upload } from "lucide-react";
+import { CompanyPatternIcon } from "../components/CompanyPatternIcon";
 import {
   Field,
   ToggleField,
   HintIcon,
 } from "../components/agent-config-primitives";
 
-type АгентSnippetInput = {
+type AgentSnippetInput = {
   onboardingTextUrl: string;
   connectionCandidates?: string[] | null;
   testResolutionUrl?: string | null;
@@ -28,37 +28,37 @@ type АгентSnippetInput = {
 const BYTES_PER_MIB = 1024 * 1024;
 const DEFAULT_COMPANY_ATTACHMENT_MAX_MIB = DEFAULT_COMPANY_ATTACHMENT_MAX_BYTES / BYTES_PER_MIB;
 const MAX_COMPANY_ATTACHMENT_MAX_MIB = MAX_COMPANY_ATTACHMENT_MAX_BYTES / BYTES_PER_MIB;
-export function КомпанияНастройки() {
+export function CompanySettings() {
   const {
     companies,
-    selectedКомпания,
-    selectedКомпанияId,
-    setSelectedКомпанияId
-  } = useКомпания();
+    selectedCompany,
+    selectedCompanyId,
+    setSelectedCompanyId
+  } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
-  // Общие settings local state
-  const [companyИмя, setКомпанияИмя] = useState("");
-  const [description, setОписание] = useState("");
+  // General settings local state
+  const [companyName, setCompanyName] = useState("");
+  const [description, setDescription] = useState("");
   const [brandColor, setBrandColor] = useState("");
   const [attachmentMaxMiB, setAttachmentMaxMiB] = useState(String(DEFAULT_COMPANY_ATTACHMENT_MAX_MIB));
   const [logoUrl, setLogoUrl] = useState("");
-  const [logoЗагрузитьОшибка, setLogoЗагрузитьОшибка] = useState<string | null>(null);
+  const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
 
   // Sync local state from selected company
   useEffect(() => {
-    if (!selectedКомпания) return;
-    setКомпанияИмя(selectedКомпания.name);
-    setОписание(selectedКомпания.description ?? "");
-    setBrandColor(selectedКомпания.brandColor ?? "");
-    setAttachmentMaxMiB(String(Math.round((selectedКомпания.attachmentMaxBytes ?? DEFAULT_COMPANY_ATTACHMENT_MAX_BYTES) / BYTES_PER_MIB)));
-    setLogoUrl(selectedКомпания.logoUrl ?? "");
-  }, [selectedКомпания]);
+    if (!selectedCompany) return;
+    setCompanyName(selectedCompany.name);
+    setDescription(selectedCompany.description ?? "");
+    setBrandColor(selectedCompany.brandColor ?? "");
+    setAttachmentMaxMiB(String(Math.round((selectedCompany.attachmentMaxBytes ?? DEFAULT_COMPANY_ATTACHMENT_MAX_BYTES) / BYTES_PER_MIB)));
+    setLogoUrl(selectedCompany.logoUrl ?? "");
+  }, [selectedCompany]);
 
-  const [inviteОшибка, setInviteОшибка] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSnippet, setInviteSnippet] = useState<string | null>(null);
   const [snippetCopied, setSnippetCopied] = useState(false);
-  const [snippetКопироватьDelightId, setSnippetКопироватьDelightId] = useState(0);
+  const [snippetCopyDelightId, setSnippetCopyDelightId] = useState(0);
 
   const attachmentMaxBytes = Number.parseInt(attachmentMaxMiB, 10) * BYTES_PER_MIB;
   const attachmentMaxValid =
@@ -67,11 +67,11 @@ export function КомпанияНастройки() {
     && attachmentMaxBytes <= MAX_COMPANY_ATTACHMENT_MAX_BYTES;
 
   const generalDirty =
-    !!selectedКомпания &&
-    (companyИмя !== selectedКомпания.name ||
-      description !== (selectedКомпания.description ?? "") ||
-      brandColor !== (selectedКомпания.brandColor ?? "") ||
-      attachmentMaxBytes !== (selectedКомпания.attachmentMaxBytes ?? DEFAULT_COMPANY_ATTACHMENT_MAX_BYTES));
+    !!selectedCompany &&
+    (companyName !== selectedCompany.name ||
+      description !== (selectedCompany.description ?? "") ||
+      brandColor !== (selectedCompany.brandColor ?? "") ||
+      attachmentMaxBytes !== (selectedCompany.attachmentMaxBytes ?? DEFAULT_COMPANY_ATTACHMENT_MAX_BYTES));
 
   const generalMutation = useMutation({
     mutationFn: (data: {
@@ -79,41 +79,41 @@ export function КомпанияНастройки() {
       description: string | null;
       brandColor: string | null;
       attachmentMaxBytes: number;
-    }) => companiesApi.update(selectedКомпанияId!, data),
-    onУспешно: () => {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
+    }) => companiesApi.update(selectedCompanyId!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
     }
   });
 
   const settingsMutation = useMutation({
-    mutationFn: (requireСогласование: boolean) =>
-      companiesApi.update(selectedКомпанияId!, {
-        requireСоветСогласованиеForNewАгенты: requireСогласование
+    mutationFn: (requireApproval: boolean) =>
+      companiesApi.update(selectedCompanyId!, {
+        requireBoardApprovalForNewAgents: requireApproval
       }),
-    onУспешно: () => {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
     }
   });
 
   const inviteMutation = useMutation({
     mutationFn: () =>
-      accessApi.createOpenClawInvitePrompt(selectedКомпанияId!),
-    onУспешно: async (invite) => {
-      setInviteОшибка(null);
+      accessApi.createOpenClawInvitePrompt(selectedCompanyId!),
+    onSuccess: async (invite) => {
+      setInviteError(null);
       const base = window.location.origin.replace(/\/+$/, "");
       const onboardingTextLink =
         invite.onboardingTextUrl ??
-        invite.onboardingTextПуть ??
+        invite.onboardingTextPath ??
         `/api/invites/${invite.token}/onboarding.txt`;
       const absoluteUrl = onboardingTextLink.startsWith("http")
         ? onboardingTextLink
         : `${base}${onboardingTextLink}`;
       setSnippetCopied(false);
-      setSnippetКопироватьDelightId(0);
+      setSnippetCopyDelightId(0);
       let snippet: string;
       try {
         const manifest = await accessApi.getInviteOnboarding(invite.token);
-        snippet = buildАгентSnippet({
+        snippet = buildAgentSnippet({
           onboardingTextUrl: absoluteUrl,
           connectionCandidates:
             manifest.onboarding.connectivity?.connectionCandidates ?? null,
@@ -122,7 +122,7 @@ export function КомпанияНастройки() {
             null
         });
       } catch {
-        snippet = buildАгентSnippet({
+        snippet = buildAgentSnippet({
           onboardingTextUrl: absoluteUrl,
           connectionCandidates: null,
           testResolutionUrl: null
@@ -132,104 +132,104 @@ export function КомпанияНастройки() {
       try {
         await navigator.clipboard.writeText(snippet);
         setSnippetCopied(true);
-        setSnippetКопироватьDelightId((prev) => prev + 1);
+        setSnippetCopyDelightId((prev) => prev + 1);
         setTimeout(() => setSnippetCopied(false), 2000);
       } catch {
         /* clipboard may not be available */
       }
       queryClient.invalidateQueries({
-        queryКлюч: queryКлючs.sidebarBadges(selectedКомпанияId!)
+        queryKey: queryKeys.sidebarBadges(selectedCompanyId!)
       });
     },
-    onОшибка: (err) => {
-      setInviteОшибка(
-        err instanceof Ошибка ? err.message : "Ошибка to create invite"
+    onError: (err) => {
+      setInviteError(
+        err instanceof Error ? err.message : "Failed to create invite"
       );
     }
   });
 
   const syncLogoState = (nextLogoUrl: string | null) => {
     setLogoUrl(nextLogoUrl ?? "");
-    void queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
   };
 
-  const logoЗагрузитьMutation = useMutation({
+  const logoUploadMutation = useMutation({
     mutationFn: (file: File) =>
       assetsApi
-        .uploadКомпанияLogo(selectedКомпанияId!, file)
-        .then((asset) => companiesApi.update(selectedКомпанияId!, { logoAssetId: asset.assetId })),
-    onУспешно: (company) => {
+        .uploadCompanyLogo(selectedCompanyId!, file)
+        .then((asset) => companiesApi.update(selectedCompanyId!, { logoAssetId: asset.assetId })),
+    onSuccess: (company) => {
       syncLogoState(company.logoUrl);
-      setLogoЗагрузитьОшибка(null);
+      setLogoUploadError(null);
     }
   });
 
   const clearLogoMutation = useMutation({
-    mutationFn: () => companiesApi.update(selectedКомпанияId!, { logoAssetId: null }),
-    onУспешно: (company) => {
-      setLogoЗагрузитьОшибка(null);
+    mutationFn: () => companiesApi.update(selectedCompanyId!, { logoAssetId: null }),
+    onSuccess: (company) => {
+      setLogoUploadError(null);
       syncLogoState(company.logoUrl);
     }
   });
 
   function handleLogoFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
-    event.currentЦель.value = "";
+    event.currentTarget.value = "";
     if (!file) return;
-    setLogoЗагрузитьОшибка(null);
-    logoЗагрузитьMutation.mutate(file);
+    setLogoUploadError(null);
+    logoUploadMutation.mutate(file);
   }
 
-  function handleОчиститьLogo() {
+  function handleClearLogo() {
     clearLogoMutation.mutate();
   }
 
   useEffect(() => {
-    setInviteОшибка(null);
+    setInviteError(null);
     setInviteSnippet(null);
     setSnippetCopied(false);
-    setSnippetКопироватьDelightId(0);
-  }, [selectedКомпанияId]);
+    setSnippetCopyDelightId(0);
+  }, [selectedCompanyId]);
 
   const archiveMutation = useMutation({
     mutationFn: ({
       companyId,
-      nextКомпанияId
+      nextCompanyId
     }: {
       companyId: string;
-      nextКомпанияId: string | null;
-    }) => companiesApi.archive(companyId).then(() => ({ nextКомпанияId })),
-    onУспешно: async ({ nextКомпанияId }) => {
-      if (nextКомпанияId) {
-        setSelectedКомпанияId(nextКомпанияId);
+      nextCompanyId: string | null;
+    }) => companiesApi.archive(companyId).then(() => ({ nextCompanyId })),
+    onSuccess: async ({ nextCompanyId }) => {
+      if (nextCompanyId) {
+        setSelectedCompanyId(nextCompanyId);
       }
       await queryClient.invalidateQueries({
-        queryКлюч: queryКлючs.companies.all
+        queryKey: queryKeys.companies.all
       });
       await queryClient.invalidateQueries({
-        queryКлюч: queryКлючs.companies.stats
+        queryKey: queryKeys.companies.stats
       });
     }
   });
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedКомпания?.name ?? "Компания", href: "/dashboard" },
+      { label: selectedCompany?.name ?? "Компания", href: "/dashboard" },
       { label: "Настройки" }
     ]);
-  }, [setBreadcrumbs, selectedКомпания?.name]);
+  }, [setBreadcrumbs, selectedCompany?.name]);
 
-  if (!selectedКомпания) {
+  if (!selectedCompany) {
     return (
-      <div classИмя="text-sm text-muted-foreground">
-        Нет company selected. Select a company from the switcher above.
+      <div className="text-sm text-muted-foreground">
+        No company selected. Select a company from the switcher above.
       </div>
     );
   }
 
-  function handleСохранитьОбщие() {
+  function handleSaveGeneral() {
     generalMutation.mutate({
-      name: companyИмя.trim(),
+      name: companyName.trim(),
       description: description.trim() || null,
       brandColor: brandColor || null,
       attachmentMaxBytes
@@ -237,95 +237,95 @@ export function КомпанияНастройки() {
   }
 
   return (
-    <div classИмя="max-w-2xl space-y-6">
-      <div classИмя="flex items-center gap-2">
-        <Настройки classИмя="h-5 w-5 text-muted-foreground" />
-        <h1 classИмя="text-lg font-semibold">Компания Настройки</h1>
+    <div className="max-w-2xl space-y-6">
+      <div className="flex items-center gap-2">
+        <Settings className="h-5 w-5 text-muted-foreground" />
+        <h1 className="text-lg font-semibold">Company Settings</h1>
       </div>
 
-      {/* Общие */}
-      <div classИмя="space-y-4">
-        <div classИмя="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Общие
+      {/* General */}
+      <div className="space-y-4">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          General
         </div>
-        <div classИмя="space-y-3 rounded-md border border-border px-4 py-4">
-          <Field label="Компания name" hint="The display name for your company.">
+        <div className="space-y-3 rounded-md border border-border px-4 py-4">
+          <Field label="Company name" hint="The display name for your company.">
             <input
-              classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+              className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
-              value={companyИмя}
-              onChange={(e) => setКомпанияИмя(e.target.value)}
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
             />
           </Field>
           <Field
             label="Описание"
-            hint="Опционально description shown in the company profile."
+            hint="Optional description shown in the company profile."
           >
             <input
-              classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+              className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
               value={description}
-              placeholder="Опционально company description"
-              onChange={(e) => setОписание(e.target.value)}
+              placeholder="Optional company description"
+              onChange={(e) => setDescription(e.target.value)}
             />
           </Field>
         </div>
       </div>
 
       {/* Appearance */}
-      <div classИмя="space-y-4">
-        <div classИмя="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="space-y-4">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Appearance
         </div>
-        <div classИмя="space-y-3 rounded-md border border-border px-4 py-4">
-          <div classИмя="flex items-start gap-4">
-            <div classИмя="shrink-0">
-              <КомпанияPatternIcon
-                companyИмя={companyИмя || selectedКомпания.name}
+        <div className="space-y-3 rounded-md border border-border px-4 py-4">
+          <div className="flex items-start gap-4">
+            <div className="shrink-0">
+              <CompanyPatternIcon
+                companyName={companyName || selectedCompany.name}
                 logoUrl={logoUrl || null}
                 brandColor={brandColor || null}
-                classИмя="rounded-[14px]"
+                className="rounded-[14px]"
               />
             </div>
-            <div classИмя="flex-1 space-y-3">
+            <div className="flex-1 space-y-3">
               <Field
                 label="Logo"
-                hint="Загрузить a PNG, JPEG, WEBP, GIF, or SVG logo image."
+                hint="Upload a PNG, JPEG, WEBP, GIF, or SVG logo image."
               >
-                <div classИмя="space-y-2">
+                <div className="space-y-2">
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
                     onChange={handleLogoFileChange}
-                    classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none file:mr-4 file:rounded-md file:border-0 file:bg-muted file:px-2.5 file:py-1 file:text-xs"
+                    className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none file:mr-4 file:rounded-md file:border-0 file:bg-muted file:px-2.5 file:py-1 file:text-xs"
                   />
                   {logoUrl && (
-                    <div classИмя="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={handleОчиститьLogo}
-                        disabled={clearLogoMutation.isОжидание}
+                        onClick={handleClearLogo}
+                        disabled={clearLogoMutation.isPending}
                       >
-                        {clearLogoMutation.isОжидание ? "Removing..." : "Удалить logo"}
+                        {clearLogoMutation.isPending ? "Removing..." : "Remove logo"}
                       </Button>
                     </div>
                   )}
-                  {(logoЗагрузитьMutation.isОшибка || logoЗагрузитьОшибка) && (
-                    <span classИмя="text-xs text-destructive">
-                      {logoЗагрузитьОшибка ??
-                        (logoЗагрузитьMutation.error instanceof Ошибка
-                          ? logoЗагрузитьMutation.error.message
+                  {(logoUploadMutation.isError || logoUploadError) && (
+                    <span className="text-xs text-destructive">
+                      {logoUploadError ??
+                        (logoUploadMutation.error instanceof Error
+                          ? logoUploadMutation.error.message
                           : "Logo upload failed")}
                     </span>
                   )}
-                  {clearLogoMutation.isОшибка && (
-                    <span classИмя="text-xs text-destructive">
+                  {clearLogoMutation.isError && (
+                    <span className="text-xs text-destructive">
                       {clearLogoMutation.error.message}
                     </span>
                   )}
-                  {logoЗагрузитьMutation.isОжидание && (
-                    <span classИмя="text-xs text-muted-foreground">Загрузитьing logo...</span>
+                  {logoUploadMutation.isPending && (
+                    <span className="text-xs text-muted-foreground">Uploading logo...</span>
                   )}
                 </div>
               </Field>
@@ -333,12 +333,12 @@ export function КомпанияНастройки() {
                 label="Brand color"
                 hint="Sets the hue for the company icon. Leave empty for auto-generated color."
               >
-                <div classИмя="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={brandColor || "#6366f1"}
                     onChange={(e) => setBrandColor(e.target.value)}
-                    classИмя="h-8 w-8 cursor-pointer rounded border border-border bg-transparent p-0"
+                    className="h-8 w-8 cursor-pointer rounded border border-border bg-transparent p-0"
                   />
                   <input
                     type="text"
@@ -350,26 +350,26 @@ export function КомпанияНастройки() {
                       }
                     }}
                     placeholder="Авто"
-                    classИмя="w-28 rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm font-mono outline-none"
+                    className="w-28 rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm font-mono outline-none"
                   />
                   {brandColor && (
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => setBrandColor("")}
-                      classИмя="text-xs text-muted-foreground"
+                      className="text-xs text-muted-foreground"
                     >
-                      Очистить
+                      Clear
                     </Button>
                   )}
                 </div>
               </Field>
               <Field
                 label="Attachment size limit"
-                hint={`Принятьed range: 1-${MAX_COMPANY_ATTACHMENT_MAX_MIB} MiB.`}
+                hint={`Accepted range: 1-${MAX_COMPANY_ATTACHMENT_MAX_MIB} MiB.`}
               >
-                <div classИмя="flex flex-col gap-1.5">
-                  <div classИмя="flex items-center gap-2">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
                     <input
                       type="number"
                       min={1}
@@ -377,12 +377,12 @@ export function КомпанияНастройки() {
                       step={1}
                       value={attachmentMaxMiB}
                       onChange={(e) => setAttachmentMaxMiB(e.target.value)}
-                      classИмя="w-28 rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                      className="w-28 rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                     />
-                    <span classИмя="text-xs text-muted-foreground">MiB</span>
+                    <span className="text-xs text-muted-foreground">MiB</span>
                   </div>
                   {!attachmentMaxValid && (
-                    <span classИмя="text-xs text-destructive">
+                    <span className="text-xs text-destructive">
                       Enter a whole number from 1 to {MAX_COMPANY_ATTACHMENT_MAX_MIB}.
                     </span>
                   )}
@@ -393,99 +393,99 @@ export function КомпанияНастройки() {
         </div>
       </div>
 
-      {/* Сохранить button for Общие + Appearance */}
+      {/* Save button for General + Appearance */}
       {generalDirty && (
-        <div classИмя="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Button
             size="sm"
-            onClick={handleСохранитьОбщие}
-            disabled={generalMutation.isОжидание || !companyИмя.trim() || !attachmentMaxValid}
+            onClick={handleSaveGeneral}
+            disabled={generalMutation.isPending || !companyName.trim() || !attachmentMaxValid}
           >
-            {generalMutation.isОжидание ? "Saving..." : "Сохранить изменения"}
+            {generalMutation.isPending ? "Saving..." : "Save changes"}
           </Button>
-          {generalMutation.isУспешно && (
-            <span classИмя="text-xs text-muted-foreground">Сохранитьd</span>
+          {generalMutation.isSuccess && (
+            <span className="text-xs text-muted-foreground">Saved</span>
           )}
-          {generalMutation.isОшибка && (
-            <span classИмя="text-xs text-destructive">
-              {generalMutation.error instanceof Ошибка
+          {generalMutation.isError && (
+            <span className="text-xs text-destructive">
+              {generalMutation.error instanceof Error
                   ? generalMutation.error.message
-                  : "Ошибка to save"}
+                  : "Failed to save"}
             </span>
           )}
         </div>
       )}
 
       {/* Hiring */}
-      <div classИмя="space-y-4" data-testid="company-settings-team-section">
-        <div classИмя="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="space-y-4" data-testid="company-settings-team-section">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Hiring
         </div>
-        <div classИмя="rounded-md border border-border px-4 py-3">
+        <div className="rounded-md border border-border px-4 py-3">
           <ToggleField
             label="Require board approval for new hires"
-            hint="Новый агент hires stay pending until approved by board."
-            checked={!!selectedКомпания.requireСоветСогласованиеForNewАгенты}
+            hint="New agent hires stay pending until approved by board."
+            checked={!!selectedCompany.requireBoardApprovalForNewAgents}
             onChange={(v) => settingsMutation.mutate(v)}
-            toggleПроверитьId="company-settings-team-approval-toggle"
+            toggleTestId="company-settings-team-approval-toggle"
           />
         </div>
       </div>
 
       {/* Invites */}
-      <div classИмя="space-y-4" data-testid="company-settings-invites-section">
-        <div classИмя="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="space-y-4" data-testid="company-settings-invites-section">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Invites
         </div>
-        <div classИмя="space-y-3 rounded-md border border-border px-4 py-4">
-          <div classИмя="flex items-center gap-1.5">
-            <span classИмя="text-xs text-muted-foreground">
+        <div className="space-y-3 rounded-md border border-border px-4 py-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">
               Generate an OpenClaw agent invite snippet.
             </span>
-            <HintIcon text="Создатьs a short-lived OpenClaw agent invite and renders a copy-ready prompt." />
+            <HintIcon text="Creates a short-lived OpenClaw agent invite and renders a copy-ready prompt." />
           </div>
-          <div classИмя="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               data-testid="company-settings-invites-generate-button"
               size="sm"
               onClick={() => inviteMutation.mutate()}
-              disabled={inviteMutation.isОжидание}
+              disabled={inviteMutation.isPending}
             >
-              {inviteMutation.isОжидание
+              {inviteMutation.isPending
                 ? "Generating..."
                 : "Generate OpenClaw Invite Prompt"}
             </Button>
           </div>
-          {inviteОшибка && (
-            <p classИмя="text-sm text-destructive">{inviteОшибка}</p>
+          {inviteError && (
+            <p className="text-sm text-destructive">{inviteError}</p>
           )}
           {inviteSnippet && (
             <div
-              classИмя="rounded-md border border-border bg-muted/30 p-2"
+              className="rounded-md border border-border bg-muted/30 p-2"
               data-testid="company-settings-invites-snippet"
             >
-              <div classИмя="flex items-center justify-between gap-2">
-                <div classИмя="text-xs text-muted-foreground">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs text-muted-foreground">
                   OpenClaw Invite Prompt
                 </div>
                 {snippetCopied && (
                   <span
-                    key={snippetКопироватьDelightId}
-                    classИмя="flex items-center gap-1 text-xs text-green-600 animate-pulse"
+                    key={snippetCopyDelightId}
+                    className="flex items-center gap-1 text-xs text-green-600 animate-pulse"
                   >
-                    <Check classИмя="h-3 w-3" />
+                    <Check className="h-3 w-3" />
                     Copied
                   </span>
                 )}
               </div>
-              <div classИмя="mt-1 space-y-1.5">
+              <div className="mt-1 space-y-1.5">
                 <textarea
                   data-testid="company-settings-invites-snippet-textarea"
-                  classИмя="h-[28rem] w-full rounded-md border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none"
+                  className="h-[28rem] w-full rounded-md border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none"
                   value={inviteSnippet}
                   readOnly
                 />
-                <div classИмя="flex justify-end">
+                <div className="flex justify-end">
                   <Button
                     data-testid="company-settings-invites-copy-button"
                     size="sm"
@@ -494,14 +494,14 @@ export function КомпанияНастройки() {
                       try {
                         await navigator.clipboard.writeText(inviteSnippet);
                         setSnippetCopied(true);
-                        setSnippetКопироватьDelightId((prev) => prev + 1);
+                        setSnippetCopyDelightId((prev) => prev + 1);
                         setTimeout(() => setSnippetCopied(false), 2000);
                       } catch {
                         /* clipboard may not be available */
                       }
                     }}
                   >
-                    {snippetCopied ? "Copied snippet" : "Копировать snippet"}
+                    {snippetCopied ? "Copied snippet" : "Copy snippet"}
                   </Button>
                 </div>
               </div>
@@ -510,27 +510,27 @@ export function КомпанияНастройки() {
         </div>
       </div>
 
-      {/* Импорт / Экспорт */}
-      <div classИмя="space-y-4">
-        <div classИмя="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Компания Packages
+      {/* Import / Export */}
+      <div className="space-y-4">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Company Packages
         </div>
-        <div classИмя="rounded-md border border-border px-4 py-4">
-          <p classИмя="text-sm text-muted-foreground">
-            Импорт and export have moved to dedicated pages accessible from the{" "}
-            <a href="/org" classИмя="underline hover:text-foreground">Оргструктура Chart</a> header.
+        <div className="rounded-md border border-border px-4 py-4">
+          <p className="text-sm text-muted-foreground">
+            Import and export have moved to dedicated pages accessible from the{" "}
+            <a href="/org" className="underline hover:text-foreground">Org Chart</a> header.
           </p>
-          <div classИмя="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex items-center gap-2">
             <Button size="sm" variant="outline" asChild>
               <a href="/company/export">
-                <Скачать classИмя="mr-1.5 h-3.5 w-3.5" />
-                Экспорт
+                <Download className="mr-1.5 h-3.5 w-3.5" />
+                Export
               </a>
             </Button>
             <Button size="sm" variant="outline" asChild>
               <a href="/company/import">
-                <Загрузить classИмя="mr-1.5 h-3.5 w-3.5" />
-                Импорт
+                <Upload className="mr-1.5 h-3.5 w-3.5" />
+                Import
               </a>
             </Button>
           </div>
@@ -538,52 +538,52 @@ export function КомпанияНастройки() {
       </div>
 
       {/* Danger Zone */}
-      <div classИмя="space-y-4">
-        <div classИмя="text-xs font-medium text-destructive uppercase tracking-wide">
+      <div className="space-y-4">
+        <div className="text-xs font-medium text-destructive uppercase tracking-wide">
           Danger Zone
         </div>
-        <div classИмя="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
-          <p classИмя="text-sm text-muted-foreground">
-            Архивировать this company to hide it from the sidebar. This persists in
+        <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
+          <p className="text-sm text-muted-foreground">
+            Archive this company to hide it from the sidebar. This persists in
             the database.
           </p>
-          <div classИмя="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Button
               size="sm"
               variant="destructive"
               disabled={
-                archiveMutation.isОжидание ||
-                selectedКомпания.status === "archived"
+                archiveMutation.isPending ||
+                selectedCompany.status === "archived"
               }
               onClick={() => {
-                if (!selectedКомпанияId) return;
+                if (!selectedCompanyId) return;
                 const confirmed = window.confirm(
-                  `Архивировать company "${selectedКомпания.name}"? It will be hidden from the sidebar.`
+                  `Archive company "${selectedCompany.name}"? It will be hidden from the sidebar.`
                 );
                 if (!confirmed) return;
-                const nextКомпанияId =
+                const nextCompanyId =
                   companies.find(
                     (company) =>
-                      company.id !== selectedКомпанияId &&
+                      company.id !== selectedCompanyId &&
                       company.status !== "archived"
                   )?.id ?? null;
                 archiveMutation.mutate({
-                  companyId: selectedКомпанияId,
-                  nextКомпанияId
+                  companyId: selectedCompanyId,
+                  nextCompanyId
                 });
               }}
             >
-              {archiveMutation.isОжидание
+              {archiveMutation.isPending
                 ? "Archiving..."
-                : selectedКомпания.status === "archived"
+                : selectedCompany.status === "archived"
                 ? "Already archived"
-                : "Архивировать company"}
+                : "Archive company"}
             </Button>
-            {archiveMutation.isОшибка && (
-              <span classИмя="text-xs text-destructive">
-                {archiveMutation.error instanceof Ошибка
+            {archiveMutation.isError && (
+              <span className="text-xs text-destructive">
+                {archiveMutation.error instanceof Error
                   ? archiveMutation.error.message
-                  : "Ошибка to archive company"}
+                  : "Failed to archive company"}
               </span>
             )}
           </div>
@@ -593,18 +593,18 @@ export function КомпанияНастройки() {
   );
 }
 
-function buildАгентSnippet(input: АгентSnippetInput) {
+function buildAgentSnippet(input: AgentSnippetInput) {
   const candidateUrls = buildCandidateOnboardingUrls(input);
-  const resolutionПроверитьUrl = buildResolutionПроверитьUrl(input);
+  const resolutionTestUrl = buildResolutionTestUrl(input);
 
   const candidateList =
     candidateUrls.length > 0
       ? candidateUrls.map((u) => `- ${u}`).join("\n")
-      : "- (Нет candidate URLs available yet.)";
+      : "- (No candidate URLs available yet.)";
 
   const connectivityBlock =
     candidateUrls.length === 0
-      ? `Нет candidate URLs are available. Ask your user to configure a reachable hostname in Paperclip, then retry.
+      ? `No candidate URLs are available. Ask your user to configure a reachable hostname in Paperclip, then retry.
 Suggested steps:
 - choose a hostname that resolves to the Paperclip host from your runtime
 - run: pnpm paperclipai allowed-hostname <host>
@@ -616,8 +616,8 @@ Suggested command:
 - pnpm paperclipai allowed-hostname <host>
 Then verify with: curl -fsS <base-url>/api/health`;
 
-  const resolutionLine = resolutionПроверитьUrl
-    ? `\nYou MUST test Paperclip-to-gateway reachability, call: ${resolutionПроверитьUrl}?url=<urlencoded-gateway-url> (using the hostname that worked above). Do not assume your 172.x is necessarily reachable from Paperclip. Проверить it. `
+  const resolutionLine = resolutionTestUrl
+    ? `\nYou MUST test Paperclip-to-gateway reachability, call: ${resolutionTestUrl}?url=<urlencoded-gateway-url> (using the hostname that worked above). Do not assume your 172.x is necessarily reachable from Paperclip. Test it. `
     : "";
 
   return `You're invited to join a Paperclip organization.
@@ -631,30 +631,30 @@ Verify the hostname works from your runtime with: GET <base-url>/api/health
 
 ${connectivityBlock}
 
-For your "agentИмя", just use your own agent name (OpenClaw or whatever your name is) and send it directly.
+For your "agentName", just use your own agent name (OpenClaw or whatever your name is) and send it directly.
 You also need to send a gateway URL that Paperclip can access. Check your config and include that URL.${resolutionLine}
 
 ---
 
 This onboarding flow is for OpenClaw Gateway.
 When you submit the join request, use:
-- \`adapterТип: "openclaw_gateway"\`
-- \`agentПо умолчаниюsPayload.url\` as your \`ws://\` or \`wss://\` gateway URL
-- \`agentПо умолчаниюsPayload.headers["x-openclaw-token"]\` with your gateway token
-- (legacy accepted) \`agentПо умолчаниюsPayload.headers["x-openclaw-auth"]\`
-- Keep device auth enabled (recommended). If \`devicePrivateКлючPem\` is omitted, Paperclip will generate and persist one during join so pairing approvals remain stable.
+- \`adapterType: "openclaw_gateway"\`
+- \`agentDefaultsPayload.url\` as your \`ws://\` or \`wss://\` gateway URL
+- \`agentDefaultsPayload.headers["x-openclaw-token"]\` with your gateway token
+- (legacy accepted) \`agentDefaultsPayload.headers["x-openclaw-auth"]\`
+- Keep device auth enabled (recommended). If \`devicePrivateKeyPem\` is omitted, Paperclip will generate and persist one during join so pairing approvals remain stable.
 - Only use \`disableDeviceAuth=true\` for special environments where pairing cannot be completed.
 
 Do NOT use \`/v1/responses\` or \`/hooks/*\` in this join flow.
 
-Before you do anything, please respond to your user that you understand the instructions and you're going to work on them. Then do the step above in another session called "paperclip-onboarding" and then tell your user when you're done. Обновить your user in intermediate steps along the way so they know what's going on.
+Before you do anything, please respond to your user that you understand the instructions and you're going to work on them. Then do the step above in another session called "paperclip-onboarding" and then tell your user when you're done. Update your user in intermediate steps along the way so they know what's going on.
 
 Then after you've connected to Paperclip (exchanged keys etc.) you MUST review and follow the onboarding instructions in onboarding.txt they give you.
 
 `;
 }
 
-function buildCandidateOnboardingUrls(input: АгентSnippetInput): string[] {
+function buildCandidateOnboardingUrls(input: AgentSnippetInput): string[] {
   const candidates = (input.connectionCandidates ?? [])
     .map((candidate) => candidate.trim())
     .filter(Boolean);
@@ -678,11 +678,11 @@ function buildCandidateOnboardingUrls(input: АгентSnippetInput): string[] {
     return Array.from(urls);
   }
 
-  const onboardingПуть = `${onboardingUrl.pathname}${onboardingUrl.search}`;
+  const onboardingPath = `${onboardingUrl.pathname}${onboardingUrl.search}`;
   for (const candidate of candidates) {
     try {
       const base = new URL(candidate);
-      urls.add(`${base.origin}${onboardingПуть}`);
+      urls.add(`${base.origin}${onboardingPath}`);
     } catch {
       urls.add(candidate);
     }
@@ -691,17 +691,17 @@ function buildCandidateOnboardingUrls(input: АгентSnippetInput): string[] {
   return Array.from(urls);
 }
 
-function buildResolutionПроверитьUrl(input: АгентSnippetInput): string | null {
+function buildResolutionTestUrl(input: AgentSnippetInput): string | null {
   const explicit = input.testResolutionUrl?.trim();
   if (explicit) return explicit;
 
   try {
     const onboardingUrl = new URL(input.onboardingTextUrl);
-    const testПуть = onboardingUrl.pathname.replace(
+    const testPath = onboardingUrl.pathname.replace(
       /\/onboarding\.txt$/,
       "/test-resolution"
     );
-    return `${onboardingUrl.origin}${testПуть}`;
+    return `${onboardingUrl.origin}${testPath}`;
   } catch {
     return null;
   }

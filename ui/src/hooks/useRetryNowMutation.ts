@@ -1,53 +1,53 @@
 import { useCallback } from "react";
 import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
-import type { ЗадачаПовторитьСейчасOutcome, ЗадачаПовторитьСейчасResponse } from "@paperclipai/shared";
-import { ApiОшибка } from "../api/client";
+import type { IssueRetryNowOutcome, IssueRetryNowResponse } from "@paperclipai/shared";
+import { ApiError } from "../api/client";
 import { issuesApi } from "../api/issues";
 import { useToastActions } from "../context/ToastContext";
-import { queryКлючs } from "../lib/queryКлючs";
+import { queryKeys } from "../lib/queryKeys";
 
-export type ПовторитьСейчасОшибка = {
+export type RetryNowError = {
   message: string;
   outcomeMessage: string | null;
   status: number | null;
 };
 
-function readОшибкаMessage(error: unknown): string {
-  if (error instanceof ApiОшибка) {
+function readErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
     if (typeof error.message === "string" && error.message.trim().length > 0) return error.message;
-    return `Запрос не удался (${error.status})`;
+    return `Request failed (${error.status})`;
   }
-  if (error instanceof Ошибка && error.message) return error.message;
-  return "Запрос не выполнен. Попробовать снова in a moment.";
+  if (error instanceof Error && error.message) return error.message;
+  return "The request failed. Try again in a moment.";
 }
 
-export const RETRY_NOW_OUTCOME_HEADLINE: Record<ЗадачаПовторитьСейчасOutcome, string> = {
-  promoted: "Повторить promoted",
-  already_promoted: "Повторить already running",
-  no_scheduled_retry: "Нет scheduled retry",
+export const RETRY_NOW_OUTCOME_HEADLINE: Record<IssueRetryNowOutcome, string> = {
+  promoted: "Retry promoted",
+  already_promoted: "Retry already running",
+  no_scheduled_retry: "No scheduled retry",
   gate_suppressed: "Couldn't retry now",
 };
 
-export function useПовторитьСейчасMutation(
+export function useRetryNowMutation(
   issueId: string | null | undefined,
-): UseMutationResult<ЗадачаПовторитьСейчасResponse, unknown, void, unknown> & {
-  lastОшибка: ПовторитьСейчасОшибка | null;
+): UseMutationResult<IssueRetryNowResponse, unknown, void, unknown> & {
+  lastError: RetryNowError | null;
 } {
   const queryClient = useQueryClient();
   const { pushToast } = useToastActions();
 
   const mutation = useMutation({
     mutationFn: () => {
-      if (!issueId) throw new Ошибка("Missing issue id");
-      return issuesApi.retryРасписаниеdПовторитьСейчас(issueId);
+      if (!issueId) throw new Error("Missing issue id");
+      return issuesApi.retryScheduledRetryNow(issueId);
     },
-    onУспешно: (response) => {
+    onSuccess: (response) => {
       if (issueId) {
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(issueId) });
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activity(issueId) });
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.runs(issueId) });
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.liveЗапуститьs(issueId) });
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activeЗапустить(issueId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(issueId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.runs(issueId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.liveRuns(issueId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.activeRun(issueId) });
       }
       if (response.outcome === "promoted") {
         pushToast({
@@ -63,25 +63,25 @@ export function useПовторитьСейчасMutation(
         });
       }
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
         title: "Couldn't retry now",
-        body: readОшибкаMessage(error),
+        body: readErrorMessage(error),
         tone: "error",
       });
     },
   });
 
   const reset = mutation.reset;
-  const wrappedСбросить = useCallback(() => reset(), [reset]);
+  const wrappedReset = useCallback(() => reset(), [reset]);
 
-  const lastОшибка: ПовторитьСейчасОшибка | null = (() => {
+  const lastError: RetryNowError | null = (() => {
     if (mutation.error) {
-      const apiОшибка = mutation.error instanceof ApiОшибка ? mutation.error : null;
+      const apiError = mutation.error instanceof ApiError ? mutation.error : null;
       return {
-        message: readОшибкаMessage(mutation.error),
+        message: readErrorMessage(mutation.error),
         outcomeMessage: null,
-        status: apiОшибка?.status ?? null,
+        status: apiError?.status ?? null,
       };
     }
     if (mutation.data && mutation.data.outcome === "gate_suppressed") {
@@ -96,9 +96,9 @@ export function useПовторитьСейчасMutation(
 
   return {
     ...mutation,
-    reset: wrappedСбросить,
-    lastОшибка,
-  } as UseMutationResult<ЗадачаПовторитьСейчасResponse, unknown, void, unknown> & {
-    lastОшибка: ПовторитьСейчасОшибка | null;
+    reset: wrappedReset,
+    lastError,
+  } as UseMutationResult<IssueRetryNowResponse, unknown, void, unknown> & {
+    lastError: RetryNowError | null;
   };
 }

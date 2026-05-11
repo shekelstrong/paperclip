@@ -1,64 +1,64 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-  КомпанияПортabilityCollisionStrategy,
-  КомпанияПортabilityFileEntry,
-  КомпанияПортabilityПредпросмотрResult,
-  КомпанияПортabilitySource,
-  КомпанияПортabilityАдаптерOverride,
+  CompanyPortabilityCollisionStrategy,
+  CompanyPortabilityFileEntry,
+  CompanyPortabilityPreviewResult,
+  CompanyPortabilitySource,
+  CompanyPortabilityAdapterOverride,
 } from "@paperclipai/shared";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToastActions } from "../context/ToastContext";
 import { authApi } from "../api/auth";
 import { companiesApi } from "../api/companies";
 import { agentsApi } from "../api/agents";
 import { sidebarPreferencesApi } from "../api/sidebarPreferences";
-import { queryКлючs } from "../lib/queryКлючs";
-import { getАгентOrderStorageКлюч, writeАгентOrder } from "../lib/agent-order";
+import { queryKeys } from "../lib/queryKeys";
+import { getAgentOrderStorageKey, writeAgentOrder } from "../lib/agent-order";
 import { MarkdownBody } from "../components/MarkdownBody";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "../components/EmptyState";
-import { АгентConfigForm } from "../components/АгентConfigForm";
+import { AgentConfigForm } from "../components/AgentConfigForm";
 import { cn } from "../lib/utils";
 import {
   ArrowRight,
   Check,
   ChevronRight,
-  Скачать,
+  Download,
   Github,
   Package,
-  Загрузить,
+  Upload,
 } from "lucide-react";
-import { Field, adapterЯрлыки } from "../components/agent-config-primitives";
-import { getАдаптерLabel } from "../adapters/adapter-display-registry";
-import { defaultСоздатьЗначениеs } from "../components/agent-config-defaults";
-import { getUIАдаптер, listUIАдаптеры } from "../adapters";
-import type { СоздатьConfigЗначениеs } from "@paperclipai/adapter-utils";
+import { Field, adapterLabels } from "../components/agent-config-primitives";
+import { getAdapterLabel } from "../adapters/adapter-display-registry";
+import { defaultCreateValues } from "../components/agent-config-defaults";
+import { getUIAdapter, listUIAdapters } from "../adapters";
+import type { CreateConfigValues } from "@paperclipai/adapter-utils";
 import {
-  type FileTreeНетde,
+  type FileTreeNode,
   type FrontmatterData,
   buildFileTree,
-  countФайлы,
-  collectВсеПутьs,
+  countFiles,
+  collectAllPaths,
   parseFrontmatter,
   FRONTMATTER_FIELD_LABELS,
   FileTree,
 } from "../components/FileTree";
-import { readZipАрхивировать } from "../lib/zip";
-import { getПортableFileDataUrl, getПортableFileText, isПортableImageFile } from "../lib/portable-files";
+import { readZipArchive } from "../lib/zip";
+import { getPortableFileDataUrl, getPortableFileText, isPortableImageFile } from "../lib/portable-files";
 
-// ── Импорт-specific helpers ───────────────────────────────────────────
+// ── Import-specific helpers ───────────────────────────────────────────
 
 /** Build a map from file path → planned action (create/update/skip) using the manifest + plan */
-function buildActionMap(preview: КомпанияПортabilityПредпросмотрResult): Map<string, string> {
+function buildActionMap(preview: CompanyPortabilityPreviewResult): Map<string, string> {
   const map = new Map<string, string>();
   const manifest = preview.manifest;
 
   for (const ap of preview.plan.agentPlans) {
     const agent = manifest.agents.find((a) => a.slug === ap.slug);
     if (agent) {
-      const path = ensureMarkdownПуть(agent.path);
+      const path = ensureMarkdownPath(agent.path);
       map.set(path, ap.action);
     }
   }
@@ -66,7 +66,7 @@ function buildActionMap(preview: КомпанияПортabilityПредпрос
   for (const pp of preview.plan.projectPlans) {
     const project = manifest.projects.find((p) => p.slug === pp.slug);
     if (project) {
-      const path = ensureMarkdownПуть(project.path);
+      const path = ensureMarkdownPath(project.path);
       map.set(path, pp.action);
     }
   }
@@ -74,13 +74,13 @@ function buildActionMap(preview: КомпанияПортabilityПредпрос
   for (const ip of preview.plan.issuePlans) {
     const issue = manifest.issues.find((i) => i.slug === ip.slug);
     if (issue) {
-      const path = ensureMarkdownПуть(issue.path);
+      const path = ensureMarkdownPath(issue.path);
       map.set(path, ip.action);
     }
   }
 
   for (const skill of manifest.skills) {
-    const path = ensureMarkdownПуть(skill.path);
+    const path = ensureMarkdownPath(skill.path);
     map.set(path, "create");
     // Also mark skill file inventory
     for (const file of skill.fileInventory) {
@@ -90,16 +90,16 @@ function buildActionMap(preview: КомпанияПортabilityПредпрос
     }
   }
 
-  // Компания file
+  // Company file
   if (manifest.company) {
-    const path = ensureMarkdownПуть(manifest.company.path);
+    const path = ensureMarkdownPath(manifest.company.path);
     map.set(path, preview.plan.companyAction === "none" ? "skip" : preview.plan.companyAction);
   }
 
   return map;
 }
 
-function ensureMarkdownПуть(p: string): string {
+function ensureMarkdownPath(p: string): string {
   return p.endsWith(".md") ? p : `${p}.md`;
 }
 
@@ -114,20 +114,20 @@ const ACTION_COLORS: Record<string, string> = {
 
 function FrontmatterCard({ data }: { data: FrontmatterData }) {
   return (
-    <div classИмя="rounded-md border border-border bg-accent/20 px-4 py-3 mb-4">
-      <dl classИмя="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
+    <div className="rounded-md border border-border bg-accent/20 px-4 py-3 mb-4">
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
         {Object.entries(data).map(([key, value]) => (
-          <div key={key} classИмя="contents">
-            <dt classИмя="text-muted-foreground whitespace-nowrap py-0.5">
+          <div key={key} className="contents">
+            <dt className="text-muted-foreground whitespace-nowrap py-0.5">
               {FRONTMATTER_FIELD_LABELS[key] ?? key}
             </dt>
-            <dd classИмя="py-0.5">
+            <dd className="py-0.5">
               {Array.isArray(value) ? (
-                <div classИмя="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   {value.map((item) => (
                     <span
                       key={item}
-                      classИмя="inline-flex items-center rounded-md border border-border bg-background px-2 py-0.5 text-xs"
+                      className="inline-flex items-center rounded-md border border-border bg-background px-2 py-0.5 text-xs"
                     >
                       {item}
                     </span>
@@ -144,13 +144,13 @@ function FrontmatterCard({ data }: { data: FrontmatterData }) {
   );
 }
 
-// ── Импорт file tree customization ───────────────────────────────────
+// ── Import file tree customization ───────────────────────────────────
 
-function renderИмпортFileExtra(node: FileTreeНетde, checked: boolean, renameMap: Map<string, string>) {
+function renderImportFileExtra(node: FileTreeNode, checked: boolean, renameMap: Map<string, string>) {
   // Show rename indicator only on directories (folders), not individual files
   const renamedTo = node.kind === "dir" ? renameMap.get(node.path) : undefined;
   const actionBadge = node.action ? (
-    <span classИмя={cn(
+    <span className={cn(
       "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
       ACTION_COLORS[node.action] ?? ACTION_COLORS.skip,
     )}>
@@ -161,9 +161,9 @@ function renderИмпортFileExtra(node: FileTreeНетde, checked: boolean, r
   if (!actionBadge && !renamedTo) return null;
 
   return (
-    <span classИмя="inline-flex items-center gap-1.5 shrink-0">
+    <span className="inline-flex items-center gap-1.5 shrink-0">
       {renamedTo && checked && (
-        <span classИмя="text-[10px] text-cyan-500 font-mono truncate max-w-[7rem]" title={renamedTo}>
+        <span className="text-[10px] text-cyan-500 font-mono truncate max-w-[7rem]" title={renamedTo}>
           &rarr; {renamedTo}
         </span>
       )}
@@ -172,22 +172,22 @@ function renderИмпортFileExtra(node: FileTreeНетde, checked: boolean, r
   );
 }
 
-function importFileRowClassИмя(_node: FileTreeНетde, checked: boolean) {
+function importFileRowClassName(_node: FileTreeNode, checked: boolean) {
   return !checked ? "opacity-50" : undefined;
 }
 
-// ── Предпросмотр pane ──────────────────────────────────────────────────────
+// ── Preview pane ──────────────────────────────────────────────────────
 
-function ИмпортПредпросмотрPane({
+function ImportPreviewPane({
   selectedFile,
   content,
-  allФайлы,
+  allFiles,
   action,
   renamedTo,
 }: {
   selectedFile: string | null;
-  content: КомпанияПортabilityFileEntry | null;
-  allФайлы: Record<string, КомпанияПортabilityFileEntry>;
+  content: CompanyPortabilityFileEntry | null;
+  allFiles: Record<string, CompanyPortabilityFileEntry>;
   action: string | null;
   renamedTo: string | null;
 }) {
@@ -197,10 +197,10 @@ function ИмпортПредпросмотрPane({
     );
   }
 
-  const textContent = getПортableFileText(content);
+  const textContent = getPortableFileText(content);
   const isMarkdown = selectedFile.endsWith(".md") && textContent !== null;
   const parsed = isMarkdown && textContent ? parseFrontmatter(textContent) : null;
-  const imageSrc = isПортableImageFile(selectedFile, content) ? getПортableFileDataUrl(selectedFile, content) : null;
+  const imageSrc = isPortableImageFile(selectedFile, content) ? getPortableFileDataUrl(selectedFile, content) : null;
   const actionColor = action ? (ACTION_COLORS[action] ?? ACTION_COLORS.skip) : "";
 
   // Resolve relative image paths within the import package
@@ -209,26 +209,26 @@ function ИмпортПредпросмотрPane({
         if (/^(?:https?:|data:)/i.test(src)) return null;
         const dir = selectedFile.includes("/") ? selectedFile.slice(0, selectedFile.lastIndexOf("/") + 1) : "";
         const resolved = dir + src;
-        const entry = allФайлы[resolved] ?? allФайлы[src];
+        const entry = allFiles[resolved] ?? allFiles[src];
         if (!entry) return null;
-        return getПортableFileDataUrl(resolved in allФайлы ? resolved : src, entry);
+        return getPortableFileDataUrl(resolved in allFiles ? resolved : src, entry);
       }
     : undefined;
 
   return (
-    <div classИмя="min-w-0">
-      <div classИмя="border-b border-border px-5 py-3">
-        <div classИмя="flex items-center justify-between gap-3">
-          <div classИмя="min-w-0 flex items-center gap-2">
-            <span classИмя="truncate font-mono text-sm">{selectedFile}</span>
+    <div className="min-w-0">
+      <div className="border-b border-border px-5 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex items-center gap-2">
+            <span className="truncate font-mono text-sm">{selectedFile}</span>
             {renamedTo && (
-              <span classИмя="shrink-0 font-mono text-sm text-cyan-500">
+              <span className="shrink-0 font-mono text-sm text-cyan-500">
                 &rarr; {renamedTo}
               </span>
             )}
           </div>
           {action && (
-            <span classИмя={cn(
+            <span className={cn(
               "shrink-0 rounded-full border px-2 py-0.5 text-xs uppercase tracking-wide",
               actionColor,
             )}>
@@ -237,24 +237,24 @@ function ИмпортПредпросмотрPane({
           )}
         </div>
       </div>
-      <div classИмя="min-h-[560px] px-5 py-5">
+      <div className="min-h-[560px] px-5 py-5">
         {parsed ? (
           <>
             <FrontmatterCard data={parsed.data} />
-            {parsed.body.trim() && <MarkdownBody resolveImageSrc={resolveImageSrc} softBreaks={false} linkЗадачаСсылки={false}>{parsed.body}</MarkdownBody>}
+            {parsed.body.trim() && <MarkdownBody resolveImageSrc={resolveImageSrc} softBreaks={false} linkIssueReferences={false}>{parsed.body}</MarkdownBody>}
           </>
         ) : isMarkdown ? (
-          <MarkdownBody resolveImageSrc={resolveImageSrc} softBreaks={false} linkЗадачаСсылки={false}>{textContent ?? ""}</MarkdownBody>
+          <MarkdownBody resolveImageSrc={resolveImageSrc} softBreaks={false} linkIssueReferences={false}>{textContent ?? ""}</MarkdownBody>
         ) : imageSrc ? (
-          <div classИмя="flex min-h-[520px] items-center justify-center rounded-lg border border-border bg-accent/10 p-6">
-            <img src={imageSrc} alt={selectedFile} classИмя="max-h-[480px] max-w-full object-contain" />
+          <div className="flex min-h-[520px] items-center justify-center rounded-lg border border-border bg-accent/10 p-6">
+            <img src={imageSrc} alt={selectedFile} className="max-h-[480px] max-w-full object-contain" />
           </div>
         ) : textContent !== null ? (
-          <pre classИмя="overflow-x-auto whitespace-pre-wrap break-words border-0 bg-transparent p-0 font-mono text-sm text-foreground">
+          <pre className="overflow-x-auto whitespace-pre-wrap break-words border-0 bg-transparent p-0 font-mono text-sm text-foreground">
             <code>{textContent}</code>
           </pre>
         ) : (
-          <div classИмя="rounded-lg border border-border bg-accent/10 px-4 py-3 text-sm text-muted-foreground">
+          <div className="rounded-lg border border-border bg-accent/10 px-4 py-3 text-sm text-muted-foreground">
             Binary asset preview is not available for this file type.
           </div>
         )}
@@ -268,43 +268,43 @@ function ИмпортПредпросмотрPane({
 interface ConflictItem {
   slug: string;
   kind: "agent" | "project" | "issue" | "skill";
-  originalИмя: string;
-  plannedИмя: string;
-  fileПуть: string | null;
+  originalName: string;
+  plannedName: string;
+  filePath: string | null;
   action: "rename" | "update";
 }
 
 function buildConflictList(
-  preview: КомпанияПортabilityПредпросмотрResult,
+  preview: CompanyPortabilityPreviewResult,
 ): ConflictItem[] {
   const conflicts: ConflictItem[] = [];
   const manifest = preview.manifest;
 
-  // Агенты with collisions
+  // Agents with collisions
   for (const ap of preview.plan.agentPlans) {
-    if (ap.existingАгентId) {
+    if (ap.existingAgentId) {
       const agent = manifest.agents.find((a) => a.slug === ap.slug);
       conflicts.push({
         slug: ap.slug,
         kind: "agent",
-        originalИмя: agent?.name ?? ap.slug,
-        plannedИмя: ap.plannedИмя,
-        fileПуть: agent ? ensureMarkdownПуть(agent.path) : null,
+        originalName: agent?.name ?? ap.slug,
+        plannedName: ap.plannedName,
+        filePath: agent ? ensureMarkdownPath(agent.path) : null,
         action: ap.action === "update" ? "update" : "rename",
       });
     }
   }
 
-  // Проекты with collisions
+  // Projects with collisions
   for (const pp of preview.plan.projectPlans) {
     if (pp.existingProjectId) {
       const project = manifest.projects.find((p) => p.slug === pp.slug);
       conflicts.push({
         slug: pp.slug,
         kind: "project",
-        originalИмя: project?.name ?? pp.slug,
-        plannedИмя: pp.plannedИмя,
-        fileПуть: project ? ensureMarkdownПуть(project.path) : null,
+        originalName: project?.name ?? pp.slug,
+        plannedName: pp.plannedName,
+        filePath: project ? ensureMarkdownPath(project.path) : null,
         action: pp.action === "update" ? "update" : "rename",
       });
     }
@@ -317,13 +317,13 @@ function buildConflictList(
 function deriveSourcePrefix(
   sourceMode: string,
   importUrl: string,
-  localPackageИмя: string | null,
-  localRootПуть: string | null,
+  localPackageName: string | null,
+  localRootPath: string | null,
 ): string | null {
   if (sourceMode === "local") {
-    if (localRootПуть) return localRootПуть.split("/").pop() ?? null;
-    if (!localPackageИмя) return null;
-    return localPackageИмя.replace(/\.zip$/i, "") || null;
+    if (localRootPath) return localRootPath.split("/").pop() ?? null;
+    if (!localPackageName) return null;
+    return localPackageName.replace(/\.zip$/i, "") || null;
   }
   if (sourceMode === "github") {
     const url = importUrl.trim();
@@ -341,13 +341,13 @@ function deriveSourcePrefix(
 }
 
 /** Generate a prefix-based rename: e.g. "gstack" + "CEO" → "gstack-CEO" */
-function prefixedИмя(prefix: string | null, originalИмя: string): string {
-  if (!prefix) return originalИмя;
-  return `${prefix}-${originalИмя}`;
+function prefixedName(prefix: string | null, originalName: string): string {
+  if (!prefix) return originalName;
+  return `${prefix}-${originalName}`;
 }
 
-async function applyИмпортedSidebarOrder(
-  preview: КомпанияПортabilityПредпросмотрResult | null,
+async function applyImportedSidebarOrder(
+  preview: CompanyPortabilityPreviewResult | null,
   result: {
     company: { id: string };
     agents: Array<{ slug: string; id: string | null }>;
@@ -370,15 +370,15 @@ async function applyИмпортedSidebarOrder(
       .map((project) => [project.slug, project.id]),
   );
 
-  const orderedАгентIds = sidebar.agents
+  const orderedAgentIds = sidebar.agents
     .map((slug) => agentIdBySlug.get(slug))
     .filter((id): id is string => Boolean(id));
   const orderedProjectIds = sidebar.projects
     .map((slug) => projectIdBySlug.get(slug))
     .filter((id): id is string => Boolean(id));
 
-  if (orderedАгентIds.length > 0) {
-    writeАгентOrder(getАгентOrderStorageКлюч(result.company.id, userId), orderedАгентIds);
+  if (orderedAgentIds.length > 0) {
+    writeAgentOrder(getAgentOrderStorageKey(result.company.id, userId), orderedAgentIds);
   }
   if (orderedProjectIds.length > 0) {
     await sidebarPreferencesApi.updateProjectOrder(result.company.id, { orderedIds: orderedProjectIds });
@@ -394,107 +394,107 @@ function ConflictResolutionList({
   confirmedSlugs,
   onRename,
   onToggleSkip,
-  onToggleПодтвердить,
+  onToggleConfirm,
 }: {
   conflicts: ConflictItem[];
   nameOverrides: Record<string, string>;
   skippedSlugs: Set<string>;
   confirmedSlugs: Set<string>;
-  onRename: (slug: string, newИмя: string) => void;
-  onToggleSkip: (slug: string, fileПуть: string | null) => void;
-  onToggleПодтвердить: (slug: string) => void;
+  onRename: (slug: string, newName: string) => void;
+  onToggleSkip: (slug: string, filePath: string | null) => void;
+  onToggleConfirm: (slug: string) => void;
 }) {
   if (conflicts.length === 0) return null;
 
   return (
-    <div classИмя="mx-5 mt-3">
-      <div classИмя="rounded-md border border-border">
-        <div classИмя="flex items-center gap-2 border-b border-border px-4 py-2.5">
-          <h3 classИмя="text-sm font-medium">
+    <div className="mx-5 mt-3">
+      <div className="rounded-md border border-border">
+        <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+          <h3 className="text-sm font-medium">
             Renames
           </h3>
-          <span classИмя="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {conflicts.length} item{conflicts.length === 1 ? "" : "s"}
           </span>
         </div>
-        <div classИмя="divide-y divide-border">
+        <div className="divide-y divide-border">
           {conflicts.map((item) => {
             const isSkipped = skippedSlugs.has(item.slug);
-            const isПодтвердитьed = confirmedSlugs.has(item.slug);
-            const currentИмя = nameOverrides[item.slug] ?? item.plannedИмя;
+            const isConfirmed = confirmedSlugs.has(item.slug);
+            const currentName = nameOverrides[item.slug] ?? item.plannedName;
             return (
               <div
                 key={item.slug}
-                classИмя={cn(
+                className={cn(
                   "flex items-center gap-3 px-4 py-2.5 text-sm",
                   isSkipped && "opacity-40",
-                  isПодтвердитьed && !isSkipped && "bg-emerald-500/5",
+                  isConfirmed && !isSkipped && "bg-emerald-500/5",
                 )}
               >
                 {/* Skip button on the left */}
                 <button
                   type="button"
-                  classИмя={cn(
+                  className={cn(
                     "shrink-0 rounded-md border px-2.5 py-1 text-xs transition-colors",
                     isSkipped
                       ? "border-foreground bg-accent text-foreground"
                       : "border-border text-muted-foreground hover:bg-accent/50",
                   )}
-                  onClick={() => onToggleSkip(item.slug, item.fileПуть)}
+                  onClick={() => onToggleSkip(item.slug, item.filePath)}
                 >
                   {isSkipped ? "skipped" : "skip"}
                 </button>
 
-                <span classИмя={cn(
+                <span className={cn(
                   "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
                   isSkipped
                     ? "text-muted-foreground border-border"
-                    : isПодтвердитьed
+                    : isConfirmed
                       ? "text-emerald-500 border-emerald-500/30"
                       : "text-amber-500 border-amber-500/30",
                 )}>
                   {item.kind}
                 </span>
 
-                <span classИмя={cn(
+                <span className={cn(
                   "shrink-0 font-mono text-xs",
                   isSkipped ? "text-muted-foreground line-through" : "text-muted-foreground",
                 )}>
-                  {item.originalИмя}
+                  {item.originalName}
                 </span>
 
                 {!isSkipped && (
                   <>
-                    <ArrowRight classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
-                    {isПодтвердитьed ? (
-                      <span classИмя="min-w-0 flex-1 font-mono text-xs text-emerald-500">
-                        {currentИмя}
+                    <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    {isConfirmed ? (
+                      <span className="min-w-0 flex-1 font-mono text-xs text-emerald-500">
+                        {currentName}
                       </span>
                     ) : (
                       <input
-                        classИмя="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 font-mono text-xs outline-none focus:border-foreground"
-                        value={currentИмя}
+                        className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 font-mono text-xs outline-none focus:border-foreground"
+                        value={currentName}
                         onChange={(e) => onRename(item.slug, e.target.value)}
                       />
                     )}
                   </>
                 )}
 
-                {/* Подтвердить rename button on the right */}
+                {/* Confirm rename button on the right */}
                 {!isSkipped && (
                   <button
                     type="button"
-                    classИмя={cn(
+                    className={cn(
                       "ml-auto shrink-0 rounded-md border px-2.5 py-1 text-xs transition-colors inline-flex items-center gap-1.5",
-                      isПодтвердитьed
+                      isConfirmed
                         ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
                         : "border-border text-muted-foreground hover:bg-accent/50",
                     )}
-                    onClick={() => onToggleПодтвердить(item.slug)}
+                    onClick={() => onToggleConfirm(item.slug)}
                   >
-                    {isПодтвердитьed ? (
+                    {isConfirmed ? (
                       <>
-                        <Check classИмя="h-3 w-3" />
+                        <Check className="h-3 w-3" />
                         confirmed
                       </>
                     ) : (
@@ -511,72 +511,72 @@ function ConflictResolutionList({
   );
 }
 
-// ── Адаптер type options for import ───────────────────────────────────
+// ── Adapter type options for import ───────────────────────────────────
 
-const IMPORT_ADAPTER_OPTIONS: { value: string; label: string }[] = listUIАдаптеры().map((adapter) => ({
+const IMPORT_ADAPTER_OPTIONS: { value: string; label: string }[] = listUIAdapters().map((adapter) => ({
   value: adapter.type,
-  label: adapterЯрлыки[adapter.type] ?? getАдаптерLabel(adapter.type),
+  label: adapterLabels[adapter.type] ?? getAdapterLabel(adapter.type),
 }));
 
-// ── Адаптер picker for imported agents ───────────────────────────────
+// ── Adapter picker for imported agents ───────────────────────────────
 
-interface АдаптерPickerItem {
+interface AdapterPickerItem {
   slug: string;
   name: string;
-  adapterТип: string;
+  adapterType: string;
 }
 
-function АдаптерPickerList({
+function AdapterPickerList({
   agents,
   adapterOverrides,
   expandedSlugs,
-  configЗначениеs,
-  onChangeАдаптер,
+  configValues,
+  onChangeAdapter,
   onToggleExpand,
   onChangeConfig,
 }: {
-  agents: АдаптерPickerItem[];
+  agents: AdapterPickerItem[];
   adapterOverrides: Record<string, string>;
   expandedSlugs: Set<string>;
-  configЗначениеs: Record<string, СоздатьConfigЗначениеs>;
-  onChangeАдаптер: (slug: string, adapterТип: string) => void;
+  configValues: Record<string, CreateConfigValues>;
+  onChangeAdapter: (slug: string, adapterType: string) => void;
   onToggleExpand: (slug: string) => void;
-  onChangeConfig: (slug: string, patch: Partial<СоздатьConfigЗначениеs>) => void;
+  onChangeConfig: (slug: string, patch: Partial<CreateConfigValues>) => void;
 }) {
   if (agents.length === 0) return null;
 
   return (
-    <div classИмя="mx-5 mt-3">
-      <div classИмя="rounded-md border border-border">
-        <div classИмя="flex items-center gap-2 border-b border-border px-4 py-2.5">
-          <h3 classИмя="text-sm font-medium">Адаптеры</h3>
-          <span classИмя="text-xs text-muted-foreground">
+    <div className="mx-5 mt-3">
+      <div className="rounded-md border border-border">
+        <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+          <h3 className="text-sm font-medium">Adapters</h3>
+          <span className="text-xs text-muted-foreground">
             {agents.length} agent{agents.length === 1 ? "" : "s"}
           </span>
         </div>
-        <div classИмя="divide-y divide-border">
+        <div className="divide-y divide-border">
           {agents.map((agent) => {
-            const selectedТип = adapterOverrides[agent.slug] ?? agent.adapterТип;
+            const selectedType = adapterOverrides[agent.slug] ?? agent.adapterType;
             const isExpanded = expandedSlugs.has(agent.slug);
-            const vals = configЗначениеs[agent.slug] ?? { ...defaultСоздатьЗначениеs, adapterТип: selectedТип };
+            const vals = configValues[agent.slug] ?? { ...defaultCreateValues, adapterType: selectedType };
 
             return (
               <div key={agent.slug}>
-                <div classИмя="flex items-center gap-3 px-4 py-2.5 text-sm">
-                  <span classИмя={cn(
+                <div className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                  <span className={cn(
                     "shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
                     "text-blue-500 border-blue-500/30",
                   )}>
                     agent
                   </span>
-                  <span classИмя="shrink-0 font-mono text-xs text-muted-foreground">
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground">
                     {agent.name}
                   </span>
-                  <ArrowRight classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
                   <select
-                    classИмя="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs outline-none focus:border-foreground"
-                    value={selectedТип}
-                    onChange={(e) => onChangeАдаптер(agent.slug, e.target.value)}
+                    className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs outline-none focus:border-foreground"
+                    value={selectedType}
+                    onChange={(e) => onChangeAdapter(agent.slug, e.target.value)}
                   >
                     {IMPORT_ADAPTER_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -586,7 +586,7 @@ function АдаптерPickerList({
                   </select>
                   <button
                     type="button"
-                    classИмя={cn(
+                    className={cn(
                       "ml-auto shrink-0 rounded-md border px-2.5 py-1 text-xs transition-colors inline-flex items-center gap-1.5",
                       isExpanded
                         ? "border-foreground bg-accent text-foreground"
@@ -594,19 +594,19 @@ function АдаптерPickerList({
                     )}
                     onClick={() => onToggleExpand(agent.slug)}
                   >
-                    <ChevronRight classИмя={cn("h-3 w-3 transition-transform", isExpanded && "rotate-90")} />
+                    <ChevronRight className={cn("h-3 w-3 transition-transform", isExpanded && "rotate-90")} />
                     configure adapter
                   </button>
                 </div>
                 {isExpanded && (
-                  <div classИмя="border-t border-border bg-accent/10 px-4 py-3 space-y-3">
-                    <АгентConfigForm
+                  <div className="border-t border-border bg-accent/10 px-4 py-3 space-y-3">
+                    <AgentConfigForm
                       mode="create"
                       values={vals}
                       onChange={(patch) => onChangeConfig(agent.slug, patch)}
-                      showАдаптерТипField={false}
-                      showАдаптерПроверитьОкружениеButton={false}
-                      showСоздатьЗапуститьPolicySection={false}
+                      showAdapterTypeField={false}
+                      showAdapterTestEnvironmentButton={false}
+                      showCreateRunPolicySection={false}
                       hideInstructionsFile
                       sectionLayout="cards"
                     />
@@ -625,121 +625,121 @@ function АдаптерPickerList({
 
 async function readLocalPackageZip(file: File): Promise<{
   name: string;
-  rootПуть: string | null;
-  files: Record<string, КомпанияПортabilityFileEntry>;
+  rootPath: string | null;
+  files: Record<string, CompanyPortabilityFileEntry>;
 }> {
   if (!/\.zip$/i.test(file.name)) {
-    throw new Ошибка("Select a .zip company package.");
+    throw new Error("Select a .zip company package.");
   }
-  const archive = await readZipАрхивировать(await file.arrayBuffer());
+  const archive = await readZipArchive(await file.arrayBuffer());
   if (Object.keys(archive.files).length === 0) {
-    throw new Ошибка("Нет package files were found in the selected zip archive.");
+    throw new Error("No package files were found in the selected zip archive.");
   }
   return {
     name: file.name,
-    rootПуть: archive.rootПуть,
+    rootPath: archive.rootPath,
     files: archive.files,
   };
 }
 
 // ── Main page ─────────────────────────────────────────────────────────
 
-export function КомпанияИмпорт() {
+export function CompanyImport() {
   const {
-    selectedКомпанияId,
-    selectedКомпания,
-    setSelectedКомпанияId,
-  } = useКомпания();
+    selectedCompanyId,
+    selectedCompany,
+    setSelectedCompanyId,
+  } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToastActions();
   const queryClient = useQueryClient();
   const packageInputRef = useRef<HTMLInputElement | null>(null);
   const { data: session } = useQuery({
-    queryКлюч: queryКлючs.auth.session,
+    queryKey: queryKeys.auth.session,
     queryFn: () => authApi.getSession(),
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
 
   // Source state
   const [sourceMode, setSourceMode] = useState<"github" | "local">("github");
-  const [importUrl, setИмпортUrl] = useState("");
+  const [importUrl, setImportUrl] = useState("");
   const [localPackage, setLocalPackage] = useState<{
     name: string;
-    rootПуть: string | null;
-    files: Record<string, КомпанияПортabilityFileEntry>;
+    rootPath: string | null;
+    files: Record<string, CompanyPortabilityFileEntry>;
   } | null>(null);
 
-  // Цель state
-  const [targetMode, setЦельMode] = useState<"existing" | "new">("new");
-  const [newКомпанияИмя, setNewКомпанияИмя] = useState("");
+  // Target state
+  const [targetMode, setTargetMode] = useState<"existing" | "new">("new");
+  const [newCompanyName, setNewCompanyName] = useState("");
 
-  // Предпросмотр state
-  const [importПредпросмотр, setИмпортПредпросмотр] =
-    useState<КомпанияПортabilityПредпросмотрResult | null>(null);
+  // Preview state
+  const [importPreview, setImportPreview] =
+    useState<CompanyPortabilityPreviewResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
-  const [checkedФайлы, setCheckedФайлы] = useState<Set<string>>(new Set());
+  const [checkedFiles, setCheckedFiles] = useState<Set<string>>(new Set());
 
   // Conflict resolution state
-  const [nameOverrides, setИмяOverrides] = useState<Record<string, string>>({});
+  const [nameOverrides, setNameOverrides] = useState<Record<string, string>>({});
   const [skippedSlugs, setSkippedSlugs] = useState<Set<string>>(new Set());
-  const [confirmedSlugs, setПодтвердитьedSlugs] = useState<Set<string>>(new Set());
-  const [collisionStrategy, setCollisionStrategy] = useState<КомпанияПортabilityCollisionStrategy>("rename");
+  const [confirmedSlugs, setConfirmedSlugs] = useState<Set<string>>(new Set());
+  const [collisionStrategy, setCollisionStrategy] = useState<CompanyPortabilityCollisionStrategy>("rename");
 
-  // Адаптер override state
-  const [adapterOverrides, setАдаптерOverrides] = useState<Record<string, string>>({});
-  const [adapterExpandedSlugs, setАдаптерExpandedSlugs] = useState<Set<string>>(new Set());
-  const [adapterConfigЗначениеs, setАдаптерConfigЗначениеs] = useState<Record<string, СоздатьConfigЗначениеs>>({});
+  // Adapter override state
+  const [adapterOverrides, setAdapterOverrides] = useState<Record<string, string>>({});
+  const [adapterExpandedSlugs, setAdapterExpandedSlugs] = useState<Set<string>>(new Set());
+  const [adapterConfigValues, setAdapterConfigValues] = useState<Record<string, CreateConfigValues>>({});
 
   // Fetch current company agents to find CEO adapter type
-  const { data: companyАгенты } = useQuery({
-    queryКлюч: selectedКомпанияId ? queryКлючs.agents.list(selectedКомпанияId) : ["agents", "none"],
-    queryFn: () => agentsApi.list(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+  const { data: companyAgents } = useQuery({
+    queryKey: selectedCompanyId ? queryKeys.agents.list(selectedCompanyId) : ["agents", "none"],
+    queryFn: () => agentsApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
   });
-  const ceoАдаптерТип = useMemo(() => {
-    if (!companyАгенты) return "claude_local";
-    const ceo = companyАгенты.find((a) => a.role === "ceo");
-    return ceo?.adapterТип ?? "claude_local";
-  }, [companyАгенты]);
+  const ceoAdapterType = useMemo(() => {
+    if (!companyAgents) return "claude_local";
+    const ceo = companyAgents.find((a) => a.role === "ceo");
+    return ceo?.adapterType ?? "claude_local";
+  }, [companyAgents]);
 
   const localZipHelpText =
-    "Загрузить a .zip exported directly from Paperclip. Re-zipped archives created by Finder, Explorer, or other zip tools may not import correctly.";
+    "Upload a .zip exported directly from Paperclip. Re-zipped archives created by Finder, Explorer, or other zip tools may not import correctly.";
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Оргструктура Chart", href: "/org" },
+      { label: "Org Chart", href: "/org" },
       { label: "Импорт" },
     ]);
   }, [setBreadcrumbs]);
 
-  function buildSource(): КомпанияПортabilitySource | null {
+  function buildSource(): CompanyPortabilitySource | null {
     if (sourceMode === "local") {
       if (!localPackage) return null;
-      return { type: "inline", rootПуть: localPackage.rootПуть, files: localPackage.files };
+      return { type: "inline", rootPath: localPackage.rootPath, files: localPackage.files };
     }
     const url = importUrl.trim();
     if (!url) return null;
     return { type: "github", url };
   }
 
-  // Предпросмотр mutation
+  // Preview mutation
   const previewMutation = useMutation({
     mutationFn: () => {
       const source = buildSource();
-      if (!source) throw new Ошибка("Нет source configured.");
-      return companiesApi.importПредпросмотр({
+      if (!source) throw new Error("No source configured.");
+      return companiesApi.importPreview({
         source,
         include: { company: true, agents: true, projects: true, issues: true },
         target:
           targetMode === "new"
-            ? { mode: "new_company", newКомпанияИмя: newКомпанияИмя || null }
-            : { mode: "existing_company", companyId: selectedКомпанияId! },
+            ? { mode: "new_company", newCompanyName: newCompanyName || null }
+            : { mode: "existing_company", companyId: selectedCompanyId! },
         collisionStrategy,
       });
     },
-    onУспешно: (result) => {
-      setИмпортПредпросмотр(result);
+    onSuccess: (result) => {
+      setImportPreview(result);
 
       // Build conflicts and set default name overrides with prefix
       const conflicts = buildConflictList(result);
@@ -747,36 +747,36 @@ export function КомпанияИмпорт() {
         sourceMode,
         importUrl,
         localPackage?.name ?? null,
-        localPackage?.rootПуть ?? null,
+        localPackage?.rootPath ?? null,
       );
       const defaultOverrides: Record<string, string> = {};
 
       for (const c of conflicts) {
         if (c.action === "rename" && prefix) {
           // Use prefix-based default rename
-          defaultOverrides[c.slug] = prefixedИмя(prefix, c.originalИмя);
+          defaultOverrides[c.slug] = prefixedName(prefix, c.originalName);
         }
       }
-      setИмяOverrides(defaultOverrides);
+      setNameOverrides(defaultOverrides);
       setSkippedSlugs(new Set());
-      setПодтвердитьedSlugs(new Set());
+      setConfirmedSlugs(new Set());
 
       // Initialize adapter overrides — default all agents to the CEO's adapter type
-      const defaultАдаптеры: Record<string, string> = {};
+      const defaultAdapters: Record<string, string> = {};
       for (const agent of result.manifest.agents) {
-        defaultАдаптеры[agent.slug] = ceoАдаптерТип;
+        defaultAdapters[agent.slug] = ceoAdapterType;
       }
-      setАдаптерOverrides(defaultАдаптеры);
-      setАдаптерExpandedSlugs(new Set());
-      setАдаптерConfigЗначениеs({});
+      setAdapterOverrides(defaultAdapters);
+      setAdapterExpandedSlugs(new Set());
+      setAdapterConfigValues({});
 
       // Check all files by default, then uncheck COMPANY.md for existing company
-      const allФайлы = new Set(Object.keys(result.files));
+      const allFiles = new Set(Object.keys(result.files));
       if (targetMode === "existing" && result.manifest.company && result.plan.companyAction === "update") {
-        const companyПуть = ensureMarkdownПуть(result.manifest.company.path);
-        allФайлы.delete(companyПуть);
+        const companyPath = ensureMarkdownPath(result.manifest.company.path);
+        allFiles.delete(companyPath);
       }
-      setCheckedФайлы(allФайлы);
+      setCheckedFiles(allFiles);
 
       // Expand top-level dirs + all ancestor dirs of files with conflicts (update action)
       const am = buildActionMap(result);
@@ -785,10 +785,10 @@ export function КомпанияИмпорт() {
       for (const node of tree) {
         if (node.kind === "dir") dirsToExpand.add(node.path);
       }
-      // Авто-expand directories containing conflicting files so they're visible
-      for (const [fileПуть, action] of am) {
+      // Auto-expand directories containing conflicting files so they're visible
+      for (const [filePath, action] of am) {
         if (action === "update") {
-          const segments = fileПуть.split("/").filter(Boolean);
+          const segments = filePath.split("/").filter(Boolean);
           let current = "";
           for (let i = 0; i < segments.length - 1; i++) {
             current = current ? `${current}/${segments[i]}` : segments[i];
@@ -801,18 +801,18 @@ export function КомпанияИмпорт() {
       const firstFile = Object.keys(result.files)[0];
       if (firstFile) setSelectedFile(firstFile);
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
         tone: "error",
-        title: "Предпросмотр failed",
-        body: err instanceof Ошибка ? err.message : "Ошибка to preview import.",
+        title: "Preview failed",
+        body: err instanceof Error ? err.message : "Failed to preview import.",
       });
     },
   });
 
-  // Build the final nameOverrides to send (only overrides that differ from plannedИмя)
-  function buildFinalИмяOverrides(): Record<string, string> | undefined {
-    if (!importПредпросмотр) return undefined;
+  // Build the final nameOverrides to send (only overrides that differ from plannedName)
+  function buildFinalNameOverrides(): Record<string, string> | undefined {
+    if (!importPreview) return undefined;
     const overrides: Record<string, string> = {};
     for (const [slug, name] of Object.entries(nameOverrides)) {
       if (name.trim()) {
@@ -822,8 +822,8 @@ export function КомпанияИмпорт() {
     return Object.keys(overrides).length > 0 ? overrides : undefined;
   }
 
-  function buildSelectedФайлы(): string[] | undefined {
-    const selected = Array.from(checkedФайлы).sort();
+  function buildSelectedFiles(): string[] | undefined {
+    const selected = Array.from(checkedFiles).sort();
     return selected.length > 0 ? selected : undefined;
   }
 
@@ -831,27 +831,27 @@ export function КомпанияИмпорт() {
   const importMutation = useMutation({
     mutationFn: () => {
       const source = buildSource();
-      if (!source) throw new Ошибка("Нет source configured.");
+      if (!source) throw new Error("No source configured.");
       return companiesApi.importBundle({
         source,
         include: { company: true, agents: true, projects: true, issues: true },
         target:
           targetMode === "new"
-            ? { mode: "new_company", newКомпанияИмя: newКомпанияИмя || null }
-            : { mode: "existing_company", companyId: selectedКомпанияId! },
+            ? { mode: "new_company", newCompanyName: newCompanyName || null }
+            : { mode: "existing_company", companyId: selectedCompanyId! },
         collisionStrategy,
-        nameOverrides: buildFinalИмяOverrides(),
-        selectedФайлы: buildSelectedФайлы(),
-        adapterOverrides: buildFinalАдаптерOverrides(),
+        nameOverrides: buildFinalNameOverrides(),
+        selectedFiles: buildSelectedFiles(),
+        adapterOverrides: buildFinalAdapterOverrides(),
       });
     },
-    onУспешно: async (result) => {
-      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
-      const importedКомпания = await companiesApi.get(result.company.id);
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      const importedCompany = await companiesApi.get(result.company.id);
       const refreshedSession = currentUserId
         ? null
         : await queryClient.fetchQuery({
-          queryКлюч: queryКлючs.auth.session,
+          queryKey: queryKeys.auth.session,
           queryFn: () => authApi.getSession(),
         });
       const sidebarOrderUserId =
@@ -859,21 +859,21 @@ export function КомпанияИмпорт() {
         ?? refreshedSession?.user?.id
         ?? refreshedSession?.session?.userId
         ?? null;
-      await applyИмпортedSidebarOrder(importПредпросмотр, result, sidebarOrderUserId);
-      setSelectedКомпанияId(importedКомпания.id);
+      await applyImportedSidebarOrder(importPreview, result, sidebarOrderUserId);
+      setSelectedCompanyId(importedCompany.id);
       pushToast({
         tone: "success",
-        title: "Импорт complete",
+        title: "Import complete",
         body: `${result.company.name}: ${result.agents.length} agent${result.agents.length === 1 ? "" : "s"} processed.`,
       });
       // Force a fresh dashboard load so newly imported agents are immediately visible.
-      window.location.assign(`/${importedКомпания.issuePrefix}/dashboard`);
+      window.location.assign(`/${importedCompany.issuePrefix}/dashboard`);
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
         tone: "error",
-        title: "Импорт failed",
-        body: err instanceof Ошибка ? err.message : "Ошибка to apply import.",
+        title: "Import failed",
+        body: err instanceof Error ? err.message : "Failed to apply import.",
       });
     },
   });
@@ -884,53 +884,53 @@ export function КомпанияИмпорт() {
     try {
       const pkg = await readLocalPackageZip(fileList[0]!);
       setLocalPackage(pkg);
-      setИмпортПредпросмотр(null);
+      setImportPreview(null);
     } catch (err) {
       pushToast({
         tone: "error",
         title: "Package read failed",
-        body: err instanceof Ошибка ? err.message : "Ошибка to read folder.",
+        body: err instanceof Error ? err.message : "Failed to read folder.",
       });
     }
   }
 
   const actionMap = useMemo(
-    () => (importПредпросмотр ? buildActionMap(importПредпросмотр) : new Map<string, string>()),
-    [importПредпросмотр],
+    () => (importPreview ? buildActionMap(importPreview) : new Map<string, string>()),
+    [importPreview],
   );
 
   const tree = useMemo(
-    () => (importПредпросмотр ? buildFileTree(importПредпросмотр.files, actionMap) : []),
-    [importПредпросмотр, actionMap],
+    () => (importPreview ? buildFileTree(importPreview.files, actionMap) : []),
+    [importPreview, actionMap],
   );
 
   const conflicts = useMemo(
-    () => (importПредпросмотр ? buildConflictList(importПредпросмотр) : []),
-    [importПредпросмотр],
+    () => (importPreview ? buildConflictList(importPreview) : []),
+    [importPreview],
   );
 
   // Map directory paths → planned rename name for display in the file tree
   // Also maps file paths for use in the preview header
   const renameMap = useMemo(() => {
     const map = new Map<string, string>();
-    if (!importПредпросмотр) return map;
+    if (!importPreview) return map;
     for (const c of conflicts) {
-      if (!c.fileПуть) continue;
+      if (!c.filePath) continue;
       const isSkipped = skippedSlugs.has(c.slug);
       if (isSkipped) continue;
-      const renamedTo = nameOverrides[c.slug] ?? c.plannedИмя;
-      if (renamedTo === c.originalИмя) continue;
+      const renamedTo = nameOverrides[c.slug] ?? c.plannedName;
+      if (renamedTo === c.originalName) continue;
       // Map the parent directory (e.g. agents/ceo → gstack-ceo) for the file tree
-      const parentDir = c.fileПуть.split("/").slice(0, -1).join("/");
+      const parentDir = c.filePath.split("/").slice(0, -1).join("/");
       if (parentDir) map.set(parentDir, renamedTo);
       // Map the file path too — used by the preview header, not shown in tree
-      map.set(c.fileПуть, renamedTo);
+      map.set(c.filePath, renamedTo);
     }
     return map;
-  }, [importПредпросмотр, conflicts, nameOverrides, skippedSlugs]);
+  }, [importPreview, conflicts, nameOverrides, skippedSlugs]);
 
-  const totalФайлы = useMemo(() => countФайлы(tree), [tree]);
-  const selectedCount = checkedФайлы.size;
+  const totalFiles = useMemo(() => countFiles(tree), [tree]);
+  const selectedCount = checkedFiles.size;
 
   function handleToggleDir(path: string) {
     setExpandedDirs((prev) => {
@@ -942,29 +942,29 @@ export function КомпанияИмпорт() {
   }
 
   function handleToggleCheck(path: string, kind: "file" | "dir") {
-    if (!importПредпросмотр) return;
-    setCheckedФайлы((prev) => {
+    if (!importPreview) return;
+    setCheckedFiles((prev) => {
       const next = new Set(prev);
       if (kind === "file") {
         if (next.has(path)) next.delete(path);
         else next.add(path);
       } else {
-        const findНетde = (nodes: FileTreeНетde[], target: string): FileTreeНетde | null => {
+        const findNode = (nodes: FileTreeNode[], target: string): FileTreeNode | null => {
           for (const n of nodes) {
             if (n.path === target) return n;
-            const found = findНетde(n.children, target);
+            const found = findNode(n.children, target);
             if (found) return found;
           }
           return null;
         };
-        const dirНетde = findНетde(tree, path);
-        if (dirНетde) {
-          const childФайлы = collectВсеПутьs(dirНетde.children, "file");
-          for (const child of dirНетde.children) {
-            if (child.kind === "file") childФайлы.add(child.path);
+        const dirNode = findNode(tree, path);
+        if (dirNode) {
+          const childFiles = collectAllPaths(dirNode.children, "file");
+          for (const child of dirNode.children) {
+            if (child.kind === "file") childFiles.add(child.path);
           }
-          const allChecked = [...childФайлы].every((p) => next.has(p));
-          for (const f of childФайлы) {
+          const allChecked = [...childFiles].every((p) => next.has(p));
+          for (const f of childFiles) {
             if (allChecked) next.delete(f);
             else next.add(f);
           }
@@ -974,10 +974,10 @@ export function КомпанияИмпорт() {
     });
   }
 
-  function handleConflictRename(slug: string, newИмя: string) {
-    setИмяOverrides((prev) => ({ ...prev, [slug]: newИмя }));
-    // Изменитьing the name un-confirms
-    setПодтвердитьedSlugs((prev) => {
+  function handleConflictRename(slug: string, newName: string) {
+    setNameOverrides((prev) => ({ ...prev, [slug]: newName }));
+    // Editing the name un-confirms
+    setConfirmedSlugs((prev) => {
       if (!prev.has(slug)) return prev;
       const next = new Set(prev);
       next.delete(slug);
@@ -985,8 +985,8 @@ export function КомпанияИмпорт() {
     });
   }
 
-  function handleConflictToggleПодтвердить(slug: string) {
-    setПодтвердитьedSlugs((prev) => {
+  function handleConflictToggleConfirm(slug: string) {
+    setConfirmedSlugs((prev) => {
       const next = new Set(prev);
       if (next.has(slug)) next.delete(slug);
       else next.add(slug);
@@ -994,7 +994,7 @@ export function КомпанияИмпорт() {
     });
   }
 
-  function handleConflictToggleSkip(slug: string, fileПуть: string | null) {
+  function handleConflictToggleSkip(slug: string, filePath: string | null) {
     setSkippedSlugs((prev) => {
       const next = new Set(prev);
       const wasSkipped = next.has(slug);
@@ -1005,13 +1005,13 @@ export function КомпанияИмпорт() {
       }
 
       // Sync with file tree checkboxes
-      if (fileПуть) {
-        setCheckedФайлы((prevChecked) => {
+      if (filePath) {
+        setCheckedFiles((prevChecked) => {
           const nextChecked = new Set(prevChecked);
           if (wasSkipped) {
-            nextChecked.add(fileПуть);
+            nextChecked.add(filePath);
           } else {
-            nextChecked.delete(fileПуть);
+            nextChecked.delete(filePath);
           }
           return nextChecked;
         });
@@ -1021,18 +1021,18 @@ export function КомпанияИмпорт() {
     });
   }
 
-  function handleАдаптерChange(slug: string, adapterТип: string) {
-    setАдаптерOverrides((prev) => ({ ...prev, [slug]: adapterТип }));
-    // Сбросить config values when adapter type changes
-    setАдаптерConfigЗначениеs((prev) => {
+  function handleAdapterChange(slug: string, adapterType: string) {
+    setAdapterOverrides((prev) => ({ ...prev, [slug]: adapterType }));
+    // Reset config values when adapter type changes
+    setAdapterConfigValues((prev) => {
       const next = { ...prev };
       delete next[slug];
       return next;
     });
   }
 
-  function handleАдаптерToggleExpand(slug: string) {
-    setАдаптерExpandedSlugs((prev) => {
+  function handleAdapterToggleExpand(slug: string) {
+    setAdapterExpandedSlugs((prev) => {
       const next = new Set(prev);
       if (next.has(slug)) next.delete(slug);
       else next.add(slug);
@@ -1040,34 +1040,34 @@ export function КомпанияИмпорт() {
     });
   }
 
-  function handleАдаптерConfigChange(slug: string, patch: Partial<СоздатьConfigЗначениеs>) {
-    setАдаптерConfigЗначениеs((prev) => ({
+  function handleAdapterConfigChange(slug: string, patch: Partial<CreateConfigValues>) {
+    setAdapterConfigValues((prev) => ({
       ...prev,
-      [slug]: { ...(prev[slug] ?? { ...defaultСоздатьЗначениеs, adapterТип: adapterOverrides[slug] ?? "claude_local" }), ...patch },
+      [slug]: { ...(prev[slug] ?? { ...defaultCreateValues, adapterType: adapterOverrides[slug] ?? "claude_local" }), ...patch },
     }));
   }
 
   // Build the list of agents for adapter picking
-  const adapterАгенты = useMemo<АдаптерPickerItem[]>(() => {
-    if (!importПредпросмотр) return [];
-    return importПредпросмотр.manifest.agents.map((a) => ({
+  const adapterAgents = useMemo<AdapterPickerItem[]>(() => {
+    if (!importPreview) return [];
+    return importPreview.manifest.agents.map((a) => ({
       slug: a.slug,
       name: a.name,
-      adapterТип: a.adapterТип,
+      adapterType: a.adapterType,
     }));
-  }, [importПредпросмотр]);
+  }, [importPreview]);
 
   // Build final adapterOverrides for import request
-  function buildFinalАдаптерOverrides(): Record<string, КомпанияПортabilityАдаптерOverride> | undefined {
-    if (adapterАгенты.length === 0) return undefined;
-    const overrides: Record<string, КомпанияПортabilityАдаптерOverride> = {};
-    for (const agent of adapterАгенты) {
-      const selectedТип = adapterOverrides[agent.slug] ?? agent.adapterТип;
-      const configVals = adapterConfigЗначениеs[agent.slug];
-      const override: КомпанияПортabilityАдаптерOverride = { adapterТип: selectedТип };
+  function buildFinalAdapterOverrides(): Record<string, CompanyPortabilityAdapterOverride> | undefined {
+    if (adapterAgents.length === 0) return undefined;
+    const overrides: Record<string, CompanyPortabilityAdapterOverride> = {};
+    for (const agent of adapterAgents) {
+      const selectedType = adapterOverrides[agent.slug] ?? agent.adapterType;
+      const configVals = adapterConfigValues[agent.slug];
+      const override: CompanyPortabilityAdapterOverride = { adapterType: selectedType };
       if (configVals) {
-        const uiАдаптер = getUIАдаптер(selectedТип);
-        override.adapterConfig = uiАдаптер.buildАдаптерConfig(configVals);
+        const uiAdapter = getUIAdapter(selectedType);
+        override.adapterConfig = uiAdapter.buildAdapterConfig(configVals);
       }
       overrides[agent.slug] = override;
     }
@@ -1076,41 +1076,41 @@ export function КомпанияИмпорт() {
 
   const hasSource =
     sourceMode === "local" ? !!localPackage : importUrl.trim().length > 0;
-  const hasОшибкаs = importПредпросмотр ? importПредпросмотр.errors.length > 0 : false;
+  const hasErrors = importPreview ? importPreview.errors.length > 0 : false;
 
-  const previewContent = selectedFile && importПредпросмотр
+  const previewContent = selectedFile && importPreview
     ? (() => {
-        return importПредпросмотр.files[selectedFile] ?? null;
+        return importPreview.files[selectedFile] ?? null;
       })()
     : null;
   const selectedAction = selectedFile ? (actionMap.get(selectedFile) ?? null) : null;
 
-  if (!selectedКомпанияId) {
-    return <EmptyState icon={Скачать} message="Select a company to import into." />;
+  if (!selectedCompanyId) {
+    return <EmptyState icon={Download} message="Select a company to import into." />;
   }
 
   return (
     <div>
       {/* Source form section */}
-      <div classИмя="border-b border-border px-5 py-5 space-y-4">
+      <div className="border-b border-border px-5 py-5 space-y-4">
         <div>
-          <h2 classИмя="text-base font-semibold">Импорт source</h2>
-          <p classИмя="text-xs text-muted-foreground mt-1">
-            Choose a Репозиторий GitHub or upload a local Paperclip zip package.
+          <h2 className="text-base font-semibold">Import source</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Choose a GitHub repo or upload a local Paperclip zip package.
           </p>
         </div>
 
-        <div classИмя="grid gap-2 md:grid-cols-2">
+        <div className="grid gap-2 md:grid-cols-2">
           {(
             [
-              { key: "github", icon: Github, label: "Репозиторий GitHub" },
-              { key: "local", icon: Загрузить, label: "Local zip" },
+              { key: "github", icon: Github, label: "GitHub repo" },
+              { key: "local", icon: Upload, label: "Local zip" },
             ] as const
           ).map(({ key, icon: Icon, label }) => (
             <button
               key={key}
               type="button"
-              classИмя={cn(
+              className={cn(
                 "rounded-md border px-3 py-2 text-left text-sm transition-colors",
                 sourceMode === key
                   ? "border-foreground bg-accent"
@@ -1118,11 +1118,11 @@ export function КомпанияИмпорт() {
               )}
               onClick={() => {
                 setSourceMode(key);
-                setИмпортПредпросмотр(null);
+                setImportPreview(null);
               }}
             >
-              <div classИмя="flex items-center gap-2">
-                <Icon classИмя="h-4 w-4" />
+              <div className="flex items-center gap-2">
+                <Icon className="h-4 w-4" />
                 {label}
               </div>
             </button>
@@ -1130,15 +1130,15 @@ export function КомпанияИмпорт() {
         </div>
 
         {sourceMode === "local" ? (
-          <div classИмя="rounded-md border border-dashed border-border px-3 py-3">
+          <div className="rounded-md border border-dashed border-border px-3 py-3">
             <input
               ref={packageInputRef}
               type="file"
               accept=".zip,application/zip"
-              classИмя="hidden"
+              className="hidden"
               onChange={handleChooseLocalPackage}
             />
-            <div classИмя="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -1147,7 +1147,7 @@ export function КомпанияИмпорт() {
                 Choose zip
               </Button>
               {localPackage && (
-                <span classИмя="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {localPackage.name} with{" "}
                   {Object.keys(localPackage.files).length} file
                   {Object.keys(localPackage.files).length === 1 ? "" : "s"}
@@ -1155,7 +1155,7 @@ export function КомпанияИмпорт() {
               )}
             </div>
             {!localPackage && (
-              <p classИмя="mt-2 text-xs text-muted-foreground">
+              <p className="mt-2 text-xs text-muted-foreground">
                 {localZipHelpText}
               </p>
             )}
@@ -1163,33 +1163,33 @@ export function КомпанияИмпорт() {
         ) : (
           <Field
             label="GitHub URL"
-            hint="Репозиторий tree path or blob URL to COMPANY.md (e.g. github.com/owner/repo/tree/main/company)."
+            hint="Repo tree path or blob URL to COMPANY.md (e.g. github.com/owner/repo/tree/main/company)."
           >
             <input
-              classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+              className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
               value={importUrl}
               placeholder="https://github.com/owner/repo/tree/main/company"
               onChange={(e) => {
-                setИмпортUrl(e.target.value);
-                setИмпортПредпросмотр(null);
+                setImportUrl(e.target.value);
+                setImportPreview(null);
               }}
             />
           </Field>
         )}
 
-        <Field label="Цель" hint="Импорт into this company or create a new one.">
+        <Field label="Target" hint="Import into this company or create a new one.">
           <select
-            classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+            className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
             value={targetMode}
             onChange={(e) => {
-              setЦельMode(e.target.value as "existing" | "new");
-              setИмпортПредпросмотр(null);
+              setTargetMode(e.target.value as "existing" | "new");
+              setImportPreview(null);
             }}
           >
-            <option value="new">Создать new company</option>
+            <option value="new">Create new company</option>
             <option value="existing">
-              Existing company: {selectedКомпания?.name}
+              Existing company: {selectedCompany?.name}
             </option>
           </select>
         </Field>
@@ -1197,28 +1197,28 @@ export function КомпанияИмпорт() {
         {targetMode === "new" && (
           <Field
             label="New company name"
-            hint="Опционально override. Leave blank to use the package name."
+            hint="Optional override. Leave blank to use the package name."
           >
             <input
-              classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+              className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
-              value={newКомпанияИмя}
-              onChange={(e) => setNewКомпанияИмя(e.target.value)}
-              placeholder="Импортed Компания"
+              value={newCompanyName}
+              onChange={(e) => setNewCompanyName(e.target.value)}
+              placeholder="Imported Company"
             />
           </Field>
         )}
 
         <Field
           label="Collision strategy"
-          hint="Совет imports can rename, skip, or replace matching company content."
+          hint="Board imports can rename, skip, or replace matching company content."
         >
           <select
-            classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+            className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
             value={collisionStrategy}
             onChange={(e) => {
-              setCollisionStrategy(e.target.value as КомпанияПортabilityCollisionStrategy);
-              setИмпортПредпросмотр(null);
+              setCollisionStrategy(e.target.value as CompanyPortabilityCollisionStrategy);
+              setImportPreview(null);
             }}
           >
             <option value="rename">Rename on conflict</option>
@@ -1227,38 +1227,38 @@ export function КомпанияИмпорт() {
           </select>
         </Field>
 
-        <div classИмя="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Button
             size="sm"
             variant="outline"
             onClick={() => previewMutation.mutate()}
-            disabled={previewMutation.isОжидание || !hasSource}
+            disabled={previewMutation.isPending || !hasSource}
           >
-            {previewMutation.isОжидание ? "Предпросмотрing..." : "Предпросмотр import"}
+            {previewMutation.isPending ? "Previewing..." : "Preview import"}
           </Button>
         </div>
       </div>
 
-      {/* Предпросмотр results */}
-      {importПредпросмотр && (
+      {/* Preview results */}
+      {importPreview && (
         <>
           {/* Sticky import action bar */}
-          <div classИмя="sticky top-0 z-10 border-b border-border bg-background px-5 py-3">
-            <div classИмя="flex flex-wrap items-center gap-4 text-sm">
-              <span classИмя="font-medium">
-                Импорт preview
+          <div className="sticky top-0 z-10 border-b border-border bg-background px-5 py-3">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <span className="font-medium">
+                Import preview
               </span>
-              <span classИмя="text-muted-foreground">
-                {selectedCount} / {totalФайлы} file{totalФайлы === 1 ? "" : "s"} selected
+              <span className="text-muted-foreground">
+                {selectedCount} / {totalFiles} file{totalFiles === 1 ? "" : "s"} selected
               </span>
               {conflicts.length > 0 && (
-                <span classИмя="text-amber-500">
+                <span className="text-amber-500">
                   {conflicts.length} conflict{conflicts.length === 1 ? "" : "s"}
                 </span>
               )}
-              {importПредпросмотр.errors.length > 0 && (
-                <span classИмя="text-destructive">
-                  {importПредпросмотр.errors.length} error{importПредпросмотр.errors.length === 1 ? "" : "s"}
+              {importPreview.errors.length > 0 && (
+                <span className="text-destructive">
+                  {importPreview.errors.length} error{importPreview.errors.length === 1 ? "" : "s"}
                 </span>
               )}
             </div>
@@ -1272,78 +1272,78 @@ export function КомпанияИмпорт() {
             confirmedSlugs={confirmedSlugs}
             onRename={handleConflictRename}
             onToggleSkip={handleConflictToggleSkip}
-            onToggleПодтвердить={handleConflictToggleПодтвердить}
+            onToggleConfirm={handleConflictToggleConfirm}
           />
 
-          {/* Адаптер picker list */}
-          <АдаптерPickerList
-            agents={adapterАгенты}
+          {/* Adapter picker list */}
+          <AdapterPickerList
+            agents={adapterAgents}
             adapterOverrides={adapterOverrides}
             expandedSlugs={adapterExpandedSlugs}
-            configЗначениеs={adapterConfigЗначениеs}
-            onChangeАдаптер={handleАдаптерChange}
-            onToggleExpand={handleАдаптерToggleExpand}
-            onChangeConfig={handleАдаптерConfigChange}
+            configValues={adapterConfigValues}
+            onChangeAdapter={handleAdapterChange}
+            onToggleExpand={handleAdapterToggleExpand}
+            onChangeConfig={handleAdapterConfigChange}
           />
 
-          {/* Импорт button — below renames */}
-          <div classИмя="mx-5 mt-3 flex justify-end">
+          {/* Import button — below renames */}
+          <div className="mx-5 mt-3 flex justify-end">
             <Button
               size="sm"
               onClick={() => importMutation.mutate()}
-              disabled={importMutation.isОжидание || hasОшибкаs || selectedCount === 0}
+              disabled={importMutation.isPending || hasErrors || selectedCount === 0}
             >
-              <Скачать classИмя="mr-1.5 h-3.5 w-3.5" />
-              {importMutation.isОжидание
-                ? "Импортing..."
-                : `Импорт ${selectedCount} file${selectedCount === 1 ? "" : "s"}`}
+              <Download className="mr-1.5 h-3.5 w-3.5" />
+              {importMutation.isPending
+                ? "Importing..."
+                : `Import ${selectedCount} file${selectedCount === 1 ? "" : "s"}`}
             </Button>
           </div>
 
-          {/* Предупреждениеs */}
-          {importПредпросмотр.warnings.length > 0 && (
-            <div classИмя="mx-5 mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
-              {importПредпросмотр.warnings.map((w) => (
-                <div key={w} classИмя="text-xs text-amber-500">{w}</div>
+          {/* Warnings */}
+          {importPreview.warnings.length > 0 && (
+            <div className="mx-5 mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+              {importPreview.warnings.map((w) => (
+                <div key={w} className="text-xs text-amber-500">{w}</div>
               ))}
             </div>
           )}
 
-          {/* Ошибкаs */}
-          {importПредпросмотр.errors.length > 0 && (
-            <div classИмя="mx-5 mt-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
-              {importПредпросмотр.errors.map((e) => (
-                <div key={e} classИмя="text-xs text-destructive">{e}</div>
+          {/* Errors */}
+          {importPreview.errors.length > 0 && (
+            <div className="mx-5 mt-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+              {importPreview.errors.map((e) => (
+                <div key={e} className="text-xs text-destructive">{e}</div>
               ))}
             </div>
           )}
 
           {/* Two-column layout */}
-          <div classИмя="grid h-[calc(100vh-16rem)] gap-0 xl:grid-cols-[19rem_minmax(0,1fr)]">
-            <aside classИмя="flex flex-col border-r border-border overflow-hidden">
-              <div classИмя="border-b border-border px-4 py-3 shrink-0">
-                <h2 classИмя="text-base font-semibold">Package files</h2>
+          <div className="grid h-[calc(100vh-16rem)] gap-0 xl:grid-cols-[19rem_minmax(0,1fr)]">
+            <aside className="flex flex-col border-r border-border overflow-hidden">
+              <div className="border-b border-border px-4 py-3 shrink-0">
+                <h2 className="text-base font-semibold">Package files</h2>
               </div>
-              <div classИмя="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto">
                 <FileTree
                   nodes={tree}
                   selectedFile={selectedFile}
                   expandedDirs={expandedDirs}
-                  checkedФайлы={checkedФайлы}
+                  checkedFiles={checkedFiles}
                   onToggleDir={handleToggleDir}
                   onSelectFile={setSelectedFile}
                   onToggleCheck={handleToggleCheck}
-                  renderFileExtra={(node, checked) => renderИмпортFileExtra(node, checked, renameMap)}
-                  fileRowClassИмя={importFileRowClassИмя}
-                  wrapЯрлыки={false}
+                  renderFileExtra={(node, checked) => renderImportFileExtra(node, checked, renameMap)}
+                  fileRowClassName={importFileRowClassName}
+                  wrapLabels={false}
                 />
               </div>
             </aside>
-            <div classИмя="min-w-0 overflow-y-auto pl-6">
-              <ИмпортПредпросмотрPane
+            <div className="min-w-0 overflow-y-auto pl-6">
+              <ImportPreviewPane
                 selectedFile={selectedFile}
                 content={previewContent}
-                allФайлы={importПредпросмотр?.files ?? {}}
+                allFiles={importPreview?.files ?? {}}
                 action={selectedAction}
                 renamedTo={selectedFile ? (renameMap.get(selectedFile) ?? null) : null}
               />

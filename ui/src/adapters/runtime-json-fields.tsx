@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { АдаптерConfigFieldsProps } from "./types";
+import type { AdapterConfigFieldsProps } from "./types";
 import { Field, help } from "../components/agent-config-primitives";
 
 // TODO(issue-worktree-support): re-enable this UI once the workflow is ready to ship.
@@ -20,28 +20,28 @@ function formatJsonObject(value: unknown): string {
 }
 
 function updateJsonConfig(
-  isСоздать: boolean,
+  isCreate: boolean,
   key: "runtimeServicesJson" | "payloadTemplateJson",
   next: string,
-  set: АдаптерConfigFieldsProps["set"],
-  mark: АдаптерConfigFieldsProps["mark"],
-  configКлюч: string,
+  set: AdapterConfigFieldsProps["set"],
+  mark: AdapterConfigFieldsProps["mark"],
+  configKey: string,
 ) {
-  if (isСоздать) {
+  if (isCreate) {
     set?.({ [key]: next });
     return;
   }
 
   const trimmed = next.trim();
   if (!trimmed) {
-    mark("adapterConfig", configКлюч, undefined);
+    mark("adapterConfig", configKey, undefined);
     return;
   }
 
   try {
     const parsed = JSON.parse(trimmed);
     if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-      mark("adapterConfig", configКлюч, parsed);
+      mark("adapterConfig", configKey, parsed);
     }
   } catch {
     // Keep local draft until JSON is valid.
@@ -49,12 +49,12 @@ function updateJsonConfig(
 }
 
 type JsonFieldProps = Pick<
-  АдаптерConfigFieldsProps,
-  "isСоздать" | "values" | "set" | "config" | "mark"
+  AdapterConfigFieldsProps,
+  "isCreate" | "values" | "set" | "config" | "mark"
 >;
 
-export function ЗапуститьtimeServicesJsonField({
-  isСоздать,
+export function RuntimeServicesJsonField({
+  isCreate,
   values,
   set,
   config,
@@ -64,24 +64,24 @@ export function ЗапуститьtimeServicesJsonField({
     return null;
   }
 
-  const existing = formatJsonObject(config.workspaceЗапуститьtime);
-  const [draft, setЧерновик] = useState(existing);
+  const existing = formatJsonObject(config.workspaceRuntime);
+  const [draft, setDraft] = useState(existing);
 
   useEffect(() => {
-    if (!isСоздать) setЧерновик(existing);
-  }, [existing, isСоздать]);
+    if (!isCreate) setDraft(existing);
+  }, [existing, isCreate]);
 
-  const value = isСоздать ? values?.runtimeServicesJson ?? "" : draft;
+  const value = isCreate ? values?.runtimeServicesJson ?? "" : draft;
 
   return (
-    <Field label="Запуститьtime services JSON" hint={help.runtimeServicesJson}>
+    <Field label="Runtime services JSON" hint={help.runtimeServicesJson}>
       <textarea
-        classИмя={`${inputClass} min-h-[148px]`}
+        className={`${inputClass} min-h-[148px]`}
         value={value}
         onChange={(e) => {
           const next = e.target.value;
-          if (!isСоздать) setЧерновик(next);
-          updateJsonConfig(isСоздать, "runtimeServicesJson", next, set, mark, "workspaceЗапуститьtime");
+          if (!isCreate) setDraft(next);
+          updateJsonConfig(isCreate, "runtimeServicesJson", next, set, mark, "workspaceRuntime");
         }}
         placeholder={`{\n  "services": [\n    {\n      "name": "preview",\n      "lifecycle": "ephemeral",\n      "metadata": {\n        "purpose": "remote preview"\n      }\n    }\n  ]\n}`}
       />
@@ -90,30 +90,30 @@ export function ЗапуститьtimeServicesJsonField({
 }
 
 export function PayloadTemplateJsonField({
-  isСоздать,
+  isCreate,
   values,
   set,
   config,
   mark,
 }: JsonFieldProps) {
   const existing = formatJsonObject(config.payloadTemplate);
-  const [draft, setЧерновик] = useState(existing);
+  const [draft, setDraft] = useState(existing);
 
   useEffect(() => {
-    if (!isСоздать) setЧерновик(existing);
-  }, [existing, isСоздать]);
+    if (!isCreate) setDraft(existing);
+  }, [existing, isCreate]);
 
-  const value = isСоздать ? values?.payloadTemplateJson ?? "" : draft;
+  const value = isCreate ? values?.payloadTemplateJson ?? "" : draft;
 
   return (
     <Field label="Payload template JSON" hint={help.payloadTemplateJson}>
       <textarea
-        classИмя={`${inputClass} min-h-[132px]`}
+        className={`${inputClass} min-h-[132px]`}
         value={value}
         onChange={(e) => {
           const next = e.target.value;
-          if (!isСоздать) setЧерновик(next);
-          updateJsonConfig(isСоздать, "payloadTemplateJson", next, set, mark, "payloadTemplate");
+          if (!isCreate) setDraft(next);
+          updateJsonConfig(isCreate, "payloadTemplateJson", next, set, mark, "payloadTemplate");
         }}
         placeholder={`{\n  "agentId": "remote-agent-123",\n  "metadata": {\n    "team": "platform"\n  }\n}`}
       />

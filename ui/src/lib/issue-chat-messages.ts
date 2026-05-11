@@ -7,39 +7,39 @@ import type {
   ThreadSystemMessage,
   ThreadUserMessage,
 } from "@assistant-ui/react";
-import type { Агент, ЗадачаComment } from "@paperclipai/shared";
-import type { АктивенЗапуститьForЗадача, LiveЗапуститьForЗадача } from "../api/heartbeats";
-import { formatИсполнительUserLabel } from "./assignees";
+import type { Agent, IssueComment } from "@paperclipai/shared";
+import type { ActiveRunForIssue, LiveRunForIssue } from "../api/heartbeats";
+import { formatAssigneeUserLabel } from "./assignees";
 import {
-  buildЗадачаThreadInteractionSummary,
-  type ЗадачаThreadInteraction,
+  buildIssueThreadInteractionSummary,
+  type IssueThreadInteraction,
 } from "./issue-thread-interactions";
-import type { ЗадачаTimelineEvent } from "./issue-timeline-events";
+import type { IssueTimelineEvent } from "./issue-timeline-events";
 import {
-  summarizeНетtice,
+  summarizeNotice,
 } from "./transcriptPresentation";
 
-type JsonЗначение = null | string | number | boolean | JsonЗначение[] | { [key: string]: JsonЗначение };
-type JsonObject = { [key: string]: JsonЗначение };
+type JsonValue = null | string | number | boolean | JsonValue[] | { [key: string]: JsonValue };
+type JsonObject = { [key: string]: JsonValue };
 
-export interface ЗадачаChatComment extends ЗадачаComment {
+export interface IssueChatComment extends IssueComment {
   runId?: string | null;
-  runАгентId?: string | null;
-  interruptedЗапуститьId?: string | null;
+  runAgentId?: string | null;
+  interruptedRunId?: string | null;
   clientId?: string;
-  clientСтатус?: "pending" | "queued";
+  clientStatus?: "pending" | "queued";
   queueState?: "queued";
-  queueЦельЗапуститьId?: string | null;
+  queueTargetRunId?: string | null;
   queueReason?: "hold" | "active_run" | "other";
   followUpRequested?: boolean;
 }
 
-export interface ЗадачаChatLinkedЗапустить {
+export interface IssueChatLinkedRun {
   runId: string;
   status: string;
   agentId: string;
-  adapterТип?: string;
-  agentИмя?: string;
+  adapterType?: string;
+  agentName?: string;
   createdAt: Date | string;
   startedAt: Date | string | null;
   finishedAt?: Date | string | null;
@@ -48,7 +48,7 @@ export interface ЗадачаChatLinkedЗапустить {
   resultJson?: Record<string, unknown> | null;
 }
 
-export interface ЗадачаChatTranscriptEntry {
+export interface IssueChatTranscriptEntry {
   kind:
     | "assistant"
     | "thinking"
@@ -67,18 +67,18 @@ export interface ЗадачаChatTranscriptEntry {
   name?: string;
   input?: unknown;
   toolUseId?: string;
-  toolИмя?: string;
+  toolName?: string;
   content?: string;
-  isОшибка?: boolean;
+  isError?: boolean;
   subtype?: string;
   errors?: string[];
   model?: string;
   sessionId?: string;
-  inputТокенs?: number;
-  outputТокенs?: number;
-  cachedТокенs?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  cachedTokens?: number;
   costUsd?: number;
-  changeТип?: "add" | "remove" | "context" | "hunk" | "file_header" | "truncation";
+  changeType?: "add" | "remove" | "context" | "hunk" | "file_header" | "truncation";
 }
 
 const ISSUE_CHAT_TRANSCRIPT_MAX_VISIBLE_ENTRIES = 30;
@@ -89,7 +89,7 @@ type MessageWithOrder = {
   message: ThreadMessage;
 };
 
-type СортировкаBoundaryItem = {
+type SortBoundaryItem = {
   createdAtMs: number;
   runId?: string | null;
 };
@@ -142,7 +142,7 @@ export function stabilizeThreadMessages(
   };
 }
 
-function sortByСоздано<T extends { createdAt: Date | string; id: string }>(items: readonly T[]) {
+function sortByCreated<T extends { createdAt: Date | string; id: string }>(items: readonly T[]) {
   return [...items].sort((a, b) => {
     const diff = toTimestamp(a.createdAt) - toTimestamp(b.createdAt);
     if (diff !== 0) return diff;
@@ -150,23 +150,23 @@ function sortByСоздано<T extends { createdAt: Date | string; id: string }
   });
 }
 
-function latestSameЗапуститьHandoffTimestamp(args: {
-  interactionСозданоAtMs: number;
-  sourceЗапуститьId: string;
-  comments: readonly ЗадачаChatComment[];
-  timelineEvents: readonly ЗадачаTimelineEvent[];
-  linkedЗапуститьs: readonly ЗадачаChatLinkedЗапустить[];
-  liveЗапуститьs: readonly LiveЗапуститьForЗадача[];
+function latestSameRunHandoffTimestamp(args: {
+  interactionCreatedAtMs: number;
+  sourceRunId: string;
+  comments: readonly IssueChatComment[];
+  timelineEvents: readonly IssueTimelineEvent[];
+  linkedRuns: readonly IssueChatLinkedRun[];
+  liveRuns: readonly LiveRunForIssue[];
 }) {
   const {
-    interactionСозданоAtMs,
-    sourceЗапуститьId,
+    interactionCreatedAtMs,
+    sourceRunId,
     comments,
     timelineEvents,
-    linkedЗапуститьs,
-    liveЗапуститьs,
+    linkedRuns,
+    liveRuns,
   } = args;
-  const handoffItems: СортировкаBoundaryItem[] = [
+  const handoffItems: SortBoundaryItem[] = [
     ...comments.map((comment) => ({
       createdAtMs: toTimestamp(comment.createdAt),
       runId: comment.runId ?? null,
@@ -176,19 +176,19 @@ function latestSameЗапуститьHandoffTimestamp(args: {
       runId: event.runId ?? null,
     })),
   ];
-  const barrierItems: СортировкаBoundaryItem[] = [
+  const barrierItems: SortBoundaryItem[] = [
     ...handoffItems,
-    ...linkedЗапуститьs.map((run) => ({
+    ...linkedRuns.map((run) => ({
       createdAtMs: toTimestamp(runTimestamp(run)),
       runId: run.runId,
     })),
-    ...liveЗапуститьs.map((run) => ({
+    ...liveRuns.map((run) => ({
       createdAtMs: toTimestamp(run.startedAt ?? run.createdAt),
       runId: run.id,
     })),
   ];
   const barrierAtMs = barrierItems
-    .filter((item) => item.createdAtMs > interactionСозданоAtMs && item.runId !== sourceЗапуститьId)
+    .filter((item) => item.createdAtMs > interactionCreatedAtMs && item.runId !== sourceRunId)
     .reduce<number | null>(
       (earliest, item) =>
         earliest === null ? item.createdAtMs : Math.min(earliest, item.createdAtMs),
@@ -197,8 +197,8 @@ function latestSameЗапуститьHandoffTimestamp(args: {
 
   return handoffItems
     .filter((item) =>
-      item.createdAtMs > interactionСозданоAtMs
-      && item.runId === sourceЗапуститьId
+      item.createdAtMs > interactionCreatedAtMs
+      && item.runId === sourceRunId
       && (barrierAtMs === null || item.createdAtMs < barrierAtMs)
     )
     .reduce<number | null>(
@@ -208,7 +208,7 @@ function latestSameЗапуститьHandoffTimestamp(args: {
     );
 }
 
-function normalizeJsonЗначение(input: unknown): JsonЗначение {
+function normalizeJsonValue(input: unknown): JsonValue {
   if (
     input === null ||
     typeof input === "string" ||
@@ -218,12 +218,12 @@ function normalizeJsonЗначение(input: unknown): JsonЗначение {
     return input;
   }
   if (Array.isArray(input)) {
-    return input.map((entry) => normalizeJsonЗначение(entry));
+    return input.map((entry) => normalizeJsonValue(entry));
   }
   if (typeof input === "object" && input) {
     const entries = Object.entries(input as Record<string, unknown>).map(([key, value]) => [
       key,
-      normalizeJsonЗначение(value),
+      normalizeJsonValue(value),
     ]);
     return Object.fromEntries(entries) as JsonObject;
   }
@@ -232,13 +232,13 @@ function normalizeJsonЗначение(input: unknown): JsonЗначение {
 
 function normalizeToolArgs(input: unknown): JsonObject {
   if (typeof input === "object" && input && !Array.isArray(input)) {
-    return normalizeJsonЗначение(input) as JsonObject;
+    return normalizeJsonValue(input) as JsonObject;
   }
   if (input === undefined) return {};
-  return { value: normalizeJsonЗначение(input) };
+  return { value: normalizeJsonValue(input) };
 }
 
-function stringifyНеизвестно(value: unknown) {
+function stringifyUnknown(value: unknown) {
   if (typeof value === "string") return value;
   if (value === null || value === undefined) return "";
   try {
@@ -271,20 +271,20 @@ function formatDiffBlock(lines: string[]) {
   return `\`\`\`diff\n${lines.join("\n")}\n\`\`\``;
 }
 
-function isЗадачаChatRenderableTranscriptEntry(entry: ЗадачаChatTranscriptEntry) {
+function isIssueChatRenderableTranscriptEntry(entry: IssueChatTranscriptEntry) {
   return entry.kind !== "init"
     && entry.kind !== "stderr"
     && entry.kind !== "stdout"
     && entry.kind !== "system";
 }
 
-function compactЗадачаChatTranscript(
-  entries: readonly ЗадачаChatTranscriptEntry[],
+function compactIssueChatTranscript(
+  entries: readonly IssueChatTranscriptEntry[],
   maxVisibleEntries = ISSUE_CHAT_TRANSCRIPT_MAX_VISIBLE_ENTRIES,
-): readonly ЗадачаChatTranscriptEntry[] {
+): readonly IssueChatTranscriptEntry[] {
   const renderable = entries
     .map((entry, fullIndex) => ({ entry, fullIndex }))
-    .filter(({ entry }) => isЗадачаChatRenderableTranscriptEntry(entry));
+    .filter(({ entry }) => isIssueChatRenderableTranscriptEntry(entry));
 
   if (renderable.length <= maxVisibleEntries) {
     return entries;
@@ -337,29 +337,29 @@ function createAssistantMetadata(custom: Record<string, unknown>) {
   } as const;
 }
 
-function authorИмяForComment(
-  comment: ЗадачаChatComment,
-  agentMap?: Map<string, Агент>,
+function authorNameForComment(
+  comment: IssueChatComment,
+  agentMap?: Map<string, Agent>,
   currentUserId?: string | null,
   userLabelMap?: ReadonlyMap<string, string> | null,
 ) {
-  if (comment.authorАгентId) {
-    return agentMap?.get(comment.authorАгентId)?.name ?? comment.authorАгентId.slice(0, 8);
+  if (comment.authorAgentId) {
+    return agentMap?.get(comment.authorAgentId)?.name ?? comment.authorAgentId.slice(0, 8);
   }
   const authorUserId = comment.authorUserId ?? null;
   if (!authorUserId) return "You";
   const userLabel = userLabelMap?.get(authorUserId)?.trim();
   if (userLabel) return userLabel;
-  return formatИсполнительUserLabel(authorUserId, currentUserId, userLabelMap) ?? "You";
+  return formatAssigneeUserLabel(authorUserId, currentUserId, userLabelMap) ?? "You";
 }
 
-function formatСтатусLabel(status: string) {
+function formatStatusLabel(status: string) {
   return status.replace(/_/g, " ");
 }
 
 function createCommentMessage(args: {
-  comment: ЗадачаChatComment;
-  agentMap?: Map<string, Агент>;
+  comment: IssueChatComment;
+  agentMap?: Map<string, Agent>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
   companyId?: string | null;
@@ -367,31 +367,31 @@ function createCommentMessage(args: {
 }): ThreadMessage {
   const { comment, agentMap, currentUserId, userLabelMap, companyId, projectId } = args;
   const createdAt = toDate(comment.createdAt);
-  const authorИмя = authorИмяForComment(comment, agentMap, currentUserId, userLabelMap);
-  const isSystemНетtice = comment.authorТип === "system";
+  const authorName = authorNameForComment(comment, agentMap, currentUserId, userLabelMap);
+  const isSystemNotice = comment.authorType === "system";
   const custom = {
-    kind: isSystemНетtice ? "system_notice" : "comment",
+    kind: isSystemNotice ? "system_notice" : "comment",
     commentId: comment.id,
     anchorId: `comment-${comment.id}`,
-    authorИмя,
-    authorТип: comment.authorТип,
-    authorАгентId: comment.authorАгентId,
+    authorName,
+    authorType: comment.authorType,
+    authorAgentId: comment.authorAgentId,
     authorUserId: comment.authorUserId,
     companyId: companyId ?? comment.companyId,
     projectId: projectId ?? null,
     runId: comment.runId ?? null,
-    runАгентId: comment.runАгентId ?? null,
-    clientСтатус: comment.clientСтатус ?? null,
+    runAgentId: comment.runAgentId ?? null,
+    clientStatus: comment.clientStatus ?? null,
     queueState: comment.queueState ?? null,
-    queueЦельЗапуститьId: comment.queueЦельЗапуститьId ?? null,
+    queueTargetRunId: comment.queueTargetRunId ?? null,
     queueReason: comment.queueReason ?? null,
-    interruptedЗапуститьId: comment.interruptedЗапуститьId ?? null,
+    interruptedRunId: comment.interruptedRunId ?? null,
     followUpRequested: comment.followUpRequested === true,
     presentation: comment.presentation ?? null,
     commentMetadata: comment.metadata ?? null,
   };
 
-  if (isSystemНетtice) {
+  if (isSystemNotice) {
     const message: ThreadSystemMessage = {
       id: comment.id,
       role: "system",
@@ -402,7 +402,7 @@ function createCommentMessage(args: {
     return message;
   }
 
-  if (comment.authorАгентId) {
+  if (comment.authorAgentId) {
     const message: ThreadAssistantMessage = {
       id: comment.id,
       role: "assistant",
@@ -426,38 +426,38 @@ function createCommentMessage(args: {
 }
 
 function createTimelineEventMessage(args: {
-  event: ЗадачаTimelineEvent;
-  agentMap?: Map<string, Агент>;
+  event: IssueTimelineEvent;
+  agentMap?: Map<string, Agent>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
 }) {
   const { event, agentMap, currentUserId, userLabelMap } = args;
-  const actorИмя = event.actorТип === "agent"
+  const actorName = event.actorType === "agent"
     ? (agentMap?.get(event.actorId)?.name ?? event.actorId.slice(0, 8))
-    : event.actorТип === "system"
+    : event.actorType === "system"
       ? "System"
-      : (formatИсполнительUserLabel(event.actorId, currentUserId, userLabelMap) ?? "Совет");
+      : (formatAssigneeUserLabel(event.actorId, currentUserId, userLabelMap) ?? "Board");
 
   const lines: string[] = [
-    event.followUpRequested ? `${actorИмя} requested follow-up` : `${actorИмя} updated this issue`,
+    event.followUpRequested ? `${actorName} requested follow-up` : `${actorName} updated this issue`,
   ];
   if (event.statusChange) {
     lines.push(
-      `Статус: ${event.statusChange.from ?? "none"} -> ${event.statusChange.to ?? "none"}`,
+      `Status: ${event.statusChange.from ?? "none"} -> ${event.statusChange.to ?? "none"}`,
     );
   }
   if (event.assigneeChange) {
     const from = event.assigneeChange.from.agentId
       ? (agentMap?.get(event.assigneeChange.from.agentId)?.name ?? event.assigneeChange.from.agentId.slice(0, 8))
-      : (formatИсполнительUserLabel(event.assigneeChange.from.userId, currentUserId, userLabelMap) ?? "Не назначен");
+      : (formatAssigneeUserLabel(event.assigneeChange.from.userId, currentUserId, userLabelMap) ?? "Не назначен");
     const to = event.assigneeChange.to.agentId
       ? (agentMap?.get(event.assigneeChange.to.agentId)?.name ?? event.assigneeChange.to.agentId.slice(0, 8))
-      : (formatИсполнительUserLabel(event.assigneeChange.to.userId, currentUserId, userLabelMap) ?? "Не назначен");
-    lines.push(`Исполнитель: ${from} -> ${to}`);
+      : (formatAssigneeUserLabel(event.assigneeChange.to.userId, currentUserId, userLabelMap) ?? "Не назначен");
+    lines.push(`Assignee: ${from} -> ${to}`);
   }
   if (event.workspaceChange) {
     lines.push(
-      `Рабочая область: ${event.workspaceChange.from.label ?? "none"} -> ${event.workspaceChange.to.label ?? "none"}`,
+      `Workspace: ${event.workspaceChange.from.label ?? "none"} -> ${event.workspaceChange.to.label ?? "none"}`,
     );
   }
 
@@ -471,8 +471,8 @@ function createTimelineEventMessage(args: {
         kind: "event",
         anchorId: `activity-${event.id}`,
         eventId: event.id,
-        actorИмя,
-        actorТип: event.actorТип,
+        actorName,
+        actorType: event.actorType,
         actorId: event.actorId,
         statusChange: event.statusChange ?? null,
         assigneeChange: event.assigneeChange ?? null,
@@ -484,12 +484,12 @@ function createTimelineEventMessage(args: {
   return message;
 }
 
-function createInteractionMessage(interaction: ЗадачаThreadInteraction) {
+function createInteractionMessage(interaction: IssueThreadInteraction) {
   const message: ThreadSystemMessage = {
     id: `interaction:${interaction.id}`,
     role: "system",
     createdAt: toDate(interaction.createdAt),
-    content: [{ type: "text", text: buildЗадачаThreadInteractionSummary(interaction) }],
+    content: [{ type: "text", text: buildIssueThreadInteractionSummary(interaction) }],
     metadata: {
       custom: {
         kind: "interaction",
@@ -501,7 +501,7 @@ function createInteractionMessage(interaction: ЗадачаThreadInteraction) {
   return message;
 }
 
-function runTimestamp(run: ЗадачаChatLinkedЗапустить) {
+function runTimestamp(run: IssueChatLinkedRun) {
   return run.finishedAt ?? run.startedAt ?? run.createdAt;
 }
 
@@ -510,10 +510,10 @@ export interface SegmentTiming {
   endMs: number;
 }
 
-function computeSegmentTimings(entries: readonly ЗадачаChatTranscriptEntry[]): SegmentTiming[] {
+function computeSegmentTimings(entries: readonly IssueChatTranscriptEntry[]): SegmentTiming[] {
   const timings: SegmentTiming[] = [];
   let inSegment = false;
-  let segНачать = 0;
+  let segStart = 0;
   let segEnd = 0;
 
   for (const entry of entries) {
@@ -524,23 +524,23 @@ function computeSegmentTimings(entries: readonly ЗадачаChatTranscriptEntry
       entry.kind === "tool_call" ||
       entry.kind === "tool_result" ||
       entry.kind === "diff" ||
-      (entry.kind === "result" && ((entry.isОшибка && !!entry.errors?.length) || !!entry.text));
+      (entry.kind === "result" && ((entry.isError && !!entry.errors?.length) || !!entry.text));
     const isText = entry.kind === "assistant" && !!entry.text;
 
     if (isCoT) {
       if (!inSegment) {
         inSegment = true;
-        segНачать = ts;
+        segStart = ts;
       }
       segEnd = ts;
     } else if (isText && inSegment) {
-      timings.push({ startMs: segНачать, endMs: segEnd });
+      timings.push({ startMs: segStart, endMs: segEnd });
       inSegment = false;
     }
   }
 
   if (inSegment) {
-    timings.push({ startMs: segНачать, endMs: segEnd });
+    timings.push({ startMs: segStart, endMs: segEnd });
   }
 
   return timings;
@@ -578,41 +578,41 @@ function runDurationLabel(run: {
   const stopReason = typeof run.resultJson?.stopReason === "string" ? run.resultJson.stopReason : null;
   switch (run.status) {
     case "succeeded":
-      return durationText ? `Работаed for ${durationText}` : "Finished work";
+      return durationText ? `Worked for ${durationText}` : "Finished work";
     case "failed":
     case "error":
-      return durationText ? `Ошибка after ${durationText}` : "Запустить failed";
+      return durationText ? `Failed after ${durationText}` : "Run failed";
     case "timed_out":
-      return durationText ? `Timed out after ${durationText}` : "Запустить timed out";
+      return durationText ? `Timed out after ${durationText}` : "Run timed out";
     case "cancelled":
       if (stopReason === "paused") {
-        return durationText ? `Приостановлен by board after ${durationText}` : "Приостановлен by board";
+        return durationText ? `Paused by board after ${durationText}` : "Paused by board";
       }
-      return durationText ? `Отменён after ${durationText}` : "Запустить cancelled";
+      return durationText ? `Cancelled after ${durationText}` : "Run cancelled";
     case "queued":
       return "Queued";
     case "running":
-      return "Работаing...";
+      return "Working...";
     default:
-      return formatСтатусLabel(run.status);
+      return formatStatusLabel(run.status);
   }
 }
 
-function createHistoricalЗапуститьMessage(run: ЗадачаChatLinkedЗапустить, agentMap?: Map<string, Агент>) {
-  const agentИмя = run.agentИмя ?? agentMap?.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
+function createHistoricalRunMessage(run: IssueChatLinkedRun, agentMap?: Map<string, Agent>) {
+  const agentName = run.agentName ?? agentMap?.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
   const message: ThreadSystemMessage = {
     id: `run:${run.runId}`,
     role: "system",
     createdAt: toDate(runTimestamp(run)),
-    content: [{ type: "text", text: `${agentИмя} run ${run.runId.slice(0, 8)} ${formatСтатусLabel(run.status)}` }],
+    content: [{ type: "text", text: `${agentName} run ${run.runId.slice(0, 8)} ${formatStatusLabel(run.status)}` }],
     metadata: {
       custom: {
         kind: "run",
         anchorId: `run-${run.runId}`,
         runId: run.runId,
-        runАгентId: run.agentId,
-        runАгентИмя: agentИмя,
-        runСтатус: run.status,
+        runAgentId: run.agentId,
+        runAgentName: agentName,
+        runStatus: run.status,
       },
     },
   };
@@ -620,16 +620,16 @@ function createHistoricalЗапуститьMessage(run: ЗадачаChatLinkedЗ
 }
 
 function createHistoricalTranscriptMessage(args: {
-  run: ЗадачаChatLinkedЗапустить;
-  transcript: readonly ЗадачаChatTranscriptEntry[];
+  run: IssueChatLinkedRun;
+  transcript: readonly IssueChatTranscriptEntry[];
   hasOutput: boolean;
-  agentMap?: Map<string, Агент>;
+  agentMap?: Map<string, Agent>;
 }) {
   const { run, transcript, hasOutput, agentMap } = args;
-  const agentИмя = run.agentИмя ?? agentMap?.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
-  const compactedTranscript = compactЗадачаChatTranscript(transcript);
+  const agentName = run.agentName ?? agentMap?.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
+  const compactedTranscript = compactIssueChatTranscript(transcript);
   const { parts, notices, segments } = buildAssistantPartsFromTranscript(compactedTranscript);
-  const waitingText = hasOutput ? "" : "Запустить finished";
+  const waitingText = hasOutput ? "" : "Run finished";
   const content = parts.length > 0
     ? parts
     : waitingText
@@ -646,9 +646,9 @@ function createHistoricalTranscriptMessage(args: {
       kind: "historical-run",
       anchorId: `run-${run.runId}`,
       runId: run.runId,
-      runАгентId: run.agentId,
-      runАгентИмя: agentИмя,
-      runСтатус: run.status,
+      runAgentId: run.agentId,
+      runAgentName: agentName,
+      runStatus: run.status,
       notices,
       waitingText,
       chainOfThoughtLabel: runDurationLabel(run),
@@ -658,7 +658,7 @@ function createHistoricalTranscriptMessage(args: {
   return message;
 }
 
-export function buildAssistantPartsFromTranscript(entries: readonly ЗадачаChatTranscriptEntry[]): {
+export function buildAssistantPartsFromTranscript(entries: readonly IssueChatTranscriptEntry[]): {
   parts: Array<TextMessagePart | ReasoningMessagePart | ToolCallMessagePart<JsonObject, unknown>>;
   notices: string[];
   segments: SegmentTiming[];
@@ -668,27 +668,27 @@ export function buildAssistantPartsFromTranscript(entries: readonly Задача
   const toolIndices = new Map<string, number>();
   const notices: string[] = [];
   let pendingDiffLines: string[] = [];
-  let pendingDiffРодительId: string | undefined;
+  let pendingDiffParentId: string | undefined;
 
-  const flushОжиданиеDiff = () => {
+  const flushPendingDiff = () => {
     if (pendingDiffLines.length === 0) return;
     orderedParts.push({
       type: "text",
       text: formatDiffBlock(pendingDiffLines),
-      parentId: pendingDiffРодительId,
+      parentId: pendingDiffParentId,
     });
     pendingDiffLines = [];
-    pendingDiffРодительId = undefined;
+    pendingDiffParentId = undefined;
   };
 
   for (const [index, entry] of entries.entries()) {
     if (entry.kind === "diff") {
-      pendingDiffРодительId ??= `diff-group:${index}`;
+      pendingDiffParentId ??= `diff-group:${index}`;
       pendingDiffLines.push(entry.text ?? "");
       continue;
     }
 
-    flushОжиданиеDiff();
+    flushPendingDiff();
 
     if (entry.kind === "assistant" && entry.text) {
       orderedParts.push({ type: "text", text: entry.text });
@@ -703,9 +703,9 @@ export function buildAssistantPartsFromTranscript(entries: readonly Задача
       const nextPart: ToolCallMessagePart<JsonObject, unknown> = {
         type: "tool-call",
         toolCallId,
-        toolИмя: entry.name || "tool",
+        toolName: entry.name || "tool",
         args: normalizeToolArgs(entry.input),
-        argsText: stringifyНеизвестно(entry.input),
+        argsText: stringifyUnknown(entry.input),
       };
       if (!toolParts.has(toolCallId)) {
         toolIndices.set(toolCallId, orderedParts.length);
@@ -725,11 +725,11 @@ export function buildAssistantPartsFromTranscript(entries: readonly Задача
       const nextPart: ToolCallMessagePart<JsonObject, unknown> = {
         type: "tool-call",
         toolCallId,
-        toolИмя: existing?.toolИмя || entry.toolИмя || "tool",
+        toolName: existing?.toolName || entry.toolName || "tool",
         args: existing?.args ?? {},
         argsText: existing?.argsText ?? "",
         result: entry.content ?? "",
-        isОшибка: entry.isОшибка === true,
+        isError: entry.isError === true,
       };
       if (existing) {
         const existingIndex = toolIndices.get(toolCallId);
@@ -748,23 +748,23 @@ export function buildAssistantPartsFromTranscript(entries: readonly Задача
     if (entry.kind === "stdout") continue;
     if (entry.kind === "system") continue;
     if (entry.kind === "result") {
-      if (entry.isОшибка && entry.errors?.length) {
+      if (entry.isError && entry.errors?.length) {
         for (const error of entry.errors) {
-          orderedParts.push({ type: "reasoning", text: `Запустить error: ${summarizeНетtice(error)}` });
+          orderedParts.push({ type: "reasoning", text: `Run error: ${summarizeNotice(error)}` });
         }
       } else if (entry.text) {
         orderedParts.push({
           type: "reasoning",
-          text: entry.isОшибка
-            ? `Запустить error: ${summarizeНетtice(entry.text)}`
-            : summarizeНетtice(entry.text),
+          text: entry.isError
+            ? `Run error: ${summarizeNotice(entry.text)}`
+            : summarizeNotice(entry.text),
         });
       }
       continue;
     }
   }
 
-  flushОжиданиеDiff();
+  flushPendingDiff();
 
   const mergedParts: Array<TextMessagePart | ReasoningMessagePart | ToolCallMessagePart<JsonObject, unknown>> = [];
   for (const part of orderedParts) {
@@ -790,46 +790,46 @@ export function buildAssistantPartsFromTranscript(entries: readonly Задача
   };
 }
 
-function normalizeLiveЗапуститьs(
-  liveЗапуститьs: readonly LiveЗапуститьForЗадача[],
-  activeЗапустить: АктивенЗапуститьForЗадача | null | undefined,
+function normalizeLiveRuns(
+  liveRuns: readonly LiveRunForIssue[],
+  activeRun: ActiveRunForIssue | null | undefined,
   issueId?: string,
 ) {
-  const deduped = new Map<string, LiveЗапуститьForЗадача>();
-  for (const run of liveЗапуститьs) {
+  const deduped = new Map<string, LiveRunForIssue>();
+  for (const run of liveRuns) {
     deduped.set(run.id, run);
   }
-  if (activeЗапустить) {
-    deduped.set(activeЗапустить.id, {
-      id: activeЗапустить.id,
-      status: activeЗапустить.status,
-      invocationSource: activeЗапустить.invocationSource,
-      triggerDetail: activeЗапустить.triggerDetail,
-      startedAt: activeЗапустить.startedAt ? toDate(activeЗапустить.startedAt).toISOString() : null,
-      finishedAt: activeЗапустить.finishedAt ? toDate(activeЗапустить.finishedAt).toISOString() : null,
-      createdAt: toDate(activeЗапустить.createdAt).toISOString(),
-      agentId: activeЗапустить.agentId,
-      agentИмя: activeЗапустить.agentИмя,
-      adapterТип: activeЗапустить.adapterТип,
+  if (activeRun) {
+    deduped.set(activeRun.id, {
+      id: activeRun.id,
+      status: activeRun.status,
+      invocationSource: activeRun.invocationSource,
+      triggerDetail: activeRun.triggerDetail,
+      startedAt: activeRun.startedAt ? toDate(activeRun.startedAt).toISOString() : null,
+      finishedAt: activeRun.finishedAt ? toDate(activeRun.finishedAt).toISOString() : null,
+      createdAt: toDate(activeRun.createdAt).toISOString(),
+      agentId: activeRun.agentId,
+      agentName: activeRun.agentName,
+      adapterType: activeRun.adapterType,
       issueId,
     });
   }
   return [...deduped.values()].sort((a, b) => toTimestamp(a.createdAt) - toTimestamp(b.createdAt));
 }
 
-function createLiveЗапуститьMessage(args: {
-  run: LiveЗапуститьForЗадача;
-  transcript: readonly ЗадачаChatTranscriptEntry[];
+function createLiveRunMessage(args: {
+  run: LiveRunForIssue;
+  transcript: readonly IssueChatTranscriptEntry[];
 }) {
   const { run, transcript } = args;
-  const compactedTranscript = compactЗадачаChatTranscript(transcript);
+  const compactedTranscript = compactIssueChatTranscript(transcript);
   const { parts, notices, segments } = buildAssistantPartsFromTranscript(compactedTranscript);
   const waitingText =
     run.status === "queued"
       ? "Queued..."
       : parts.length > 0
         ? ""
-        : "Работаing...";
+        : "Working...";
 
   const content = parts;
 
@@ -842,10 +842,10 @@ function createLiveЗапуститьMessage(args: {
     metadata: createAssistantMetadata({
       kind: "live-run",
       runId: run.id,
-      runАгентId: run.agentId,
-      runАгентИмя: run.agentИмя,
-      runСтатус: run.status,
-      adapterТип: run.adapterТип,
+      runAgentId: run.agentId,
+      runAgentName: run.agentName,
+      runStatus: run.status,
+      adapterType: run.adapterType,
       notices,
       waitingText,
       chainOfThoughtLabel: runDurationLabel(run),
@@ -855,20 +855,20 @@ function createLiveЗапуститьMessage(args: {
   return message;
 }
 
-export function buildЗадачаChatMessages(args: {
-  comments: readonly ЗадачаChatComment[];
-  interactions?: readonly ЗадачаThreadInteraction[];
-  timelineEvents: readonly ЗадачаTimelineEvent[];
-  linkedЗапуститьs: readonly ЗадачаChatLinkedЗапустить[];
-  liveЗапуститьs: readonly LiveЗапуститьForЗадача[];
-  activeЗапустить?: АктивенЗапуститьForЗадача | null;
-  transcriptsByЗапуститьId?: ReadonlyMap<string, readonly ЗадачаChatTranscriptEntry[]>;
-  hasOutputForЗапустить?: (runId: string) => boolean;
-  includeSucceededЗапуститьsWithoutOutput?: boolean;
+export function buildIssueChatMessages(args: {
+  comments: readonly IssueChatComment[];
+  interactions?: readonly IssueThreadInteraction[];
+  timelineEvents: readonly IssueTimelineEvent[];
+  linkedRuns: readonly IssueChatLinkedRun[];
+  liveRuns: readonly LiveRunForIssue[];
+  activeRun?: ActiveRunForIssue | null;
+  transcriptsByRunId?: ReadonlyMap<string, readonly IssueChatTranscriptEntry[]>;
+  hasOutputForRun?: (runId: string) => boolean;
+  includeSucceededRunsWithoutOutput?: boolean;
   issueId?: string;
   companyId?: string | null;
   projectId?: string | null;
-  agentMap?: Map<string, Агент>;
+  agentMap?: Map<string, Agent>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
 }) {
@@ -876,12 +876,12 @@ export function buildЗадачаChatMessages(args: {
     comments,
     interactions = [],
     timelineEvents,
-    linkedЗапуститьs,
-    liveЗапуститьs,
-    activeЗапустить,
-    transcriptsByЗапуститьId,
-    hasOutputForЗапустить,
-    includeSucceededЗапуститьsWithoutOutput = false,
+    linkedRuns,
+    liveRuns,
+    activeRun,
+    transcriptsByRunId,
+    hasOutputForRun,
+    includeSucceededRunsWithoutOutput = false,
     issueId,
     companyId,
     projectId,
@@ -892,7 +892,7 @@ export function buildЗадачаChatMessages(args: {
 
   const orderedMessages: MessageWithOrder[] = [];
 
-  for (const comment of sortByСоздано(comments)) {
+  for (const comment of sortByCreated(comments)) {
     orderedMessages.push({
       createdAtMs: toTimestamp(comment.createdAt),
       order: 1,
@@ -900,16 +900,16 @@ export function buildЗадачаChatMessages(args: {
     });
   }
 
-  for (const interaction of sortByСоздано(interactions)) {
+  for (const interaction of sortByCreated(interactions)) {
     const createdAtMs = toTimestamp(interaction.createdAt);
-    const handoffAtMs = interaction.kind === "request_confirmation" && interaction.sourceЗапуститьId
-      ? latestSameЗапуститьHandoffTimestamp({
-        interactionСозданоAtMs: createdAtMs,
-        sourceЗапуститьId: interaction.sourceЗапуститьId,
+    const handoffAtMs = interaction.kind === "request_confirmation" && interaction.sourceRunId
+      ? latestSameRunHandoffTimestamp({
+        interactionCreatedAtMs: createdAtMs,
+        sourceRunId: interaction.sourceRunId,
         comments,
         timelineEvents,
-        linkedЗапуститьs,
-        liveЗапуститьs,
+        linkedRuns,
+        liveRuns,
       })
       : null;
     orderedMessages.push({
@@ -919,7 +919,7 @@ export function buildЗадачаChatMessages(args: {
     });
   }
 
-  for (const event of sortByСоздано(timelineEvents)) {
+  for (const event of sortByCreated(timelineEvents)) {
     orderedMessages.push({
       createdAtMs: toTimestamp(event.createdAt),
       order: 0,
@@ -927,10 +927,10 @@ export function buildЗадачаChatMessages(args: {
     });
   }
 
-  for (const run of [...linkedЗапуститьs].sort((a, b) => toTimestamp(runTimestamp(a)) - toTimestamp(runTimestamp(b)))) {
-    const transcript = transcriptsByЗапуститьId?.get(run.runId) ?? [];
-    const hasЗапуститьOutput = transcript.length > 0 || (hasOutputForЗапустить?.(run.runId) ?? false);
-    if (hasЗапуститьOutput || run.status !== "succeeded") {
+  for (const run of [...linkedRuns].sort((a, b) => toTimestamp(runTimestamp(a)) - toTimestamp(runTimestamp(b)))) {
+    const transcript = transcriptsByRunId?.get(run.runId) ?? [];
+    const hasRunOutput = transcript.length > 0 || (hasOutputForRun?.(run.runId) ?? false);
+    if (hasRunOutput || run.status !== "succeeded") {
       // Always use the transcript message for non-succeeded runs (even before
       // transcript data loads) so the message type and fold header are stable
       // from initial render — avoids a flash when transcripts arrive later.
@@ -940,27 +940,27 @@ export function buildЗадачаChatMessages(args: {
         message: createHistoricalTranscriptMessage({
           run,
           transcript,
-          hasOutput: hasЗапуститьOutput,
+          hasOutput: hasRunOutput,
           agentMap,
         }),
       });
       continue;
     }
-    if (!includeSucceededЗапуститьsWithoutOutput) continue;
+    if (!includeSucceededRunsWithoutOutput) continue;
     orderedMessages.push({
       createdAtMs: toTimestamp(runTimestamp(run)),
       order: 2,
-      message: createHistoricalЗапуститьMessage(run, agentMap),
+      message: createHistoricalRunMessage(run, agentMap),
     });
   }
 
-  for (const run of normalizeLiveЗапуститьs(liveЗапуститьs, activeЗапустить, issueId)) {
+  for (const run of normalizeLiveRuns(liveRuns, activeRun, issueId)) {
     orderedMessages.push({
       createdAtMs: toTimestamp(run.startedAt ?? run.createdAt),
       order: 3,
-      message: createLiveЗапуститьMessage({
+      message: createLiveRunMessage({
         run,
-        transcript: transcriptsByЗапуститьId?.get(run.id) ?? [],
+        transcript: transcriptsByRunId?.get(run.id) ?? [],
       }),
     });
   }

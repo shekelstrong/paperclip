@@ -2,10 +2,10 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@/lib/router";
 import { useDialog } from "../context/DialogContext";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { agentsApi } from "../api/agents";
 import { adaptersApi } from "../api/adapters";
-import { queryКлючs } from "@/lib/queryКлючs";
+import { queryKeys } from "@/lib/queryKeys";
 import {
   Dialog,
   DialogContent,
@@ -13,61 +13,61 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
-  Бот,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { listUIАдаптеры } from "../adapters";
-import { isVisualАдаптерChoice } from "../adapters/metadata";
-import { getАдаптерDisplay } from "../adapters/adapter-display-registry";
-import { useОтключитьdАдаптерыSync } from "../adapters/use-disabled-adapters";
+import { listUIAdapters } from "../adapters";
+import { isVisualAdapterChoice } from "../adapters/metadata";
+import { getAdapterDisplay } from "../adapters/adapter-display-registry";
+import { useDisabledAdaptersSync } from "../adapters/use-disabled-adapters";
 
 /**
- * Адаптер types that are suitable for agent creation (excludes internal
+ * Adapter types that are suitable for agent creation (excludes internal
  * system adapters like "process" and "http").
  */
 const SYSTEM_ADAPTER_TYPES = new Set(["process", "http"]);
 
-function isАгентАдаптерТип(type: string): boolean {
+function isAgentAdapterType(type: string): boolean {
   return !SYSTEM_ADAPTER_TYPES.has(type);
 }
 
-export function NewАгентDialog() {
-  const { newАгентOpen, closeNewАгент, openNewЗадача } = useDialog();
-  const { selectedКомпанияId } = useКомпания();
+export function NewAgentDialog() {
+  const { newAgentOpen, closeNewAgent, openNewIssue } = useDialog();
+  const { selectedCompanyId } = useCompany();
   const navigate = useNavigate();
-  const [showДополнительноCards, setShowДополнительноCards] = useState(false);
-  const disabledТипs = useОтключитьdАдаптерыSync();
+  const [showAdvancedCards, setShowAdvancedCards] = useState(false);
+  const disabledTypes = useDisabledAdaptersSync();
 
   // Fetch registered adapters from server (syncs disabled store + provides data)
-  const { data: serverАдаптеры } = useQuery({
-    queryКлюч: queryКлючs.adapters.all,
+  const { data: serverAdapters } = useQuery({
+    queryKey: queryKeys.adapters.all,
     queryFn: () => adaptersApi.list(),
     staleTime: 5 * 60 * 1000,
   });
 
   // Fetch existing agents for the "Ask CEO" flow
   const { data: agents } = useQuery({
-    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
-    queryFn: () => agentsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId && newАгентOpen,
+    queryKey: queryKeys.agents.list(selectedCompanyId!),
+    queryFn: () => agentsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId && newAgentOpen,
   });
 
-  const ceoАгент = (agents ?? []).find((a) => a.role === "ceo");
+  const ceoAgent = (agents ?? []).find((a) => a.role === "ceo");
 
   // Build the adapter grid from the UI registry merged with display metadata.
   // This automatically includes external/plugin adapters.
   const adapterGrid = useMemo(() => {
-    const registered = listUIАдаптеры()
+    const registered = listUIAdapters()
       .filter((a) =>
-        isАгентАдаптерТип(a.type) &&
-        !disabledТипs.has(a.type) &&
-        isVisualАдаптерChoice(a.type)
+        isAgentAdapterType(a.type) &&
+        !disabledTypes.has(a.type) &&
+        isVisualAdapterChoice(a.type)
       );
 
-    // Сортировка: recommended first, then alphabetical
+    // Sort: recommended first, then alphabetical
     return registered
       .map((a) => {
-        const display = getАдаптерDisplay(a.type);
+        const display = getAdapterDisplay(a.type);
         return {
           value: a.type,
           label: display.label,
@@ -83,82 +83,82 @@ export function NewАгентDialog() {
         if (!a.recommended && b.recommended) return 1;
         return a.label.localeCompare(b.label);
       });
-  }, [disabledТипs, serverАдаптеры]);
+  }, [disabledTypes, serverAdapters]);
 
   function handleAskCeo() {
-    closeNewАгент();
-    openNewЗадача({
-      assigneeАгентId: ceoАгент?.id,
-      title: "Создать a new agent",
+    closeNewAgent();
+    openNewIssue({
+      assigneeAgentId: ceoAgent?.id,
+      title: "Create a new agent",
       description: "(type in what kind of agent you want here)",
     });
   }
 
-  function handleДополнительноConfig() {
-    setShowДополнительноCards(true);
+  function handleAdvancedConfig() {
+    setShowAdvancedCards(true);
   }
 
-  function handleДополнительноАдаптерPick(adapterТип: string) {
-    closeNewАгент();
-    setShowДополнительноCards(false);
-    navigate(`/agents/new?adapterТип=${encodeURIComponent(adapterТип)}`);
+  function handleAdvancedAdapterPick(adapterType: string) {
+    closeNewAgent();
+    setShowAdvancedCards(false);
+    navigate(`/agents/new?adapterType=${encodeURIComponent(adapterType)}`);
   }
 
   return (
     <Dialog
-      open={newАгентOpen}
+      open={newAgentOpen}
       onOpenChange={(open) => {
         if (!open) {
-          setShowДополнительноCards(false);
-          closeNewАгент();
+          setShowAdvancedCards(false);
+          closeNewAgent();
         }
       }}
     >
       <DialogContent
-        showЗакрытьButton={false}
-        classИмя="sm:max-w-md p-0 gap-0 overflow-hidden"
+        showCloseButton={false}
+        className="sm:max-w-md p-0 gap-0 overflow-hidden"
       >
         {/* Header */}
-        <div classИмя="flex items-center justify-between px-4 py-2.5 border-b border-border">
-          <span classИмя="text-sm text-muted-foreground">Добавить a new agent</span>
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+          <span className="text-sm text-muted-foreground">Add a new agent</span>
           <Button
             variant="ghost"
             size="icon-xs"
-            classИмя="text-muted-foreground"
+            className="text-muted-foreground"
             onClick={() => {
-              setShowДополнительноCards(false);
-              closeNewАгент();
+              setShowAdvancedCards(false);
+              closeNewAgent();
             }}
           >
-            <span classИмя="text-lg leading-none">&times;</span>
+            <span className="text-lg leading-none">&times;</span>
           </Button>
         </div>
 
-        <div classИмя="p-6 space-y-6">
-          {!showДополнительноCards ? (
+        <div className="p-6 space-y-6">
+          {!showAdvancedCards ? (
             <>
               {/* Recommendation */}
-              <div classИмя="text-center space-y-3">
-                <div classИмя="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent">
-                  <Бот classИмя="h-6 w-6 text-foreground" />
+              <div className="text-center space-y-3">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent">
+                  <Bot className="h-6 w-6 text-foreground" />
                 </div>
-                <p classИмя="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   We recommend letting your CEO handle agent setup — they know the
                   org structure and can configure reporting, permissions, and
                   adapters.
                 </p>
               </div>
 
-              <Button classИмя="w-full" size="lg" onClick={handleAskCeo}>
-                <Бот classИмя="h-4 w-4 mr-2" />
+              <Button className="w-full" size="lg" onClick={handleAskCeo}>
+                <Bot className="h-4 w-4 mr-2" />
                 Ask the CEO to create a new agent
               </Button>
 
-              {/* Дополнительно link */}
-              <div classИмя="text-center">
+              {/* Advanced link */}
+              <div className="text-center">
                 <button
-                  classИмя="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
-                  onClick={handleДополнительноConfig}
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                  onClick={handleAdvancedConfig}
                 >
                   I want advanced configuration myself
                 </button>
@@ -166,41 +166,41 @@ export function NewАгентDialog() {
             </>
           ) : (
             <>
-              <div classИмя="space-y-2">
+              <div className="space-y-2">
                 <button
-                  classИмя="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setShowДополнительноCards(false)}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setShowAdvancedCards(false)}
                 >
-                  <ArrowLeft classИмя="h-3.5 w-3.5" />
-                  Назад
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Back
                 </button>
-                <p classИмя="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Choose your adapter type for advanced setup.
                 </p>
               </div>
 
-              <div classИмя="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {adapterGrid.map((opt) => (
                   <button
                     key={opt.value}
-                    classИмя={cn(
+                    className={cn(
                       "flex flex-col items-center gap-1.5 rounded-md border border-border p-3 text-xs transition-colors hover:bg-accent/50 relative",
                       opt.comingSoon && "opacity-40 cursor-not-allowed",
                     )}
                     disabled={!!opt.comingSoon}
                     title={opt.comingSoon ? opt.disabledLabel : undefined}
                     onClick={() => {
-                      if (!opt.comingSoon) handleДополнительноАдаптерPick(opt.value);
+                      if (!opt.comingSoon) handleAdvancedAdapterPick(opt.value);
                     }}
                   >
                     {opt.recommended && (
-                      <span classИмя="absolute -top-1.5 right-1.5 bg-green-500 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="absolute -top-1.5 right-1.5 bg-green-500 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
                         Recommended
                       </span>
                     )}
-                    <opt.icon classИмя="h-4 w-4" />
-                    <span classИмя="font-medium">{opt.label}</span>
-                    <span classИмя="text-muted-foreground text-[10px]">
+                    <opt.icon className="h-4 w-4" />
+                    <span className="font-medium">{opt.label}</span>
+                    <span className="text-muted-foreground text-[10px]">
                       {opt.desc}
                     </span>
                   </button>

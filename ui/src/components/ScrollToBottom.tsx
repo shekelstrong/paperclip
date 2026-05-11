@@ -3,7 +3,7 @@ import { ArrowDown } from "lucide-react";
 import { usePanel } from "../context/PanelContext";
 import { cn } from "../lib/utils";
 
-function resolveScrollЦель() {
+function resolveScrollTarget() {
   const mainContent = document.getElementById("main-content");
 
   if (mainContent instanceof HTMLElement) {
@@ -20,7 +20,7 @@ function resolveScrollЦель() {
   return { type: "window" as const };
 }
 
-function distanceFromБотtom(target: ReturnТип<typeof resolveScrollЦель>) {
+function distanceFromBottom(target: ReturnType<typeof resolveScrollTarget>) {
   if (target.type === "element") {
     return target.element.scrollHeight - target.element.scrollTop - target.element.clientHeight;
   }
@@ -33,13 +33,13 @@ function distanceFromБотtom(target: ReturnТип<typeof resolveScrollЦель
  * Floating scroll-to-bottom button that follows the active page scroller.
  * On desktop that is `#main-content`; on mobile it falls back to window/page scroll.
  */
-export function ScrollToБотtom() {
+export function ScrollToBottom() {
   const [visible, setVisible] = useState(false);
   const { panelVisible, panelContent } = usePanel();
 
   useEffect(() => {
     const check = () => {
-      setVisible(distanceFromБотtom(resolveScrollЦель()) > 300);
+      setVisible(distanceFromBottom(resolveScrollTarget()) > 300);
     };
 
     const mainContent = document.getElementById("main-content");
@@ -57,7 +57,7 @@ export function ScrollToБотtom() {
   }, []);
 
   const scroll = useCallback(() => {
-    const target = resolveScrollЦель();
+    const target = resolveScrollTarget();
 
     if (target.type === "element") {
       target.element.scrollTo({ top: target.element.scrollHeight, behavior: "smooth" });
@@ -73,13 +73,13 @@ export function ScrollToБотtom() {
   return (
     <button
       onClick={scroll}
-      classИмя={cn(
+      className={cn(
         "fixed bottom-[calc(1.5rem+5rem+env(safe-area-inset-bottom))] right-6 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background shadow-md hover:bg-accent transition-[background-color,right] duration-200 md:bottom-6",
-        panelVisible && panelContent && "md:right-[calc(var(--properties-panel-width,320px)+1.5rem)]",
+        panelVisible && panelContent && "md:right-[calc(320px+1.5rem)]",
       )}
       aria-label="Scroll to bottom"
     >
-      <ArrowDown classИмя="h-4 w-4" />
+      <ArrowDown className="h-4 w-4" />
     </button>
   );
 }

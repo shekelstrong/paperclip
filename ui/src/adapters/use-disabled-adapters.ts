@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { adaptersApi } from "@/api/adapters";
-import { setОтключитьdАдаптерТипs } from "@/adapters/disabled-store";
-import { syncExternalАдаптеры } from "@/adapters/registry";
-import { queryКлючs } from "@/lib/queryКлючs";
+import { setDisabledAdapterTypes } from "@/adapters/disabled-store";
+import { syncExternalAdapters } from "@/adapters/registry";
+import { queryKeys } from "@/lib/queryKeys";
 
 /**
  * Fetch adapters and keep the disabled-adapter store + UI adapter registry
@@ -16,25 +16,25 @@ import { queryКлючs } from "@/lib/queryКлючs";
  * Returns a reactive Set of disabled types for use as useMemo dependencies.
  * Call this at the top of any component that renders adapter menus.
  */
-export function useОтключитьdАдаптерыSync(): Set<string> {
+export function useDisabledAdaptersSync(): Set<string> {
   const { data: adapters } = useQuery({
-    queryКлюч: queryКлючs.adapters.all,
+    queryKey: queryKeys.adapters.all,
     queryFn: () => adaptersApi.list(),
     staleTime: 5 * 60 * 1000,
   });
 
   // Eagerly register external adapter types in the UI registry so that
-  // consumers calling listUIАдаптеры() in the same render cycle see them.
+  // consumers calling listUIAdapters() in the same render cycle see them.
   // This is idempotent — already-registered types are skipped.
   if (adapters) {
-    syncExternalАдаптеры(
+    syncExternalAdapters(
       adapters
         .filter((a) => a.source === "external")
         .map((a) => ({
           type: a.type,
           label: a.label,
           disabled: a.disabled,
-          overrideОтключитьd: a.overrideПриостановлен,
+          overrideDisabled: a.overridePaused,
         })),
     );
   }
@@ -42,7 +42,7 @@ export function useОтключитьdАдаптерыSync(): Set<string> {
   // Sync the disabled set to the global store for non-React code
   useEffect(() => {
     if (!adapters) return;
-    setОтключитьdАдаптерТипs(
+    setDisabledAdapterTypes(
       adapters.filter((a) => a.disabled).map((a) => a.type),
     );
   }, [adapters]);

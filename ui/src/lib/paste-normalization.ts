@@ -1,24 +1,24 @@
-import { createRootИзменитьorSubscription$, realmPlugin } from "@mdxeditor/editor";
+import { createRootEditorSubscription$, realmPlugin } from "@mdxeditor/editor";
 import { COMMAND_PRIORITY_CRITICAL, PASTE_COMMAND } from "lexical";
 import { looksLikeMarkdownPaste } from "./markdownPaste";
 import { normalizeMarkdown } from "./normalize-markdown";
 
 /**
- * MDXИзменитьor/Lexical plugin that intercepts paste events and normalizes
+ * MDXEditor/Lexical plugin that intercepts paste events and normalizes
  * markdown content before the editor processes it. Fixes issues with
  * extra leading spaces when pasting from terminals or consoles.
  */
-export const pasteНетrmalizationPlugin = realmPlugin({
+export const pasteNormalizationPlugin = realmPlugin({
   init(realm) {
-    realm.pub(createRootИзменитьorSubscription$, [
+    realm.pub(createRootEditorSubscription$, [
       (editor) => {
-        let skipДалее = false;
+        let skipNext = false;
 
-        return editor.registerКоманда(
+        return editor.registerCommand(
           PASTE_COMMAND,
           (event) => {
-            if (skipДалее) {
-              skipДалее = false;
+            if (skipNext) {
+              skipNext = false;
               return false;
             }
 
@@ -33,7 +33,7 @@ export const pasteНетrmalizationPlugin = realmPlugin({
             // let the default paste handler deal with rich content as-is.
             if (clipboardData.getData("text/html")) return false;
 
-            // Markdown-looking pastes are handled by MarkdownИзменитьor.tsx via
+            // Markdown-looking pastes are handled by MarkdownEditor.tsx via
             // insertMarkdown(), so the plugin only owns the plain-text fallback.
             if (looksLikeMarkdownPaste(text)) return false;
 
@@ -42,10 +42,10 @@ export const pasteНетrmalizationPlugin = realmPlugin({
 
             // Prevent the original paste from being processed
             if (event instanceof ClipboardEvent) {
-              event.preventПо умолчанию();
+              event.preventDefault();
             }
 
-            // Re-dispatch with cleaned data so MDXИзменитьor's handler processes it
+            // Re-dispatch with cleaned data so MDXEditor's handler processes it
             const dt = new DataTransfer();
             dt.setData("text/plain", cleaned);
             const newEvent = new ClipboardEvent("paste", {
@@ -54,8 +54,8 @@ export const pasteНетrmalizationPlugin = realmPlugin({
               cancelable: true,
             });
 
-            skipДалее = true;
-            editor.dispatchКоманда(PASTE_COMMAND, newEvent);
+            skipNext = true;
+            editor.dispatchCommand(PASTE_COMMAND, newEvent);
             return true;
           },
           COMMAND_PRIORITY_CRITICAL,

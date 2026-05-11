@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-  Агент,
-  АдаптерОкружениеПроверитьResult,
-  КомпанияСекрет,
+  Agent,
+  AdapterEnvironmentTestResult,
+  CompanySecret,
   EnvBinding,
-  Окружение,
+  Environment,
 } from "@paperclipai/shared";
-import { AGENT_DEFAULT_MAX_CONCURRENT_RUNS, supportedОкружениеDriversForАдаптер } from "@paperclipai/shared";
-import type { АдаптерМодель } from "../api/agents";
+import { AGENT_DEFAULT_MAX_CONCURRENT_RUNS, supportedEnvironmentDriversForAdapter } from "@paperclipai/shared";
+import type { AdapterModel } from "../api/agents";
 import { agentsApi } from "../api/agents";
 import { environmentsApi } from "../api/environments";
-import { instanceНастройкиApi } from "../api/instanceНастройки";
+import { instanceSettingsApi } from "../api/instanceSettings";
 import { secretsApi } from "../api/secrets";
 import { assetsApi } from "../api/assets";
 import {
@@ -27,84 +27,84 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { ПапкаOpen, Heart, ChevronDown, X } from "lucide-react";
+import { FolderOpen, Heart, ChevronDown, X } from "lucide-react";
 import { asBoolean, asFiniteNumber, asObject, cn } from "../lib/utils";
-import { extractМодельИмя, extractПровайдерId } from "../lib/model-utils";
-import { queryКлючs } from "../lib/queryКлючs";
-import { useКомпания } from "../context/КомпанияContext";
+import { extractModelName, extractProviderId } from "../lib/model-utils";
+import { queryKeys } from "../lib/queryKeys";
+import { useCompany } from "../context/CompanyContext";
 import {
   Field,
   ToggleField,
   ToggleWithNumber,
   CollapsibleSection,
-  ЧерновикInput,
-  ЧерновикNumberInput,
+  DraftInput,
+  DraftNumberInput,
   help,
-  adapterЯрлыки,
+  adapterLabels,
 } from "./agent-config-primitives";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
-import { defaultСоздатьЗначениеs } from "./agent-config-defaults";
-import { getUIАдаптер } from "../adapters";
-import { ClaudeLocalДополнительноFields } from "../adapters/claude-local/config-fields";
-import { MarkdownИзменитьor } from "./MarkdownИзменитьor";
-import { ChooseПутьButton } from "./ПутьInstructionsModal";
+import { defaultCreateValues } from "./agent-config-defaults";
+import { getUIAdapter } from "../adapters";
+import { ClaudeLocalAdvancedFields } from "../adapters/claude-local/config-fields";
+import { MarkdownEditor } from "./MarkdownEditor";
+import { ChoosePathButton } from "./PathInstructionsModal";
 import { OpenCodeLogoIcon } from "./OpenCodeLogoIcon";
-import { РепозиторийrtsToPicker } from "./РепозиторийrtsToPicker";
-import { EnvVarИзменитьor } from "./EnvVarИзменитьor";
-import { shouldShowLegacyРаботаingDirectoryField } from "../lib/legacy-agent-config";
-import { listАдаптерOptions, listVisibleАдаптерТипs } from "../adapters/metadata";
-import { getАдаптерDisplay, getАдаптерLabel } from "../adapters/adapter-display-registry";
-import { useОтключитьdАдаптерыSync } from "../adapters/use-disabled-adapters";
-import { buildАгентОбновитьPatch, type АгентConfigOverlay } from "../lib/agent-config-patch";
-import { useАдаптерCapabilities } from "../adapters/use-adapter-capabilities";
-import { filterAcpxМодельsByАгент } from "../lib/acpx-model-filter";
+import { ReportsToPicker } from "./ReportsToPicker";
+import { EnvVarEditor } from "./EnvVarEditor";
+import { shouldShowLegacyWorkingDirectoryField } from "../lib/legacy-agent-config";
+import { listAdapterOptions, listVisibleAdapterTypes } from "../adapters/metadata";
+import { getAdapterDisplay, getAdapterLabel } from "../adapters/adapter-display-registry";
+import { useDisabledAdaptersSync } from "../adapters/use-disabled-adapters";
+import { buildAgentUpdatePatch, type AgentConfigOverlay } from "../lib/agent-config-patch";
+import { useAdapterCapabilities } from "../adapters/use-adapter-capabilities";
+import { filterAcpxModelsByAgent } from "../lib/acpx-model-filter";
 
-/* ---- Создать mode values ---- */
+/* ---- Create mode values ---- */
 
 // Canonical type lives in @paperclipai/adapter-utils; re-exported here
 // so existing imports from this file keep working.
-export type { СоздатьConfigЗначениеs } from "@paperclipai/adapter-utils";
-import type { СоздатьConfigЗначениеs } from "@paperclipai/adapter-utils";
+export type { CreateConfigValues } from "@paperclipai/adapter-utils";
+import type { CreateConfigValues } from "@paperclipai/adapter-utils";
 
 /* ---- Props ---- */
 
-type АгентConfigFormProps = {
-  adapterМодельs?: АдаптерМодель[];
+type AgentConfigFormProps = {
+  adapterModels?: AdapterModel[];
   onDirtyChange?: (dirty: boolean) => void;
-  onСохранитьActionChange?: (save: (() => void) | null) => void;
-  onОтменаActionChange?: (cancel: (() => void) | null) => void;
-  onПроверитьActionChange?: (test: (() => void) | null) => void;
-  onПроверитьActionStateChange?: (state: { disabled: boolean; pending: boolean }) => void;
-  onПроверитьFeedbackChange?: (feedback: {
+  onSaveActionChange?: (save: (() => void) | null) => void;
+  onCancelActionChange?: (cancel: (() => void) | null) => void;
+  onTestActionChange?: (test: (() => void) | null) => void;
+  onTestActionStateChange?: (state: { disabled: boolean; pending: boolean }) => void;
+  onTestFeedbackChange?: (feedback: {
     errorMessage: string | null;
-    result: АдаптерОкружениеПроверитьResult | null;
+    result: AdapterEnvironmentTestResult | null;
   }) => void;
-  hideInlineСохранить?: boolean;
-  showАдаптерТипField?: boolean;
-  showАдаптерПроверитьОкружениеButton?: boolean;
-  showСоздатьЗапуститьPolicySection?: boolean;
+  hideInlineSave?: boolean;
+  showAdapterTypeField?: boolean;
+  showAdapterTestEnvironmentButton?: boolean;
+  showCreateRunPolicySection?: boolean;
   hideInstructionsFile?: boolean;
   /** Hide the prompt template field from the Identity section (used when it's shown in a separate Prompts tab). */
   hidePromptTemplate?: boolean;
-  /** "cards" renders each section as heading + bordered card (for settings pages). По умолчанию: "inline" (border-b dividers). */
+  /** "cards" renders each section as heading + bordered card (for settings pages). Default: "inline" (border-b dividers). */
   sectionLayout?: "inline" | "cards";
 } & (
   | {
       mode: "create";
-      values: СоздатьConfigЗначениеs;
-      onChange: (patch: Partial<СоздатьConfigЗначениеs>) => void;
+      values: CreateConfigValues;
+      onChange: (patch: Partial<CreateConfigValues>) => void;
     }
   | {
       mode: "edit";
-      agent: Агент;
-      onСохранить: (patch: Record<string, unknown>) => void;
+      agent: Agent;
+      onSave: (patch: Record<string, unknown>) => void;
       isSaving?: boolean;
     }
 );
 
-/* ---- Изменить mode overlay (dirty tracking) ---- */
+/* ---- Edit mode overlay (dirty tracking) ---- */
 
-const emptyOverlay: АгентConfigOverlay = {
+const emptyOverlay: AgentConfigOverlay = {
   identity: {},
   adapterConfig: {},
   heartbeat: {},
@@ -114,14 +114,14 @@ const emptyOverlay: АгентConfigOverlay = {
 /** Stable empty object used as fallback for missing env config to avoid new-object-per-render. */
 const EMPTY_ENV: Record<string, EnvBinding> = {};
 
-function isOverlayDirty(o: АгентConfigOverlay): boolean {
+function isOverlayDirty(o: AgentConfigOverlay): boolean {
   return (
     Object.keys(o.identity).length > 0 ||
-    o.adapterТип !== undefined ||
+    o.adapterType !== undefined ||
     Object.keys(o.adapterConfig).length > 0 ||
     Object.keys(o.heartbeat).length > 0 ||
     Object.keys(o.runtime).length > 0 ||
-    o.modelПрофильs?.cheap !== undefined
+    o.modelProfiles?.cheap !== undefined
   );
 }
 
@@ -146,35 +146,35 @@ function formatArgList(value: unknown): string {
 }
 
 const codexThinkingEffortOptions = [
-  { id: "", label: "Авто" },
+  { id: "", label: "Auto" },
   { id: "minimal", label: "Minimal" },
-  { id: "low", label: "Низкий" },
-  { id: "medium", label: "Средний" },
-  { id: "high", label: "Высокий" },
-  { id: "xhigh", label: "X-Высокий" },
+  { id: "low", label: "Low" },
+  { id: "medium", label: "Medium" },
+  { id: "high", label: "High" },
+  { id: "xhigh", label: "X-High" },
 ] as const;
 
 const openCodeThinkingEffortOptions = [
-  { id: "", label: "Авто" },
+  { id: "", label: "Auto" },
   { id: "minimal", label: "Minimal" },
-  { id: "low", label: "Низкий" },
-  { id: "medium", label: "Средний" },
-  { id: "high", label: "Высокий" },
-  { id: "xhigh", label: "X-Высокий" },
+  { id: "low", label: "Low" },
+  { id: "medium", label: "Medium" },
+  { id: "high", label: "High" },
+  { id: "xhigh", label: "X-High" },
   { id: "max", label: "Max" },
 ] as const;
 
 const cursorModeOptions = [
-  { id: "", label: "Авто" },
+  { id: "", label: "Auto" },
   { id: "plan", label: "Plan" },
   { id: "ask", label: "Ask" },
 ] as const;
 
 const claudeThinkingEffortOptions = [
-  { id: "", label: "Авто" },
-  { id: "low", label: "Низкий" },
-  { id: "medium", label: "Средний" },
-  { id: "high", label: "Высокий" },
+  { id: "", label: "Auto" },
+  { id: "low", label: "Low" },
+  { id: "medium", label: "Medium" },
+  { id: "high", label: "High" },
 ] as const;
 
 const MAX_TURN_CONTINUATION_DEFAULT_MAX_ATTEMPTS = 2;
@@ -193,73 +193,73 @@ function clampDelayMsFromSeconds(value: number) {
 
 /* ---- Form ---- */
 
-export function АгентConfigForm(props: АгентConfigFormProps) {
-  const { mode, adapterМодельs: externalМодельs } = props;
-  const isСоздать = mode === "create";
+export function AgentConfigForm(props: AgentConfigFormProps) {
+  const { mode, adapterModels: externalModels } = props;
+  const isCreate = mode === "create";
   const cards = props.sectionLayout === "cards";
-  const showАдаптерТипField = props.showАдаптерТипField ?? true;
-  const showАдаптерПроверитьОкружениеButton = props.showАдаптерПроверитьОкружениеButton ?? true;
-  const showInlineАдаптерПроверитьОкружениеButton =
-    showАдаптерПроверитьОкружениеButton && !props.onПроверитьActionChange;
-  const showInlineАдаптерПроверитьОкружениеFeedback = !props.onПроверитьFeedbackChange;
-  const showСоздатьЗапуститьPolicySection = props.showСоздатьЗапуститьPolicySection ?? true;
+  const showAdapterTypeField = props.showAdapterTypeField ?? true;
+  const showAdapterTestEnvironmentButton = props.showAdapterTestEnvironmentButton ?? true;
+  const showInlineAdapterTestEnvironmentButton =
+    showAdapterTestEnvironmentButton && !props.onTestActionChange;
+  const showInlineAdapterTestEnvironmentFeedback = !props.onTestFeedbackChange;
+  const showCreateRunPolicySection = props.showCreateRunPolicySection ?? true;
   const hideInstructionsFile = props.hideInstructionsFile ?? false;
-  const { selectedКомпанияId } = useКомпания();
+  const { selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
 
   // Sync disabled adapter types from server so dropdown filters them out
-  const disabledТипs = useОтключитьdАдаптерыSync();
+  const disabledTypes = useDisabledAdaptersSync();
 
-  const { data: availableСекреты = [] } = useQuery({
-    queryКлюч: selectedКомпанияId ? queryКлючs.secrets.list(selectedКомпанияId) : ["secrets", "none"],
-    queryFn: () => secretsApi.list(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+  const { data: availableSecrets = [] } = useQuery({
+    queryKey: selectedCompanyId ? queryKeys.secrets.list(selectedCompanyId) : ["secrets", "none"],
+    queryFn: () => secretsApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
   });
-  const { data: experimentalНастройки } = useQuery({
-    queryКлюч: queryКлючs.instance.experimentalНастройки,
-    queryFn: () => instanceНастройкиApi.getExperimental(),
+  const { data: experimentalSettings } = useQuery({
+    queryKey: queryKeys.instance.experimentalSettings,
+    queryFn: () => instanceSettingsApi.getExperimental(),
     retry: false,
   });
-  const environmentsВключитьd = experimentalНастройки?.enableОкружения === true;
+  const environmentsEnabled = experimentalSettings?.enableEnvironments === true;
 
-  const { data: environments = [] } = useQuery<Окружение[]>({
-    queryКлюч: selectedКомпанияId ? queryКлючs.environments.list(selectedКомпанияId) : ["environments", "none"],
-    queryFn: () => environmentsApi.list(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId) && environmentsВключитьd,
+  const { data: environments = [] } = useQuery<Environment[]>({
+    queryKey: selectedCompanyId ? queryKeys.environments.list(selectedCompanyId) : ["environments", "none"],
+    queryFn: () => environmentsApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId) && environmentsEnabled,
   });
-  const createСекрет = useMutation({
+  const createSecret = useMutation({
     mutationFn: (input: { name: string; value: string }) => {
-      if (!selectedКомпанияId) throw new Ошибка("Select a company to create secrets");
-      return secretsApi.create(selectedКомпанияId, input);
+      if (!selectedCompanyId) throw new Error("Select a company to create secrets");
+      return secretsApi.create(selectedCompanyId, input);
     },
-    onУспешно: () => {
-      if (!selectedКомпанияId) return;
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.secrets.list(selectedКомпанияId) });
+    onSuccess: () => {
+      if (!selectedCompanyId) return;
+      queryClient.invalidateQueries({ queryKey: queryKeys.secrets.list(selectedCompanyId) });
     },
   });
 
   const uploadMarkdownImage = useMutation({
     mutationFn: async ({ file, namespace }: { file: File; namespace: string }) => {
-      if (!selectedКомпанияId) throw new Ошибка("Select a company to upload images");
-      return assetsApi.uploadImage(selectedКомпанияId, file, namespace);
+      if (!selectedCompanyId) throw new Error("Select a company to upload images");
+      return assetsApi.uploadImage(selectedCompanyId, file, namespace);
     },
   });
 
-  // ---- Изменить mode: overlay for dirty tracking ----
-  const [overlay, setOverlay] = useState<АгентConfigOverlay>(emptyOverlay);
-  const agentRef = useRef<Агент | null>(null);
+  // ---- Edit mode: overlay for dirty tracking ----
+  const [overlay, setOverlay] = useState<AgentConfigOverlay>(emptyOverlay);
+  const agentRef = useRef<Agent | null>(null);
 
-  // Очистить overlay when agent data refreshes (after save)
+  // Clear overlay when agent data refreshes (after save)
   useEffect(() => {
-    if (!isСоздать) {
+    if (!isCreate) {
       if (agentRef.current !== null && props.agent !== agentRef.current) {
         setOverlay({ ...emptyOverlay });
       }
       agentRef.current = props.agent;
     }
-  }, [isСоздать, !isСоздать ? props.agent : undefined]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isCreate, !isCreate ? props.agent : undefined]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const isDirty = !isСоздать && isOverlayDirty(overlay);
+  const isDirty = !isCreate && isOverlayDirty(overlay);
 
   type RecordOverlayGroup = "identity" | "adapterConfig" | "heartbeat" | "runtime";
 
@@ -279,134 +279,134 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
   }
 
   /** Build accumulated patch and send to parent */
-  const handleОтмена = useCallback(() => {
+  const handleCancel = useCallback(() => {
     setOverlay({ ...emptyOverlay });
   }, []);
 
-  const handleСохранить = useCallback(() => {
-    if (isСоздать || !isDirty) return;
-    props.onСохранить(buildАгентОбновитьPatch(props.agent, overlay));
-  }, [isСоздать, isDirty, overlay, props]);
+  const handleSave = useCallback(() => {
+    if (isCreate || !isDirty) return;
+    props.onSave(buildAgentUpdatePatch(props.agent, overlay));
+  }, [isCreate, isDirty, overlay, props]);
 
   useEffect(() => {
-    if (!isСоздать) {
+    if (!isCreate) {
       props.onDirtyChange?.(isDirty);
-      props.onСохранитьActionChange?.(handleСохранить);
-      props.onОтменаActionChange?.(handleОтмена);
+      props.onSaveActionChange?.(handleSave);
+      props.onCancelActionChange?.(handleCancel);
     }
-  }, [isСоздать, isDirty, props.onDirtyChange, props.onСохранитьActionChange, props.onОтменаActionChange, handleСохранить, handleОтмена]);
+  }, [isCreate, isDirty, props.onDirtyChange, props.onSaveActionChange, props.onCancelActionChange, handleSave, handleCancel]);
 
   useEffect(() => {
-    if (isСоздать) return;
+    if (isCreate) return;
     return () => {
-      props.onСохранитьActionChange?.(null);
-      props.onОтменаActionChange?.(null);
+      props.onSaveActionChange?.(null);
+      props.onCancelActionChange?.(null);
       props.onDirtyChange?.(false);
     };
-  }, [isСоздать, props.onDirtyChange, props.onСохранитьActionChange, props.onОтменаActionChange]);
+  }, [isCreate, props.onDirtyChange, props.onSaveActionChange, props.onCancelActionChange]);
 
   // ---- Resolve values ----
-  const config = !isСоздать ? ((props.agent.adapterConfig ?? {}) as Record<string, unknown>) : {};
-  const runtimeConfig = !isСоздать ? ((props.agent.runtimeConfig ?? {}) as Record<string, unknown>) : {};
-  const heartbeat = !isСоздать ? ((runtimeConfig.heartbeat ?? {}) as Record<string, unknown>) : {};
+  const config = !isCreate ? ((props.agent.adapterConfig ?? {}) as Record<string, unknown>) : {};
+  const runtimeConfig = !isCreate ? ((props.agent.runtimeConfig ?? {}) as Record<string, unknown>) : {};
+  const heartbeat = !isCreate ? ((runtimeConfig.heartbeat ?? {}) as Record<string, unknown>) : {};
 
-  const adapterТип = isСоздать
-    ? props.values.adapterТип
-    : overlay.adapterТип ?? props.agent.adapterТип;
-  const getCapabilities = useАдаптерCapabilities();
-  const adapterCaps = getCapabilities(adapterТип);
-  const isLocal = adapterCaps.supportsInstructionsBundle || adapterCaps.supportsНавыки || adapterCaps.supportsLocalАгентJwt;
+  const adapterType = isCreate
+    ? props.values.adapterType
+    : overlay.adapterType ?? props.agent.adapterType;
+  const getCapabilities = useAdapterCapabilities();
+  const adapterCaps = getCapabilities(adapterType);
+  const isLocal = adapterCaps.supportsInstructionsBundle || adapterCaps.supportsSkills || adapterCaps.supportsLocalAgentJwt;
   
-  const showLegacyРаботаingDirectoryField =
-    isLocal && shouldShowLegacyРаботаingDirectoryField({ isСоздать, adapterConfig: config });
-  const uiАдаптер = useMemo(() => getUIАдаптер(adapterТип), [adapterТип]);
-  const supportedОкружениеDrivers = useMemo(
-    () => new Set(supportedОкружениеDriversForАдаптер(adapterТип)),
-    [adapterТип],
+  const showLegacyWorkingDirectoryField =
+    isLocal && shouldShowLegacyWorkingDirectoryField({ isCreate, adapterConfig: config });
+  const uiAdapter = useMemo(() => getUIAdapter(adapterType), [adapterType]);
+  const supportedEnvironmentDrivers = useMemo(
+    () => new Set(supportedEnvironmentDriversForAdapter(adapterType)),
+    [adapterType],
   );
-  const val = isСоздать ? props.values : null;
-  const set = isСоздать
-    ? (patch: Partial<СоздатьConfigЗначениеs>) => props.onChange(patch)
+  const val = isCreate ? props.values : null;
+  const set = isCreate
+    ? (patch: Partial<CreateConfigValues>) => props.onChange(patch)
     : null;
-  const currentПо умолчаниюОкружениеId = isСоздать
-    ? val!.defaultОкружениеId ?? ""
-    : eff("identity", "defaultОкружениеId", props.agent.defaultОкружениеId ?? "");
-  const currentПо умолчаниюОкружение = useMemo(
-    () => environments.find((environment) => environment.id === currentПо умолчаниюОкружениеId) ?? null,
-    [currentПо умолчаниюОкружениеId, environments],
+  const currentDefaultEnvironmentId = isCreate
+    ? val!.defaultEnvironmentId ?? ""
+    : eff("identity", "defaultEnvironmentId", props.agent.defaultEnvironmentId ?? "");
+  const currentDefaultEnvironment = useMemo(
+    () => environments.find((environment) => environment.id === currentDefaultEnvironmentId) ?? null,
+    [currentDefaultEnvironmentId, environments],
   );
-  const runnableОкружения = useMemo(
+  const runnableEnvironments = useMemo(
     () => environments.filter((environment) => {
-      if (!supportedОкружениеDrivers.has(environment.driver)) return false;
+      if (!supportedEnvironmentDrivers.has(environment.driver)) return false;
       if (environment.driver !== "sandbox") return true;
       const provider = typeof environment.config?.provider === "string" ? environment.config.provider : null;
       return provider !== null && provider !== "fake";
     }),
-    [environments, supportedОкружениеDrivers],
+    [environments, supportedEnvironmentDrivers],
   );
 
   // Fetch adapter models for the effective adapter type
-  const modelQueryКлюч = selectedКомпанияId
-    ? queryКлючs.agents.adapterМодельs(selectedКомпанияId, adapterТип, currentПо умолчаниюОкружениеId || null)
-    : ["agents", "none", "adapter-models", adapterТип];
+  const modelQueryKey = selectedCompanyId
+    ? queryKeys.agents.adapterModels(selectedCompanyId, adapterType, currentDefaultEnvironmentId || null)
+    : ["agents", "none", "adapter-models", adapterType];
   const {
-    data: fetchedМодельs,
-    error: fetchedМодельsОшибка,
+    data: fetchedModels,
+    error: fetchedModelsError,
   } = useQuery({
-    queryКлюч: modelQueryКлюч,
-    queryFn: () => agentsApi.adapterМодельs(selectedКомпанияId!, adapterТип, {
-      environmentId: currentПо умолчаниюОкружениеId || null,
+    queryKey: modelQueryKey,
+    queryFn: () => agentsApi.adapterModels(selectedCompanyId!, adapterType, {
+      environmentId: currentDefaultEnvironmentId || null,
     }),
-    enabled: Boolean(selectedКомпанияId),
+    enabled: Boolean(selectedCompanyId),
   });
-  const [refreshМодельsОшибка, setОбновитьМодельsОшибка] = useState<string | null>(null);
-  const [refreshingМодельs, setОбновитьingМодельs] = useState(false);
-  const rawМодельs = fetchedМодельs ?? externalМодельs ?? [];
-  const adapterКомандаField =
-    adapterТип === "hermes_local" ? "hermesКоманда" : "command";
-  const acpxАгент =
-    adapterТип === "acpx_local"
-      ? isСоздать
-        ? String(val!.adapterSchemaЗначениеs?.agent ?? "claude")
+  const [refreshModelsError, setRefreshModelsError] = useState<string | null>(null);
+  const [refreshingModels, setRefreshingModels] = useState(false);
+  const rawModels = fetchedModels ?? externalModels ?? [];
+  const adapterCommandField =
+    adapterType === "hermes_local" ? "hermesCommand" : "command";
+  const acpxAgent =
+    adapterType === "acpx_local"
+      ? isCreate
+        ? String(val!.adapterSchemaValues?.agent ?? "claude")
         : eff("adapterConfig", "agent", String(config.agent ?? "claude"))
       : "";
   const models = useMemo(
-    () => adapterТип === "acpx_local"
-      ? filterAcpxМодельsByАгент(rawМодельs, acpxАгент)
-      : rawМодельs,
-    [adapterТип, rawМодельs, acpxАгент],
+    () => adapterType === "acpx_local"
+      ? filterAcpxModelsByAgent(rawModels, acpxAgent)
+      : rawModels,
+    [adapterType, rawModels, acpxAgent],
   );
   const {
-    data: detectedМодельData,
-    refetch: refetchDetectedМодель,
+    data: detectedModelData,
+    refetch: refetchDetectedModel,
   } = useQuery({
-    queryКлюч: selectedКомпанияId
-      ? queryКлючs.agents.detectМодель(selectedКомпанияId, adapterТип)
-      : ["agents", "none", "detect-model", adapterТип],
+    queryKey: selectedCompanyId
+      ? queryKeys.agents.detectModel(selectedCompanyId, adapterType)
+      : ["agents", "none", "detect-model", adapterType],
     queryFn: () => {
-      if (!selectedКомпанияId) {
-        throw new Ошибка("Select a company to detect the model");
+      if (!selectedCompanyId) {
+        throw new Error("Select a company to detect the model");
       }
-      return agentsApi.detectМодель(selectedКомпанияId, adapterТип);
+      return agentsApi.detectModel(selectedCompanyId, adapterType);
     },
-    enabled: Boolean(selectedКомпанияId && isLocal && adapterТип !== "opencode_local"),
+    enabled: Boolean(selectedCompanyId && isLocal && adapterType !== "opencode_local"),
   });
-  const detectedМодель = detectedМодельData?.model ?? null;
-  const detectedМодельCandidates = detectedМодельData?.candidates ?? [];
+  const detectedModel = detectedModelData?.model ?? null;
+  const detectedModelCandidates = detectedModelData?.candidates ?? [];
 
-  const { data: companyАгенты = [] } = useQuery({
-    queryКлюч: selectedКомпанияId ? queryКлючs.agents.list(selectedКомпанияId) : ["agents", "none", "list"],
-    queryFn: () => agentsApi.list(selectedКомпанияId!),
-    enabled: Boolean(!isСоздать && selectedКомпанияId),
+  const { data: companyAgents = [] } = useQuery({
+    queryKey: selectedCompanyId ? queryKeys.agents.list(selectedCompanyId) : ["agents", "none", "list"],
+    queryFn: () => agentsApi.list(selectedCompanyId!),
+    enabled: Boolean(!isCreate && selectedCompanyId),
   });
 
   /** Props passed to adapter-specific config field components */
   const adapterFieldProps = {
     mode,
-    isСоздать,
-    adapterТип,
-    values: isСоздать ? props.values : null,
-    set: isСоздать ? (patch: Partial<СоздатьConfigЗначениеs>) => props.onChange(patch) : null,
+    isCreate,
+    adapterType,
+    values: isCreate ? props.values : null,
+    set: isCreate ? (patch: Partial<CreateConfigValues>) => props.onChange(patch) : null,
     config,
     eff: eff as <T>(group: "adapterConfig", field: string, original: T) => T,
     mark: mark as (group: "adapterConfig", field: string, value: unknown) => void,
@@ -415,239 +415,239 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
   };
 
   // Section toggle state — advanced always starts collapsed
-  const [runPolicyДополнительноOpen, setЗапуститьPolicyДополнительноOpen] = useState(false);
+  const [runPolicyAdvancedOpen, setRunPolicyAdvancedOpen] = useState(false);
   // Popover states
-  const [modelOpen, setМодельOpen] = useState(false);
-  const [cheapМодельOpen, setCheapМодельOpen] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [cheapModelOpen, setCheapModelOpen] = useState(false);
   const [thinkingEffortOpen, setThinkingEffortOpen] = useState(false);
 
   // Cheap model profile state — only relevant when the adapter advertises
-  // `supportsМодельПрофильs`. По умолчаниюs are sourced from the adapter's
+  // `supportsModelProfiles`. Defaults are sourced from the adapter's
   // /model-profiles endpoint so the UI does not encode adapter-specific
   // cheap defaults.
-  const supportsМодельПрофильs = adapterCaps.supportsМодельПрофильs;
-  const { data: adapterCheapПрофильDefinitions } = useQuery({
-    queryКлюч: selectedКомпанияId
-      ? queryКлючs.agents.adapterМодельПрофильs(selectedКомпанияId, adapterТип)
-      : ["agents", "none", "adapter-model-profiles", adapterТип],
-    queryFn: () => agentsApi.adapterМодельПрофильs(selectedКомпанияId!, adapterТип),
-    enabled: Boolean(selectedКомпанияId) && supportsМодельПрофильs,
+  const supportsModelProfiles = adapterCaps.supportsModelProfiles;
+  const { data: adapterCheapProfileDefinitions } = useQuery({
+    queryKey: selectedCompanyId
+      ? queryKeys.agents.adapterModelProfiles(selectedCompanyId, adapterType)
+      : ["agents", "none", "adapter-model-profiles", adapterType],
+    queryFn: () => agentsApi.adapterModelProfiles(selectedCompanyId!, adapterType),
+    enabled: Boolean(selectedCompanyId) && supportsModelProfiles,
   });
-  const adapterCheapПо умолчанию = useMemo(() => {
-    return (adapterCheapПрофильDefinitions ?? []).find((profile) => profile.key === "cheap") ?? null;
-  }, [adapterCheapПрофильDefinitions]);
-  const adapterCheapПо умолчаниюМодель = useMemo(() => {
-    const adapterConfig = adapterCheapПо умолчанию?.adapterConfig ?? {};
+  const adapterCheapDefault = useMemo(() => {
+    return (adapterCheapProfileDefinitions ?? []).find((profile) => profile.key === "cheap") ?? null;
+  }, [adapterCheapProfileDefinitions]);
+  const adapterCheapDefaultModel = useMemo(() => {
+    const adapterConfig = adapterCheapDefault?.adapterConfig ?? {};
     const value = (adapterConfig as Record<string, unknown>).model;
     return typeof value === "string" ? value : "";
-  }, [adapterCheapПо умолчанию]);
+  }, [adapterCheapDefault]);
 
-  function buildАдаптерConfigForПроверить(): Record<string, unknown> {
-    if (isСоздать) {
-      return uiАдаптер.buildАдаптерConfig(val!);
+  function buildAdapterConfigForTest(): Record<string, unknown> {
+    if (isCreate) {
+      return uiAdapter.buildAdapterConfig(val!);
     }
     const base = config as Record<string, unknown>;
     const next = { ...base, ...overlay.adapterConfig };
-    if (adapterТип === "hermes_local") {
-      const hermesКоманда =
-        typeof next.hermesКоманда === "string" && next.hermesКоманда.length > 0
-          ? next.hermesКоманда
+    if (adapterType === "hermes_local") {
+      const hermesCommand =
+        typeof next.hermesCommand === "string" && next.hermesCommand.length > 0
+          ? next.hermesCommand
           : typeof next.command === "string" && next.command.length > 0
             ? next.command
             : undefined;
-      if (hermesКоманда) {
-        next.hermesКоманда = hermesКоманда;
+      if (hermesCommand) {
+        next.hermesCommand = hermesCommand;
       }
     }
     return next;
   }
 
-  const testОкружение = useMutation({
+  const testEnvironment = useMutation({
     mutationFn: async () => {
-      if (!selectedКомпанияId) {
-        throw new Ошибка("Select a company to test adapter environment");
+      if (!selectedCompanyId) {
+        throw new Error("Select a company to test adapter environment");
       }
-      return agentsApi.testОкружение(selectedКомпанияId, adapterТип, {
-        adapterConfig: buildАдаптерConfigForПроверить(),
-        environmentId: currentПо умолчаниюОкружениеId || null,
+      return agentsApi.testEnvironment(selectedCompanyId, adapterType, {
+        adapterConfig: buildAdapterConfigForTest(),
+        environmentId: currentDefaultEnvironmentId || null,
       });
     },
   });
-  const testОкружениеОтключитьd = testОкружение.isОжидание || !selectedКомпанияId;
-  const triggerПроверитьОкружение = useCallback(() => {
-    if (testОкружениеОтключитьd) return;
-    testОкружение.mutate();
-  }, [testОкружение.mutate, testОкружениеОтключитьd]);
+  const testEnvironmentDisabled = testEnvironment.isPending || !selectedCompanyId;
+  const triggerTestEnvironment = useCallback(() => {
+    if (testEnvironmentDisabled) return;
+    testEnvironment.mutate();
+  }, [testEnvironment.mutate, testEnvironmentDisabled]);
 
   useEffect(() => {
-    if (!showАдаптерПроверитьОкружениеButton || !props.onПроверитьActionChange) return;
-    props.onПроверитьActionChange(triggerПроверитьОкружение);
+    if (!showAdapterTestEnvironmentButton || !props.onTestActionChange) return;
+    props.onTestActionChange(triggerTestEnvironment);
     return () => {
-      props.onПроверитьActionChange?.(null);
+      props.onTestActionChange?.(null);
     };
-  }, [showАдаптерПроверитьОкружениеButton, props.onПроверитьActionChange, triggerПроверитьОкружение]);
+  }, [showAdapterTestEnvironmentButton, props.onTestActionChange, triggerTestEnvironment]);
 
   useEffect(() => {
-    if (!showАдаптерПроверитьОкружениеButton || !props.onПроверитьActionStateChange) return;
-    props.onПроверитьActionStateChange({
-      disabled: testОкружениеОтключитьd,
-      pending: testОкружение.isОжидание,
+    if (!showAdapterTestEnvironmentButton || !props.onTestActionStateChange) return;
+    props.onTestActionStateChange({
+      disabled: testEnvironmentDisabled,
+      pending: testEnvironment.isPending,
     });
     return () => {
-      props.onПроверитьActionStateChange?.({ disabled: true, pending: false });
+      props.onTestActionStateChange?.({ disabled: true, pending: false });
     };
   }, [
-    showАдаптерПроверитьОкружениеButton,
-    props.onПроверитьActionStateChange,
-    testОкружениеОтключитьd,
-    testОкружение.isОжидание,
+    showAdapterTestEnvironmentButton,
+    props.onTestActionStateChange,
+    testEnvironmentDisabled,
+    testEnvironment.isPending,
   ]);
 
   useEffect(() => {
-    if (!props.onПроверитьFeedbackChange) return;
-    props.onПроверитьFeedbackChange({
-      errorMessage: testОкружение.error instanceof Ошибка
-        ? testОкружение.error.message
-        : testОкружение.error
-          ? "Окружение test failed"
+    if (!props.onTestFeedbackChange) return;
+    props.onTestFeedbackChange({
+      errorMessage: testEnvironment.error instanceof Error
+        ? testEnvironment.error.message
+        : testEnvironment.error
+          ? "Environment test failed"
           : null,
-      result: testОкружение.data ?? null,
+      result: testEnvironment.data ?? null,
     });
     return () => {
-      props.onПроверитьFeedbackChange?.({ errorMessage: null, result: null });
+      props.onTestFeedbackChange?.({ errorMessage: null, result: null });
     };
-  }, [props.onПроверитьFeedbackChange, testОкружение.data, testОкружение.error]);
+  }, [props.onTestFeedbackChange, testEnvironment.data, testEnvironment.error]);
 
   // Current model for display
-  const currentМодельId = isСоздать
+  const currentModelId = isCreate
     ? val!.model
     : eff("adapterConfig", "model", String(config.model ?? ""));
 
-  async function handleОбновитьМодельs() {
-    if (!selectedКомпанияId) return;
-    setОбновитьingМодельs(true);
-    setОбновитьМодельsОшибка(null);
+  async function handleRefreshModels() {
+    if (!selectedCompanyId) return;
+    setRefreshingModels(true);
+    setRefreshModelsError(null);
     try {
-      const refreshed = await agentsApi.adapterМодельs(selectedКомпанияId, adapterТип, { refresh: true });
-      queryClient.setQueryData(modelQueryКлюч, refreshed);
+      const refreshed = await agentsApi.adapterModels(selectedCompanyId, adapterType, { refresh: true });
+      queryClient.setQueryData(modelQueryKey, refreshed);
     } catch (error) {
-      setОбновитьМодельsОшибка(error instanceof Ошибка ? error.message : "Ошибка to refresh adapter models.");
+      setRefreshModelsError(error instanceof Error ? error.message : "Failed to refresh adapter models.");
     } finally {
-      setОбновитьingМодельs(false);
+      setRefreshingModels(false);
     }
   }
 
-  const thinkingEffortКлюч =
-    adapterТип === "codex_local"
+  const thinkingEffortKey =
+    adapterType === "codex_local"
       ? "modelReasoningEffort"
-      : adapterТип === "acpx_local" && acpxАгент === "codex"
+      : adapterType === "acpx_local" && acpxAgent === "codex"
         ? "modelReasoningEffort"
-        : adapterТип === "cursor"
+        : adapterType === "cursor"
           ? "mode"
-          : adapterТип === "opencode_local"
+          : adapterType === "opencode_local"
             ? "variant"
             : "effort";
   const thinkingEffortOptions =
-    adapterТип === "codex_local"
+    adapterType === "codex_local"
       ? codexThinkingEffortOptions
-      : adapterТип === "acpx_local" && acpxАгент === "codex"
+      : adapterType === "acpx_local" && acpxAgent === "codex"
         ? codexThinkingEffortOptions
-        : adapterТип === "cursor"
+        : adapterType === "cursor"
           ? cursorModeOptions
-          : adapterТип === "opencode_local"
+          : adapterType === "opencode_local"
             ? openCodeThinkingEffortOptions
             : claudeThinkingEffortOptions;
-  const currentThinkingEffort = isСоздать
+  const currentThinkingEffort = isCreate
     ? val!.thinkingEffort
-    : adapterТип === "codex_local"
+    : adapterType === "codex_local"
       ? eff(
           "adapterConfig",
           "modelReasoningEffort",
           String(config.modelReasoningEffort ?? config.reasoningEffort ?? ""),
         )
-      : adapterТип === "acpx_local" && acpxАгент === "codex"
+      : adapterType === "acpx_local" && acpxAgent === "codex"
         ? eff(
             "adapterConfig",
             "modelReasoningEffort",
             String(config.modelReasoningEffort ?? config.reasoningEffort ?? config.effort ?? ""),
           )
-        : adapterТип === "cursor"
+        : adapterType === "cursor"
           ? eff("adapterConfig", "mode", String(config.mode ?? ""))
-          : adapterТип === "opencode_local"
+          : adapterType === "opencode_local"
             ? eff("adapterConfig", "variant", String(config.variant ?? ""))
             : eff("adapterConfig", "effort", String(config.effort ?? ""));
-  const showThinkingEffort = adapterТип !== "gemini_local" && adapterТип !== "cursor_cloud";
-  const codexПоискВключитьd = adapterТип === "codex_local"
-    ? (isСоздать ? Boolean(val!.search) : eff("adapterConfig", "search", Boolean(config.search)))
+  const showThinkingEffort = adapterType !== "gemini_local" && adapterType !== "cursor_cloud";
+  const codexSearchEnabled = adapterType === "codex_local"
+    ? (isCreate ? Boolean(val!.search) : eff("adapterConfig", "search", Boolean(config.search)))
     : false;
-  // Cheap profile read/write helpers. Изменить-mode values come from
-  // runtimeConfig.modelПрофильs.cheap with overlay overrides on top; create-mode
-  // values come straight from СоздатьConfigЗначениеs (cheapМодель + cheapМодельВключитьd).
-  const cheapПрофильFromАгент = useMemo(() => {
-    const profiles = (runtimeConfig.modelПрофильs ?? {}) as Record<string, unknown>;
+  // Cheap profile read/write helpers. Edit-mode values come from
+  // runtimeConfig.modelProfiles.cheap with overlay overrides on top; create-mode
+  // values come straight from CreateConfigValues (cheapModel + cheapModelEnabled).
+  const cheapProfileFromAgent = useMemo(() => {
+    const profiles = (runtimeConfig.modelProfiles ?? {}) as Record<string, unknown>;
     const cheap = (profiles.cheap ?? {}) as Record<string, unknown>;
-    const cheapАдаптерConfig = (cheap.adapterConfig ?? {}) as Record<string, unknown>;
+    const cheapAdapterConfig = (cheap.adapterConfig ?? {}) as Record<string, unknown>;
     return {
       enabled: cheap.enabled !== false,
-      model: typeof cheapАдаптерConfig.model === "string" ? cheapАдаптерConfig.model : "",
+      model: typeof cheapAdapterConfig.model === "string" ? cheapAdapterConfig.model : "",
     };
   }, [runtimeConfig]);
-  const cheapOverlay = !isСоздать ? overlay.modelПрофильs?.cheap : undefined;
-  const currentCheapВключитьd = isСоздать
-    ? val!.cheapМодельВключитьd ?? false
-    : cheapOverlay?.enabled ?? cheapПрофильFromАгент.enabled;
-  const currentCheapМодель = isСоздать
-    ? val!.cheapМодель ?? ""
+  const cheapOverlay = !isCreate ? overlay.modelProfiles?.cheap : undefined;
+  const currentCheapEnabled = isCreate
+    ? val!.cheapModelEnabled ?? false
+    : cheapOverlay?.enabled ?? cheapProfileFromAgent.enabled;
+  const currentCheapModel = isCreate
+    ? val!.cheapModel ?? ""
     : (() => {
-        const overlayМодель = (cheapOverlay?.adapterConfig as Record<string, unknown> | undefined)?.model;
-        if (typeof overlayМодель === "string") return overlayМодель;
-        return cheapПрофильFromАгент.model;
+        const overlayModel = (cheapOverlay?.adapterConfig as Record<string, unknown> | undefined)?.model;
+        if (typeof overlayModel === "string") return overlayModel;
+        return cheapProfileFromAgent.model;
       })();
 
-  function setCheapВключитьd(next: boolean) {
-    if (isСоздать) {
-      set!({ cheapМодельВключитьd: next });
+  function setCheapEnabled(next: boolean) {
+    if (isCreate) {
+      set!({ cheapModelEnabled: next });
       return;
     }
     setOverlay((prev) => ({
       ...prev,
-      modelПрофильs: {
+      modelProfiles: {
         cheap: {
-          ...(prev.modelПрофильs?.cheap ?? {}),
+          ...(prev.modelProfiles?.cheap ?? {}),
           enabled: next,
         },
       },
     }));
   }
 
-  function setCheapМодель(next: string) {
-    if (isСоздать) {
-      set!({ cheapМодель: next });
+  function setCheapModel(next: string) {
+    if (isCreate) {
+      set!({ cheapModel: next });
       return;
     }
     setOverlay((prev) => {
-      const existing = prev.modelПрофильs?.cheap ?? {};
-      const nextАдаптерConfig = {
+      const existing = prev.modelProfiles?.cheap ?? {};
+      const nextAdapterConfig = {
         ...((existing.adapterConfig ?? {}) as Record<string, unknown>),
         model: next || undefined,
       };
       return {
         ...prev,
-        modelПрофильs: {
+        modelProfiles: {
           cheap: {
             ...existing,
-            adapterConfig: nextАдаптерConfig,
+            adapterConfig: nextAdapterConfig,
           },
         },
       };
     });
   }
 
-  const effectiveЗапуститьtimeConfig = useMemo(() => {
-    if (isСоздать) {
+  const effectiveRuntimeConfig = useMemo(() => {
+    if (isCreate) {
       return {
         heartbeat: {
-          enabled: val!.heartbeatВключитьd,
+          enabled: val!.heartbeatEnabled,
           intervalSec: val!.intervalSec,
         },
       };
@@ -662,10 +662,10 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
       ...runtimeConfig,
       heartbeat: mergedHeartbeat,
     };
-  }, [isСоздать, overlay.heartbeat, runtimeConfig, val]);
-  const effectiveHeartbeat = asObject(effectiveЗапуститьtimeConfig.heartbeat);
+  }, [isCreate, overlay.heartbeat, runtimeConfig, val]);
+  const effectiveHeartbeat = asObject(effectiveRuntimeConfig.heartbeat);
   const maxTurnContinuation = asObject(effectiveHeartbeat.maxTurnContinuation);
-  const maxTurnContinuationВключитьd = asBoolean(maxTurnContinuation.enabled, true);
+  const maxTurnContinuationEnabled = asBoolean(maxTurnContinuation.enabled, true);
   const maxTurnContinuationMaxAttempts = clampInteger(
     asFiniteNumber(maxTurnContinuation.maxAttempts, MAX_TURN_CONTINUATION_DEFAULT_MAX_ATTEMPTS),
     0,
@@ -685,77 +685,77 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
   }
 
   return (
-    <div classИмя={cn("relative", cards && "space-y-6")}>
-      {/* ---- Floating Сохранить button (edit mode, when dirty) ---- */}
-      {isDirty && !props.hideInlineСохранить && (
-        <div classИмя="sticky top-0 z-10 flex items-center justify-end px-4 py-2 bg-background/90 backdrop-blur-sm border-b border-primary/20">
-          <div classИмя="flex items-center gap-3">
-            <span classИмя="text-xs text-muted-foreground">Unsaved changes</span>
+    <div className={cn("relative", cards && "space-y-6")}>
+      {/* ---- Floating Save button (edit mode, when dirty) ---- */}
+      {isDirty && !props.hideInlineSave && (
+        <div className="sticky top-0 z-10 flex items-center justify-end px-4 py-2 bg-background/90 backdrop-blur-sm border-b border-primary/20">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">Unsaved changes</span>
             <Button
               size="sm"
-              onClick={handleСохранить}
-              disabled={!isСоздать && props.isSaving}
+              onClick={handleSave}
+              disabled={!isCreate && props.isSaving}
             >
-              {!isСоздать && props.isSaving ? "Saving..." : "Сохранить"}
+              {!isCreate && props.isSaving ? "Saving..." : "Сохранить"}
             </Button>
           </div>
         </div>
       )}
 
       {/* ---- Identity (edit only) ---- */}
-      {!isСоздать && (
-        <div classИмя={cn(!cards && "border-b border-border")}>
+      {!isCreate && (
+        <div className={cn(!cards && "border-b border-border")}>
           {cards
-            ? <h3 classИмя="text-sm font-medium mb-3">Identity</h3>
-            : <div classИмя="px-4 py-2 text-xs font-medium text-muted-foreground">Identity</div>
+            ? <h3 className="text-sm font-medium mb-3">Identity</h3>
+            : <div className="px-4 py-2 text-xs font-medium text-muted-foreground">Identity</div>
           }
-          <div classИмя={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
+          <div className={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
             <Field label="Имя" hint={help.name}>
-              <ЧерновикInput
+              <DraftInput
                 value={eff("identity", "name", props.agent.name)}
                 onCommit={(v) => mark("identity", "name", v)}
                 immediate
-                classИмя={inputClass}
-                placeholder="Агент name"
+                className={inputClass}
+                placeholder="Agent name"
               />
             </Field>
             <Field label="Название" hint={help.title}>
-              <ЧерновикInput
+              <DraftInput
                 value={eff("identity", "title", props.agent.title ?? "")}
                 onCommit={(v) => mark("identity", "title", v || null)}
                 immediate
-                classИмя={inputClass}
-                placeholder="e.g. VP of Инженерing"
+                className={inputClass}
+                placeholder="e.g. VP of Engineering"
               />
             </Field>
-            <Field label="Репозиторийrts to" hint={help.reportsTo}>
-              <РепозиторийrtsToPicker
-                agents={companyАгенты}
+            <Field label="Reports to" hint={help.reportsTo}>
+              <ReportsToPicker
+                agents={companyAgents}
                 value={eff("identity", "reportsTo", props.agent.reportsTo ?? null)}
                 onChange={(id) => mark("identity", "reportsTo", id)}
-                excludeАгентIds={[props.agent.id]}
+                excludeAgentIds={[props.agent.id]}
                 chooseLabel="Choose manager…"
               />
             </Field>
             <Field label="Capabilities" hint={help.capabilities}>
-              <MarkdownИзменитьor
+              <MarkdownEditor
                 value={eff("identity", "capabilities", props.agent.capabilities ?? "") ?? ""}
                 onChange={(v) => mark("identity", "capabilities", v || null)}
                 placeholder="Describe what this agent can do..."
-                contentClassИмя="min-h-[44px] text-sm font-mono"
-                imageЗагрузитьHandler={async (file) => {
+                contentClassName="min-h-[44px] text-sm font-mono"
+                imageUploadHandler={async (file) => {
                   const asset = await uploadMarkdownImage.mutateAsync({
                     file,
                     namespace: `agents/${props.agent.id}/capabilities`,
                   });
-                  return asset.contentПуть;
+                  return asset.contentPath;
                 }}
               />
             </Field>
             {isLocal && !props.hidePromptTemplate && (
               <>
                 <Field label="Prompt Template" hint={help.promptTemplate}>
-                  <MarkdownИзменитьor
+                  <MarkdownEditor
                     value={eff(
                       "adapterConfig",
                       "promptTemplate",
@@ -763,15 +763,15 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                     )}
                     onChange={(v) => mark("adapterConfig", "promptTemplate", v ?? "")}
                     placeholder="You are agent {{ agent.name }}. Your role is {{ agent.role }}..."
-                    contentClassИмя="min-h-[88px] text-sm font-mono"
-                    imageЗагрузитьHandler={async (file) => {
+                    contentClassName="min-h-[88px] text-sm font-mono"
+                    imageUploadHandler={async (file) => {
                       const namespace = `agents/${props.agent.id}/prompt-template`;
                       const asset = await uploadMarkdownImage.mutateAsync({ file, namespace });
-                      return asset.contentПуть;
+                      return asset.contentPath;
                     }}
                   />
                 </Field>
-                <div classИмя="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                <div className="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
                   Prompt template is replayed on every heartbeat. Keep it compact and dynamic to avoid recurring token cost and cache churn.
                 </div>
               </>
@@ -781,31 +781,31 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
       )}
 
       {/* ---- Execution ---- */}
-      {environmentsВключитьd ? (
-        <div classИмя={cn(!cards && (isСоздать ? "border-t border-border" : "border-b border-border"))}>
+      {environmentsEnabled ? (
+        <div className={cn(!cards && (isCreate ? "border-t border-border" : "border-b border-border"))}>
           {cards
-            ? <h3 classИмя="text-sm font-medium mb-3">Execution</h3>
-            : <div classИмя="px-4 py-2 text-xs font-medium text-muted-foreground">Execution</div>
+            ? <h3 className="text-sm font-medium mb-3">Execution</h3>
+            : <div className="px-4 py-2 text-xs font-medium text-muted-foreground">Execution</div>
           }
-          <div classИмя={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
+          <div className={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
             <Field
-              label="По умолчанию environment"
-              hint="Агент-level default execution target. Project and issue settings can still override this."
+              label="Default environment"
+              hint="Agent-level default execution target. Project and issue settings can still override this."
             >
               <select
-                classИмя={inputClass}
-                value={currentПо умолчаниюОкружениеId}
+                className={inputClass}
+                value={currentDefaultEnvironmentId}
                 onChange={(event) => {
-                  const nextЗначение = event.target.value;
-                  if (isСоздать) {
-                    set!({ defaultОкружениеId: nextЗначение });
+                  const nextValue = event.target.value;
+                  if (isCreate) {
+                    set!({ defaultEnvironmentId: nextValue });
                     return;
                   }
-                  mark("identity", "defaultОкружениеId", nextЗначение || null);
+                  mark("identity", "defaultEnvironmentId", nextValue || null);
                 }}
               >
-                <option value="">Компания default (Local)</option>
-                {runnableОкружения.map((environment) => (
+                <option value="">Company default (Local)</option>
+                {runnableEnvironments.map((environment) => (
                   <option key={environment.id} value={environment.id}>
                     {environment.name} · {environment.driver}
                   </option>
@@ -816,56 +816,56 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
         </div>
       ) : null}
 
-      {/* ---- Адаптер ---- */}
-      <div classИмя={cn(!cards && (isСоздать ? "border-t border-border" : "border-b border-border"))}>
-        <div classИмя={cn(cards ? "flex items-center justify-between mb-3" : "px-4 py-2 flex items-center justify-between gap-2")}>
+      {/* ---- Adapter ---- */}
+      <div className={cn(!cards && (isCreate ? "border-t border-border" : "border-b border-border"))}>
+        <div className={cn(cards ? "flex items-center justify-between mb-3" : "px-4 py-2 flex items-center justify-between gap-2")}>
           {cards
-            ? <h3 classИмя="text-sm font-medium">Адаптер</h3>
-            : <span classИмя="text-xs font-medium text-muted-foreground">Адаптер</span>
+            ? <h3 className="text-sm font-medium">Adapter</h3>
+            : <span className="text-xs font-medium text-muted-foreground">Adapter</span>
           }
-          {showInlineАдаптерПроверитьОкружениеButton && (
+          {showInlineAdapterTestEnvironmentButton && (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              classИмя="h-7 px-2.5 text-xs"
-              onClick={triggerПроверитьОкружение}
-              disabled={testОкружениеОтключитьd}
+              className="h-7 px-2.5 text-xs"
+              onClick={triggerTestEnvironment}
+              disabled={testEnvironmentDisabled}
             >
-              {testОкружение.isОжидание ? "Проверитьing..." : "Проверить"}
+              {testEnvironment.isPending ? "Testing..." : "Проверить"}
             </Button>
           )}
         </div>
-        <div classИмя={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
-          {showАдаптерТипField && (
-            <Field label="Адаптер type" hint={help.adapterТип}>
-              <АдаптерТипDropdown
-                value={adapterТип}
-                disabledТипs={disabledТипs}
+        <div className={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
+          {showAdapterTypeField && (
+            <Field label="Adapter type" hint={help.adapterType}>
+              <AdapterTypeDropdown
+                value={adapterType}
+                disabledTypes={disabledTypes}
                 onChange={(t) => {
-                  if (isСоздать) {
-                    // Сбросить all adapter-specific fields to defaults when switching adapter type
-                    const { adapterТип: _at, ...defaults } = defaultСоздатьЗначениеs;
-                    const nextЗначениеs: СоздатьConfigЗначениеs = { ...defaults, adapterТип: t };
+                  if (isCreate) {
+                    // Reset all adapter-specific fields to defaults when switching adapter type
+                    const { adapterType: _at, ...defaults } = defaultCreateValues;
+                    const nextValues: CreateConfigValues = { ...defaults, adapterType: t };
                     if (t === "codex_local") {
-                      nextЗначениеs.model = DEFAULT_CODEX_LOCAL_MODEL;
-                      nextЗначениеs.dangerouslyBypassSandbox =
+                      nextValues.model = DEFAULT_CODEX_LOCAL_MODEL;
+                      nextValues.dangerouslyBypassSandbox =
                         DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX;
                     } else if (t === "gemini_local") {
-                      nextЗначениеs.model = DEFAULT_GEMINI_LOCAL_MODEL;
+                      nextValues.model = DEFAULT_GEMINI_LOCAL_MODEL;
                     } else if (t === "cursor") {
-                      nextЗначениеs.model = DEFAULT_CURSOR_LOCAL_MODEL;
+                      nextValues.model = DEFAULT_CURSOR_LOCAL_MODEL;
                     } else if (t === "opencode_local") {
-                      nextЗначениеs.model = DEFAULT_OPENCODE_LOCAL_MODEL;
+                      nextValues.model = DEFAULT_OPENCODE_LOCAL_MODEL;
                     }
-                    set!(nextЗначениеs);
+                    set!(nextValues);
                   } else {
-                    // Очистить all adapter config and explicitly blank out model + effort/mode keys
+                    // Clear all adapter config and explicitly blank out model + effort/mode keys
                     // so the old adapter's values don't bleed through via eff()
                     setOverlay((prev) => ({
                       ...prev,
-                      adapterТип: t,
-                      modelПрофильs: { cheap: { cleared: true } },
+                      adapterType: t,
+                      modelProfiles: { cheap: { cleared: true } },
                       adapterConfig: {
                         model:
                           t === "codex_local"
@@ -883,7 +883,7 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                         mode: "",
                         ...(t === "codex_local"
                           ? {
-                              dangerouslyBypassСогласованияAndSandbox:
+                              dangerouslyBypassApprovalsAndSandbox:
                                 DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX,
                             }
                           : {}),
@@ -895,78 +895,78 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
             </Field>
           )}
 
-          {showInlineАдаптерПроверитьОкружениеFeedback && testОкружение.error && (
-            <div classИмя="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {testОкружение.error instanceof Ошибка
-                ? testОкружение.error.message
-                : "Окружение test failed"}
+          {showInlineAdapterTestEnvironmentFeedback && testEnvironment.error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {testEnvironment.error instanceof Error
+                ? testEnvironment.error.message
+                : "Environment test failed"}
             </div>
           )}
 
-          {showInlineАдаптерПроверитьОкружениеFeedback && testОкружение.data && (
-            <АдаптерОкружениеResult result={testОкружение.data} />
+          {showInlineAdapterTestEnvironmentFeedback && testEnvironment.data && (
+            <AdapterEnvironmentResult result={testEnvironment.data} />
           )}
 
-          {/* Рабочая директория */}
-          {showLegacyРаботаingDirectoryField && (
-            <Field label="Рабочая директория (deprecated)" hint={help.cwd}>
-              <div classИмя="flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5">
-                <ПапкаOpen classИмя="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <ЧерновикInput
+          {/* Working directory */}
+          {showLegacyWorkingDirectoryField && (
+            <Field label="Working directory (deprecated)" hint={help.cwd}>
+              <div className="flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5">
+                <FolderOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <DraftInput
                   value={
-                    isСоздать
+                    isCreate
                       ? val!.cwd
                       : eff("adapterConfig", "cwd", String(config.cwd ?? ""))
                   }
                   onCommit={(v) =>
-                    isСоздать
+                    isCreate
                       ? set!({ cwd: v })
                       : mark("adapterConfig", "cwd", v || undefined)
                   }
                   immediate
-                  classИмя="w-full bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40"
+                  className="w-full bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40"
                   placeholder="/path/to/project"
                 />
-                <ChooseПутьButton />
+                <ChoosePathButton />
               </div>
             </Field>
           )}
 
-          {/* Адаптер-specific fields are rendered inside Permissions & Конфигурация */}
+          {/* Adapter-specific fields are rendered inside Permissions & Configuration */}
         </div>
 
       </div>
 
-      {/* ---- Permissions & Конфигурация ---- */}
+      {/* ---- Permissions & Configuration ---- */}
       {isLocal && (
-        <div classИмя={cn(!cards && "border-b border-border")}>
+        <div className={cn(!cards && "border-b border-border")}>
           {cards
-            ? <h3 classИмя="text-sm font-medium mb-3">Permissions &amp; Конфигурация</h3>
-            : <div classИмя="px-4 py-2 text-xs font-medium text-muted-foreground">Permissions &amp; Конфигурация</div>
+            ? <h3 className="text-sm font-medium mb-3">Permissions &amp; Configuration</h3>
+            : <div className="px-4 py-2 text-xs font-medium text-muted-foreground">Permissions &amp; Configuration</div>
           }
-          <div classИмя={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
-              <Field label="Команда" hint={help.localКоманда}>
-                <ЧерновикInput
+          <div className={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
+              <Field label="Command" hint={help.localCommand}>
+                <DraftInput
                   value={
-                    isСоздать
+                    isCreate
                       ? val!.command
                       : eff(
                           "adapterConfig",
-                          adapterКомандаField,
+                          adapterCommandField,
                           String(
-                            (adapterТип === "hermes_local"
-                              ? config.hermesКоманда ?? config.command
+                            (adapterType === "hermes_local"
+                              ? config.hermesCommand ?? config.command
                               : config.command) ?? "",
                           ),
                         )
                   }
                   onCommit={(v) =>
-                    isСоздать
+                    isCreate
                       ? set!({ command: v })
-                      : mark("adapterConfig", adapterКомандаField, v || null)
+                      : mark("adapterConfig", adapterCommandField, v || null)
                   }
                   immediate
-                  classИмя={inputClass}
+                  className={inputClass}
                   placeholder={
                     ({
                       claude_local: "claude",
@@ -975,72 +975,72 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                       pi_local: "pi",
                       cursor: "agent",
                       opencode_local: "opencode",
-                    } as Record<string, string>)[adapterТип] ?? adapterТип.replace(/_local$/, "")
+                    } as Record<string, string>)[adapterType] ?? adapterType.replace(/_local$/, "")
                   }
                 />
               </Field>
 
-              {supportsМодельПрофильs && (
-                <div classИмя="text-[11px] uppercase tracking-wide text-muted-foreground">Primary model</div>
+              {supportsModelProfiles && (
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Primary model</div>
               )}
-              <МодельDropdown
+              <ModelDropdown
                 models={models}
-                value={currentМодельId}
+                value={currentModelId}
                 onChange={(v) =>
-                  isСоздать
+                  isCreate
                     ? set!({ model: v })
                     : mark("adapterConfig", "model", v || undefined)
                 }
                 open={modelOpen}
-                onOpenChange={setМодельOpen}
-                allowПо умолчанию={adapterТип !== "opencode_local"}
-                required={adapterТип === "opencode_local"}
-                groupByПровайдер={adapterТип === "opencode_local"}
+                onOpenChange={setModelOpen}
+                allowDefault={adapterType !== "opencode_local"}
+                required={adapterType === "opencode_local"}
+                groupByProvider={adapterType === "opencode_local"}
                 creatable
-                detectedМодель={detectedМодель}
-                detectedМодельCandidates={[]}
-                onDetectМодель={adapterТип === "opencode_local"
+                detectedModel={detectedModel}
+                detectedModelCandidates={[]}
+                onDetectModel={adapterType === "opencode_local"
                   ? undefined
                   : async () => {
-                      const result = await refetchDetectedМодель();
+                      const result = await refetchDetectedModel();
                       return result.data?.model ?? null;
                     }}
-                onОбновитьМодельs={
-                  adapterТип === "codex_local" || adapterТип === "acpx_local"
-                    ? handleОбновитьМодельs
+                onRefreshModels={
+                  adapterType === "codex_local" || adapterType === "acpx_local"
+                    ? handleRefreshModels
                     : undefined
                 }
-                refreshingМодельs={refreshingМодельs}
-                detectМодельLabel="Detect model"
-                emptyDetectHint="Нет model detected. Select or enter one manually."
+                refreshingModels={refreshingModels}
+                detectModelLabel="Detect model"
+                emptyDetectHint="No model detected. Select or enter one manually."
               />
-              {(refreshМодельsОшибка || fetchedМодельsОшибка) && (
-                <p classИмя="text-xs text-destructive">
-                  {refreshМодельsОшибка
-                    ?? (fetchedМодельsОшибка instanceof Ошибка
-                      ? fetchedМодельsОшибка.message
-                      : "Ошибка to load adapter models.")}
+              {(refreshModelsError || fetchedModelsError) && (
+                <p className="text-xs text-destructive">
+                  {refreshModelsError
+                    ?? (fetchedModelsError instanceof Error
+                      ? fetchedModelsError.message
+                      : "Failed to load adapter models.")}
                 </p>
               )}
-              {adapterТип === "opencode_local"
-                && currentПо умолчаниюОкружение
-                && currentПо умолчаниюОкружение.driver !== "local" && (
-                <p classИмя="text-xs text-muted-foreground">
-                  Live OpenCode model discovery only runs for Local environments. Using the curated list and manual entry for {currentПо умолчаниюОкружение.name}.
+              {adapterType === "opencode_local"
+                && currentDefaultEnvironment
+                && currentDefaultEnvironment.driver !== "local" && (
+                <p className="text-xs text-muted-foreground">
+                  Live OpenCode model discovery only runs for Local environments. Using the curated list and manual entry for {currentDefaultEnvironment.name}.
                 </p>
               )}
 
-              {supportsМодельПрофильs && (
-                <CheapМодельSection
-                  enabled={currentCheapВключитьd}
-                  model={currentCheapМодель}
+              {supportsModelProfiles && (
+                <CheapModelSection
+                  enabled={currentCheapEnabled}
+                  model={currentCheapModel}
                   models={models}
-                  adapterТип={adapterТип}
-                  adapterПо умолчаниюМодель={adapterCheapПо умолчаниюМодель}
-                  onВключитьdChange={setCheapВключитьd}
-                  onМодельChange={setCheapМодель}
-                  open={cheapМодельOpen}
-                  onOpenChange={setCheapМодельOpen}
+                  adapterType={adapterType}
+                  adapterDefaultModel={adapterCheapDefaultModel}
+                  onEnabledChange={setCheapEnabled}
+                  onModelChange={setCheapModel}
+                  open={cheapModelOpen}
+                  onOpenChange={setCheapModelOpen}
                 />
               )}
 
@@ -1050,26 +1050,26 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                     value={currentThinkingEffort}
                     options={thinkingEffortOptions}
                     onChange={(v) =>
-                      isСоздать
+                      isCreate
                         ? set!({ thinkingEffort: v })
-                        : mark("adapterConfig", thinkingEffortКлюч, v || undefined)
+                        : mark("adapterConfig", thinkingEffortKey, v || undefined)
                     }
                     open={thinkingEffortOpen}
                     onOpenChange={setThinkingEffortOpen}
                   />
-                  {adapterТип === "codex_local" &&
-                    codexПоискВключитьd &&
+                  {adapterType === "codex_local" &&
+                    codexSearchEnabled &&
                     currentThinkingEffort === "minimal" && (
-                      <p classИмя="text-xs text-amber-400">
+                      <p className="text-xs text-amber-400">
                         Codex may reject `minimal` thinking when search is enabled.
                       </p>
                     )}
                 </>
               )}
-              {!isСоздать && typeof config.bootstrapPromptTemplate === "string" && config.bootstrapPromptTemplate && (
+              {!isCreate && typeof config.bootstrapPromptTemplate === "string" && config.bootstrapPromptTemplate && (
                 <>
                   <Field label="Bootstrap prompt (legacy)" hint={help.bootstrapPrompt}>
-                    <MarkdownИзменитьor
+                    <MarkdownEditor
                       value={eff(
                         "adapterConfig",
                         "bootstrapPromptTemplate",
@@ -1078,69 +1078,69 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                       onChange={(v) =>
                         mark("adapterConfig", "bootstrapPromptTemplate", v || undefined)
                       }
-                      placeholder="Опционально initial setup prompt for the first run"
-                      contentClassИмя="min-h-[44px] text-sm font-mono"
-                      imageЗагрузитьHandler={async (file) => {
+                      placeholder="Optional initial setup prompt for the first run"
+                      contentClassName="min-h-[44px] text-sm font-mono"
+                      imageUploadHandler={async (file) => {
                         const namespace = `agents/${props.agent.id}/bootstrap-prompt`;
                         const asset = await uploadMarkdownImage.mutateAsync({ file, namespace });
-                        return asset.contentПуть;
+                        return asset.contentPath;
                       }}
                     />
                   </Field>
-                  <div classИмя="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                  <div className="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                     Bootstrap prompt is legacy and will be removed in a future release. Consider moving this content into the agent&apos;s prompt template or instructions file instead.
                   </div>
                 </>
               )}
-              {adapterТип === "claude_local" && (
-                <ClaudeLocalДополнительноFields {...adapterFieldProps} />
+              {adapterType === "claude_local" && (
+                <ClaudeLocalAdvancedFields {...adapterFieldProps} />
               )}
-              <uiАдаптер.ConfigFields {...adapterFieldProps} />
+              <uiAdapter.ConfigFields {...adapterFieldProps} />
 
               <Field label="Extra args (comma-separated)" hint={help.extraArgs}>
-                <ЧерновикInput
+                <DraftInput
                   value={
-                    isСоздать
+                    isCreate
                       ? val!.extraArgs
                       : eff("adapterConfig", "extraArgs", formatArgList(config.extraArgs))
                   }
                   onCommit={(v) =>
-                    isСоздать
+                    isCreate
                       ? set!({ extraArgs: v })
                       : mark("adapterConfig", "extraArgs", v?.trim() ? parseCommaArgs(v) : null)
                   }
                   immediate
-                  classИмя={inputClass}
+                  className={inputClass}
                   placeholder="e.g. --verbose, --foo=bar"
                 />
               </Field>
 
-              <Field label="Окружение variables" hint={help.envVars}>
-                <EnvVarИзменитьor
+              <Field label="Environment variables" hint={help.envVars}>
+                <EnvVarEditor
                   value={
-                    isСоздать
+                    isCreate
                       ? ((val!.envBindings ?? EMPTY_ENV) as Record<string, EnvBinding>)
                       : ((eff("adapterConfig", "env", (config.env ?? EMPTY_ENV) as Record<string, EnvBinding>))
                       )
                   }
-                  secrets={availableСекреты}
-                  onСоздатьСекрет={async (name, value) => {
-                    const created = await createСекрет.mutateAsync({ name, value });
+                  secrets={availableSecrets}
+                  onCreateSecret={async (name, value) => {
+                    const created = await createSecret.mutateAsync({ name, value });
                     return created;
                   }}
                   onChange={(env) =>
-                    isСоздать
+                    isCreate
                       ? set!({ envBindings: env ?? {}, envVars: "" })
                       : mark("adapterConfig", "env", env)
                   }
                 />
               </Field>
 
-              {/* Изменить-only: timeout + grace period */}
-              {!isСоздать && (
+              {/* Edit-only: timeout + grace period */}
+              {!isCreate && (
                 <>
                   <Field label="Timeout (sec)" hint={help.timeoutSec}>
-                    <ЧерновикNumberInput
+                    <DraftNumberInput
                       value={eff(
                         "adapterConfig",
                         "timeoutSec",
@@ -1148,11 +1148,11 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                       )}
                       onCommit={(v) => mark("adapterConfig", "timeoutSec", v)}
                       immediate
-                      classИмя={inputClass}
+                      className={inputClass}
                     />
                   </Field>
                   <Field label="Interrupt grace period (sec)" hint={help.graceSec}>
-                    <ЧерновикNumberInput
+                    <DraftNumberInput
                       value={eff(
                         "adapterConfig",
                         "graceSec",
@@ -1160,7 +1160,7 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                       )}
                       onCommit={(v) => mark("adapterConfig", "graceSec", v)}
                       immediate
-                      classИмя={inputClass}
+                      className={inputClass}
                     />
                   </Field>
                 </>
@@ -1169,36 +1169,36 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
         </div>
       )}
 
-      {/* ---- Запустить Policy ---- */}
-      {isСоздать && showСоздатьЗапуститьPolicySection ? (
-        <div classИмя={cn(!cards && "border-b border-border")}>
+      {/* ---- Run Policy ---- */}
+      {isCreate && showCreateRunPolicySection ? (
+        <div className={cn(!cards && "border-b border-border")}>
           {cards
-            ? <h3 classИмя="text-sm font-medium flex items-center gap-2 mb-3"><Heart classИмя="h-3 w-3" /> Запустить Policy</h3>
-            : <div classИмя="px-4 py-2 text-xs font-medium text-muted-foreground flex items-center gap-2"><Heart classИмя="h-3 w-3" /> Запустить Policy</div>
+            ? <h3 className="text-sm font-medium flex items-center gap-2 mb-3"><Heart className="h-3 w-3" /> Run Policy</h3>
+            : <div className="px-4 py-2 text-xs font-medium text-muted-foreground flex items-center gap-2"><Heart className="h-3 w-3" /> Run Policy</div>
           }
-          <div classИмя={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
+          <div className={cn(cards ? "border border-border rounded-lg p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
             <ToggleWithNumber
               label="Heartbeat on interval"
               hint={help.heartbeatInterval}
-              checked={val!.heartbeatВключитьd}
-              onCheckedChange={(v) => set!({ heartbeatВключитьd: v })}
+              checked={val!.heartbeatEnabled}
+              onCheckedChange={(v) => set!({ heartbeatEnabled: v })}
               number={val!.intervalSec}
               onNumberChange={(v) => set!({ intervalSec: v })}
               numberLabel="sec"
-              numberPrefix="Запустить heartbeat every"
+              numberPrefix="Run heartbeat every"
               numberHint={help.intervalSec}
-              showNumber={val!.heartbeatВключитьd}
+              showNumber={val!.heartbeatEnabled}
             />
           </div>
         </div>
-      ) : !isСоздать ? (
-        <div classИмя={cn(!cards && "border-b border-border")}>
+      ) : !isCreate ? (
+        <div className={cn(!cards && "border-b border-border")}>
           {cards
-            ? <h3 classИмя="text-sm font-medium flex items-center gap-2 mb-3"><Heart classИмя="h-3 w-3" /> Запустить Policy</h3>
-            : <div classИмя="px-4 py-2 text-xs font-medium text-muted-foreground flex items-center gap-2"><Heart classИмя="h-3 w-3" /> Запустить Policy</div>
+            ? <h3 className="text-sm font-medium flex items-center gap-2 mb-3"><Heart className="h-3 w-3" /> Run Policy</h3>
+            : <div className="px-4 py-2 text-xs font-medium text-muted-foreground flex items-center gap-2"><Heart className="h-3 w-3" /> Run Policy</div>
           }
-          <div classИмя={cn(cards ? "border border-border rounded-lg overflow-hidden" : "")}>
-            <div classИмя={cn(cards ? "p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
+          <div className={cn(cards ? "border border-border rounded-lg overflow-hidden" : "")}>
+            <div className={cn(cards ? "p-4 space-y-3" : "px-4 pb-3 space-y-3")}>
               <ToggleWithNumber
                 label="Heartbeat on interval"
                 hint={help.heartbeatInterval}
@@ -1207,18 +1207,18 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                 number={eff("heartbeat", "intervalSec", Number(heartbeat.intervalSec ?? 300))}
                 onNumberChange={(v) => mark("heartbeat", "intervalSec", v)}
                 numberLabel="sec"
-                numberPrefix="Запустить heartbeat every"
+                numberPrefix="Run heartbeat every"
                 numberHint={help.intervalSec}
                 showNumber={eff("heartbeat", "enabled", heartbeat.enabled === true)}
               />
             </div>
             <CollapsibleSection
-              title="Дополнительно Запустить Policy"
+              title="Advanced Run Policy"
               bordered={cards}
-              open={runPolicyДополнительноOpen}
-              onToggle={() => setЗапуститьPolicyДополнительноOpen(!runPolicyДополнительноOpen)}
+              open={runPolicyAdvancedOpen}
+              onToggle={() => setRunPolicyAdvancedOpen(!runPolicyAdvancedOpen)}
             >
-            <div classИмя="space-y-3">
+            <div className="space-y-3">
               <ToggleField
                 label="Wake on demand"
                 hint={help.wakeOnDemand}
@@ -1230,7 +1230,7 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                 onChange={(v) => mark("heartbeat", "wakeOnDemand", v)}
               />
               <Field label="Cooldown (sec)" hint={help.cooldownSec}>
-                <ЧерновикNumberInput
+                <DraftNumberInput
                   value={eff(
                     "heartbeat",
                     "cooldownSec",
@@ -1238,50 +1238,50 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
                   )}
                   onCommit={(v) => mark("heartbeat", "cooldownSec", v)}
                   immediate
-                  classИмя={inputClass}
+                  className={inputClass}
                 />
               </Field>
-              <Field label="Max concurrent runs" hint={help.maxConcurrentЗапуститьs}>
-                <ЧерновикNumberInput
+              <Field label="Max concurrent runs" hint={help.maxConcurrentRuns}>
+                <DraftNumberInput
                   value={eff(
                     "heartbeat",
-                    "maxConcurrentЗапуститьs",
-                    Number(heartbeat.maxConcurrentЗапуститьs ?? AGENT_DEFAULT_MAX_CONCURRENT_RUNS),
+                    "maxConcurrentRuns",
+                    Number(heartbeat.maxConcurrentRuns ?? AGENT_DEFAULT_MAX_CONCURRENT_RUNS),
                   )}
-                  onCommit={(v) => mark("heartbeat", "maxConcurrentЗапуститьs", v)}
+                  onCommit={(v) => mark("heartbeat", "maxConcurrentRuns", v)}
                   immediate
-                  classИмя={inputClass}
+                  className={inputClass}
                 />
               </Field>
-              <div classИмя="rounded-md border border-border/70 px-3 py-2">
+              <div className="rounded-md border border-border/70 px-3 py-2">
                 <ToggleField
-                  label="Продолжить after max-turn stop"
-                  hint={help.maxTurnContinuationВключитьd}
-                  checked={maxTurnContinuationВключитьd}
+                  label="Continue after max-turn stop"
+                  hint={help.maxTurnContinuationEnabled}
+                  checked={maxTurnContinuationEnabled}
                   onChange={(v) => updateMaxTurnContinuation({ enabled: v })}
                 />
-                {maxTurnContinuationВключитьd ? (
-                  <div classИмя="mt-3 grid gap-3 sm:grid-cols-2">
+                {maxTurnContinuationEnabled ? (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <Field label="Continuation attempts" hint={help.maxTurnContinuationMaxAttempts}>
-                      <ЧерновикNumberInput
+                      <DraftNumberInput
                         value={maxTurnContinuationMaxAttempts}
                         onCommit={(v) =>
                           updateMaxTurnContinuation({
                             maxAttempts: clampInteger(v, 0, MAX_TURN_CONTINUATION_MAX_ATTEMPTS_CAP),
                           })}
                         immediate
-                        classИмя={inputClass}
+                        className={inputClass}
                       />
                     </Field>
                     <Field label="Continuation delay (sec)" hint={help.maxTurnContinuationDelaySec}>
-                      <ЧерновикNumberInput
+                      <DraftNumberInput
                         value={maxTurnContinuationDelaySec}
                         onCommit={(v) =>
                           updateMaxTurnContinuation({
                             delayMs: clampDelayMsFromSeconds(v),
                           })}
                         immediate
-                        classИмя={inputClass}
+                        className={inputClass}
                       />
                     </Field>
                   </div>
@@ -1297,9 +1297,9 @@ export function АгентConfigForm(props: АгентConfigFormProps) {
   );
 }
 
-export function АдаптерОкружениеResult({ result }: { result: АдаптерОкружениеПроверитьResult }) {
+export function AdapterEnvironmentResult({ result }: { result: AdapterEnvironmentTestResult }) {
   const statusLabel =
-    result.status === "pass" ? "Passed" : result.status === "warn" ? "Предупреждениеs" : "Ошибка";
+    result.status === "pass" ? "Passed" : result.status === "warn" ? "Warnings" : "Ошибка";
   const statusClass =
     result.status === "pass"
       ? "text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/40 bg-green-50 dark:bg-green-500/10"
@@ -1308,23 +1308,23 @@ export function АдаптерОкружениеResult({ result }: { result: А�
         : "text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10";
 
   return (
-    <div classИмя={`rounded-md border px-3 py-2 text-xs ${statusClass}`}>
-      <div classИмя="flex items-center justify-between gap-2">
-        <span classИмя="font-medium">{statusLabel}</span>
-        <span classИмя="text-[11px] opacity-80">
+    <div className={`rounded-md border px-3 py-2 text-xs ${statusClass}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium">{statusLabel}</span>
+        <span className="text-[11px] opacity-80">
           {new Date(result.testedAt).toLocaleTimeString()}
         </span>
       </div>
-      <div classИмя="mt-2 space-y-1.5">
+      <div className="mt-2 space-y-1.5">
         {result.checks.map((check, idx) => (
-          <div key={`${check.code}-${idx}`} classИмя="text-[11px] leading-relaxed break-words">
-            <span classИмя="font-medium uppercase tracking-wide opacity-80">
+          <div key={`${check.code}-${idx}`} className="text-[11px] leading-relaxed break-words">
+            <span className="font-medium uppercase tracking-wide opacity-80">
               {check.level}
             </span>
-            <span classИмя="mx-1 opacity-60">·</span>
+            <span className="mx-1 opacity-60">·</span>
             <span>{check.message}</span>
-            {check.detail && <span classИмя="block opacity-75 break-all">({check.detail})</span>}
-            {check.hint && <span classИмя="block opacity-90 break-words">Hint: {check.hint}</span>}
+            {check.detail && <span className="block opacity-75 break-all">({check.detail})</span>}
+            {check.hint && <span className="block opacity-90 break-words">Hint: {check.hint}</span>}
           </div>
         ))}
       </div>
@@ -1334,43 +1334,43 @@ export function АдаптерОкружениеResult({ result }: { result: А�
 
 /* ---- Internal sub-components ---- */
 
-function АдаптерТипDropdown({
+function AdapterTypeDropdown({
   value,
   onChange,
-  disabledТипs,
+  disabledTypes,
 }: {
   value: string;
   onChange: (type: string) => void;
-  disabledТипs: Set<string>;
+  disabledTypes: Set<string>;
 }) {
   const [open, setOpen] = useState(false);
-  const selectedDisplay = getАдаптерDisplay(value);
+  const selectedDisplay = getAdapterDisplay(value);
   const adapterList = useMemo(
     () =>
-      listАдаптерOptions((type) => adapterЯрлыки[type] ?? getАдаптерLabel(type)).filter(
-        (item) => !disabledТипs.has(item.value),
+      listAdapterOptions((type) => adapterLabels[type] ?? getAdapterLabel(type)).filter(
+        (item) => !disabledTypes.has(item.value),
       ),
-    [disabledТипs],
+    [disabledTypes],
   );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
-          <span classИмя="inline-flex min-w-0 items-center gap-1.5">
-            {value === "opencode_local" ? <OpenCodeLogoIcon classИмя="h-3.5 w-3.5" /> : null}
-            <span classИмя="truncate">{adapterЯрлыки[value] ?? getАдаптерLabel(value)}</span>
+        <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            {value === "opencode_local" ? <OpenCodeLogoIcon className="h-3.5 w-3.5" /> : null}
+            <span className="truncate">{adapterLabels[value] ?? getAdapterLabel(value)}</span>
             {selectedDisplay.experimental && <ExperimentalBadge />}
           </span>
-          <ChevronDown classИмя="h-3 w-3 text-muted-foreground" />
+          <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent classИмя="w-[var(--radix-popover-trigger-width)] p-1" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1" align="start">
         {adapterList.map((item) => (
           <button
             key={item.value}
             disabled={item.comingSoon}
-            classИмя={cn(
+            className={cn(
               "flex items-center justify-between w-full px-2 py-1.5 text-sm rounded",
               item.comingSoon
                 ? "opacity-40 cursor-not-allowed"
@@ -1384,13 +1384,13 @@ function АдаптерТипDropdown({
               }
             }}
           >
-            <span classИмя="inline-flex items-center gap-1.5">
-              {item.value === "opencode_local" ? <OpenCodeLogoIcon classИмя="h-3.5 w-3.5" /> : null}
+            <span className="inline-flex items-center gap-1.5">
+              {item.value === "opencode_local" ? <OpenCodeLogoIcon className="h-3.5 w-3.5" /> : null}
               <span>{item.label}</span>
               {item.experimental && <ExperimentalBadge />}
             </span>
             {item.comingSoon && (
-              <span classИмя="text-[10px] text-muted-foreground">Скоро</span>
+              <span className="text-[10px] text-muted-foreground">Coming soon</span>
             )}
           </button>
         ))}
@@ -1401,93 +1401,93 @@ function АдаптерТипDropdown({
 
 function ExperimentalBadge() {
   return (
-    <span classИмя="shrink-0 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-amber-700 dark:text-amber-200">
+    <span className="shrink-0 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-amber-700 dark:text-amber-200">
       Experimental
     </span>
   );
 }
 
-function МодельDropdown({
+function ModelDropdown({
   models,
   value,
   onChange,
   open,
   onOpenChange,
-  allowПо умолчанию,
+  allowDefault,
   required,
-  groupByПровайдер,
+  groupByProvider,
   creatable,
-  detectedМодель,
-  detectedМодельCandidates,
-  onDetectМодель,
-  onОбновитьМодельs,
-  refreshingМодельs,
-  detectМодельLabel,
+  detectedModel,
+  detectedModelCandidates,
+  onDetectModel,
+  onRefreshModels,
+  refreshingModels,
+  detectModelLabel,
   emptyDetectHint,
   defaultLabel,
 }: {
-  models: АдаптерМодель[];
+  models: AdapterModel[];
   value: string;
   onChange: (id: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  allowПо умолчанию: boolean;
+  allowDefault: boolean;
   required: boolean;
-  groupByПровайдер: boolean;
+  groupByProvider: boolean;
   creatable?: boolean;
-  detectedМодель?: string | null;
-  detectedМодельCandidates?: string[];
-  onDetectМодель?: () => Promise<string | null>;
-  onОбновитьМодельs?: () => Promise<void>;
-  refreshingМодельs?: boolean;
-  detectМодельLabel?: string;
+  detectedModel?: string | null;
+  detectedModelCandidates?: string[];
+  onDetectModel?: () => Promise<string | null>;
+  onRefreshModels?: () => Promise<void>;
+  refreshingModels?: boolean;
+  detectModelLabel?: string;
   emptyDetectHint?: string;
   defaultLabel?: string;
 }) {
-  const [modelПоиск, setМодельПоиск] = useState("");
-  const [detectingМодель, setDetectingМодель] = useState(false);
+  const [modelSearch, setModelSearch] = useState("");
+  const [detectingModel, setDetectingModel] = useState(false);
   const selected = models.find((m) => m.id === value);
-  const manualМодель = modelПоиск.trim();
-  const canСоздатьManualМодель = Boolean(
+  const manualModel = modelSearch.trim();
+  const canCreateManualModel = Boolean(
     creatable &&
-      manualМодель &&
-      !models.some((m) => m.id.toНизкийerCase() === manualМодель.toНизкийerCase()),
+      manualModel &&
+      !models.some((m) => m.id.toLowerCase() === manualModel.toLowerCase()),
   );
-  // Модель IDs already shown as detected/candidate badges — exclude from regular list
-  const promotedМодельIds = useMemo(() => {
+  // Model IDs already shown as detected/candidate badges — exclude from regular list
+  const promotedModelIds = useMemo(() => {
     const set = new Set<string>();
-    if (detectedМодель) set.add(detectedМодель);
-    for (const c of detectedМодельCandidates ?? []) {
+    if (detectedModel) set.add(detectedModel);
+    for (const c of detectedModelCandidates ?? []) {
       if (c) set.add(c);
     }
     return set;
-  }, [detectedМодель, detectedМодельCandidates]);
+  }, [detectedModel, detectedModelCandidates]);
 
-  const filteredМодельs = useMemo(() => {
+  const filteredModels = useMemo(() => {
     return models.filter((m) => {
-      if (promotedМодельIds.has(m.id)) return false;
-      if (!modelПоиск.trim()) return true;
-      const q = modelПоиск.toНизкийerCase();
-      const provider = extractПровайдерId(m.id) ?? "";
+      if (promotedModelIds.has(m.id)) return false;
+      if (!modelSearch.trim()) return true;
+      const q = modelSearch.toLowerCase();
+      const provider = extractProviderId(m.id) ?? "";
       return (
-        m.id.toНизкийerCase().includes(q) ||
-        m.label.toНизкийerCase().includes(q) ||
-        provider.toНизкийerCase().includes(q)
+        m.id.toLowerCase().includes(q) ||
+        m.label.toLowerCase().includes(q) ||
+        provider.toLowerCase().includes(q)
       );
     });
-  }, [models, modelПоиск, promotedМодельIds]);
-  const groupedМодельs = useMemo(() => {
-    if (!groupByПровайдер) {
+  }, [models, modelSearch, promotedModelIds]);
+  const groupedModels = useMemo(() => {
+    if (!groupByProvider) {
       return [
         {
           provider: "models",
-          entries: [...filteredМодельs].sort((a, b) => a.id.localeCompare(b.id)),
+          entries: [...filteredModels].sort((a, b) => a.id.localeCompare(b.id)),
         },
       ];
     }
-    const map = new Map<string, АдаптерМодель[]>();
-    for (const model of filteredМодельs) {
-      const provider = extractПровайдерId(model.id) ?? "other";
+    const map = new Map<string, AdapterModel[]>();
+    for (const model of filteredModels) {
+      const provider = extractProviderId(model.id) ?? "other";
       const group = map.get(provider) ?? [];
       group.push(model);
       map.set(provider, group);
@@ -1498,145 +1498,145 @@ function МодельDropdown({
         provider,
         entries: [...entries].sort((a, b) => a.id.localeCompare(b.id)),
       }));
-  }, [filteredМодельs, groupByПровайдер]);
+  }, [filteredModels, groupByProvider]);
 
-  async function handleDetectМодель() {
-    if (!onDetectМодель) return;
-    setDetectingМодель(true);
+  async function handleDetectModel() {
+    if (!onDetectModel) return;
+    setDetectingModel(true);
     try {
-      const nextМодель = await onDetectМодель();
-      if (nextМодель) {
-        onChange(nextМодель);
+      const nextModel = await onDetectModel();
+      if (nextModel) {
+        onChange(nextModel);
         onOpenChange(false);
-        setМодельПоиск("");
+        setModelSearch("");
       }
     } finally {
-      setDetectingМодель(false);
+      setDetectingModel(false);
     }
   }
 
   return (
-    <Field label="Модель" hint={help.model}>
+    <Field label="Model" hint={help.model}>
       <Popover
         open={open}
         onOpenChange={(nextOpen) => {
           onOpenChange(nextOpen);
-          if (!nextOpen) setМодельПоиск("");
+          if (!nextOpen) setModelSearch("");
         }}
       >
         <PopoverTrigger asChild>
-          <button type="button" classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
-            <span classИмя={cn(!value && "text-muted-foreground")}>
+          <button type="button" className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
+            <span className={cn(!value && "text-muted-foreground")}>
               {selected
                 ? selected.label
                 : value
-                  || (allowПо умолчанию ? (defaultLabel ?? "По умолчанию") : required ? "Select model (required)" : "Select model")}
+                  || (allowDefault ? (defaultLabel ?? "По умолчанию") : required ? "Select model (required)" : "Select model")}
             </span>
-            <ChevronDown classИмя="h-3 w-3 text-muted-foreground" />
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
         </PopoverTrigger>
-        <PopoverContent classИмя="w-[var(--radix-popover-trigger-width)] p-1" align="start">
-          <div classИмя="relative mb-1">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1" align="start">
+          <div className="relative mb-1">
             <input
-              classИмя="w-full px-2 py-1.5 pr-6 text-xs bg-transparent outline-none border-b border-border placeholder:text-muted-foreground/50"
-              placeholder={creatable ? "Поиск models... (type to create)" : "Поиск models..."}
-              value={modelПоиск}
-              onChange={(e) => setМодельПоиск(e.target.value)}
+              className="w-full px-2 py-1.5 pr-6 text-xs bg-transparent outline-none border-b border-border placeholder:text-muted-foreground/50"
+              placeholder={creatable ? "Search models... (type to create)" : "Search models..."}
+              value={modelSearch}
+              onChange={(e) => setModelSearch(e.target.value)}
               autoFocus
             />
-            {modelПоиск && (
+            {modelSearch && (
               <button
                 type="button"
-                classИмя="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                onClick={() => setМодельПоиск("")}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setModelSearch("")}
               >
-                <svg aria-hidden="true" focusable="false" classИмя="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg aria-hidden="true" focusable="false" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             )}
           </div>
-          {onDetectМодель && !modelПоиск.trim() && (
+          {onDetectModel && !modelSearch.trim() && (
             <button
               type="button"
-              classИмя="flex items-center gap-1.5 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground"
+              className="flex items-center gap-1.5 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground"
               onClick={() => {
-                void handleDetectМодель();
+                void handleDetectModel();
               }}
-              disabled={detectingМодель}
+              disabled={detectingModel}
             >
-              <svg aria-hidden="true" focusable="false" classИмя="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" focusable="false" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                 <path d="M3 3v5h5" />
               </svg>
-              {detectingМодель ? "Detecting..." : detectedМодель ? (detectМодельLabel?.replace(/^Detect\b/, "Re-detect") ?? "Re-detect from config") : (detectМодельLabel ?? "Detect from config")}
+              {detectingModel ? "Detecting..." : detectedModel ? (detectModelLabel?.replace(/^Detect\b/, "Re-detect") ?? "Re-detect from config") : (detectModelLabel ?? "Detect from config")}
             </button>
           )}
-          {onОбновитьМодельs && !modelПоиск.trim() && (
+          {onRefreshModels && !modelSearch.trim() && (
             <button
               type="button"
-              classИмя="flex items-center gap-1.5 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground"
+              className="flex items-center gap-1.5 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground"
               onClick={() => {
-                void onОбновитьМодельs();
+                void onRefreshModels();
               }}
-              disabled={refreshingМодельs}
+              disabled={refreshingModels}
             >
-              <svg aria-hidden="true" focusable="false" classИмя="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" focusable="false" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 12a9 9 0 0 1 15.28-6.36L21 8" />
                 <path d="M21 3v5h-5" />
                 <path d="M21 12a9 9 0 0 1-15.28 6.36L3 16" />
                 <path d="M8 16H3v5" />
               </svg>
-              {refreshingМодельs ? "Обновитьing..." : "Обновить models"}
+              {refreshingModels ? "Refreshing..." : "Refresh models"}
             </button>
           )}
-          {value && (!models.some((m) => m.id === value) || promotedМодельIds.has(value)) && (
+          {value && (!models.some((m) => m.id === value) || promotedModelIds.has(value)) && (
             <button
               type="button"
-              classИмя={cn(
+              className={cn(
                 "flex items-center w-full px-2 py-1.5 text-sm rounded bg-accent/50",
               )}
               onClick={() => {
                 onOpenChange(false);
               }}
             >
-              <span classИмя="block w-full text-left truncate font-mono text-xs" title={value}>
+              <span className="block w-full text-left truncate font-mono text-xs" title={value}>
                 {models.find((m) => m.id === value)?.label ?? value}
               </span>
-              <span classИмя="shrink-0 ml-auto text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/20">
+              <span className="shrink-0 ml-auto text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/20">
                 current
               </span>
             </button>
           )}
-          {detectedМодель && detectedМодель !== value && (
+          {detectedModel && detectedModel !== value && (
             <button
               type="button"
-              classИмя={cn(
+              className={cn(
                 "flex items-center w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50",
               )}
               onClick={() => {
-                onChange(detectedМодель);
+                onChange(detectedModel);
                 onOpenChange(false);
               }}
             >
-              <span classИмя="block w-full text-left truncate font-mono text-xs" title={detectedМодель}>
-                {models.find((m) => m.id === detectedМодель)?.label ?? detectedМодель}
+              <span className="block w-full text-left truncate font-mono text-xs" title={detectedModel}>
+                {models.find((m) => m.id === detectedModel)?.label ?? detectedModel}
               </span>
-              <span classИмя="shrink-0 ml-auto text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
+              <span className="shrink-0 ml-auto text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
                 detected
               </span>
             </button>
           )}
-          {detectedМодельCandidates
-            ?.filter((candidate) => candidate && candidate !== detectedМодель && candidate !== value)
+          {detectedModelCandidates
+            ?.filter((candidate) => candidate && candidate !== detectedModel && candidate !== value)
             .map((candidate) => {
               const entry = models.find((m) => m.id === candidate);
               return (
                 <button
                   key={`detected-${candidate}`}
                   type="button"
-                  classИмя={cn(
+                  className={cn(
                     "flex items-center w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50",
                   )}
                   onClick={() => {
@@ -1644,20 +1644,20 @@ function МодельDropdown({
                     onOpenChange(false);
                   }}
                 >
-                  <span classИмя="block w-full text-left truncate font-mono text-xs" title={candidate}>
+                  <span className="block w-full text-left truncate font-mono text-xs" title={candidate}>
                     {entry?.label ?? candidate}
                   </span>
-                  <span classИмя="shrink-0 ml-auto text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/20">
+                  <span className="shrink-0 ml-auto text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/20">
                     config
                   </span>
                 </button>
               );
             })}
-          <div classИмя="max-h-[240px] overflow-y-auto">
-            {allowПо умолчанию && (
+          <div className="max-h-[240px] overflow-y-auto">
+            {allowDefault && (
               <button
                 type="button"
-                classИмя={cn(
+                className={cn(
                   "flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50",
                   !value && "bg-accent",
                 )}
@@ -1666,27 +1666,27 @@ function МодельDropdown({
                   onOpenChange(false);
                 }}
               >
-                По умолчанию
+                Default
               </button>
             )}
-            {canСоздатьManualМодель && (
+            {canCreateManualModel && (
               <button
                 type="button"
-                classИмя="flex items-center justify-between gap-2 w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50"
+                className="flex items-center justify-between gap-2 w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50"
                 onClick={() => {
-                  onChange(manualМодель);
+                  onChange(manualModel);
                   onOpenChange(false);
-                  setМодельПоиск("");
+                  setModelSearch("");
                 }}
               >
                 <span>Use manual model</span>
-                <span classИмя="text-xs font-mono text-muted-foreground">{manualМодель}</span>
+                <span className="text-xs font-mono text-muted-foreground">{manualModel}</span>
               </button>
             )}
-            {groupedМодельs.map((group) => (
-              <div key={group.provider} classИмя="mb-1 last:mb-0">
-                {groupByПровайдер && (
-                  <div classИмя="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+            {groupedModels.map((group) => (
+              <div key={group.provider} className="mb-1 last:mb-0">
+                {groupByProvider && (
+                  <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                     {group.provider} ({group.entries.length})
                   </div>
                 )}
@@ -1694,7 +1694,7 @@ function МодельDropdown({
                   <button
                     type="button"
                     key={m.id}
-                    classИмя={cn(
+                    className={cn(
                       "flex items-center w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50",
                       m.id === value && "bg-accent",
                     )}
@@ -1703,19 +1703,19 @@ function МодельDropdown({
                       onOpenChange(false);
                     }}
                   >
-                    <span classИмя="block w-full text-left truncate" title={m.id}>
-                      {groupByПровайдер ? extractМодельИмя(m.id) : m.label}
+                    <span className="block w-full text-left truncate" title={m.id}>
+                      {groupByProvider ? extractModelName(m.id) : m.label}
                     </span>
                   </button>
                 ))}
               </div>
             ))}
-            {filteredМодельs.length === 0 && !canСоздатьManualМодель && promotedМодельIds.size === 0 && (
-              <div classИмя="px-2 py-2 space-y-2">
-                <p classИмя="text-xs text-muted-foreground">
-                  {onDetectМодель
-                    ? (emptyDetectHint ?? "Нет model detected yet. Enter a provider/model manually.")
-                    : "Нет models found."}
+            {filteredModels.length === 0 && !canCreateManualModel && promotedModelIds.size === 0 && (
+              <div className="px-2 py-2 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  {onDetectModel
+                    ? (emptyDetectHint ?? "No model detected yet. Enter a provider/model manually.")
+                    : "No models found."}
                 </p>
               </div>
             )}
@@ -1726,66 +1726,66 @@ function МодельDropdown({
   );
 }
 
-function CheapМодельSection({
+function CheapModelSection({
   enabled,
   model,
   models,
-  adapterТип,
-  adapterПо умолчаниюМодель,
-  onВключитьdChange,
-  onМодельChange,
+  adapterType,
+  adapterDefaultModel,
+  onEnabledChange,
+  onModelChange,
   open,
   onOpenChange,
 }: {
   enabled: boolean;
   model: string;
-  models: АдаптерМодель[];
-  adapterТип: string;
-  adapterПо умолчаниюМодель: string;
-  onВключитьdChange: (next: boolean) => void;
-  onМодельChange: (next: string) => void;
+  models: AdapterModel[];
+  adapterType: string;
+  adapterDefaultModel: string;
+  onEnabledChange: (next: boolean) => void;
+  onModelChange: (next: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const placeholderHint = adapterПо умолчаниюМодель
-    ? `Адаптер default · ${adapterПо умолчаниюМодель}`
-    : "Нет adapter default — choose a cheaper model";
+  const placeholderHint = adapterDefaultModel
+    ? `Adapter default · ${adapterDefaultModel}`
+    : "No adapter default — choose a cheaper model";
   return (
-    <div classИмя="rounded-md border border-border/70 bg-muted/20 p-3 space-y-3">
-      <div classИмя="flex items-center justify-between gap-3">
-        <div classИмя="min-w-0">
-          <div classИмя="text-[11px] uppercase tracking-wide text-muted-foreground">Cheap model</div>
-          <p classИмя="text-xs text-muted-foreground">
+    <div className="rounded-md border border-border/70 bg-muted/20 p-3 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Cheap model</div>
+          <p className="text-xs text-muted-foreground">
             Used when a run requests the cheap profile (e.g. routine summaries). The primary model stays unchanged.
           </p>
         </div>
-        <ToggleSwitch checked={enabled} onCheckedChange={onВключитьdChange} />
+        <ToggleSwitch checked={enabled} onCheckedChange={onEnabledChange} />
       </div>
       {enabled ? (
-        <МодельDropdown
+        <ModelDropdown
           models={models}
           value={model}
-          onChange={onМодельChange}
+          onChange={onModelChange}
           open={open}
           onOpenChange={onOpenChange}
-          allowПо умолчанию
+          allowDefault
           required={false}
-          groupByПровайдер={adapterТип === "opencode_local"}
+          groupByProvider={adapterType === "opencode_local"}
           creatable
-          detectedМодель={null}
-          detectedМодельCandidates={[]}
+          detectedModel={null}
+          detectedModelCandidates={[]}
           emptyDetectHint={placeholderHint}
           defaultLabel={placeholderHint}
         />
       ) : null}
-      {enabled && !model && adapterПо умолчаниюМодель ? (
-        <p classИмя="text-[11px] text-muted-foreground">
-          Нет explicit cheap model selected — runtime falls back to <code>{adapterПо умолчаниюМодель}</code>.
+      {enabled && !model && adapterDefaultModel ? (
+        <p className="text-[11px] text-muted-foreground">
+          No explicit cheap model selected — runtime falls back to <code>{adapterDefaultModel}</code>.
         </p>
       ) : null}
-      {enabled && !model && !adapterПо умолчаниюМодель ? (
-        <p classИмя="text-[11px] text-amber-500">
-          Нет cheap model selected and the adapter has no default. Cheap-lane runs will continue on the primary model with a fallback note.
+      {enabled && !model && !adapterDefaultModel ? (
+        <p className="text-[11px] text-amber-500">
+          No cheap model selected and the adapter has no default. Cheap-lane runs will continue on the primary model with a fallback note.
         </p>
       ) : null}
     </div>
@@ -1811,16 +1811,16 @@ function ThinkingEffortDropdown({
     <Field label="Thinking effort" hint={help.thinkingEffort}>
       <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
-          <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
-            <span classИмя={cn(!value && "text-muted-foreground")}>{selected?.label ?? "Авто"}</span>
-            <ChevronDown classИмя="h-3 w-3 text-muted-foreground" />
+          <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
+            <span className={cn(!value && "text-muted-foreground")}>{selected?.label ?? "Авто"}</span>
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
         </PopoverTrigger>
-        <PopoverContent classИмя="w-[var(--radix-popover-trigger-width)] p-1" align="start">
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1" align="start">
           {options.map((option) => (
             <button
               key={option.id || "auto"}
-              classИмя={cn(
+              className={cn(
                 "flex items-center justify-between w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50",
                 option.id === value && "bg-accent",
               )}
@@ -1830,7 +1830,7 @@ function ThinkingEffortDropdown({
               }}
             >
               <span>{option.label}</span>
-              {option.id ? <span classИмя="text-xs text-muted-foreground font-mono">{option.id}</span> : null}
+              {option.id ? <span className="text-xs text-muted-foreground font-mono">{option.id}</span> : null}
             </button>
           ))}
         </PopoverContent>

@@ -1,13 +1,13 @@
-import type { LiveЗапуститьForЗадача } from "../api/heartbeats";
+import type { LiveRunForIssue } from "../api/heartbeats";
 import type {
-  ЗадачаChatComment,
-  ЗадачаChatTranscriptEntry,
+  IssueChatComment,
+  IssueChatTranscriptEntry,
 } from "../lib/issue-chat-messages";
-import type { ЗадачаTimelineEvent } from "../lib/issue-timeline-events";
+import type { IssueTimelineEvent } from "../lib/issue-timeline-events";
 import type {
   AskUserQuestionsInteraction,
-  RequestПодтвердитьationInteraction,
-  SuggestЗадачиInteraction,
+  RequestConfirmationInteraction,
+  SuggestTasksInteraction,
 } from "../lib/issue-thread-interactions";
 
 export const issueThreadInteractionFixtureMeta = {
@@ -17,14 +17,14 @@ export const issueThreadInteractionFixtureMeta = {
   currentUserId: "user-board",
 } as const;
 
-function createComment(overrides: Partial<ЗадачаChatComment>): ЗадачаChatComment {
+function createComment(overrides: Partial<IssueChatComment>): IssueChatComment {
   const createdAt = overrides.createdAt ?? new Date("2026-04-20T14:00:00.000Z");
   return {
     id: "comment-default",
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
-    authorТип: overrides.authorАгентId ? "agent" : "user",
-    authorАгентId: null,
+    authorType: overrides.authorAgentId ? "agent" : "user",
+    authorAgentId: null,
     authorUserId: issueThreadInteractionFixtureMeta.currentUserId,
     body: "",
     presentation: null,
@@ -35,9 +35,9 @@ function createComment(overrides: Partial<ЗадачаChatComment>): Задач�
   };
 }
 
-function createSuggestЗадачиInteraction(
-  overrides: Partial<SuggestЗадачиInteraction>,
-): SuggestЗадачиInteraction {
+function createSuggestTasksInteraction(
+  overrides: Partial<SuggestTasksInteraction>,
+): SuggestTasksInteraction {
   return {
     id: "interaction-suggest-default",
     companyId: issueThreadInteractionFixtureMeta.companyId,
@@ -45,58 +45,58 @@ function createSuggestЗадачиInteraction(
     kind: "suggest_tasks",
     title: "Suggested issue tree for the first interaction pass",
     summary:
-      "Черновик task creation stays pending until a reviewer accepts it, so the thread can preview structure without mutating the task system.",
+      "Draft task creation stays pending until a reviewer accepts it, so the thread can preview structure without mutating the task system.",
     status: "pending",
     continuationPolicy: "wake_assignee",
-    createdByАгентId: "agent-codex",
+    createdByAgentId: "agent-codex",
     createdByUserId: null,
-    resolvedByАгентId: null,
+    resolvedByAgentId: null,
     resolvedByUserId: null,
     createdAt: new Date("2026-04-20T14:11:00.000Z"),
     updatedAt: new Date("2026-04-20T14:11:00.000Z"),
     resolvedAt: null,
     payload: {
       version: 1,
-      defaultРодительId: "PAP-1709",
+      defaultParentId: "PAP-1709",
       tasks: [
         {
-          clientКлюч: "root-design",
+          clientKey: "root-design",
           title: "Prototype issue-thread interaction cards",
           description:
             "Build render-only cards that sit in the issue feed and show suggested tasks before anything is persisted.",
           priority: "high",
-          assigneeАгентId: "agent-codex",
+          assigneeAgentId: "agent-codex",
           billingCode: "ui-research",
           labels: ["UI", "interaction"],
         },
         {
-          clientКлюч: "child-stories",
-          parentClientКлюч: "root-design",
-          title: "Добавить Storybook coverage for acceptance and rejection states",
+          clientKey: "child-stories",
+          parentClientKey: "root-design",
+          title: "Add Storybook coverage for acceptance and rejection states",
           description:
             "Cover pending, accepted, rejected, and collapsed-child previews in a fixture-backed story.",
           priority: "medium",
-          assigneeАгентId: "agent-qa",
+          assigneeAgentId: "agent-qa",
           labels: ["Storybook"],
         },
         {
-          clientКлюч: "child-mixed-thread",
-          parentClientКлюч: "root-design",
+          clientKey: "child-mixed-thread",
+          parentClientKey: "root-design",
           title: "Prototype the mixed thread feed",
           description:
             "Show comments, activity, live runs, and interaction cards in one chronological feed.",
           priority: "medium",
-          assigneeАгентId: "agent-codex",
-          labels: ["Задача thread"],
+          assigneeAgentId: "agent-codex",
+          labels: ["Issue thread"],
         },
         {
-          clientКлюч: "hidden-follow-up",
-          parentClientКлюч: "child-mixed-thread",
+          clientKey: "hidden-follow-up",
+          parentClientKey: "child-mixed-thread",
           title: "Follow-up polish on spacing and answered summaries",
           description:
             "Collapse this under the visible task tree so the preview proves the hidden-descendant treatment.",
           priority: "low",
-          hiddenInПредпросмотр: true,
+          hiddenInPreview: true,
         },
       ],
     },
@@ -118,9 +118,9 @@ function createAskUserQuestionsInteraction(
       "This form stays local until the operator submits it, so the assignee only wakes once after the whole answer set is ready.",
     status: "pending",
     continuationPolicy: "wake_assignee",
-    createdByАгентId: "agent-codex",
+    createdByAgentId: "agent-codex",
     createdByUserId: null,
-    resolvedByАгентId: null,
+    resolvedByAgentId: null,
     resolvedByUserId: null,
     createdAt: new Date("2026-04-20T14:18:00.000Z"),
     updatedAt: new Date("2026-04-20T14:18:00.000Z"),
@@ -128,7 +128,7 @@ function createAskUserQuestionsInteraction(
     payload: {
       version: 1,
       title: "Before I wire the persistence layer, which preview behavior do you want?",
-      submitLabel: "Отправить answers",
+      submitLabel: "Send answers",
       questions: [
         {
           id: "collapse-depth",
@@ -165,7 +165,7 @@ function createAskUserQuestionsInteraction(
             {
               id: "summary-note",
               label: "Short markdown summary",
-              description: "Добавить a compact narrative summary at the bottom of the card.",
+              description: "Add a compact narrative summary at the bottom of the card.",
             },
             {
               id: "resolver-meta",
@@ -181,30 +181,30 @@ function createAskUserQuestionsInteraction(
   };
 }
 
-function createRequestПодтвердитьationInteraction(
-  overrides: Partial<RequestПодтвердитьationInteraction>,
-): RequestПодтвердитьationInteraction {
+function createRequestConfirmationInteraction(
+  overrides: Partial<RequestConfirmationInteraction>,
+): RequestConfirmationInteraction {
   return {
     id: "interaction-confirmation-default",
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
     kind: "request_confirmation",
-    title: "Одобрить the proposed plan",
+    title: "Approve the proposed plan",
     summary:
       "The assignee is waiting on a direct board decision before continuing from the plan document.",
     status: "pending",
     continuationPolicy: "wake_assignee",
-    createdByАгентId: "agent-codex",
+    createdByAgentId: "agent-codex",
     createdByUserId: null,
-    resolvedByАгентId: null,
+    resolvedByAgentId: null,
     resolvedByUserId: null,
     createdAt: new Date("2026-04-20T14:30:00.000Z"),
     updatedAt: new Date("2026-04-20T14:30:00.000Z"),
     resolvedAt: null,
     payload: {
       version: 1,
-      prompt: "Одобрить the plan and let the assignee start implementation?",
-      acceptLabel: "Одобрить plan",
+      prompt: "Approve the plan and let the assignee start implementation?",
+      acceptLabel: "Approve plan",
       rejectLabel: "Request revisions",
       rejectRequiresReason: true,
       rejectReasonLabel: "Describe the plan changes needed before approval",
@@ -224,9 +224,9 @@ function createRequestПодтвердитьationInteraction(
   };
 }
 
-export const pendingSuggestedЗадачиInteraction = createSuggestЗадачиInteraction({});
+export const pendingSuggestedTasksInteraction = createSuggestTasksInteraction({});
 
-export const acceptedSuggestedЗадачиInteraction = createSuggestЗадачиInteraction({
+export const acceptedSuggestedTasksInteraction = createSuggestTasksInteraction({
   id: "interaction-suggest-accepted",
   status: "accepted",
   resolvedByUserId: issueThreadInteractionFixtureMeta.currentUserId,
@@ -234,42 +234,42 @@ export const acceptedSuggestedЗадачиInteraction = createSuggestЗадач�
   updatedAt: new Date("2026-04-20T14:16:00.000Z"),
   result: {
     version: 1,
-    createdЗадачи: [
+    createdTasks: [
       {
-        clientКлюч: "root-design",
+        clientKey: "root-design",
         issueId: "issue-created-1",
         identifier: "PAP-1713",
         title: "Prototype issue-thread interaction cards",
       },
       {
-        clientКлюч: "child-stories",
+        clientKey: "child-stories",
         issueId: "issue-created-2",
         identifier: "PAP-1714",
-        title: "Добавить Storybook coverage for acceptance and rejection states",
-        parentЗадачаId: "issue-created-1",
+        title: "Add Storybook coverage for acceptance and rejection states",
+        parentIssueId: "issue-created-1",
         parentIdentifier: "PAP-1713",
       },
       {
-        clientКлюч: "child-mixed-thread",
+        clientKey: "child-mixed-thread",
         issueId: "issue-created-3",
         identifier: "PAP-1715",
         title: "Prototype the mixed thread feed",
-        parentЗадачаId: "issue-created-1",
+        parentIssueId: "issue-created-1",
         parentIdentifier: "PAP-1713",
       },
       {
-        clientКлюч: "hidden-follow-up",
+        clientKey: "hidden-follow-up",
         issueId: "issue-created-4",
         identifier: "PAP-1716",
         title: "Follow-up polish on spacing and answered summaries",
-        parentЗадачаId: "issue-created-3",
+        parentIssueId: "issue-created-3",
         parentIdentifier: "PAP-1715",
       },
     ],
   },
 });
 
-export const rejectedSuggestedЗадачиInteraction = createSuggestЗадачиInteraction({
+export const rejectedSuggestedTasksInteraction = createSuggestTasksInteraction({
   id: "interaction-suggest-rejected",
   status: "rejected",
   resolvedByUserId: issueThreadInteractionFixtureMeta.currentUserId,
@@ -305,25 +305,25 @@ export const answeredAskUserQuestionsInteraction = createAskUserQuestionsInterac
     summaryMarkdown: [
       "- Keep visible child tasks expanded when they are part of the main review path.",
       "- Preserve inline answer chips and resolver metadata in the answered state.",
-      "- Добавить a short summary note so future reviewers understand the operator's intent without replaying the form.",
+      "- Add a short summary note so future reviewers understand the operator's intent without replaying the form.",
     ].join("\n"),
   },
 });
 
-export const pendingRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({});
+export const pendingRequestConfirmationInteraction = createRequestConfirmationInteraction({});
 
-export const genericОжиданиеRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const genericPendingRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-generic-pending",
-  title: "Подтвердить next step",
+  title: "Confirm next step",
   summary: "The assignee needs a lightweight yes or no before continuing.",
   continuationPolicy: "none",
   payload: {
     version: 1,
-    prompt: "Продолжить with the current approach?",
+    prompt: "Continue with the current approach?",
   },
 });
 
-export const optionalОтклонитьRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const optionalDeclineRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-optional-decline",
   continuationPolicy: "none",
   payload: {
@@ -332,23 +332,23 @@ export const optionalОтклонитьRequestПодтвердитьationInterac
     acceptLabel: "Подтвердить",
     rejectLabel: "Отклонить",
     rejectRequiresReason: false,
-    declineReasonPlaceholder: "Опционально: tell the agent what you'd change.",
+    declineReasonPlaceholder: "Optional: tell the agent what you'd change.",
   },
 });
 
-export const disabledОтклонитьReasonRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const disabledDeclineReasonRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-no-decline-reason",
   continuationPolicy: "none",
   payload: {
     version: 1,
-    prompt: "Закрыть this low-risk follow-up as unnecessary?",
-    acceptLabel: "Закрыть it",
+    prompt: "Close this low-risk follow-up as unnecessary?",
+    acceptLabel: "Close it",
     rejectLabel: "Keep it",
-    allowОтклонитьReason: false,
+    allowDeclineReason: false,
   },
 });
 
-export const acceptedRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const acceptedRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-accepted",
   status: "accepted",
   resolvedByUserId: issueThreadInteractionFixtureMeta.currentUserId,
@@ -360,7 +360,7 @@ export const acceptedRequestПодтвердитьationInteraction = createReque
   },
 });
 
-export const planСогласованиеПринятьedRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const planApprovalAcceptedRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-plan-accepted",
   status: "accepted",
   resolvedByUserId: issueThreadInteractionFixtureMeta.currentUserId,
@@ -368,11 +368,11 @@ export const planСогласованиеПринятьedRequestПодтверд
   updatedAt: new Date("2026-04-20T14:34:00.000Z"),
   payload: {
     version: 1,
-    prompt: "Одобрить the plan and let the assignee start implementation?",
-    acceptLabel: "Одобрить plan",
+    prompt: "Approve the plan and let the assignee start implementation?",
+    acceptLabel: "Approve plan",
     rejectLabel: "Request changes",
     rejectRequiresReason: true,
-    declineReasonPlaceholder: "Опционально: what would you like revised?",
+    declineReasonPlaceholder: "Optional: what would you like revised?",
     target: {
       type: "issue_document",
       issueId: issueThreadInteractionFixtureMeta.issueId,
@@ -387,7 +387,7 @@ export const planСогласованиеПринятьedRequestПодтверд
   },
 });
 
-export const rejectedRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const rejectedRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-rejected",
   status: "rejected",
   resolvedByUserId: issueThreadInteractionFixtureMeta.currentUserId,
@@ -400,7 +400,7 @@ export const rejectedRequestПодтвердитьationInteraction = createReque
   },
 });
 
-export const rejectedНетReasonRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const rejectedNoReasonRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-rejected-no-reason",
   status: "rejected",
   resolvedByUserId: issueThreadInteractionFixtureMeta.currentUserId,
@@ -413,7 +413,7 @@ export const rejectedНетReasonRequestПодтвердитьationInteraction =
   },
 });
 
-export const commentExpiredRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const commentExpiredRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-expired-comment",
   status: "expired",
   resolvedByUserId: issueThreadInteractionFixtureMeta.currentUserId,
@@ -426,16 +426,16 @@ export const commentExpiredRequestПодтвердитьationInteraction = creat
   },
 });
 
-export const staleЦельRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const staleTargetRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-expired-target",
   status: "expired",
-  resolvedByАгентId: "agent-codex",
+  resolvedByAgentId: "agent-codex",
   resolvedAt: new Date("2026-04-20T14:40:00.000Z"),
   updatedAt: new Date("2026-04-20T14:40:00.000Z"),
   payload: {
     version: 1,
-    prompt: "Одобрить the plan and let the assignee start implementation?",
-    acceptLabel: "Одобрить plan",
+    prompt: "Approve the plan and let the assignee start implementation?",
+    acceptLabel: "Approve plan",
     rejectLabel: "Request revisions",
     rejectRequiresReason: true,
     target: {
@@ -449,7 +449,7 @@ export const staleЦельRequestПодтвердитьationInteraction = create
   result: {
     version: 1,
     outcome: "stale_target",
-    staleЦель: {
+    staleTarget: {
       type: "issue_document",
       issueId: issueThreadInteractionFixtureMeta.issueId,
       key: "plan",
@@ -459,13 +459,13 @@ export const staleЦельRequestПодтвердитьationInteraction = create
   },
 });
 
-export const failedRequestПодтвердитьationInteraction = createRequestПодтвердитьationInteraction({
+export const failedRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-failed",
   status: "failed",
   updatedAt: new Date("2026-04-20T14:42:00.000Z"),
 });
 
-export const issueThreadInteractionКомментарии: ЗадачаChatComment[] = [
+export const issueThreadInteractionComments: IssueChatComment[] = [
   createComment({
     id: "comment-thread-board",
     body: "Pressure-test first-class issue-thread interactions before we touch persistence. I want to see the cards in the real feed, not in a disconnected mock.",
@@ -474,21 +474,21 @@ export const issueThreadInteractionКомментарии: ЗадачаChatComme
   }),
   createComment({
     id: "comment-thread-agent",
-    authorАгентId: "agent-codex",
+    authorAgentId: "agent-codex",
     authorUserId: null,
     body: "I found the existing issue chat surface and I am adding prototype-only interaction records so the Storybook review can happen before persistence work.",
     createdAt: new Date("2026-04-20T14:09:00.000Z"),
     updatedAt: new Date("2026-04-20T14:09:00.000Z"),
     runId: "run-thread-interaction",
-    runАгентId: "agent-codex",
+    runAgentId: "agent-codex",
   }),
 ];
 
-export const issueThreadInteractionEvents: ЗадачаTimelineEvent[] = [
+export const issueThreadInteractionEvents: IssueTimelineEvent[] = [
   {
     id: "event-thread-checkout",
     createdAt: new Date("2026-04-20T14:01:00.000Z"),
-    actorТип: "user",
+    actorType: "user",
     actorId: issueThreadInteractionFixtureMeta.currentUserId,
     statusChange: {
       from: "todo",
@@ -497,7 +497,7 @@ export const issueThreadInteractionEvents: ЗадачаTimelineEvent[] = [
   },
 ];
 
-export const issueThreadInteractionLiveЗапуститьs: LiveЗапуститьForЗадача[] = [
+export const issueThreadInteractionLiveRuns: LiveRunForIssue[] = [
   {
     id: "run-thread-live",
     status: "running",
@@ -507,14 +507,14 @@ export const issueThreadInteractionLiveЗапуститьs: LiveЗапустит
     finishedAt: null,
     createdAt: "2026-04-20T14:26:00.000Z",
     agentId: "agent-codex",
-    agentИмя: "CodexCoder",
-    adapterТип: "codex_local",
+    agentName: "CodexCoder",
+    adapterType: "codex_local",
   },
 ];
 
-export const issueThreadInteractionTranscriptsByЗапуститьId = new Map<
+export const issueThreadInteractionTranscriptsByRunId = new Map<
   string,
-  readonly ЗадачаChatTranscriptEntry[]
+  readonly IssueChatTranscriptEntry[]
 >([
   [
     "run-thread-live",
@@ -533,8 +533,8 @@ export const issueThreadInteractionTranscriptsByЗапуститьId = new Map<
   ],
 ]);
 
-export const mixedЗадачаThreadInteractions = [
-  acceptedSuggestedЗадачиInteraction,
-  pendingRequestПодтвердитьationInteraction,
+export const mixedIssueThreadInteractions = [
+  acceptedSuggestedTasksInteraction,
+  pendingRequestConfirmationInteraction,
   pendingAskUserQuestionsInteraction,
 ];

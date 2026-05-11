@@ -1,23 +1,23 @@
 import { useEffect } from "react";
 import {
-  focusPageПоискShortcutЦель,
+  focusPageSearchShortcutTarget,
   hasBlockingShortcutDialog,
-  isКлючboardShortcutTextInputЦель,
+  isKeyboardShortcutTextInputTarget,
 } from "../lib/keyboardShortcuts";
 
 interface ShortcutHandlers {
   enabled?: boolean;
-  onNewЗадача?: () => void;
-  onПоиск?: () => void;
+  onNewIssue?: () => void;
+  onSearch?: () => void;
   onToggleSidebar?: () => void;
   onTogglePanel?: () => void;
   onShowShortcuts?: () => void;
 }
 
-export function useКлючboardShortcuts({
+export function useKeyboardShortcuts({
   enabled = true,
-  onNewЗадача,
-  onПоиск,
+  onNewIssue,
+  onSearch,
   onToggleSidebar,
   onTogglePanel,
   onShowShortcuts,
@@ -25,56 +25,56 @@ export function useКлючboardShortcuts({
   useEffect(() => {
     if (!enabled) return;
 
-    function handleКлючDown(e: КлючboardEvent) {
+    function handleKeyDown(e: KeyboardEvent) {
       if (e.defaultPrevented) {
         return;
       }
 
       // Don't fire shortcuts when typing in inputs
-      if (isКлючboardShortcutTextInputЦель(e.target)) {
+      if (isKeyboardShortcutTextInputTarget(e.target)) {
         return;
       }
 
       // / → Page search when available, otherwise quick search
-      if (e.key === "/" && !e.metaКлюч && !e.ctrlКлюч && !e.altКлюч) {
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         if (hasBlockingShortcutDialog()) {
           return;
         }
 
-        e.preventПо умолчанию();
-        if (!focusPageПоискShortcutЦель()) {
-          onПоиск?.();
+        e.preventDefault();
+        if (!focusPageSearchShortcutTarget()) {
+          onSearch?.();
         }
         return;
       }
 
       // ? → Show keyboard shortcuts cheatsheet
-      if (e.key === "?" && !e.metaКлюч && !e.ctrlКлюч && !e.altКлюч) {
-        e.preventПо умолчанию();
+      if (e.key === "?" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
         onShowShortcuts?.();
         return;
       }
 
-      // C → Новая задача
-      if (e.key === "c" && !e.metaКлюч && !e.ctrlКлюч && !e.altКлюч) {
-        e.preventПо умолчанию();
-        onNewЗадача?.();
+      // C → New Issue
+      if (e.key === "c" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        onNewIssue?.();
       }
 
       // [ → Toggle Sidebar
-      if (e.key === "[" && !e.metaКлюч && !e.ctrlКлюч) {
-        e.preventПо умолчанию();
+      if (e.key === "[" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
         onToggleSidebar?.();
       }
 
       // ] → Toggle Panel
-      if (e.key === "]" && !e.metaКлюч && !e.ctrlКлюч) {
-        e.preventПо умолчанию();
+      if (e.key === "]" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
         onTogglePanel?.();
       }
     }
 
-    document.addEventListener("keydown", handleКлючDown);
-    return () => document.removeEventListener("keydown", handleКлючDown);
-  }, [enabled, onNewЗадача, onПоиск, onToggleSidebar, onTogglePanel, onShowShortcuts]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [enabled, onNewIssue, onSearch, onToggleSidebar, onTogglePanel, onShowShortcuts]);
 }

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ExecutionРабочая область } from "@paperclipai/shared";
-import { executionРабочие областиApi } from "../api/execution-workspaces";
+import type { ExecutionWorkspace } from "@paperclipai/shared";
+import { executionWorkspacesApi } from "../api/execution-workspaces";
 import { projectsApi } from "../api/projects";
-import { queryКлючs } from "../lib/queryКлючs";
-import type { ProjectРабочая областьSummary } from "../lib/project-workspaces-tab";
-import { ExecutionРабочая областьЗакрытьDialog } from "./ExecutionРабочая областьЗакрытьDialog";
-import { ProjectРабочая областьSummaryCard } from "./ProjectРабочая областьSummaryCard";
+import { queryKeys } from "../lib/queryKeys";
+import type { ProjectWorkspaceSummary } from "../lib/project-workspaces-tab";
+import { ExecutionWorkspaceCloseDialog } from "./ExecutionWorkspaceCloseDialog";
+import { ProjectWorkspaceSummaryCard } from "./ProjectWorkspaceSummaryCard";
 
-export function ProjectРабочие областиContent({
+export function ProjectWorkspacesContent({
   companyId,
   projectId,
   projectRef,
@@ -17,100 +17,100 @@ export function ProjectРабочие областиContent({
   companyId: string;
   projectId: string;
   projectRef: string;
-  summaries: ProjectРабочая областьSummary[];
+  summaries: ProjectWorkspaceSummary[];
 }) {
   const queryClient = useQueryClient();
-  const [runtimeActionКлюч, setЗапуститьtimeActionКлюч] = useState<string | null>(null);
-  const [closingРабочая область, setClosingРабочая область] = useState<{
+  const [runtimeActionKey, setRuntimeActionKey] = useState<string | null>(null);
+  const [closingWorkspace, setClosingWorkspace] = useState<{
     id: string;
     name: string;
-    status: ExecutionРабочая область["status"];
+    status: ExecutionWorkspace["status"];
   } | null>(null);
-  const controlРабочая областьЗапуститьtime = useMutation({
+  const controlWorkspaceRuntime = useMutation({
     mutationFn: async (input: {
       key: string;
       kind: "project_workspace" | "execution_workspace";
       workspaceId: string;
       action: "start" | "stop" | "restart";
     }) => {
-      setЗапуститьtimeActionКлюч(`${input.key}:${input.action}`);
+      setRuntimeActionKey(`${input.key}:${input.action}`);
       if (input.kind === "project_workspace") {
-        return await projectsApi.controlРабочая областьЗапуститьtimeServices(projectId, input.workspaceId, input.action, companyId);
+        return await projectsApi.controlWorkspaceRuntimeServices(projectId, input.workspaceId, input.action, companyId);
       }
-      return await executionРабочие областиApi.controlЗапуститьtimeServices(input.workspaceId, input.action);
+      return await executionWorkspacesApi.controlRuntimeServices(input.workspaceId, input.action);
     },
     onSettled: () => {
-      setЗапуститьtimeActionКлюч(null);
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.list(companyId) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.list(companyId, { projectId }) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.detail(projectId) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.list(companyId) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(companyId) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listByProject(companyId, projectId) });
+      setRuntimeActionKey(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.list(companyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.list(companyId, { projectId }) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(companyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(companyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByProject(companyId, projectId) });
     },
   });
 
   if (summaries.length === 0) {
-    return <p classИмя="text-sm text-muted-foreground">Нет non-default workspace activity yet.</p>;
+    return <p className="text-sm text-muted-foreground">No non-default workspace activity yet.</p>;
   }
 
-  const activeSummaries = summaries.filter((summary) => summary.executionРабочая областьСтатус !== "cleanup_failed");
-  const cleanupОшибкаSummaries = summaries.filter((summary) => summary.executionРабочая областьСтатус === "cleanup_failed");
+  const activeSummaries = summaries.filter((summary) => summary.executionWorkspaceStatus !== "cleanup_failed");
+  const cleanupFailedSummaries = summaries.filter((summary) => summary.executionWorkspaceStatus === "cleanup_failed");
 
   return (
     <>
-      <div classИмя="space-y-4">
-        <div classИмя="space-y-3">
+      <div className="space-y-4">
+        <div className="space-y-3">
           {activeSummaries.map((summary) => (
-            <ProjectРабочая областьSummaryCard
+            <ProjectWorkspaceSummaryCard
               key={summary.key}
               projectRef={projectRef}
               summary={summary}
-              runtimeActionКлюч={runtimeActionКлюч}
-              runtimeActionОжидание={controlРабочая областьЗапуститьtime.isОжидание}
-              onЗапуститьtimeAction={(input) => controlРабочая областьЗапуститьtime.mutate(input)}
-              onЗакрытьРабочая область={(input) => setClosingРабочая область(input)}
+              runtimeActionKey={runtimeActionKey}
+              runtimeActionPending={controlWorkspaceRuntime.isPending}
+              onRuntimeAction={(input) => controlWorkspaceRuntime.mutate(input)}
+              onCloseWorkspace={(input) => setClosingWorkspace(input)}
             />
           ))}
         </div>
-        {cleanupОшибкаSummaries.length > 0 ? (
-          <div classИмя="space-y-2">
-            <div classИмя="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        {cleanupFailedSummaries.length > 0 ? (
+          <div className="space-y-2">
+            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               Cleanup attention needed
             </div>
-            <div classИмя="space-y-3">
-              {cleanupОшибкаSummaries.map((summary) => (
-                <ProjectРабочая областьSummaryCard
+            <div className="space-y-3">
+              {cleanupFailedSummaries.map((summary) => (
+                <ProjectWorkspaceSummaryCard
                   key={summary.key}
                   projectRef={projectRef}
                   summary={summary}
-                  runtimeActionКлюч={runtimeActionКлюч}
-                  runtimeActionОжидание={controlРабочая областьЗапуститьtime.isОжидание}
-                  onЗапуститьtimeAction={(input) => controlРабочая областьЗапуститьtime.mutate(input)}
-                  onЗакрытьРабочая область={(input) => setClosingРабочая область(input)}
+                  runtimeActionKey={runtimeActionKey}
+                  runtimeActionPending={controlWorkspaceRuntime.isPending}
+                  onRuntimeAction={(input) => controlWorkspaceRuntime.mutate(input)}
+                  onCloseWorkspace={(input) => setClosingWorkspace(input)}
                 />
               ))}
             </div>
           </div>
         ) : null}
       </div>
-      {closingРабочая область ? (
-        <ExecutionРабочая областьЗакрытьDialog
-          workspaceId={closingРабочая область.id}
-          workspaceИмя={closingРабочая область.name}
-          currentСтатус={closingРабочая область.status}
+      {closingWorkspace ? (
+        <ExecutionWorkspaceCloseDialog
+          workspaceId={closingWorkspace.id}
+          workspaceName={closingWorkspace.name}
+          currentStatus={closingWorkspace.status}
           open
           onOpenChange={(open) => {
-            if (!open) setClosingРабочая область(null);
+            if (!open) setClosingWorkspace(null);
           }}
-          onЗакрытьd={() => {
-            queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.list(companyId) });
-            queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.list(companyId, { projectId }) });
-            queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.detail(projectId) });
-            queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.list(companyId) });
-            queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(companyId) });
-            queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listByProject(companyId, projectId) });
-            setClosingРабочая область(null);
+          onClosed={() => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.list(companyId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.list(companyId, { projectId }) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(companyId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(companyId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByProject(companyId, projectId) });
+            setClosingWorkspace(null);
           }}
         />
       ) : null}

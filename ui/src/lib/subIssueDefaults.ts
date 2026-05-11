@@ -1,52 +1,52 @@
-import type { Задача } from "@paperclipai/shared";
+import type { Issue } from "@paperclipai/shared";
 
-type SubЗадачаПо умолчаниюSource = Pick<
-  Задача,
+type SubIssueDefaultSource = Pick<
+  Issue,
   | "id"
   | "identifier"
   | "title"
   | "projectId"
-  | "projectРабочая областьId"
+  | "projectWorkspaceId"
   | "goalId"
-  | "executionРабочая областьId"
-  | "executionРабочая областьPreference"
-  | "currentExecutionРабочая область"
-  | "assigneeАгентId"
+  | "executionWorkspaceId"
+  | "executionWorkspacePreference"
+  | "currentExecutionWorkspace"
+  | "assigneeAgentId"
   | "assigneeUserId"
 >;
 
-export function buildSubЗадачаПо умолчаниюs(issue: SubЗадачаПо умолчаниюSource) {
-  return buildSubЗадачаПо умолчаниюsForViewer(issue);
+export function buildSubIssueDefaults(issue: SubIssueDefaultSource) {
+  return buildSubIssueDefaultsForViewer(issue);
 }
 
-export function buildSubЗадачаПо умолчаниюsForViewer(
-  issue: SubЗадачаПо умолчаниюSource,
+export function buildSubIssueDefaultsForViewer(
+  issue: SubIssueDefaultSource,
   currentUserId?: string | null,
 ) {
-  const parentExecutionРабочая областьLabel =
-    issue.currentExecutionРабочая область?.name
-    ?? issue.currentExecutionРабочая область?.branchИмя
-    ?? issue.currentExecutionРабочая область?.cwd
-    ?? issue.executionРабочая областьId
+  const parentExecutionWorkspaceLabel =
+    issue.currentExecutionWorkspace?.name
+    ?? issue.currentExecutionWorkspace?.branchName
+    ?? issue.currentExecutionWorkspace?.cwd
+    ?? issue.executionWorkspaceId
     ?? null;
-  const shouldInheritUserИсполнитель = Boolean(issue.assigneeUserId && issue.assigneeUserId !== currentUserId);
-  const inheritedИсполнительUserId = shouldInheritUserИсполнитель ? issue.assigneeUserId ?? undefined : undefined;
+  const shouldInheritUserAssignee = Boolean(issue.assigneeUserId && issue.assigneeUserId !== currentUserId);
+  const inheritedAssigneeUserId = shouldInheritUserAssignee ? issue.assigneeUserId ?? undefined : undefined;
 
   return {
     parentId: issue.id,
     parentIdentifier: issue.identifier ?? undefined,
-    parentНазвание: issue.title,
+    parentTitle: issue.title,
     ...(issue.projectId ? { projectId: issue.projectId } : {}),
-    ...(issue.projectРабочая областьId ? { projectРабочая областьId: issue.projectРабочая областьId } : {}),
+    ...(issue.projectWorkspaceId ? { projectWorkspaceId: issue.projectWorkspaceId } : {}),
     ...(issue.goalId ? { goalId: issue.goalId } : {}),
-    ...(issue.executionРабочая областьId ? { executionРабочая областьId: issue.executionРабочая областьId } : {}),
-    ...(issue.executionРабочая областьId
-      ? { executionРабочая областьMode: "reuse_existing" }
-      : issue.executionРабочая областьPreference
-        ? { executionРабочая областьMode: issue.executionРабочая областьPreference }
+    ...(issue.executionWorkspaceId ? { executionWorkspaceId: issue.executionWorkspaceId } : {}),
+    ...(issue.executionWorkspaceId
+      ? { executionWorkspaceMode: "reuse_existing" }
+      : issue.executionWorkspacePreference
+        ? { executionWorkspaceMode: issue.executionWorkspacePreference }
         : {}),
-    ...(parentExecutionРабочая областьLabel ? { parentExecutionРабочая областьLabel } : {}),
-    ...(issue.assigneeАгентId ? { assigneeАгентId: issue.assigneeАгентId } : {}),
-    ...(inheritedИсполнительUserId ? { assigneeUserId: inheritedИсполнительUserId } : {}),
+    ...(parentExecutionWorkspaceLabel ? { parentExecutionWorkspaceLabel } : {}),
+    ...(issue.assigneeAgentId ? { assigneeAgentId: issue.assigneeAgentId } : {}),
+    ...(inheritedAssigneeUserId ? { assigneeUserId: inheritedAssigneeUserId } : {}),
   };
 }

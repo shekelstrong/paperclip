@@ -1,9 +1,9 @@
-import type { UserПрофильResponse } from "@paperclipai/shared";
+import type { UserProfileResponse } from "@paperclipai/shared";
 import { api } from "./client";
 
-export const userПрофильsApi = {
+export const userProfilesApi = {
   get: (companyId: string, userSlug: string) =>
-    api.get<UserПрофильResponse>(
+    api.get<UserProfileResponse>(
       `/companies/${companyId}/users/${encodeURIComponent(userSlug)}/profile`,
     ),
 };

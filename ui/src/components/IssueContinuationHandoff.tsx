@@ -1,25 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ЗадачаDocument } from "@paperclipai/shared";
+import type { IssueDocument } from "@paperclipai/shared";
 import { ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
 import { cn, relativeTime } from "../lib/utils";
 import { MarkdownBody } from "./MarkdownBody";
-import { Check, ChevronDown, ChevronRight, Копировать, История } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Copy, History } from "lucide-react";
 
-type ЗадачаContinuationHandoffProps = {
-  document: ЗадачаDocument | null | undefined;
+type IssueContinuationHandoffProps = {
+  document: IssueDocument | null | undefined;
   focusSignal?: number;
 };
 
-export function ЗадачаContinuationHandoff({
+export function IssueContinuationHandoff({
   document,
   focusSignal = 0,
-}: ЗадачаContinuationHandoffProps) {
+}: IssueContinuationHandoffProps) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [highlighted, setВысокийlighted] = useState(false);
+  const [highlighted, setHighlighted] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const copiedTimerRef = useRef<ReturnТип<typeof setTimeout> | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
@@ -32,9 +32,9 @@ export function ЗадачаContinuationHandoff({
   useEffect(() => {
     if (!document || focusSignal <= 0) return;
     setExpanded(true);
-    setВысокийlighted(true);
+    setHighlighted(true);
     rootRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    const timer = setTimeout(() => setВысокийlighted(false), 3000);
+    const timer = setTimeout(() => setHighlighted(false), 3000);
     return () => clearTimeout(timer);
   }, [document, focusSignal]);
 
@@ -56,42 +56,42 @@ export function ЗадачаContinuationHandoff({
     <div
       ref={rootRef}
       id={`document-${ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY}`}
-      classИмя={cn(
+      className={cn(
         "mb-3 rounded-lg border border-border bg-accent/20 p-3 transition-colors duration-1000",
         highlighted && "border-primary/50 bg-primary/5",
       )}
     >
-      <div classИмя="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          classИмя="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
           onClick={() => setExpanded((current) => !current)}
           aria-label={expanded ? "Collapse continuation handoff" : "Expand continuation handoff"}
           aria-expanded={expanded}
         >
-          {expanded ? <ChevronDown classИмя="h-3.5 w-3.5" /> : <ChevronRight classИмя="h-3.5 w-3.5" />}
+          {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         </button>
-        <История classИмя="h-4 w-4 text-muted-foreground" />
-        <div classИмя="min-w-0 flex-1">
-          <div classИмя="flex flex-wrap items-center gap-2">
-            <span classИмя="text-sm font-medium text-foreground">{title}</span>
-            <span classИмя="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase text-muted-foreground">
+        <History className="h-4 w-4 text-muted-foreground" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-foreground">{title}</span>
+            <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase text-muted-foreground">
               handoff
             </span>
           </div>
-          <div classИмя="text-[11px] text-muted-foreground">
-            Обновлено {relativeTime(document.updatedAt)}
+          <div className="text-[11px] text-muted-foreground">
+            Updated {relativeTime(document.updatedAt)}
             {document.latestRevisionNumber > 0 ? ` - revision ${document.latestRevisionNumber}` : ""}
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={copyBody} classИмя="shrink-0">
-          {copied ? <Check classИмя="mr-1.5 h-3.5 w-3.5" /> : <Копировать classИмя="mr-1.5 h-3.5 w-3.5" />}
+        <Button variant="ghost" size="sm" onClick={copyBody} className="shrink-0">
+          {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
           {copied ? "Copied" : "Копировать"}
         </Button>
       </div>
       {expanded ? (
-        <div classИмя="mt-3 rounded-md border border-border bg-background/80 p-3">
-          <MarkdownBody classИмя="paperclip-edit-in-place-content text-sm leading-6" softBreaks={false}>
+        <div className="mt-3 rounded-md border border-border bg-background/80 p-3">
+          <MarkdownBody className="paperclip-edit-in-place-content text-sm leading-6" softBreaks={false}>
             {document.body}
           </MarkdownBody>
         </div>

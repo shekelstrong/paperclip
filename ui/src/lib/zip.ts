@@ -1,4 +1,4 @@
-import type { КомпанияПортabilityFileEntry } from "@paperclipai/shared";
+import type { CompanyPortabilityFileEntry } from "@paperclipai/shared";
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -12,8 +12,8 @@ for (let i = 0; i < 256; i++) {
   crcTable[i] = crc >>> 0;
 }
 
-function normalizeАрхивироватьПуть(pathЗначение: string) {
-  return pathЗначение
+function normalizeArchivePath(pathValue: string) {
+  return pathValue
     .replace(/\\/g, "/")
     .split("/")
     .filter(Boolean)
@@ -78,10 +78,10 @@ function concatChunks(chunks: Uint8Array[]) {
   return archive;
 }
 
-function sharedАрхивироватьRoot(paths: string[]) {
+function sharedArchiveRoot(paths: string[]) {
   if (paths.length === 0) return null;
   const firstSegments = paths
-    .map((entry) => normalizeАрхивироватьПуть(entry).split("/").filter(Boolean))
+    .map((entry) => normalizeArchivePath(entry).split("/").filter(Boolean))
     .filter((parts) => parts.length > 0);
   if (firstSegments.length === 0) return null;
   const candidate = firstSegments[0]![0]!;
@@ -90,7 +90,7 @@ function sharedАрхивироватьRoot(paths: string[]) {
     : null;
 }
 
-const binaryContentТипByExtension: Record<string, string> = {
+const binaryContentTypeByExtension: Record<string, string> = {
   ".gif": "image/gif",
   ".jpeg": "image/jpeg",
   ".jpg": "image/jpeg",
@@ -99,11 +99,11 @@ const binaryContentТипByExtension: Record<string, string> = {
   ".webp": "image/webp",
 };
 
-function inferBinaryContentТип(pathЗначение: string) {
-  const normalized = normalizeАрхивироватьПуть(pathЗначение);
+function inferBinaryContentType(pathValue: string) {
+  const normalized = normalizeArchivePath(pathValue);
   const extensionIndex = normalized.lastIndexOf(".");
   if (extensionIndex === -1) return null;
-  return binaryContentТипByExtension[normalized.slice(extensionIndex).toНизкийerCase()] ?? null;
+  return binaryContentTypeByExtension[normalized.slice(extensionIndex).toLowerCase()] ?? null;
 }
 
 function bytesToBase64(bytes: Uint8Array) {
@@ -121,17 +121,17 @@ function base64ToBytes(base64: string) {
   return bytes;
 }
 
-function bytesToПортableFileEntry(pathЗначение: string, bytes: Uint8Array): КомпанияПортabilityFileEntry {
-  const contentТип = inferBinaryContentТип(pathЗначение);
-  if (!contentТип) return textDecoder.decode(bytes);
+function bytesToPortableFileEntry(pathValue: string, bytes: Uint8Array): CompanyPortabilityFileEntry {
+  const contentType = inferBinaryContentType(pathValue);
+  if (!contentType) return textDecoder.decode(bytes);
   return {
     encoding: "base64",
     data: bytesToBase64(bytes),
-    contentТип,
+    contentType,
   };
 }
 
-function portableFileEntryToBytes(entry: КомпанияПортabilityFileEntry): Uint8Array {
+function portableFileEntryToBytes(entry: CompanyPortabilityFileEntry): Uint8Array {
   if (typeof entry === "string") return textEncoder.encode(entry);
   return base64ToBytes(entry.data);
 }
@@ -139,10 +139,10 @@ function portableFileEntryToBytes(entry: КомпанияПортabilityFileEntr
 async function inflateZipEntry(compressionMethod: number, bytes: Uint8Array) {
   if (compressionMethod === 0) return bytes;
   if (compressionMethod !== 8) {
-    throw new Ошибка("Unsupported zip archive: only STORE and DEFLATE entries are supported.");
+    throw new Error("Unsupported zip archive: only STORE and DEFLATE entries are supported.");
   }
   if (typeof DecompressionStream !== "function") {
-    throw new Ошибка("Unsupported zip archive: this browser cannot read compressed zip entries.");
+    throw new Error("Unsupported zip archive: this browser cannot read compressed zip entries.");
   }
   const body = new Uint8Array(bytes.byteLength);
   body.set(bytes);
@@ -150,85 +150,85 @@ async function inflateZipEntry(compressionMethod: number, bytes: Uint8Array) {
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-export async function readZipАрхивировать(source: ArrayBuffer | Uint8Array): Promise<{
-  rootПуть: string | null;
-  files: Record<string, КомпанияПортabilityFileEntry>;
+export async function readZipArchive(source: ArrayBuffer | Uint8Array): Promise<{
+  rootPath: string | null;
+  files: Record<string, CompanyPortabilityFileEntry>;
 }> {
   const bytes = source instanceof Uint8Array ? source : new Uint8Array(source);
-  const entries: Array<{ path: string; body: КомпанияПортabilityFileEntry }> = [];
+  const entries: Array<{ path: string; body: CompanyPortabilityFileEntry }> = [];
   let offset = 0;
 
   while (offset + 4 <= bytes.length) {
     const signature = readUint32(bytes, offset);
     if (signature === 0x02014b50 || signature === 0x06054b50) break;
     if (signature !== 0x04034b50) {
-      throw new Ошибка("Invalid zip archive: unsupported local file header.");
+      throw new Error("Invalid zip archive: unsupported local file header.");
     }
 
     if (offset + 30 > bytes.length) {
-      throw new Ошибка("Invalid zip archive: truncated local file header.");
+      throw new Error("Invalid zip archive: truncated local file header.");
     }
 
     const generalPurposeFlag = readUint16(bytes, offset + 6);
     const compressionMethod = readUint16(bytes, offset + 8);
     const compressedSize = readUint32(bytes, offset + 18);
-    const fileИмяLength = readUint16(bytes, offset + 26);
+    const fileNameLength = readUint16(bytes, offset + 26);
     const extraFieldLength = readUint16(bytes, offset + 28);
 
     if ((generalPurposeFlag & 0x0008) !== 0) {
-      throw new Ошибка("Unsupported zip archive: data descriptors are not supported.");
+      throw new Error("Unsupported zip archive: data descriptors are not supported.");
     }
 
     const nameOffset = offset + 30;
-    const bodyOffset = nameOffset + fileИмяLength + extraFieldLength;
+    const bodyOffset = nameOffset + fileNameLength + extraFieldLength;
     const bodyEnd = bodyOffset + compressedSize;
     if (bodyEnd > bytes.length) {
-      throw new Ошибка("Invalid zip archive: truncated file contents.");
+      throw new Error("Invalid zip archive: truncated file contents.");
     }
 
-    const rawАрхивироватьПуть = textDecoder.decode(bytes.slice(nameOffset, nameOffset + fileИмяLength));
-    const archiveПуть = normalizeАрхивироватьПуть(rawАрхивироватьПуть);
-    const isDirectoryEntry = /\/$/.test(rawАрхивироватьПуть.replace(/\\/g, "/"));
-    if (archiveПуть && !isDirectoryEntry) {
+    const rawArchivePath = textDecoder.decode(bytes.slice(nameOffset, nameOffset + fileNameLength));
+    const archivePath = normalizeArchivePath(rawArchivePath);
+    const isDirectoryEntry = /\/$/.test(rawArchivePath.replace(/\\/g, "/"));
+    if (archivePath && !isDirectoryEntry) {
       const entryBytes = await inflateZipEntry(compressionMethod, bytes.slice(bodyOffset, bodyEnd));
       entries.push({
-        path: archiveПуть,
-        body: bytesToПортableFileEntry(archiveПуть, entryBytes),
+        path: archivePath,
+        body: bytesToPortableFileEntry(archivePath, entryBytes),
       });
     }
 
     offset = bodyEnd;
   }
 
-  const rootПуть = sharedАрхивироватьRoot(entries.map((entry) => entry.path));
-  const files: Record<string, КомпанияПортabilityFileEntry> = {};
+  const rootPath = sharedArchiveRoot(entries.map((entry) => entry.path));
+  const files: Record<string, CompanyPortabilityFileEntry> = {};
   for (const entry of entries) {
-    const normalizedПуть =
-      rootПуть && entry.path.startsWith(`${rootПуть}/`)
-        ? entry.path.slice(rootПуть.length + 1)
+    const normalizedPath =
+      rootPath && entry.path.startsWith(`${rootPath}/`)
+        ? entry.path.slice(rootPath.length + 1)
         : entry.path;
-    if (!normalizedПуть) continue;
-    files[normalizedПуть] = entry.body;
+    if (!normalizedPath) continue;
+    files[normalizedPath] = entry.body;
   }
 
-  return { rootПуть, files };
+  return { rootPath, files };
 }
 
-export function createZipАрхивировать(files: Record<string, КомпанияПортabilityFileEntry>, rootПуть: string): Uint8Array {
-  const normalizedRoot = normalizeАрхивироватьПуть(rootПуть);
+export function createZipArchive(files: Record<string, CompanyPortabilityFileEntry>, rootPath: string): Uint8Array {
+  const normalizedRoot = normalizeArchivePath(rootPath);
   const localChunks: Uint8Array[] = [];
   const centralChunks: Uint8Array[] = [];
   const archiveDate = getDosDateTime(new Date());
   let localOffset = 0;
   let entryCount = 0;
 
-  for (const [relativeПуть, contents] of Object.entries(files).sort(([left], [right]) => left.localeCompare(right))) {
-    const archiveПуть = normalizeАрхивироватьПуть(`${normalizedRoot}/${relativeПуть}`);
-    const fileИмя = textEncoder.encode(archiveПуть);
+  for (const [relativePath, contents] of Object.entries(files).sort(([left], [right]) => left.localeCompare(right))) {
+    const archivePath = normalizeArchivePath(`${normalizedRoot}/${relativePath}`);
+    const fileName = textEncoder.encode(archivePath);
     const body = portableFileEntryToBytes(contents);
     const checksum = crc32(body);
 
-    const localHeader = new Uint8Array(30 + fileИмя.length);
+    const localHeader = new Uint8Array(30 + fileName.length);
     writeUint32(localHeader, 0, 0x04034b50);
     writeUint16(localHeader, 4, 20);
     writeUint16(localHeader, 6, 0x0800);
@@ -238,11 +238,11 @@ export function createZipАрхивировать(files: Record<string, Комп
     writeUint32(localHeader, 14, checksum);
     writeUint32(localHeader, 18, body.length);
     writeUint32(localHeader, 22, body.length);
-    writeUint16(localHeader, 26, fileИмя.length);
+    writeUint16(localHeader, 26, fileName.length);
     writeUint16(localHeader, 28, 0);
-    localHeader.set(fileИмя, 30);
+    localHeader.set(fileName, 30);
 
-    const centralHeader = new Uint8Array(46 + fileИмя.length);
+    const centralHeader = new Uint8Array(46 + fileName.length);
     writeUint32(centralHeader, 0, 0x02014b50);
     writeUint16(centralHeader, 4, 20);
     writeUint16(centralHeader, 6, 20);
@@ -253,14 +253,14 @@ export function createZipАрхивировать(files: Record<string, Комп
     writeUint32(centralHeader, 16, checksum);
     writeUint32(centralHeader, 20, body.length);
     writeUint32(centralHeader, 24, body.length);
-    writeUint16(centralHeader, 28, fileИмя.length);
+    writeUint16(centralHeader, 28, fileName.length);
     writeUint16(centralHeader, 30, 0);
     writeUint16(centralHeader, 32, 0);
     writeUint16(centralHeader, 34, 0);
     writeUint16(centralHeader, 36, 0);
     writeUint32(centralHeader, 38, 0);
     writeUint32(centralHeader, 42, localOffset);
-    centralHeader.set(fileИмя, 46);
+    centralHeader.set(fileName, 46);
 
     localChunks.push(localHeader, body);
     centralChunks.push(centralHeader);

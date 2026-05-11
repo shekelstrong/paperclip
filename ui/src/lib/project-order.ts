@@ -3,19 +3,19 @@ import type { Project } from "@paperclipai/shared";
 export const PROJECT_ORDER_UPDATED_EVENT = "paperclip:project-order-updated";
 export const PROJECT_SORT_MODE_UPDATED_EVENT = "paperclip:project-sort-mode-updated";
 const PROJECT_ORDER_STORAGE_PREFIX = "paperclip.projectOrder";
-const PROJECT_SORT_MODE_STORAGE_PREFIX = "paperclip.projectСортировкаMode";
+const PROJECT_SORT_MODE_STORAGE_PREFIX = "paperclip.projectSortMode";
 const ANONYMOUS_USER_ID = "anonymous";
 
-export type ProjectSidebarСортировкаMode = "top" | "alphabetical" | "recent";
+export type ProjectSidebarSortMode = "top" | "alphabetical" | "recent";
 
-type ProjectOrderОбновитьdDetail = {
-  storageКлюч: string;
+type ProjectOrderUpdatedDetail = {
+  storageKey: string;
   orderedIds: string[];
 };
 
-export type ProjectСортировкаModeОбновитьdDetail = {
-  storageКлюч: string;
-  sortMode: ProjectSidebarСортировкаMode;
+export type ProjectSortModeUpdatedDetail = {
+  storageKey: string;
+  sortMode: ProjectSidebarSortMode;
 };
 
 function normalizeIdList(value: unknown): string[] {
@@ -23,7 +23,7 @@ function normalizeIdList(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string" && item.length > 0);
 }
 
-function normalizeСортировкаMode(value: unknown): ProjectSidebarСортировкаMode {
+function normalizeSortMode(value: unknown): ProjectSidebarSortMode {
   return value === "alphabetical" || value === "recent" || value === "top" ? value : "top";
 }
 
@@ -33,17 +33,17 @@ function resolveUserId(userId: string | null | undefined): string {
   return trimmed.length > 0 ? trimmed : ANONYMOUS_USER_ID;
 }
 
-export function getProjectOrderStorageКлюч(companyId: string, userId: string | null | undefined): string {
+export function getProjectOrderStorageKey(companyId: string, userId: string | null | undefined): string {
   return `${PROJECT_ORDER_STORAGE_PREFIX}:${companyId}:${resolveUserId(userId)}`;
 }
 
-export function getProjectСортировкаModeStorageКлюч(companyId: string, userId: string | null | undefined): string {
+export function getProjectSortModeStorageKey(companyId: string, userId: string | null | undefined): string {
   return `${PROJECT_SORT_MODE_STORAGE_PREFIX}:${companyId}:${resolveUserId(userId)}`;
 }
 
-export function readProjectOrder(storageКлюч: string): string[] {
+export function readProjectOrder(storageKey: string): string[] {
   try {
-    const raw = localStorage.getItem(storageКлюч);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return [];
     return normalizeIdList(JSON.parse(raw));
   } catch {
@@ -51,47 +51,47 @@ export function readProjectOrder(storageКлюч: string): string[] {
   }
 }
 
-export function readProjectСортировкаMode(storageКлюч: string): ProjectSidebarСортировкаMode {
+export function readProjectSortMode(storageKey: string): ProjectSidebarSortMode {
   try {
-    return normalizeСортировкаMode(localStorage.getItem(storageКлюч));
+    return normalizeSortMode(localStorage.getItem(storageKey));
   } catch {
     return "top";
   }
 }
 
-export function writeProjectOrder(storageКлюч: string, orderedIds: string[]) {
+export function writeProjectOrder(storageKey: string, orderedIds: string[]) {
   const normalized = normalizeIdList(orderedIds);
   try {
-    localStorage.setItem(storageКлюч, JSON.stringify(normalized));
+    localStorage.setItem(storageKey, JSON.stringify(normalized));
   } catch {
     // Ignore storage write failures in restricted browser contexts.
   }
   if (typeof window !== "undefined") {
     window.dispatchEvent(
-      new СвойEvent<ProjectOrderОбновитьdDetail>(PROJECT_ORDER_UPDATED_EVENT, {
-        detail: { storageКлюч, orderedIds: normalized },
+      new CustomEvent<ProjectOrderUpdatedDetail>(PROJECT_ORDER_UPDATED_EVENT, {
+        detail: { storageKey, orderedIds: normalized },
       }),
     );
   }
 }
 
-export function writeProjectСортировкаMode(storageКлюч: string, sortMode: ProjectSidebarСортировкаMode) {
-  const normalized = normalizeСортировкаMode(sortMode);
+export function writeProjectSortMode(storageKey: string, sortMode: ProjectSidebarSortMode) {
+  const normalized = normalizeSortMode(sortMode);
   try {
-    localStorage.setItem(storageКлюч, normalized);
+    localStorage.setItem(storageKey, normalized);
   } catch {
     // Ignore storage write failures in restricted browser contexts.
   }
   if (typeof window !== "undefined") {
     window.dispatchEvent(
-      new СвойEvent<ProjectСортировкаModeОбновитьdDetail>(PROJECT_SORT_MODE_UPDATED_EVENT, {
-        detail: { storageКлюч, sortMode: normalized },
+      new CustomEvent<ProjectSortModeUpdatedDetail>(PROJECT_SORT_MODE_UPDATED_EVENT, {
+        detail: { storageKey, sortMode: normalized },
       }),
     );
   }
 }
 
-export function sortПроектыByStoredOrder(projects: Project[], orderedIds: string[]): Project[] {
+export function sortProjectsByStoredOrder(projects: Project[], orderedIds: string[]): Project[] {
   if (projects.length === 0) return [];
   if (orderedIds.length === 0) return projects;
 

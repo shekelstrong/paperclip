@@ -1,18 +1,18 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "../lib/utils";
 import { MarkdownBody } from "./MarkdownBody";
-import { MarkdownИзменитьor, type MarkdownИзменитьorRef, type MentionOption } from "./MarkdownИзменитьor";
-import { useАвтоsaveIndicator } from "../hooks/useАвтоsaveIndicator";
+import { MarkdownEditor, type MarkdownEditorRef, type MentionOption } from "./MarkdownEditor";
+import { useAutosaveIndicator } from "../hooks/useAutosaveIndicator";
 import { FoldCurtain } from "./FoldCurtain";
 
-interface InlineИзменитьorProps {
+interface InlineEditorProps {
   value: string;
-  onСохранить: (value: string) => void | Promise<unknown>;
+  onSave: (value: string) => void | Promise<unknown>;
   as?: "h1" | "h2" | "p" | "span";
-  classИмя?: string;
+  className?: string;
   placeholder?: string;
   multiline?: boolean;
-  imageЗагрузитьHandler?: (file: File) => Promise<string>;
+  imageUploadHandler?: (file: File) => Promise<string>;
   /** Called when a non-image file is dropped onto the editor. */
   onDropFile?: (file: File) => Promise<void>;
   mentions?: MentionOption[];
@@ -31,7 +31,7 @@ export function queueContainedBlurCommit(container: HTMLDivElement, onCommit: ()
     frameId = requestAnimationFrame(() => {
       frameId = 0;
       const active = document.activeElement;
-      if (active instanceof Нетde && container.contains(active)) return;
+      if (active instanceof Node && container.contains(active)) return;
       onCommit();
     });
   });
@@ -43,44 +43,44 @@ export function queueContainedBlurCommit(container: HTMLDivElement, onCommit: ()
   };
 }
 
-export function InlineИзменитьor({
+export function InlineEditor({
   value,
-  onСохранить,
+  onSave,
   as: Tag = "span",
-  classИмя,
+  className,
   placeholder = "Click to edit...",
   multiline = false,
   nullable = false,
-  imageЗагрузитьHandler,
+  imageUploadHandler,
   onDropFile,
   mentions,
   foldable = false,
-}: InlineИзменитьorProps) {
-  const [editing, setИзменитьing] = useState(false);
-  const [multilineИзменитьing, setMultilineИзменитьing] = useState(false);
+}: InlineEditorProps) {
+  const [editing, setEditing] = useState(false);
+  const [multilineEditing, setMultilineEditing] = useState(false);
   const [multilineFocused, setMultilineFocused] = useState(false);
-  const [draft, setЧерновик] = useState(value);
-  const lastPropЗначениеRef = useRef(value);
+  const [draft, setDraft] = useState(value);
+  const lastPropValueRef = useRef(value);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const markdownRef = useRef<MarkdownИзменитьorRef>(null);
-  const autosaveDebounceRef = useRef<ReturnТип<typeof setTimeout> | null>(null);
+  const markdownRef = useRef<MarkdownEditorRef>(null);
+  const autosaveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const blurCommitFrameRef = useRef<(() => void) | null>(null);
   const pendingFocusFrameRef = useRef<number | null>(null);
-  const justEnteredИзменитьRef = useRef(false);
+  const justEnteredEditRef = useRef(false);
   const hasBeenFocusedRef = useRef(false);
   const {
     state: autosaveState,
     markDirty,
     reset,
-    runСохранить,
-  } = useАвтоsaveIndicator();
+    runSave,
+  } = useAutosaveIndicator();
 
   useEffect(() => {
-    const previousЗначение = lastPropЗначениеRef.current;
-    lastPropЗначениеRef.current = value;
-    setЧерновик((currentЧерновик) => {
-      if (multiline && multilineFocused && currentЧерновик !== previousЗначение) {
-        return currentЧерновик;
+    const previousValue = lastPropValueRef.current;
+    lastPropValueRef.current = value;
+    setDraft((currentDraft) => {
+      if (multiline && multilineFocused && currentDraft !== previousValue) {
+        return currentDraft;
       }
       return value;
     });
@@ -119,9 +119,9 @@ export function InlineИзменитьor({
   }, [editing, autoSize]);
 
   useEffect(() => {
-    if (!multilineИзменитьing || !multiline) return;
-    if (!justEnteredИзменитьRef.current) return;
-    justEnteredИзменитьRef.current = false;
+    if (!multilineEditing || !multiline) return;
+    if (!justEnteredEditRef.current) return;
+    justEnteredEditRef.current = false;
     if (pendingFocusFrameRef.current !== null) {
       cancelAnimationFrame(pendingFocusFrameRef.current);
     }
@@ -135,7 +135,7 @@ export function InlineИзменитьor({
         pendingFocusFrameRef.current = null;
       }
     };
-  }, [multilineИзменитьing, multiline]);
+  }, [multilineEditing, multiline]);
 
   // Once the editor has been focused at least once, it's blurred, and any
   // autosave has settled, swap back to the MarkdownBody preview so inline
@@ -145,32 +145,32 @@ export function InlineИзменитьor({
       hasBeenFocusedRef.current = true;
       return;
     }
-    if (!multiline || !multilineИзменитьing) return;
+    if (!multiline || !multilineEditing) return;
     if (!hasBeenFocusedRef.current) return;
     if (autosaveState !== "idle") return;
     hasBeenFocusedRef.current = false;
-    setMultilineИзменитьing(false);
-  }, [multiline, multilineИзменитьing, multilineFocused, autosaveState]);
+    setMultilineEditing(false);
+  }, [multiline, multilineEditing, multilineFocused, autosaveState]);
 
 
-  const commit = useCallback(async (nextЗначение = draft) => {
-    const valueToСохранить = nextЗначение.trim();
-    const valueChanged = valueToСохранить !== value;
-    const shouldСохранить = nullable
+  const commit = useCallback(async (nextValue = draft) => {
+    const valueToSave = nextValue.trim();
+    const valueChanged = valueToSave !== value;
+    const shouldSave = nullable
       ? valueChanged
-      : Boolean(valueToСохранить && valueChanged);
-    if (shouldСохранить) {
-      await Promise.resolve(onСохранить(valueToСохранить));
+      : Boolean(valueToSave && valueChanged);
+    if (shouldSave) {
+      await Promise.resolve(onSave(valueToSave));
     } else {
-      setЧерновик(value);
+      setDraft(value);
     }
     if (!multiline) {
-      setИзменитьing(false);
+      setEditing(false);
     }
-  }, [draft, multiline, nullable, onСохранить, value]);
+  }, [draft, multiline, nullable, onSave, value]);
 
   /** Multiline blur/submit: show autosave indicator when persisting */
-  const finalizeMultilineBlurOrОтправить = useCallback(() => {
+  const finalizeMultilineBlurOrSubmit = useCallback(() => {
     const trimmed = draft.trim();
     if (trimmed === value) {
       reset();
@@ -182,30 +182,30 @@ export function InlineИзменитьor({
       void commit();
       return;
     }
-    void runСохранить(() => commit());
-  }, [commit, draft, nullable, reset, runСохранить, value]);
+    void runSave(() => commit());
+  }, [commit, draft, nullable, reset, runSave, value]);
 
-  const cancelОжиданиеBlurCommit = useCallback(() => {
+  const cancelPendingBlurCommit = useCallback(() => {
     if (blurCommitFrameRef.current === null) return;
     blurCommitFrameRef.current();
     blurCommitFrameRef.current = null;
   }, []);
 
   const scheduleBlurCommit = useCallback((container: HTMLDivElement) => {
-    cancelОжиданиеBlurCommit();
+    cancelPendingBlurCommit();
     blurCommitFrameRef.current = queueContainedBlurCommit(container, () => {
       blurCommitFrameRef.current = null;
       if (autosaveDebounceRef.current) {
         clearTimeout(autosaveDebounceRef.current);
       }
       setMultilineFocused(false);
-      finalizeMultilineBlurOrОтправить();
+      finalizeMultilineBlurOrSubmit();
     });
-  }, [cancelОжиданиеBlurCommit, finalizeMultilineBlurOrОтправить]);
+  }, [cancelPendingBlurCommit, finalizeMultilineBlurOrSubmit]);
 
-  function handleКлючDown(e: React.КлючboardEvent) {
+  function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !multiline) {
-      e.preventПо умолчанию();
+      e.preventDefault();
       void commit();
     }
     if (e.key === "Escape") {
@@ -213,16 +213,16 @@ export function InlineИзменитьor({
         clearTimeout(autosaveDebounceRef.current);
       }
       reset();
-      setЧерновик(value);
+      setDraft(value);
       if (multiline) {
         setMultilineFocused(false);
-        setMultilineИзменитьing(false);
+        setMultilineEditing(false);
         hasBeenFocusedRef.current = false;
         if (document.activeElement instanceof HTMLElement) {
           document.activeElement.blur();
         }
       } else {
-        setИзменитьing(false);
+        setEditing(false);
       }
     }
   }
@@ -243,7 +243,7 @@ export function InlineИзменитьor({
       clearTimeout(autosaveDebounceRef.current);
     }
     autosaveDebounceRef.current = setTimeout(() => {
-      void runСохранить(() => commit(trimmed));
+      void runSave(() => commit(trimmed));
     }, AUTOSAVE_DEBOUNCE_MS);
 
     return () => {
@@ -251,35 +251,35 @@ export function InlineИзменитьor({
         clearTimeout(autosaveDebounceRef.current);
       }
     };
-  }, [autosaveState, commit, draft, markDirty, multiline, multilineFocused, nullable, reset, runСохранить, value]);
+  }, [autosaveState, commit, draft, markDirty, multiline, multilineFocused, nullable, reset, runSave, value]);
 
   if (multiline) {
-    const previewЗначение = autosaveState === "saved" || autosaveState === "idle" ? draft : value;
-    const hasЗначение = Boolean(previewЗначение.trim());
-    const showИзменитьor = multilineИзменитьing || multilineFocused || !hasЗначение;
+    const previewValue = autosaveState === "saved" || autosaveState === "idle" ? draft : value;
+    const hasValue = Boolean(previewValue.trim());
+    const showEditor = multilineEditing || multilineFocused || !hasValue;
 
-    if (!showИзменитьor) {
-      const enterИзменитьMode = () => {
-        if (multilineИзменитьing) return;
-        justEnteredИзменитьRef.current = true;
-        setMultilineИзменитьing(true);
+    if (!showEditor) {
+      const enterEditMode = () => {
+        if (multilineEditing) return;
+        justEnteredEditRef.current = true;
+        setMultilineEditing(true);
       };
       return (
         <div
-          classИмя={cn(markdownPad, "rounded transition-colors hover:bg-accent/20")}
+          className={cn(markdownPad, "rounded transition-colors hover:bg-accent/20")}
           onClick={(event) => {
             if (event.defaultPrevented) return;
             const target = event.target as HTMLElement | null;
             if (target && target.closest("a,button,[data-mention-kind],[data-radix-popper-content-wrapper]")) {
               return;
             }
-            enterИзменитьMode();
+            enterEditMode();
           }}
-          onDragEnter={() => enterИзменитьMode()}
-          onКлючDown={(event) => {
+          onDragEnter={() => enterEditMode()}
+          onKeyDown={(event) => {
             if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventПо умолчанию();
-            enterИзменитьMode();
+            event.preventDefault();
+            enterEditMode();
           }}
           role="textbox"
           aria-multiline="true"
@@ -288,13 +288,13 @@ export function InlineИзменитьor({
         >
           {foldable ? (
             <FoldCurtain>
-              <MarkdownBody classИмя={cn("paperclip-edit-in-place-content", classИмя)}>
-                {previewЗначение}
+              <MarkdownBody className={cn("paperclip-edit-in-place-content", className)}>
+                {previewValue}
               </MarkdownBody>
             </FoldCurtain>
           ) : (
-            <MarkdownBody classИмя={cn("paperclip-edit-in-place-content", classИмя)}>
-              {previewЗначение}
+            <MarkdownBody className={cn("paperclip-edit-in-place-content", className)}>
+              {previewValue}
             </MarkdownBody>
           )}
         </div>
@@ -303,7 +303,7 @@ export function InlineИзменитьor({
 
     return (
       <div
-        classИмя={cn(
+        className={cn(
           markdownPad,
           "rounded transition-colors",
           multilineFocused ? "bg-transparent" : "hover:bg-accent/20",
@@ -312,47 +312,47 @@ export function InlineИзменитьor({
           // Ignore focus events where the active element isn't actually inside
           // the wrapper (React 19 can emit a synthetic focus after a blur).
           const active = document.activeElement;
-          if (!(active instanceof Нетde) || !event.currentЦель.contains(active)) return;
-          cancelОжиданиеBlurCommit();
+          if (!(active instanceof Node) || !event.currentTarget.contains(active)) return;
+          cancelPendingBlurCommit();
           setMultilineFocused(true);
         }}
         onBlurCapture={(event) => {
-          if (event.currentЦель.contains(event.relatedЦель as Нетde | null)) return;
+          if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
           if (pendingFocusFrameRef.current !== null) {
             cancelAnimationFrame(pendingFocusFrameRef.current);
             pendingFocusFrameRef.current = null;
           }
-          scheduleBlurCommit(event.currentЦель);
+          scheduleBlurCommit(event.currentTarget);
         }}
-        onКлючDown={handleКлючDown}
+        onKeyDown={handleKeyDown}
       >
-        <MarkdownИзменитьor
+        <MarkdownEditor
           ref={markdownRef}
           value={draft}
-          onChange={setЧерновик}
+          onChange={setDraft}
           placeholder={placeholder}
           bordered={false}
-          classИмя="bg-transparent"
-          contentClassИмя={cn("paperclip-edit-in-place-content", classИмя)}
-          imageЗагрузитьHandler={imageЗагрузитьHandler}
+          className="bg-transparent"
+          contentClassName={cn("paperclip-edit-in-place-content", className)}
+          imageUploadHandler={imageUploadHandler}
           onDropFile={onDropFile}
           mentions={mentions}
-          onОтправить={() => {
-            finalizeMultilineBlurOrОтправить();
+          onSubmit={() => {
+            finalizeMultilineBlurOrSubmit();
           }}
         />
-        <div classИмя="flex min-h-4 items-center justify-end pr-1">
+        <div className="flex min-h-4 items-center justify-end pr-1">
           <span
-            classИмя={cn(
+            className={cn(
               "text-[11px] transition-opacity duration-150",
               autosaveState === "error" ? "text-destructive" : "text-muted-foreground",
               autosaveState === "idle" ? "opacity-0" : "opacity-100",
             )}
           >
             {autosaveState === "saving"
-              ? "Автоsaving..."
+              ? "Autosaving..."
               : autosaveState === "saved"
-                ? "Сохранитьd"
+                ? "Saved"
                 : autosaveState === "error"
                   ? "Could not save"
                   : "Idle"}
@@ -370,17 +370,17 @@ export function InlineИзменитьor({
         value={draft}
         rows={1}
         onChange={(e) => {
-          setЧерновик(e.target.value);
+          setDraft(e.target.value);
           autoSize(e.target);
         }}
         onBlur={() => {
           void commit();
         }}
-        onКлючDown={handleКлючDown}
-        classИмя={cn(
+        onKeyDown={handleKeyDown}
+        className={cn(
           "w-full bg-transparent rounded outline-none resize-none overflow-hidden",
           pad,
-          classИмя
+          className
         )}
       />
     );
@@ -392,13 +392,13 @@ export function InlineИзменитьor({
 
   return (
     <DisplayTag
-      classИмя={cn(
+      className={cn(
         "cursor-pointer rounded hover:bg-accent/50 transition-colors overflow-hidden",
         pad,
         !value && "text-muted-foreground italic",
-        classИмя,
+        className,
       )}
-      onClick={() => setИзменитьing(true)}
+      onClick={() => setEditing(true)}
     >
       {value || placeholder}
     </DisplayTag>

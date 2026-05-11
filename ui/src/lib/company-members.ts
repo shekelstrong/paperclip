@@ -1,22 +1,22 @@
-import type { КомпанияMember, КомпанияUserDirectoryEntry } from "@/api/access";
+import type { CompanyMember, CompanyUserDirectoryEntry } from "@/api/access";
 import type { InlineEntityOption } from "@/components/InlineEntitySelector";
-import type { MentionOption } from "@/components/MarkdownИзменитьor";
-import type { Агент, Project } from "@paperclipai/shared";
+import type { MentionOption } from "@/components/MarkdownEditor";
+import type { Agent, Project } from "@paperclipai/shared";
 
-export interface КомпанияUserПрофиль {
+export interface CompanyUserProfile {
   label: string;
   image: string | null;
 }
 
-type КомпанияUserRecord = Pick<КомпанияMember, "principalId" | "status" | "user">
-  | КомпанияUserDirectoryEntry;
+type CompanyUserRecord = Pick<CompanyMember, "principalId" | "status" | "user">
+  | CompanyUserDirectoryEntry;
 
 function fallbackUserLabel(userId: string): string {
-  if (userId === "local-board") return "Совет";
+  if (userId === "local-board") return "Board";
   return userId.slice(0, 5);
 }
 
-function baseMemberLabel(member: Pick<КомпанияUserRecord, "principalId" | "user">): string {
+function baseMemberLabel(member: Pick<CompanyUserRecord, "principalId" | "user">): string {
   const name = member.user?.name?.trim();
   if (name) return name;
   const email = member.user?.email?.trim();
@@ -24,8 +24,8 @@ function baseMemberLabel(member: Pick<КомпанияUserRecord, "principalId" 
   return fallbackUserLabel(member.principalId);
 }
 
-function activeUniqueMembers(members: КомпанияUserRecord[] | null | undefined) {
-  const byId = new Map<string, КомпанияUserRecord>();
+function activeUniqueMembers(members: CompanyUserRecord[] | null | undefined) {
+  const byId = new Map<string, CompanyUserRecord>();
   for (const member of members ?? []) {
     if (member.status !== "active") continue;
     if (!byId.has(member.principalId)) {
@@ -35,7 +35,7 @@ function activeUniqueMembers(members: КомпанияUserRecord[] | null | unde
   return [...byId.values()].sort((left, right) => baseMemberLabel(left).localeCompare(baseMemberLabel(right)));
 }
 
-export function buildКомпанияUserLabelMap(members: КомпанияUserRecord[] | null | undefined): Map<string, string> {
+export function buildCompanyUserLabelMap(members: CompanyUserRecord[] | null | undefined): Map<string, string> {
   const labels = new Map<string, string>();
   for (const member of members ?? []) {
     labels.set(member.principalId, baseMemberLabel(member));
@@ -43,10 +43,10 @@ export function buildКомпанияUserLabelMap(members: КомпанияUserR
   return labels;
 }
 
-export function buildКомпанияUserПрофильMap(
-  members: КомпанияUserRecord[] | null | undefined,
-): Map<string, КомпанияUserПрофиль> {
-  const profiles = new Map<string, КомпанияUserПрофиль>();
+export function buildCompanyUserProfileMap(
+  members: CompanyUserRecord[] | null | undefined,
+): Map<string, CompanyUserProfile> {
+  const profiles = new Map<string, CompanyUserProfile>();
   for (const member of members ?? []) {
     profiles.set(member.principalId, {
       label: baseMemberLabel(member),
@@ -56,8 +56,8 @@ export function buildКомпанияUserПрофильMap(
   return profiles;
 }
 
-export function buildКомпанияUserInlineOptions(
-  members: КомпанияUserRecord[] | null | undefined,
+export function buildCompanyUserInlineOptions(
+  members: CompanyUserRecord[] | null | undefined,
   options?: { excludeUserIds?: Iterable<string | null | undefined> },
 ): InlineEntityOption[] {
   const exclude = new Set(
@@ -73,8 +73,8 @@ export function buildКомпанияUserInlineOptions(
     }));
 }
 
-export function buildКомпанияUserMentionOptions(
-  members: КомпанияUserRecord[] | null | undefined,
+export function buildCompanyUserMentionOptions(
+  members: CompanyUserRecord[] | null | undefined,
 ): MentionOption[] {
   return activeUniqueMembers(members).map((member) => ({
     id: `user:${member.principalId}`,
@@ -85,12 +85,12 @@ export function buildКомпанияUserMentionOptions(
 }
 
 export function buildMarkdownMentionOptions(args: {
-  agents?: Array<Pick<Агент, "id" | "name" | "status" | "icon">> | null | undefined;
+  agents?: Array<Pick<Agent, "id" | "name" | "status" | "icon">> | null | undefined;
   projects?: Array<Pick<Project, "id" | "name" | "color">> | null | undefined;
-  members?: КомпанияUserRecord[] | null | undefined;
+  members?: CompanyUserRecord[] | null | undefined;
 }): MentionOption[] {
   const options: MentionOption[] = [
-    ...buildКомпанияUserMentionOptions(args.members),
+    ...buildCompanyUserMentionOptions(args.members),
     ...[...(args.agents ?? [])]
       .filter((agent) => agent.status !== "terminated")
       .sort((left, right) => left.name.localeCompare(right.name))

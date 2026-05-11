@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Агент } from "@paperclipai/shared";
+import type { Agent } from "@paperclipai/shared";
 import {
   AGENT_ORDER_UPDATED_EVENT,
-  getАгентOrderStorageКлюч,
-  readАгентOrder,
-  sortАгентыByStoredOrder,
-  writeАгентOrder,
+  getAgentOrderStorageKey,
+  readAgentOrder,
+  sortAgentsByStoredOrder,
+  writeAgentOrder,
 } from "../lib/agent-order";
 
-type UseАгентOrderParams = {
-  agents: Агент[];
+type UseAgentOrderParams = {
+  agents: Agent[];
   companyId: string | null | undefined;
   userId: string | null | undefined;
 };
 
-type АгентOrderОбновленоDetail = {
-  storageКлюч: string;
+type AgentOrderUpdatedDetail = {
+  storageKey: string;
   orderedIds: string[];
 };
 
@@ -27,30 +27,30 @@ function areEqual(a: string[], b: string[]) {
   return true;
 }
 
-function buildOrderIds(agents: Агент[], orderedIds: string[]) {
-  return sortАгентыByStoredOrder(agents, orderedIds).map((agent) => agent.id);
+function buildOrderIds(agents: Agent[], orderedIds: string[]) {
+  return sortAgentsByStoredOrder(agents, orderedIds).map((agent) => agent.id);
 }
 
-export function useАгентOrder({ agents, companyId, userId }: UseАгентOrderParams) {
-  const storageКлюч = useMemo(() => {
+export function useAgentOrder({ agents, companyId, userId }: UseAgentOrderParams) {
+  const storageKey = useMemo(() => {
     if (!companyId) return null;
-    return getАгентOrderStorageКлюч(companyId, userId);
+    return getAgentOrderStorageKey(companyId, userId);
   }, [companyId, userId]);
 
   const [orderedIds, setOrderedIds] = useState<string[]>(() => {
-    if (!storageКлюч) return agents.map((agent) => agent.id);
-    return buildOrderIds(agents, readАгентOrder(storageКлюч));
+    if (!storageKey) return agents.map((agent) => agent.id);
+    return buildOrderIds(agents, readAgentOrder(storageKey));
   });
 
   useEffect(() => {
-    const nextIds = storageКлюч
-      ? buildOrderIds(agents, readАгентOrder(storageКлюч))
+    const nextIds = storageKey
+      ? buildOrderIds(agents, readAgentOrder(storageKey))
       : agents.map((agent) => agent.id);
     setOrderedIds((current) => (areEqual(current, nextIds) ? current : nextIds));
-  }, [agents, storageКлюч]);
+  }, [agents, storageKey]);
 
   useEffect(() => {
-    if (!storageКлюч) return;
+    if (!storageKey) return;
 
     const syncFromIds = (ids: string[]) => {
       const nextIds = buildOrderIds(agents, ids);
@@ -58,25 +58,25 @@ export function useАгентOrder({ agents, companyId, userId }: UseАгентO
     };
 
     const onStorage = (event: StorageEvent) => {
-      if (event.key !== storageКлюч) return;
-      syncFromIds(readАгентOrder(storageКлюч));
+      if (event.key !== storageKey) return;
+      syncFromIds(readAgentOrder(storageKey));
     };
-    const onСвойEvent = (event: Event) => {
-      const detail = (event as СвойEvent<АгентOrderОбновленоDetail>).detail;
-      if (!detail || detail.storageКлюч !== storageКлюч) return;
+    const onCustomEvent = (event: Event) => {
+      const detail = (event as CustomEvent<AgentOrderUpdatedDetail>).detail;
+      if (!detail || detail.storageKey !== storageKey) return;
       syncFromIds(detail.orderedIds);
     };
 
     window.addEventListener("storage", onStorage);
-    window.addEventListener(AGENT_ORDER_UPDATED_EVENT, onСвойEvent);
+    window.addEventListener(AGENT_ORDER_UPDATED_EVENT, onCustomEvent);
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener(AGENT_ORDER_UPDATED_EVENT, onСвойEvent);
+      window.removeEventListener(AGENT_ORDER_UPDATED_EVENT, onCustomEvent);
     };
-  }, [agents, storageКлюч]);
+  }, [agents, storageKey]);
 
-  const orderedАгенты = useMemo(
-    () => sortАгентыByStoredOrder(agents, orderedIds),
+  const orderedAgents = useMemo(
+    () => sortAgentsByStoredOrder(agents, orderedIds),
     [agents, orderedIds],
   );
 
@@ -84,20 +84,20 @@ export function useАгентOrder({ agents, companyId, userId }: UseАгентO
     (ids: string[]) => {
       const idSet = new Set(agents.map((agent) => agent.id));
       const filtered = ids.filter((id) => idSet.has(id));
-      for (const agent of sortАгентыByStoredOrder(agents, [])) {
+      for (const agent of sortAgentsByStoredOrder(agents, [])) {
         if (!filtered.includes(agent.id)) filtered.push(agent.id);
       }
 
       setOrderedIds((current) => (areEqual(current, filtered) ? current : filtered));
-      if (storageКлюч) {
-        writeАгентOrder(storageКлюч, filtered);
+      if (storageKey) {
+        writeAgentOrder(storageKey, filtered);
       }
     },
-    [agents, storageКлюч],
+    [agents, storageKey],
   );
 
   return {
-    orderedАгенты,
+    orderedAgents,
     orderedIds,
     persistOrder,
   };

@@ -1,14 +1,14 @@
 import type {
-  SystemНетticeMetadataSection,
-  SystemНетticeProps,
-} from "../components/SystemНетtice";
+  SystemNoticeMetadataSection,
+  SystemNoticeProps,
+} from "../components/SystemNotice";
 
-export type SystemНетticeFixture = {
+export type SystemNoticeFixture = {
   id: string;
   caption: string;
-} & SystemНетticeProps;
+} & SystemNoticeProps;
 
-const HANDOFF_METADATA: SystemНетticeMetadataSection[] = [
+const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
   {
     title: "Recovery owner",
     rows: [
@@ -17,7 +17,7 @@ const HANDOFF_METADATA: SystemНетticeMetadataSection[] = [
         label: "Recovery issue",
         identifier: "PAP-3440",
         href: "/PAP/issues/PAP-3440",
-        title: "Успешноful run handoff missing disposition",
+        title: "Successful run handoff missing disposition",
       },
       {
         kind: "agent",
@@ -33,7 +33,7 @@ const HANDOFF_METADATA: SystemНетticeMetadataSection[] = [
     ],
   },
   {
-    title: "Запустить evidence",
+    title: "Run evidence",
     rows: [
       {
         kind: "run",
@@ -51,23 +51,23 @@ const HANDOFF_METADATA: SystemНетticeMetadataSection[] = [
       },
       {
         kind: "text",
-        label: "Нетrmalized cause",
-        value: "Запустить completed without issuing a disposition for an in_progress task.",
+        label: "Normalized cause",
+        value: "Run completed without issuing a disposition for an in_progress task.",
       },
     ],
   },
 ];
 
-const REQUIRED_METADATA: SystemНетticeMetadataSection[] = [
+const REQUIRED_METADATA: SystemNoticeMetadataSection[] = [
   {
-    title: "Обязательно action",
+    title: "Required action",
     rows: [
       {
         kind: "issue",
         label: "Source issue",
         identifier: "PAP-3440",
         href: "/PAP/issues/PAP-3440",
-        title: "Успешноful run handoff missing disposition",
+        title: "Successful run handoff missing disposition",
       },
       {
         kind: "agent",
@@ -77,31 +77,31 @@ const REQUIRED_METADATA: SystemНетticeMetadataSection[] = [
       },
       {
         kind: "text",
-        label: "Далее step",
+        label: "Next step",
         value: "Pick done, blocked, or in_review and post a one-line rationale.",
       },
     ],
   },
   {
-    title: "Запустить context",
+    title: "Run context",
     rows: [
       {
         kind: "run",
-        label: "Успешноful run",
+        label: "Successful run",
         runId: "9cdba892-c7ca-4d93-8604-4843873b127c",
         href: "/PAP/agents/codexcoder/runs/9cdba892-c7ca-4d93-8604-4843873b127c",
         status: "succeeded",
       },
       {
         kind: "code",
-        label: "Статус before",
+        label: "Status before",
         value: "in_progress",
       },
     ],
   },
 ];
 
-const NEUTRAL_METADATA: SystemНетticeMetadataSection[] = [
+const NEUTRAL_METADATA: SystemNoticeMetadataSection[] = [
   {
     rows: [
       {
@@ -119,34 +119,34 @@ const NEUTRAL_METADATA: SystemНетticeMetadataSection[] = [
       {
         kind: "text",
         label: "Reason",
-        value: "Manual reassignment requested by Совет.",
+        value: "Manual reassignment requested by Board.",
       },
     ],
   },
 ];
 
-export const systemНетticeFixtures: readonly SystemНетticeFixture[] = [
+export const systemNoticeFixtures: readonly SystemNoticeFixture[] = [
   {
     id: "warning-collapsed",
-    caption: "Предупреждение · collapsed (default)",
+    caption: "Warning · collapsed (default)",
     tone: "warning",
     label: "System warning",
     source: { label: "Paperclip", href: "/PAP/agents" },
     timestamp: "2026-05-04T16:32:00.000Z",
     body: "Paperclip needs a disposition before this issue can continue.",
     metadata: REQUIRED_METADATA,
-    detailsПо умолчаниюOpen: false,
+    detailsDefaultOpen: false,
   },
   {
     id: "warning-expanded",
-    caption: "Предупреждение · expanded",
+    caption: "Warning · expanded",
     tone: "warning",
     label: "System warning",
     source: { label: "Paperclip", href: "/PAP/agents" },
     timestamp: "2026-05-04T16:32:00.000Z",
     body: "Paperclip needs a disposition before this issue can continue.",
     metadata: REQUIRED_METADATA,
-    detailsПо умолчаниюOpen: true,
+    detailsDefaultOpen: true,
   },
   {
     id: "danger-collapsed",
@@ -157,7 +157,7 @@ export const systemНетticeFixtures: readonly SystemНетticeFixture[] = [
     timestamp: "2026-05-04T16:48:00.000Z",
     body: "Paperclip could not resolve this issue's missing disposition automatically. The issue is blocked on a recovery owner.",
     metadata: HANDOFF_METADATA,
-    detailsПо умолчаниюOpen: false,
+    detailsDefaultOpen: false,
   },
   {
     id: "danger-expanded",
@@ -168,7 +168,7 @@ export const systemНетticeFixtures: readonly SystemНетticeFixture[] = [
     timestamp: "2026-05-04T16:48:00.000Z",
     body: "Paperclip could not resolve this issue's missing disposition automatically. The issue is blocked on a recovery owner.",
     metadata: HANDOFF_METADATA,
-    detailsПо умолчаниюOpen: true,
+    detailsDefaultOpen: true,
   },
   {
     id: "neutral-collapsed",
@@ -179,7 +179,7 @@ export const systemНетticeFixtures: readonly SystemНетticeFixture[] = [
     timestamp: "2026-05-04T15:10:00.000Z",
     body: "Reassigned to ClaudeFixer.",
     metadata: NEUTRAL_METADATA,
-    detailsПо умолчаниюOpen: false,
+    detailsDefaultOpen: false,
   },
   {
     id: "neutral-expanded",
@@ -190,11 +190,11 @@ export const systemНетticeFixtures: readonly SystemНетticeFixture[] = [
     timestamp: "2026-05-04T15:10:00.000Z",
     body: "Reassigned to ClaudeFixer.",
     metadata: NEUTRAL_METADATA,
-    detailsПо умолчаниюOpen: true,
+    detailsDefaultOpen: true,
   },
   {
     id: "warning-no-details",
-    caption: "Предупреждение · no metadata (Детали affordance hidden)",
+    caption: "Warning · no metadata (Details affordance hidden)",
     tone: "warning",
     label: "System warning",
     source: { label: "Paperclip" },

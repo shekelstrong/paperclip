@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
-import { agentsApi, type ОргструктураНетde } from "../api/agents";
-import { useКомпания } from "../context/КомпанияContext";
+import { agentsApi, type OrgNode } from "../api/agents";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { queryКлючs } from "../lib/queryКлючs";
+import { queryKeys } from "../lib/queryKeys";
 import { agentUrl } from "../lib/utils";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "../components/EmptyState";
 import { PageSkeleton } from "../components/PageSkeleton";
-import { АгентIcon } from "../components/АгентIconPicker";
-import { Скачать, Maximize2, Minus, Network, Plus, Загрузить } from "lucide-react";
-import { AGENT_ROLE_LABELS, type Агент } from "@paperclipai/shared";
+import { AgentIcon } from "../components/AgentIconPicker";
+import { Download, Maximize2, Minus, Network, Plus, Upload } from "lucide-react";
+import { AGENT_ROLE_LABELS, type Agent } from "@paperclipai/shared";
 
 // Layout constants
 const CARD_W = 200;
@@ -25,14 +25,14 @@ const TOUCH_MOVE_THRESHOLD = 6;
 
 // ── Tree layout types ───────────────────────────────────────────────────
 
-interface LayoutНетde {
+interface LayoutNode {
   id: string;
   name: string;
   role: string;
   status: string;
   x: number;
   y: number;
-  children: LayoutНетde[];
+  children: LayoutNode[];
 }
 
 interface Point {
@@ -53,7 +53,7 @@ interface TouchGesture {
 // ── Layout algorithm ────────────────────────────────────────────────────
 
 /** Compute the width each subtree needs. */
-function subtreeWidth(node: ОргструктураНетde): number {
+function subtreeWidth(node: OrgNode): number {
   if (node.reports.length === 0) return CARD_W;
   const childrenW = node.reports.reduce((sum, c) => sum + subtreeWidth(c), 0);
   const gaps = (node.reports.length - 1) * GAP_X;
@@ -61,9 +61,9 @@ function subtreeWidth(node: ОргструктураНетde): number {
 }
 
 /** Recursively assign x,y positions. */
-function layoutTree(node: ОргструктураНетde, x: number, y: number): LayoutНетde {
+function layoutTree(node: OrgNode, x: number, y: number): LayoutNode {
   const totalW = subtreeWidth(node);
-  const layoutChildren: LayoutНетde[] = [];
+  const layoutChildren: LayoutNode[] = [];
 
   if (node.reports.length > 0) {
     const childrenW = node.reports.reduce((sum, c) => sum + subtreeWidth(c), 0);
@@ -89,7 +89,7 @@ function layoutTree(node: ОргструктураНетde, x: number, y: number
 }
 
 /** Layout all root nodes side by side. */
-function layoutForest(roots: ОргструктураНетde[]): LayoutНетde[] {
+function layoutForest(roots: OrgNode[]): LayoutNode[] {
   if (roots.length === 0) return [];
 
   const totalW = roots.reduce((sum, r) => sum + subtreeWidth(r), 0);
@@ -97,7 +97,7 @@ function layoutForest(roots: ОргструктураНетde[]): LayoutНетde
   let x = PADDING;
   const y = PADDING;
 
-  const result: LayoutНетde[] = [];
+  const result: LayoutNode[] = [];
   for (const root of roots) {
     const w = subtreeWidth(root);
     result.push(layoutTree(root, x, y));
@@ -109,9 +109,9 @@ function layoutForest(roots: ОргструктураНетde[]): LayoutНетde
 }
 
 /** Flatten layout tree to list of nodes. */
-function flattenLayout(nodes: LayoutНетde[]): LayoutНетde[] {
-  const result: LayoutНетde[] = [];
-  function walk(n: LayoutНетde) {
+function flattenLayout(nodes: LayoutNode[]): LayoutNode[] {
+  const result: LayoutNode[] = [];
+  function walk(n: LayoutNode) {
     result.push(n);
     n.children.forEach(walk);
   }
@@ -120,9 +120,9 @@ function flattenLayout(nodes: LayoutНетde[]): LayoutНетde[] {
 }
 
 /** Collect all parent→child edges. */
-function collectEdges(nodes: LayoutНетde[]): Array<{ parent: LayoutНетde; child: LayoutНетde }> {
-  const edges: Array<{ parent: LayoutНетde; child: LayoutНетde }> = [];
-  function walk(n: LayoutНетde) {
+function collectEdges(nodes: LayoutNode[]): Array<{ parent: LayoutNode; child: LayoutNode }> {
+  const edges: Array<{ parent: LayoutNode; child: LayoutNode }> = [];
+  function walk(n: LayoutNode) {
     for (const c of n.children) {
       edges.push({ parent: n, child: c });
       walk(c);
@@ -154,9 +154,9 @@ function touchCenter(a: React.Touch, b: React.Touch, container: HTMLDivElement):
   };
 }
 
-// ── Статус dot colors (raw hex for SVG) ─────────────────────────────────
+// ── Status dot colors (raw hex for SVG) ─────────────────────────────────
 
-import { getАдаптерLabel } from "../adapters/adapter-display-registry";
+import { getAdapterLabel } from "../adapters/adapter-display-registry";
 
 const statusDotColor: Record<string, string> = {
   running: "#22d3ee",
@@ -170,55 +170,55 @@ const defaultDotColor = "#a3a3a3";
 
 // ── Main component ──────────────────────────────────────────────────────
 
-export function ОргструктураChart() {
-  const { selectedКомпанияId } = useКомпания();
+export function OrgChart() {
+  const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
 
-  const { data: orgTree, isЗагрузка } = useQuery({
-    queryКлюч: queryКлючs.org(selectedКомпанияId!),
-    queryFn: () => agentsApi.org(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+  const { data: orgTree, isLoading } = useQuery({
+    queryKey: queryKeys.org(selectedCompanyId!),
+    queryFn: () => agentsApi.org(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
 
   const { data: agents } = useQuery({
-    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
-    queryFn: () => agentsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.agents.list(selectedCompanyId!),
+    queryFn: () => agentsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
 
   const agentMap = useMemo(() => {
-    const m = new Map<string, Агент>();
+    const m = new Map<string, Agent>();
     for (const a of agents ?? []) m.set(a.id, a);
     return m;
   }, [agents]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Оргструктура Chart" }]);
+    setBreadcrumbs([{ label: "Org Chart" }]);
   }, [setBreadcrumbs]);
 
   // Layout computation
   const layout = useMemo(() => layoutForest(orgTree ?? []), [orgTree]);
-  const allНетdes = useMemo(() => flattenLayout(layout), [layout]);
+  const allNodes = useMemo(() => flattenLayout(layout), [layout]);
   const edges = useMemo(() => collectEdges(layout), [layout]);
 
   // Compute SVG bounds
   const bounds = useMemo(() => {
-    if (allНетdes.length === 0) return { width: 800, height: 600 };
+    if (allNodes.length === 0) return { width: 800, height: 600 };
     let maxX = 0, maxY = 0;
-    for (const n of allНетdes) {
+    for (const n of allNodes) {
       maxX = Math.max(maxX, n.x + CARD_W);
       maxY = Math.max(maxY, n.y + CARD_H);
     }
     return { width: maxX + PADDING, height: maxY + PADDING };
-  }, [allНетdes]);
+  }, [allNodes]);
 
   // Pan & zoom state
   const containerRef = useRef<HTMLDivElement>(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [dragging, setDragging] = useState(false);
-  const dragНачать = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const touchGesture = useRef<TouchGesture>({
     mode: null,
     startPoint: { x: 0, y: 0 },
@@ -228,7 +228,7 @@ export function ОргструктураChart() {
     startCenter: { x: 0, y: 0 },
     moved: false,
   });
-  const suppressДалееCardClick = useRef(false);
+  const suppressNextCardClick = useRef(false);
   const suppressClickTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -242,7 +242,7 @@ export function ОргструктураChart() {
   // Center the chart on first load
   const hasInitialized = useRef(false);
   useEffect(() => {
-    if (hasInitialized.current || allНетdes.length === 0 || !containerRef.current) return;
+    if (hasInitialized.current || allNodes.length === 0 || !containerRef.current) return;
     hasInitialized.current = true;
 
     const container = containerRef.current;
@@ -262,7 +262,7 @@ export function ОргструктураChart() {
       x: (containerW - chartW) / 2,
       y: (containerH - chartH) / 2,
     });
-  }, [allНетdes, bounds]);
+  }, [allNodes, bounds]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -270,14 +270,14 @@ export function ОргструктураChart() {
     const target = e.target as HTMLElement;
     if (target.closest("[data-org-card]")) return;
     setDragging(true);
-    dragНачать.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+    dragStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
   }, [pan]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!dragging) return;
-    const dx = e.clientX - dragНачать.current.x;
-    const dy = e.clientY - dragНачать.current.y;
-    setPan({ x: dragНачать.current.panX + dx, y: dragНачать.current.panY + dy });
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    setPan({ x: dragStart.current.panX + dx, y: dragStart.current.panY + dy });
   }, [dragging]);
 
   const handleMouseUp = useCallback(() => {
@@ -285,7 +285,7 @@ export function ОргструктураChart() {
   }, []);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventПо умолчанию();
+    e.preventDefault();
     const container = containerRef.current;
     if (!container) return;
 
@@ -328,7 +328,7 @@ export function ОргструктураChart() {
     setPan({ x: (cW - chartW) / 2, y: (cH - chartH) / 2 });
   }, [bounds]);
 
-  const handleTouchНачать = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length >= 2 && containerRef.current) {
       const [first, second] = [e.touches[0]!, e.touches[1]!];
       touchGesture.current = {
@@ -408,12 +408,12 @@ export function ОргструктураChart() {
 
   const handleTouchEnd = useCallback(() => {
     if (touchGesture.current.moved) {
-      suppressДалееCardClick.current = true;
+      suppressNextCardClick.current = true;
       if (suppressClickTimerRef.current !== null) {
         window.clearTimeout(suppressClickTimerRef.current);
       }
       suppressClickTimerRef.current = window.setTimeout(() => {
-        suppressДалееCardClick.current = false;
+        suppressNextCardClick.current = false;
         suppressClickTimerRef.current = null;
       }, 400);
     }
@@ -428,38 +428,38 @@ export function ОргструктураChart() {
     };
   }, [pan, zoom]);
 
-  if (!selectedКомпанияId) {
+  if (!selectedCompanyId) {
     return <EmptyState icon={Network} message="Select a company to view the org chart." />;
   }
 
-  if (isЗагрузка) {
+  if (isLoading) {
     return <PageSkeleton variant="org-chart" />;
   }
 
   if (orgTree && orgTree.length === 0) {
-    return <EmptyState icon={Network} message="Нет organizational hierarchy defined." />;
+    return <EmptyState icon={Network} message="No organizational hierarchy defined." />;
   }
 
   return (
-    <div classИмя="flex h-[calc(100dvh-9rem)] min-h-[420px] flex-col md:h-full md:min-h-0">
-      <div classИмя="mb-2 flex shrink-0 flex-wrap items-center justify-start gap-2">
+    <div className="flex h-[calc(100dvh-9rem)] min-h-[420px] flex-col md:h-full md:min-h-0">
+      <div className="mb-2 flex shrink-0 flex-wrap items-center justify-start gap-2">
         <Link to="/company/import">
           <Button variant="outline" size="sm">
-            <Загрузить classИмя="mr-1.5 h-3.5 w-3.5" />
-            Импорт company
+            <Upload className="mr-1.5 h-3.5 w-3.5" />
+            Import company
           </Button>
         </Link>
         <Link to="/company/export">
           <Button variant="outline" size="sm">
-            <Скачать classИмя="mr-1.5 h-3.5 w-3.5" />
-            Экспорт company
+            <Download className="mr-1.5 h-3.5 w-3.5" />
+            Export company
           </Button>
         </Link>
       </div>
       <div
         ref={containerRef}
         data-testid="org-chart-viewport"
-        classИмя="w-full flex-1 min-h-0 overflow-hidden relative bg-muted/20 border border-border rounded-lg"
+        className="w-full flex-1 min-h-0 overflow-hidden relative bg-muted/20 border border-border rounded-lg"
         style={{
           cursor: dragging ? "grabbing" : "grab",
           touchAction: "none",
@@ -470,15 +470,15 @@ export function ОргструктураChart() {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
-        onTouchНачать={handleTouchНачать}
+        onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onTouchОтмена={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
         {/* Zoom controls */}
-        <div classИмя="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
+        <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
           <button
-            classИмя="flex size-9 items-center justify-center rounded border border-border bg-background text-sm transition-colors hover:bg-accent sm:size-7"
+            className="flex size-9 items-center justify-center rounded border border-border bg-background text-sm transition-colors hover:bg-accent sm:size-7"
             onClick={() => {
               const container = containerRef.current;
               if (container) {
@@ -491,10 +491,10 @@ export function ОргструктураChart() {
             title="Zoom in"
             aria-label="Zoom in"
           >
-            <Plus classИмя="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+            <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
           <button
-            classИмя="flex size-9 items-center justify-center rounded border border-border bg-background text-sm transition-colors hover:bg-accent sm:size-7"
+            className="flex size-9 items-center justify-center rounded border border-border bg-background text-sm transition-colors hover:bg-accent sm:size-7"
             onClick={() => {
               const container = containerRef.current;
               if (container) {
@@ -507,21 +507,21 @@ export function ОргструктураChart() {
             title="Zoom out"
             aria-label="Zoom out"
           >
-            <Minus classИмя="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+            <Minus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
           <button
-            classИмя="flex size-9 items-center justify-center rounded border border-border bg-background text-[10px] transition-colors hover:bg-accent sm:size-7"
+            className="flex size-9 items-center justify-center rounded border border-border bg-background text-[10px] transition-colors hover:bg-accent sm:size-7"
             onClick={fitToScreen}
             title="Fit to screen"
             aria-label="Fit chart to screen"
           >
-            <Maximize2 classИмя="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+            <Maximize2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
         </div>
 
         {/* SVG layer for edges */}
         <svg
-          classИмя="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none"
           style={{
             width: "100%",
             height: "100%",
@@ -551,13 +551,13 @@ export function ОргструктураChart() {
         {/* Card layer */}
         <div
           data-testid="org-chart-card-layer"
-          classИмя="absolute inset-0"
+          className="absolute inset-0"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: "0 0",
           }}
         >
-          {allНетdes.map((node) => {
+          {allNodes.map((node) => {
             const agent = agentMap.get(node.id);
             const dotColor = statusDotColor[node.status] ?? defaultDotColor;
 
@@ -565,7 +565,7 @@ export function ОргструктураChart() {
               <div
                 key={node.id}
                 data-org-card
-                classИмя="absolute bg-card border border-border rounded-lg shadow-sm hover:shadow-md hover:border-foreground/20 transition-[box-shadow,border-color] duration-150 cursor-pointer select-none"
+                className="absolute bg-card border border-border rounded-lg shadow-sm hover:shadow-md hover:border-foreground/20 transition-[box-shadow,border-color] duration-150 cursor-pointer select-none"
                 style={{
                   left: node.x,
                   top: node.y,
@@ -574,38 +574,38 @@ export function ОргструктураChart() {
                 }}
                 onClick={() => navigate(agent ? agentUrl(agent) : `/agents/${node.id}`)}
                 onClickCapture={(e) => {
-                  if (!suppressДалееCardClick.current) return;
-                  suppressДалееCardClick.current = false;
-                  e.preventПо умолчанию();
+                  if (!suppressNextCardClick.current) return;
+                  suppressNextCardClick.current = false;
+                  e.preventDefault();
                   e.stopPropagation();
                 }}
               >
-                <div classИмя="flex items-center px-4 py-3 gap-3">
-                  {/* Агент icon + status dot */}
-                  <div classИмя="relative shrink-0">
-                    <div classИмя="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
-                      <АгентIcon icon={agent?.icon} classИмя="h-4.5 w-4.5 text-foreground/70" />
+                <div className="flex items-center px-4 py-3 gap-3">
+                  {/* Agent icon + status dot */}
+                  <div className="relative shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
+                      <AgentIcon icon={agent?.icon} className="h-4.5 w-4.5 text-foreground/70" />
                     </div>
                     <span
-                      classИмя="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card"
+                      className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card"
                       style={{ backgroundColor: dotColor }}
                     />
                   </div>
-                  {/* Имя + role + adapter type */}
-                  <div classИмя="flex flex-col items-start min-w-0 flex-1">
-                    <span classИмя="text-sm font-semibold text-foreground leading-tight">
+                  {/* Name + role + adapter type */}
+                  <div className="flex flex-col items-start min-w-0 flex-1">
+                    <span className="text-sm font-semibold text-foreground leading-tight">
                       {node.name}
                     </span>
-                    <span classИмя="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                    <span className="text-[11px] text-muted-foreground leading-tight mt-0.5">
                       {agent?.title ?? roleLabel(node.role)}
                     </span>
                     {agent && (
-                      <span classИмя="text-[10px] text-muted-foreground/60 font-mono leading-tight mt-1">
-                        {getАдаптерLabel(agent.adapterТип)}
+                      <span className="text-[10px] text-muted-foreground/60 font-mono leading-tight mt-1">
+                        {getAdapterLabel(agent.adapterType)}
                       </span>
                     )}
                     {agent && agent.capabilities && (
-                      <span classИмя="text-[10px] text-muted-foreground/80 leading-tight mt-1 line-clamp-2">
+                      <span className="text-[10px] text-muted-foreground/80 leading-tight mt-1 line-clamp-2">
                         {agent.capabilities}
                       </span>
                     )}
@@ -620,8 +620,8 @@ export function ОргструктураChart() {
   );
 }
 
-const roleЯрлыки: Record<string, string> = AGENT_ROLE_LABELS;
+const roleLabels: Record<string, string> = AGENT_ROLE_LABELS;
 
 function roleLabel(role: string): string {
-  return roleЯрлыки[role] ?? role;
+  return roleLabels[role] ?? role;
 }

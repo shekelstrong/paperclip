@@ -1,81 +1,81 @@
 import type {
-  АктивностьEvent,
-  Процедура,
-  ПроцедураDetail,
-  ПроцедураListItem,
-  ПроцедураRevision,
-  ПроцедураЗапустить,
-  ПроцедураЗапуститьSummary,
-  ПроцедураTrigger,
-  ПроцедураTriggerСекретMaterial,
+  ActivityEvent,
+  Routine,
+  RoutineDetail,
+  RoutineListItem,
+  RoutineRevision,
+  RoutineRun,
+  RoutineRunSummary,
+  RoutineTrigger,
+  RoutineTriggerSecretMaterial,
 } from "@paperclipai/shared";
 import { activityApi } from "./activity";
 import { api } from "./client";
 
-export interface ПроцедураTriggerResponse {
-  trigger: ПроцедураTrigger;
-  secretMaterial: ПроцедураTriggerСекретMaterial | null;
+export interface RoutineTriggerResponse {
+  trigger: RoutineTrigger;
+  secretMaterial: RoutineTriggerSecretMaterial | null;
 }
 
-export interface RotateПроцедураTriggerResponse {
-  trigger: ПроцедураTrigger;
-  secretMaterial: ПроцедураTriggerСекретMaterial;
+export interface RotateRoutineTriggerResponse {
+  trigger: RoutineTrigger;
+  secretMaterial: RoutineTriggerSecretMaterial;
 }
 
-export interface RestoreПроцедураRevisionСекретMaterial extends ПроцедураTriggerСекретMaterial {
+export interface RestoreRoutineRevisionSecretMaterial extends RoutineTriggerSecretMaterial {
   triggerId: string;
 }
 
-export interface RestoreПроцедураRevisionResponse {
-  routine: Процедура;
-  revision: ПроцедураRevision;
+export interface RestoreRoutineRevisionResponse {
+  routine: Routine;
+  revision: RoutineRevision;
   restoredFromRevisionId: string;
   restoredFromRevisionNumber: number;
-  secretMaterials: RestoreПроцедураRevisionСекретMaterial[];
+  secretMaterials: RestoreRoutineRevisionSecretMaterial[];
 }
 
 export const routinesApi = {
   list: (companyId: string, filters?: { projectId?: string | null }) => {
-    const params = new URLПоискParams();
+    const params = new URLSearchParams();
     if (filters?.projectId) params.set("projectId", filters.projectId);
     const query = params.toString();
-    return api.get<ПроцедураListItem[]>(`/companies/${companyId}/routines${query ? `?${query}` : ""}`);
+    return api.get<RoutineListItem[]>(`/companies/${companyId}/routines${query ? `?${query}` : ""}`);
   },
   create: (companyId: string, data: Record<string, unknown>) =>
-    api.post<Процедура>(`/companies/${companyId}/routines`, data),
-  get: (id: string) => api.get<ПроцедураDetail>(`/routines/${id}`),
-  update: (id: string, data: Record<string, unknown>) => api.patch<Процедура>(`/routines/${id}`, data),
-  listRevisions: (id: string) => api.get<ПроцедураRevision[]>(`/routines/${id}/revisions`),
+    api.post<Routine>(`/companies/${companyId}/routines`, data),
+  get: (id: string) => api.get<RoutineDetail>(`/routines/${id}`),
+  update: (id: string, data: Record<string, unknown>) => api.patch<Routine>(`/routines/${id}`, data),
+  listRevisions: (id: string) => api.get<RoutineRevision[]>(`/routines/${id}/revisions`),
   restoreRevision: (
     id: string,
     revisionId: string,
     body: { changeSummary?: string | null } = {},
   ) =>
-    api.post<RestoreПроцедураRevisionResponse>(
+    api.post<RestoreRoutineRevisionResponse>(
       `/routines/${id}/revisions/${revisionId}/restore`,
       body,
     ),
-  listЗапуститьs: (id: string, limit: number = 50) => api.get<ПроцедураЗапуститьSummary[]>(`/routines/${id}/runs?limit=${limit}`),
+  listRuns: (id: string, limit: number = 50) => api.get<RoutineRunSummary[]>(`/routines/${id}/runs?limit=${limit}`),
   createTrigger: (id: string, data: Record<string, unknown>) =>
-    api.post<ПроцедураTriggerResponse>(`/routines/${id}/triggers`, data),
+    api.post<RoutineTriggerResponse>(`/routines/${id}/triggers`, data),
   updateTrigger: (id: string, data: Record<string, unknown>) =>
-    api.patch<ПроцедураTrigger>(`/routine-triggers/${id}`, data),
+    api.patch<RoutineTrigger>(`/routine-triggers/${id}`, data),
   deleteTrigger: (id: string) => api.delete<void>(`/routine-triggers/${id}`),
-  rotateTriggerСекрет: (id: string) =>
-    api.post<RotateПроцедураTriggerResponse>(`/routine-triggers/${id}/rotate-secret`, {}),
+  rotateTriggerSecret: (id: string) =>
+    api.post<RotateRoutineTriggerResponse>(`/routine-triggers/${id}/rotate-secret`, {}),
   run: (id: string, data?: Record<string, unknown>) =>
-    api.post<ПроцедураЗапустить>(`/routines/${id}/run`, data ?? {}),
+    api.post<RoutineRun>(`/routines/${id}/run`, data ?? {}),
   activity: async (
     companyId: string,
     routineId: string,
     related?: { triggerIds?: string[]; runIds?: string[] },
   ) => {
     const requests = [
-      activityApi.list(companyId, { entityТип: "routine", entityId: routineId }),
+      activityApi.list(companyId, { entityType: "routine", entityId: routineId }),
       ...(related?.triggerIds ?? []).map((triggerId) =>
-        activityApi.list(companyId, { entityТип: "routine_trigger", entityId: triggerId })),
+        activityApi.list(companyId, { entityType: "routine_trigger", entityId: triggerId })),
       ...(related?.runIds ?? []).map((runId) =>
-        activityApi.list(companyId, { entityТип: "routine_run", entityId: runId })),
+        activityApi.list(companyId, { entityType: "routine_run", entityId: runId })),
     ];
     const events = (await Promise.all(requests)).flat();
     const deduped = new Map(events.map((event) => [event.id, event]));

@@ -1,9 +1,9 @@
-import type { АдаптерConfigFieldsProps } from "../types";
+import type { AdapterConfigFieldsProps } from "../types";
 import {
-  ЧерновикInput,
+  DraftInput,
   Field,
 } from "../../components/agent-config-primitives";
-import { ChooseПутьButton } from "../../components/ПутьInstructionsModal";
+import { ChoosePathButton } from "../../components/PathInstructionsModal";
 
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
@@ -11,39 +11,39 @@ const instructionsFileHint =
   "Absolute path to a markdown file (e.g. AGENTS.md) that defines this agent's behavior. Prepended to the Gemini prompt at runtime.";
 
 export function GeminiLocalConfigFields({
-  isСоздать,
+  isCreate,
   values,
   set,
   config,
   eff,
   mark,
   hideInstructionsFile,
-}: АдаптерConfigFieldsProps) {
+}: AdapterConfigFieldsProps) {
   if (hideInstructionsFile) return null;
   return (
     <>
-      <Field label="Агент instructions file" hint={instructionsFileHint}>
-        <div classИмя="flex items-center gap-2">
-          <ЧерновикInput
+      <Field label="Agent instructions file" hint={instructionsFileHint}>
+        <div className="flex items-center gap-2">
+          <DraftInput
             value={
-              isСоздать
-                ? values!.instructionsFileПуть ?? ""
+              isCreate
+                ? values!.instructionsFilePath ?? ""
                 : eff(
                     "adapterConfig",
-                    "instructionsFileПуть",
-                    String(config.instructionsFileПуть ?? ""),
+                    "instructionsFilePath",
+                    String(config.instructionsFilePath ?? ""),
                   )
             }
             onCommit={(v) =>
-              isСоздать
-                ? set!({ instructionsFileПуть: v })
-                : mark("adapterConfig", "instructionsFileПуть", v || undefined)
+              isCreate
+                ? set!({ instructionsFilePath: v })
+                : mark("adapterConfig", "instructionsFilePath", v || undefined)
             }
             immediate
-            classИмя={inputClass}
+            className={inputClass}
             placeholder="/absolute/path/to/AGENTS.md"
           />
-          <ChooseПутьButton />
+          <ChoosePathButton />
         </div>
       </Field>
     </>

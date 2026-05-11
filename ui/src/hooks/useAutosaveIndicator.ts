@@ -1,24 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export type АвтоsaveState = "idle" | "saving" | "saved" | "error";
+export type AutosaveState = "idle" | "saving" | "saved" | "error";
 
 const SAVING_DELAY_MS = 250;
 const SAVED_LINGER_MS = 1600;
 
-export function useАвтоsaveIndicator() {
-  const [state, setState] = useState<АвтоsaveState>("idle");
+export function useAutosaveIndicator() {
+  const [state, setState] = useState<AutosaveState>("idle");
   const saveIdRef = useRef(0);
-  const savingTimerRef = useRef<ReturnТип<typeof setTimeout> | null>(null);
-  const clearСохранитьdTimerRef = useRef<ReturnТип<typeof setTimeout> | null>(null);
+  const savingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTimers = useCallback(() => {
     if (savingTimerRef.current) {
       clearTimeout(savingTimerRef.current);
       savingTimerRef.current = null;
     }
-    if (clearСохранитьdTimerRef.current) {
-      clearTimeout(clearСохранитьdTimerRef.current);
-      clearСохранитьdTimerRef.current = null;
+    if (clearSavedTimerRef.current) {
+      clearTimeout(clearSavedTimerRef.current);
+      clearSavedTimerRef.current = null;
     }
   }, []);
 
@@ -35,7 +35,7 @@ export function useАвтоsaveIndicator() {
     setState("idle");
   }, [clearTimers]);
 
-  const runСохранить = useCallback(async (save: () => Promise<void>) => {
+  const runSave = useCallback(async (save: () => Promise<void>) => {
     const saveId = saveIdRef.current + 1;
     saveIdRef.current = saveId;
     clearTimers();
@@ -50,7 +50,7 @@ export function useАвтоsaveIndicator() {
       if (saveIdRef.current !== saveId) return;
       clearTimers();
       setState("saved");
-      clearСохранитьdTimerRef.current = setTimeout(() => {
+      clearSavedTimerRef.current = setTimeout(() => {
         if (saveIdRef.current === saveId) {
           setState("idle");
         }
@@ -67,6 +67,6 @@ export function useАвтоsaveIndicator() {
     state,
     markDirty,
     reset,
-    runСохранить,
+    runSave,
   };
 }

@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { issuesApi } from "../api/issues";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { queryКлючs } from "../lib/queryКлючs";
-import { СтатусIcon } from "../components/СтатусIcon";
+import { queryKeys } from "../lib/queryKeys";
+import { StatusIcon } from "../components/StatusIcon";
 
 import { EntityRow } from "../components/EntityRow";
 import { EmptyState } from "../components/EmptyState";
@@ -12,54 +12,54 @@ import { PageSkeleton } from "../components/PageSkeleton";
 import { formatDate } from "../lib/utils";
 import { ListTodo } from "lucide-react";
 
-export function MyЗадачи() {
-  const { selectedКомпанияId } = useКомпания();
+export function MyIssues() {
+  const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Мои задачи" }]);
+    setBreadcrumbs([{ label: "My Issues" }]);
   }, [setBreadcrumbs]);
 
-  const { data: issues, isЗагрузка, error } = useQuery({
-    queryКлюч: queryКлючs.issues.list(selectedКомпанияId!),
-    queryFn: () => issuesApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+  const { data: issues, isLoading, error } = useQuery({
+    queryKey: queryKeys.issues.list(selectedCompanyId!),
+    queryFn: () => issuesApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
 
-  if (!selectedКомпанияId) {
+  if (!selectedCompanyId) {
     return <EmptyState icon={ListTodo} message="Select a company to view your issues." />;
   }
 
-  if (isЗагрузка) {
+  if (isLoading) {
     return <PageSkeleton variant="list" />;
   }
 
   // Show issues that are not assigned (user-created or unassigned)
-  const myЗадачи = (issues ?? []).filter(
-    (i) => !i.assigneeАгентId && !["done", "cancelled"].includes(i.status)
+  const myIssues = (issues ?? []).filter(
+    (i) => !i.assigneeAgentId && !["done", "cancelled"].includes(i.status)
   );
 
   return (
-    <div classИмя="space-y-4">
-      {error && <p classИмя="text-sm text-destructive">{error.message}</p>}
+    <div className="space-y-4">
+      {error && <p className="text-sm text-destructive">{error.message}</p>}
 
-      {myЗадачи.length === 0 && (
-        <EmptyState icon={ListTodo} message="Нет назначенных вам задач." />
+      {myIssues.length === 0 && (
+        <EmptyState icon={ListTodo} message="No issues assigned to you." />
       )}
 
-      {myЗадачи.length > 0 && (
-        <div classИмя="border border-border">
-          {myЗадачи.map((issue) => (
+      {myIssues.length > 0 && (
+        <div className="border border-border">
+          {myIssues.map((issue) => (
             <EntityRow
               key={issue.id}
               identifier={issue.identifier ?? issue.id.slice(0, 8)}
               title={issue.title}
               to={`/issues/${issue.identifier ?? issue.id}`}
               leading={
-                <СтатусIcon status={issue.status} blockerAttention={issue.blockerAttention} />
+                <StatusIcon status={issue.status} blockerAttention={issue.blockerAttention} />
               }
               trailing={
-                <span classИмя="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {formatDate(issue.createdAt)}
                 </span>
               }

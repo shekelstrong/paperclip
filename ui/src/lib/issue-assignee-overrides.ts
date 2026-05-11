@@ -4,31 +4,31 @@ export const ISSUE_OVERRIDE_ADAPTER_TYPES = new Set([
   "opencode_local",
 ]);
 
-export type ЗадачаМодельLane = "primary" | "cheap" | "custom";
+export type IssueModelLane = "primary" | "cheap" | "custom";
 
-export interface BuildИсполнительАдаптерOverridesInput {
-  adapterТип: string | null | undefined;
-  lane: ЗадачаМодельLane;
+export interface BuildAssigneeAdapterOverridesInput {
+  adapterType: string | null | undefined;
+  lane: IssueModelLane;
   modelOverride: string;
   thinkingEffortOverride: string;
   chrome: boolean;
 }
 
 /**
- * Build the `assigneeАдаптерOverrides` payload sent to the issue create API.
+ * Build the `assigneeAdapterOverrides` payload sent to the issue create API.
  *
  * Lane semantics:
  * - "primary" → no overrides, runs on the agent's primary model.
- * - "cheap"   → `modelПрофиль: "cheap"` only; the runtime resolves the actual
+ * - "cheap"   → `modelProfile: "cheap"` only; the runtime resolves the actual
  *               adapter config from the agent's runtimeConfig + adapter default.
  * - "custom"  → preserves the legacy explicit override path
  *               (`adapterConfig.model`, thinking effort, chrome).
  */
-export function buildИсполнительАдаптерOverrides(
-  input: BuildИсполнительАдаптерOverridesInput,
+export function buildAssigneeAdapterOverrides(
+  input: BuildAssigneeAdapterOverridesInput,
 ): Record<string, unknown> | null {
-  const adapterТип = input.adapterТип ?? null;
-  if (!adapterТип || !ISSUE_OVERRIDE_ADAPTER_TYPES.has(adapterТип)) {
+  const adapterType = input.adapterType ?? null;
+  if (!adapterType || !ISSUE_OVERRIDE_ADAPTER_TYPES.has(adapterType)) {
     return null;
   }
 
@@ -37,21 +37,21 @@ export function buildИсполнительАдаптерOverrides(
   }
 
   if (input.lane === "cheap") {
-    return { modelПрофиль: "cheap" };
+    return { modelProfile: "cheap" };
   }
 
   const adapterConfig: Record<string, unknown> = {};
   if (input.modelOverride) adapterConfig.model = input.modelOverride;
   if (input.thinkingEffortOverride) {
-    if (adapterТип === "codex_local") {
+    if (adapterType === "codex_local") {
       adapterConfig.modelReasoningEffort = input.thinkingEffortOverride;
-    } else if (adapterТип === "opencode_local") {
+    } else if (adapterType === "opencode_local") {
       adapterConfig.variant = input.thinkingEffortOverride;
-    } else if (adapterТип === "claude_local") {
+    } else if (adapterType === "claude_local") {
       adapterConfig.effort = input.thinkingEffortOverride;
     }
   }
-  if (adapterТип === "claude_local" && input.chrome) {
+  if (adapterType === "claude_local" && input.chrome) {
     adapterConfig.chrome = true;
   }
 

@@ -1,29 +1,29 @@
-import type { UIАдаптерModule } from "./types";
-import { acpxLocalUIАдаптер } from "./acpx-local";
-import { claudeLocalUIАдаптер } from "./claude-local";
-import { codexLocalUIАдаптер } from "./codex-local";
-import { cursorCloudUIАдаптер } from "./cursor-cloud";
-import { cursorLocalUIАдаптер } from "./cursor";
-import { geminiLocalUIАдаптер } from "./gemini-local";
-import { openCodeLocalUIАдаптер } from "./opencode-local";
-import { piLocalUIАдаптер } from "./pi-local";
-import { openClawGatewayUIАдаптер } from "./openclaw-gateway";
-import { hermesLocalUIАдаптер } from "./hermes-local";
-import { processUIАдаптер } from "./process";
-import { httpUIАдаптер } from "./http";
-import { loadDynamicParser, invalidateDynamicParser, setDynamicParserResultНетtifier } from "./dynamic-loader";
-import { SchemaConfigFields, buildSchemaАдаптерConfig } from "./schema-config-fields";
+import type { UIAdapterModule } from "./types";
+import { acpxLocalUIAdapter } from "./acpx-local";
+import { claudeLocalUIAdapter } from "./claude-local";
+import { codexLocalUIAdapter } from "./codex-local";
+import { cursorCloudUIAdapter } from "./cursor-cloud";
+import { cursorLocalUIAdapter } from "./cursor";
+import { geminiLocalUIAdapter } from "./gemini-local";
+import { openCodeLocalUIAdapter } from "./opencode-local";
+import { piLocalUIAdapter } from "./pi-local";
+import { openClawGatewayUIAdapter } from "./openclaw-gateway";
+import { hermesLocalUIAdapter } from "./hermes-local";
+import { processUIAdapter } from "./process";
+import { httpUIAdapter } from "./http";
+import { loadDynamicParser, invalidateDynamicParser, setDynamicParserResultNotifier } from "./dynamic-loader";
+import { SchemaConfigFields, buildSchemaAdapterConfig } from "./schema-config-fields";
 
-const uiАдаптеры: UIАдаптерModule[] = [];
-const adaptersByТип = new Map<string, UIАдаптерModule>();
+const uiAdapters: UIAdapterModule[] = [];
+const adaptersByType = new Map<string, UIAdapterModule>();
 
-// Типs registered at module load time — allowed to be overridden by
+// Types registered at module load time — allowed to be overridden by
 // external adapters that ship their own ui-parser.js via the server.
-const builtinТипs = new Set<string>();
+const builtinTypes = new Set<string>();
 
 // Original builtin adapters stored for restoration when external overrides
 // are deactivated or removed.
-const builtinАдаптерыByТип = new Map<string, UIАдаптерModule>();
+const builtinAdaptersByType = new Map<string, UIAdapterModule>();
 
 // Tracks which builtin types currently have an active external override.
 const activeExternalOverrides = new Set<string>();
@@ -38,92 +38,92 @@ const overrideGeneration = new Map<string, number>();
 const adapterChangeListeners = new Set<() => void>();
 
 /** Subscribe to adapter registry changes. Returns unsubscribe function. */
-export function onАдаптерChange(fn: () => void): () => void {
+export function onAdapterChange(fn: () => void): () => void {
   adapterChangeListeners.add(fn);
   return () => adapterChangeListeners.delete(fn);
 }
 
-function notifyАдаптерChange(): void {
+function notifyAdapterChange(): void {
   for (const fn of adapterChangeListeners) fn();
 }
 
-setDynamicParserResultНетtifier(notifyАдаптерChange);
+setDynamicParserResultNotifier(notifyAdapterChange);
 
-function registerBuiltInUIАдаптеры() {
+function registerBuiltInUIAdapters() {
   for (const adapter of [
-    acpxLocalUIАдаптер,
-    claudeLocalUIАдаптер,
-    codexLocalUIАдаптер,
-    cursorCloudUIАдаптер,
-    geminiLocalUIАдаптер,
-    hermesLocalUIАдаптер,
-    openCodeLocalUIАдаптер,
-    piLocalUIАдаптер,
-    cursorLocalUIАдаптер,
-    openClawGatewayUIАдаптер,
-    processUIАдаптер,
-    httpUIАдаптер,
+    acpxLocalUIAdapter,
+    claudeLocalUIAdapter,
+    codexLocalUIAdapter,
+    cursorCloudUIAdapter,
+    geminiLocalUIAdapter,
+    hermesLocalUIAdapter,
+    openCodeLocalUIAdapter,
+    piLocalUIAdapter,
+    cursorLocalUIAdapter,
+    openClawGatewayUIAdapter,
+    processUIAdapter,
+    httpUIAdapter,
   ]) {
-    builtinТипs.add(adapter.type);
-    builtinАдаптерыByТип.set(adapter.type, adapter);
-    registerUIАдаптер(adapter);
+    builtinTypes.add(adapter.type);
+    builtinAdaptersByType.set(adapter.type, adapter);
+    registerUIAdapter(adapter);
   }
 }
 
-export function registerUIАдаптер(adapter: UIАдаптерModule): void {
-  const existingIndex = uiАдаптеры.findIndex((entry) => entry.type === adapter.type);
+export function registerUIAdapter(adapter: UIAdapterModule): void {
+  const existingIndex = uiAdapters.findIndex((entry) => entry.type === adapter.type);
   if (existingIndex >= 0) {
-    uiАдаптеры.splice(existingIndex, 1, adapter);
+    uiAdapters.splice(existingIndex, 1, adapter);
   } else {
-    uiАдаптеры.push(adapter);
+    uiAdapters.push(adapter);
   }
-  adaptersByТип.set(adapter.type, adapter);
-  notifyАдаптерChange();
+  adaptersByType.set(adapter.type, adapter);
+  notifyAdapterChange();
 }
 
-export function unregisterUIАдаптер(type: string): void {
-  if (type === processUIАдаптер.type || type === httpUIАдаптер.type) return;
-  const existingIndex = uiАдаптеры.findIndex((entry) => entry.type === type);
+export function unregisterUIAdapter(type: string): void {
+  if (type === processUIAdapter.type || type === httpUIAdapter.type) return;
+  const existingIndex = uiAdapters.findIndex((entry) => entry.type === type);
   if (existingIndex >= 0) {
-    uiАдаптеры.splice(existingIndex, 1);
+    uiAdapters.splice(existingIndex, 1);
   }
-  adaptersByТип.delete(type);
+  adaptersByType.delete(type);
 }
 
-export function findUIАдаптер(type: string): UIАдаптерModule | null {
-  return adaptersByТип.get(type) ?? null;
+export function findUIAdapter(type: string): UIAdapterModule | null {
+  return adaptersByType.get(type) ?? null;
 }
 
-registerBuiltInUIАдаптеры();
+registerBuiltInUIAdapters();
 
-export function getUIАдаптер(type: string): UIАдаптерModule {
-  const builtIn = adaptersByТип.get(type);
+export function getUIAdapter(type: string): UIAdapterModule {
+  const builtIn = adaptersByType.get(type);
 
   if (!builtIn) {
-    let loadЗапущен = false;
+    let loadStarted = false;
     return {
       type,
       label: type,
       parseStdoutLine: (line: string, ts: string) => {
-        if (!loadЗапущен) {
-          loadЗапущен = true;
+        if (!loadStarted) {
+          loadStarted = true;
           loadDynamicParser(type).then((parserModule) => {
             if (parserModule) {
-              registerUIАдаптер({
+              registerUIAdapter({
                 type,
                 label: type,
                 parseStdoutLine: parserModule.parseStdoutLine,
                 createStdoutParser: parserModule.createStdoutParser,
                 ConfigFields: SchemaConfigFields,
-                buildАдаптерConfig: buildSchemaАдаптерConfig,
+                buildAdapterConfig: buildSchemaAdapterConfig,
               });
             }
           });
         }
-        return processUIАдаптер.parseStdoutLine(line, ts);
+        return processUIAdapter.parseStdoutLine(line, ts);
       },
       ConfigFields: SchemaConfigFields,
-      buildАдаптерConfig: buildSchemaАдаптерConfig,
+      buildAdapterConfig: buildSchemaAdapterConfig,
     };
   }
 
@@ -141,64 +141,64 @@ export function getUIАдаптер(type: string): UIАдаптерModule {
  *    A generation counter guards against stale loads that resolve after the
  *    override has been torn down.
  *
- * 2. **Нетn-builtin externals** — register a bridge adapter that lazily loads the
+ * 2. **Non-builtin externals** — register a bridge adapter that lazily loads the
  *    dynamic parser on first stdout line, falling back to the generic process
  *    adapter.  Once the parser resolves the bridge is replaced.
  */
-export function syncExternalАдаптеры(
-  serverАдаптеры: {
+export function syncExternalAdapters(
+  serverAdapters: {
     type: string;
     label: string;
     disabled?: boolean;
     /** When true, the external override for a builtin type is client-side paused. */
-    overrideОтключитьd?: boolean;
+    overrideDisabled?: boolean;
   }[],
 ): void {
-  const enabledExternalТипs = new Set(
-    serverАдаптеры.filter((a) => !a.disabled && !a.overrideОтключитьd).map((a) => a.type),
+  const enabledExternalTypes = new Set(
+    serverAdapters.filter((a) => !a.disabled && !a.overrideDisabled).map((a) => a.type),
   );
-  const allExternalТипs = new Set(
-    serverАдаптеры.map((a) => a.type),
+  const allExternalTypes = new Set(
+    serverAdapters.map((a) => a.type),
   );
 
   // ── Builtin override lifecycle ──────────────────────────────────────────
 
-  for (const builtinТип of builtinТипs) {
-    const originalBuiltin = builtinАдаптерыByТип.get(builtinТип);
+  for (const builtinType of builtinTypes) {
+    const originalBuiltin = builtinAdaptersByType.get(builtinType);
     if (!originalBuiltin) continue;
 
-    const hasExternal = allExternalТипs.has(builtinТип);
-    const externalВключитьd = enabledExternalТипs.has(builtinТип);
-    const wasOverridden = activeExternalOverrides.has(builtinТип);
+    const hasExternal = allExternalTypes.has(builtinType);
+    const externalEnabled = enabledExternalTypes.has(builtinType);
+    const wasOverridden = activeExternalOverrides.has(builtinType);
 
-    if (hasExternal && externalВключитьd && !wasOverridden) {
+    if (hasExternal && externalEnabled && !wasOverridden) {
       // Activate: external just became active → replace builtin with bridge.
-      activeExternalOverrides.add(builtinТип);
+      activeExternalOverrides.add(builtinType);
 
-      const gen = (overrideGeneration.get(builtinТип) ?? 0) + 1;
-      overrideGeneration.set(builtinТип, gen);
+      const gen = (overrideGeneration.get(builtinType) ?? 0) + 1;
+      overrideGeneration.set(builtinType, gen);
 
-      let loadЗапущен = false;
+      let loadStarted = false;
       const fallbackParser = originalBuiltin.parseStdoutLine;
-      const externalEntry = serverАдаптеры.find((a) => a.type === builtinТип);
-      const label = externalEntry?.label ?? builtinТип;
+      const externalEntry = serverAdapters.find((a) => a.type === builtinType);
+      const label = externalEntry?.label ?? builtinType;
 
-      registerUIАдаптер({
-        type: builtinТип,
+      registerUIAdapter({
+        type: builtinType,
         label,
         parseStdoutLine: (line: string, ts: string) => {
-          if (!loadЗапущен) {
-            loadЗапущен = true;
-            loadDynamicParser(builtinТип).then((parserModule) => {
+          if (!loadStarted) {
+            loadStarted = true;
+            loadDynamicParser(builtinType).then((parserModule) => {
               // Discard if the override was torn down while the load was in-flight.
-              if (parserModule && overrideGeneration.get(builtinТип) === gen) {
-                registerUIАдаптер({
-                  type: builtinТип,
+              if (parserModule && overrideGeneration.get(builtinType) === gen) {
+                registerUIAdapter({
+                  type: builtinType,
                   label,
                   parseStdoutLine: parserModule.parseStdoutLine,
                   createStdoutParser: parserModule.createStdoutParser,
                   ConfigFields: originalBuiltin.ConfigFields,
-                  buildАдаптерConfig: originalBuiltin.buildАдаптерConfig,
+                  buildAdapterConfig: originalBuiltin.buildAdapterConfig,
                 });
               }
             });
@@ -206,49 +206,49 @@ export function syncExternalАдаптеры(
           return fallbackParser(line, ts);
         },
         ConfigFields: originalBuiltin.ConfigFields,
-        buildАдаптерConfig: originalBuiltin.buildАдаптерConfig,
+        buildAdapterConfig: originalBuiltin.buildAdapterConfig,
       });
-    } else if ((!hasExternal || !externalВключитьd) && wasOverridden) {
+    } else if ((!hasExternal || !externalEnabled) && wasOverridden) {
       // Deactivate: external disabled or removed → restore builtin.
-      activeExternalOverrides.delete(builtinТип);
-      overrideGeneration.delete(builtinТип);
-      invalidateDynamicParser(builtinТип);
-      registerUIАдаптер(originalBuiltin);
+      activeExternalOverrides.delete(builtinType);
+      overrideGeneration.delete(builtinType);
+      invalidateDynamicParser(builtinType);
+      registerUIAdapter(originalBuiltin);
     }
   }
 
-  // ── Нетn-builtin externals ───────────────────────────────────────────────
+  // ── Non-builtin externals ───────────────────────────────────────────────
 
-  for (const { type, label } of serverАдаптеры) {
-    if (builtinТипs.has(type)) continue; // handled above
+  for (const { type, label } of serverAdapters) {
+    if (builtinTypes.has(type)) continue; // handled above
 
-    const existing = adaptersByТип.get(type);
+    const existing = adaptersByType.get(type);
 
     // If this type already has an externally-loaded dynamic parser, skip —
     // it was loaded from disk on a previous sync. Only re-trigger loading
     // when the server returns a new external adapter that hasn't been loaded yet.
-    if (existing && existing !== processUIАдаптер) continue;
+    if (existing && existing !== processUIAdapter) continue;
 
-    let loadЗапущен = false;
+    let loadStarted = false;
     // Use the existing built-in parser as fallback (if any) so we don't
     // regress to the generic process parser while the dynamic one loads.
-    const fallbackParser = existing?.parseStdoutLine ?? processUIАдаптер.parseStdoutLine;
+    const fallbackParser = existing?.parseStdoutLine ?? processUIAdapter.parseStdoutLine;
 
-    registerUIАдаптер({
+    registerUIAdapter({
       type,
       label,
       parseStdoutLine: (line: string, ts: string) => {
-        if (!loadЗапущен) {
-          loadЗапущен = true;
+        if (!loadStarted) {
+          loadStarted = true;
           loadDynamicParser(type).then((parserModule) => {
             if (parserModule) {
-              registerUIАдаптер({
+              registerUIAdapter({
                 type,
                 label,
                 parseStdoutLine: parserModule.parseStdoutLine,
                 createStdoutParser: parserModule.createStdoutParser,
                 ConfigFields: existing?.ConfigFields ?? SchemaConfigFields,
-                buildАдаптерConfig: existing?.buildАдаптерConfig ?? buildSchemaАдаптерConfig,
+                buildAdapterConfig: existing?.buildAdapterConfig ?? buildSchemaAdapterConfig,
               });
             }
           });
@@ -256,11 +256,11 @@ export function syncExternalАдаптеры(
         return fallbackParser(line, ts);
       },
       ConfigFields: existing?.ConfigFields ?? SchemaConfigFields,
-      buildАдаптерConfig: existing?.buildАдаптерConfig ?? buildSchemaАдаптерConfig,
+      buildAdapterConfig: existing?.buildAdapterConfig ?? buildSchemaAdapterConfig,
     });
   }
 }
 
-export function listUIАдаптеры(): UIАдаптерModule[] {
-  return [...uiАдаптеры];
+export function listUIAdapters(): UIAdapterModule[] {
+  return [...uiAdapters];
 }

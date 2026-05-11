@@ -1,16 +1,16 @@
-import type { ЗадачаRelationЗадачаSummary } from "@paperclipai/shared";
+import type { IssueRelationIssueSummary } from "@paperclipai/shared";
 
-export function isAssignedНазадlogBlocker(blocker: ЗадачаRelationЗадачаSummary): boolean {
-  return blocker.status === "backlog" && Boolean(blocker.assigneeАгентId);
+export function isAssignedBacklogBlocker(blocker: IssueRelationIssueSummary): boolean {
+  return blocker.status === "backlog" && Boolean(blocker.assigneeAgentId);
 }
 
-export function hasAssignedНазадlogBlocker(
-  blockers: ЗадачаRelationЗадачаSummary[] | undefined | null,
+export function hasAssignedBacklogBlocker(
+  blockers: IssueRelationIssueSummary[] | undefined | null,
 ): boolean {
   if (!blockers || blockers.length === 0) return false;
   return blockers.some((blocker) => {
-    if (isAssignedНазадlogBlocker(blocker)) return true;
-    if (blocker.terminalBlockers?.some(isAssignedНазадlogBlocker)) return true;
+    if (isAssignedBacklogBlocker(blocker)) return true;
+    if (blocker.terminalBlockers?.some(isAssignedBacklogBlocker)) return true;
     return false;
   });
 }

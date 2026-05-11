@@ -1,29 +1,29 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams, useПоискParams } from "@/lib/router";
+import { Link, useParams, useSearchParams } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { accessApi } from "../api/access";
 import { authApi } from "../api/auth";
-import { queryКлючs } from "../lib/queryКлючs";
+import { queryKeys } from "../lib/queryKeys";
 
 export function CliAuthPage() {
   const queryClient = useQueryClient();
   const params = useParams();
-  const [searchParams] = useПоискParams();
+  const [searchParams] = useSearchParams();
   const challengeId = (params.id ?? "").trim();
   const token = (searchParams.get("token") ?? "").trim();
-  const currentПуть = useMemo(
+  const currentPath = useMemo(
     () => `/cli-auth/${encodeURIComponent(challengeId)}${token ? `?token=${encodeURIComponent(token)}` : ""}`,
     [challengeId, token],
   );
 
   const sessionQuery = useQuery({
-    queryКлюч: queryКлючs.auth.session,
+    queryKey: queryKeys.auth.session,
     queryFn: () => authApi.getSession(),
     retry: false,
   });
   const challengeQuery = useQuery({
-    queryКлюч: ["cli-auth-challenge", challengeId, token],
+    queryKey: ["cli-auth-challenge", challengeId, token],
     queryFn: () => accessApi.getCliAuthChallenge(challengeId, token),
     enabled: challengeId.length > 0 && token.length > 0,
     retry: false,
@@ -31,34 +31,34 @@ export function CliAuthPage() {
 
   const approveMutation = useMutation({
     mutationFn: () => accessApi.approveCliAuthChallenge(challengeId, token),
-    onУспешно: async () => {
-      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.auth.session });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.session });
       await challengeQuery.refetch();
     },
   });
 
   const cancelMutation = useMutation({
     mutationFn: () => accessApi.cancelCliAuthChallenge(challengeId, token),
-    onУспешно: async () => {
+    onSuccess: async () => {
       await challengeQuery.refetch();
     },
   });
 
   if (!challengeId || !token) {
-    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-destructive">Invalid CLI auth URL.</div>;
+    return <div className="mx-auto max-w-xl py-10 text-sm text-destructive">Invalid CLI auth URL.</div>;
   }
 
-  if (sessionQuery.isЗагрузка || challengeQuery.isЗагрузка) {
-    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Загрузка CLI auth challenge...</div>;
+  if (sessionQuery.isLoading || challengeQuery.isLoading) {
+    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading CLI auth challenge...</div>;
   }
 
   if (challengeQuery.error) {
     return (
-      <div classИмя="mx-auto max-w-xl py-10">
-        <div classИмя="rounded-lg border border-border bg-card p-6">
-          <h1 classИмя="text-lg font-semibold">CLI auth challenge unavailable</h1>
-          <p classИмя="mt-2 text-sm text-muted-foreground">
-            {challengeQuery.error instanceof Ошибка ? challengeQuery.error.message : "Challenge is invalid or expired."}
+      <div className="mx-auto max-w-xl py-10">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h1 className="text-lg font-semibold">CLI auth challenge unavailable</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {challengeQuery.error instanceof Error ? challengeQuery.error.message : "Challenge is invalid or expired."}
           </p>
         </div>
       </div>
@@ -67,19 +67,19 @@ export function CliAuthPage() {
 
   const challenge = challengeQuery.data;
   if (!challenge) {
-    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-destructive">CLI auth challenge unavailable.</div>;
+    return <div className="mx-auto max-w-xl py-10 text-sm text-destructive">CLI auth challenge unavailable.</div>;
   }
 
   if (challenge.status === "approved") {
     return (
-      <div classИмя="mx-auto max-w-xl py-10">
-        <div classИмя="rounded-lg border border-border bg-card p-6">
-          <h1 classИмя="text-xl font-semibold">CLI access approved</h1>
-          <p classИмя="mt-2 text-sm text-muted-foreground">
+      <div className="mx-auto max-w-xl py-10">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h1 className="text-xl font-semibold">CLI access approved</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             The Paperclip CLI can now finish authentication on the requesting machine.
           </p>
-          <p classИмя="mt-4 text-sm text-muted-foreground">
-            Команда: <span classИмя="font-mono text-foreground">{challenge.command}</span>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Command: <span className="font-mono text-foreground">{challenge.command}</span>
           </p>
         </div>
       </div>
@@ -88,13 +88,13 @@ export function CliAuthPage() {
 
   if (challenge.status === "cancelled" || challenge.status === "expired") {
     return (
-      <div classИмя="mx-auto max-w-xl py-10">
-        <div classИмя="rounded-lg border border-border bg-card p-6">
-          <h1 classИмя="text-xl font-semibold">
+      <div className="mx-auto max-w-xl py-10">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h1 className="text-xl font-semibold">
             {challenge.status === "expired" ? "CLI auth challenge expired" : "CLI auth challenge cancelled"}
           </h1>
-          <p classИмя="mt-2 text-sm text-muted-foreground">
-            Начать the CLI auth flow again from your terminal to generate a new approval request.
+          <p className="mt-2 text-sm text-muted-foreground">
+            Start the CLI auth flow again from your terminal to generate a new approval request.
           </p>
         </div>
       </div>
@@ -103,14 +103,14 @@ export function CliAuthPage() {
 
   if (challenge.requiresSignIn || !sessionQuery.data) {
     return (
-      <div classИмя="mx-auto max-w-xl py-10">
-        <div classИмя="rounded-lg border border-border bg-card p-6">
-          <h1 classИмя="text-xl font-semibold">Войти required</h1>
-          <p classИмя="mt-2 text-sm text-muted-foreground">
-            Войти or create an account, then return to this page to approve the CLI access request.
+      <div className="mx-auto max-w-xl py-10">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h1 className="text-xl font-semibold">Sign in required</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Sign in or create an account, then return to this page to approve the CLI access request.
           </p>
-          <Button asChild classИмя="mt-4">
-            <Link to={`/auth?next=${encodeURIComponent(currentПуть)}`}>Войти / Создать account</Link>
+          <Button asChild className="mt-4">
+            <Link to={`/auth?next=${encodeURIComponent(currentPath)}`}>Sign in / Create account</Link>
           </Button>
         </div>
       </div>
@@ -118,64 +118,64 @@ export function CliAuthPage() {
   }
 
   return (
-    <div classИмя="mx-auto max-w-xl py-10">
-      <div classИмя="rounded-lg border border-border bg-card p-6">
-        <h1 classИмя="text-xl font-semibold">Одобрить Paperclip CLI access</h1>
-        <p classИмя="mt-2 text-sm text-muted-foreground">
+    <div className="mx-auto max-w-xl py-10">
+      <div className="rounded-lg border border-border bg-card p-6">
+        <h1 className="text-xl font-semibold">Approve Paperclip CLI access</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           A local Paperclip CLI process is requesting board access to this instance.
         </p>
 
-        <div classИмя="mt-5 space-y-3 text-sm">
+        <div className="mt-5 space-y-3 text-sm">
           <div>
-            <div classИмя="text-muted-foreground">Команда</div>
-            <div classИмя="font-mono text-foreground">{challenge.command}</div>
+            <div className="text-muted-foreground">Command</div>
+            <div className="font-mono text-foreground">{challenge.command}</div>
           </div>
           <div>
-            <div classИмя="text-muted-foreground">Client</div>
-            <div classИмя="text-foreground">{challenge.clientИмя ?? "paperclipai cli"}</div>
+            <div className="text-muted-foreground">Client</div>
+            <div className="text-foreground">{challenge.clientName ?? "paperclipai cli"}</div>
           </div>
           <div>
-            <div classИмя="text-muted-foreground">Requested access</div>
-            <div classИмя="text-foreground">
-              {challenge.requestedДоступ === "instance_admin_required" ? "Instance admin" : "Совет"}
+            <div className="text-muted-foreground">Requested access</div>
+            <div className="text-foreground">
+              {challenge.requestedAccess === "instance_admin_required" ? "Instance admin" : "Board"}
             </div>
           </div>
-          {challenge.requestedКомпанияИмя && (
+          {challenge.requestedCompanyName && (
             <div>
-              <div classИмя="text-muted-foreground">Requested company</div>
-              <div classИмя="text-foreground">{challenge.requestedКомпанияИмя}</div>
+              <div className="text-muted-foreground">Requested company</div>
+              <div className="text-foreground">{challenge.requestedCompanyName}</div>
             </div>
           )}
         </div>
 
         {(approveMutation.error || cancelMutation.error) && (
-          <p classИмя="mt-4 text-sm text-destructive">
-            {(approveMutation.error ?? cancelMutation.error) instanceof Ошибка
-              ? ((approveMutation.error ?? cancelMutation.error) as Ошибка).message
-              : "Ошибка to update CLI auth challenge"}
+          <p className="mt-4 text-sm text-destructive">
+            {(approveMutation.error ?? cancelMutation.error) instanceof Error
+              ? ((approveMutation.error ?? cancelMutation.error) as Error).message
+              : "Failed to update CLI auth challenge"}
           </p>
         )}
 
-        {!challenge.canОдобрить && (
-          <p classИмя="mt-4 text-sm text-destructive">
-            This challenge requires instance-admin access. Войти with an instance admin account to approve it.
+        {!challenge.canApprove && (
+          <p className="mt-4 text-sm text-destructive">
+            This challenge requires instance-admin access. Sign in with an instance admin account to approve it.
           </p>
         )}
 
-        <div classИмя="mt-5 flex gap-3">
+        <div className="mt-5 flex gap-3">
           <Button
             onClick={() => approveMutation.mutate()}
-            disabled={!challenge.canОдобрить || approveMutation.isОжидание || cancelMutation.isОжидание}
+            disabled={!challenge.canApprove || approveMutation.isPending || cancelMutation.isPending}
           >
-            {approveMutation.isОжидание ? "Approving..." : "Одобрить CLI access"}
+            {approveMutation.isPending ? "Approving..." : "Approve CLI access"}
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => cancelMutation.mutate()}
-            disabled={approveMutation.isОжидание || cancelMutation.isОжидание}
+            disabled={approveMutation.isPending || cancelMutation.isPending}
           >
-            {cancelMutation.isОжидание ? "Отменаling..." : "Отмена"}
+            {cancelMutation.isPending ? "Cancelling..." : "Отмена"}
           </Button>
         </div>
       </div>

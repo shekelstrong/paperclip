@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
-  Агент,
-  КомпанияПортabilityFileEntry,
-  КомпанияПортabilityЭкспортПредпросмотрResult,
-  КомпанияПортabilityЭкспортResult,
-  КомпанияПортabilityManifest,
+  Agent,
+  CompanyPortabilityFileEntry,
+  CompanyPortabilityExportPreviewResult,
+  CompanyPortabilityExportResult,
+  CompanyPortabilityManifest,
   Project,
 } from "@paperclipai/shared";
 import { useNavigate, useLocation } from "@/lib/router";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToastActions } from "../context/ToastContext";
 import { agentsApi } from "../api/agents";
@@ -21,24 +21,24 @@ import { EmptyState } from "../components/EmptyState";
 import { PageSkeleton } from "../components/PageSkeleton";
 import { MarkdownBody } from "../components/MarkdownBody";
 import { cn } from "../lib/utils";
-import { queryКлючs } from "../lib/queryКлючs";
-import { createZipАрхивировать } from "../lib/zip";
-import { buildInitialЭкспортCheckedФайлы } from "../lib/company-export-selection";
-import { useАгентOrder } from "../hooks/useАгентOrder";
+import { queryKeys } from "../lib/queryKeys";
+import { createZipArchive } from "../lib/zip";
+import { buildInitialExportCheckedFiles } from "../lib/company-export-selection";
+import { useAgentOrder } from "../hooks/useAgentOrder";
 import { useProjectOrder } from "../hooks/useProjectOrder";
-import { buildПортableSidebarOrder } from "../lib/company-portability-sidebar";
-import { getПортableFileDataUrl, getПортableFileText, isПортableImageFile } from "../lib/portable-files";
+import { buildPortableSidebarOrder } from "../lib/company-portability-sidebar";
+import { getPortableFileDataUrl, getPortableFileText, isPortableImageFile } from "../lib/portable-files";
 import {
-  Скачать,
+  Download,
   Package,
-  Поиск,
+  Search,
 } from "lucide-react";
 import {
-  type FileTreeНетde,
+  type FileTreeNode,
   type FrontmatterData,
   buildFileTree,
-  countФайлы,
-  collectВсеПутьs,
+  countFiles,
+  collectAllPaths,
   parseFrontmatter,
   FRONTMATTER_FIELD_LABELS,
   FileTree,
@@ -51,7 +51,7 @@ import {
  *   projects/{slug}/PROJECT.md → projects slug
  *   tasks/{slug}/TASK.md     → tasks slug
  */
-function checkedSlugs(checkedФайлы: Set<string>): {
+function checkedSlugs(checkedFiles: Set<string>): {
   agents: Set<string>;
   projects: Set<string>;
   tasks: Set<string>;
@@ -60,7 +60,7 @@ function checkedSlugs(checkedФайлы: Set<string>): {
   const agents = new Set<string>();
   const projects = new Set<string>();
   const tasks = new Set<string>();
-  for (const p of checkedФайлы) {
+  for (const p of checkedFiles) {
     const agentMatch = p.match(/^agents\/([^/]+)\//);
     if (agentMatch) agents.add(agentMatch[1]);
     const projectMatch = p.match(/^projects\/([^/]+)\//);
@@ -72,13 +72,13 @@ function checkedSlugs(checkedФайлы: Set<string>): {
 }
 
 /**
- * Фильтр .paperclip.yaml content so it only includes entries whose
- * corresponding files are checked. Работаs by line-level YAML parsing
+ * Filter .paperclip.yaml content so it only includes entries whose
+ * corresponding files are checked. Works by line-level YAML parsing
  * since the file has a known, simple structure produced by our own
  * renderYamlBlock.
  */
-function filterPaperclipYaml(yaml: string, checkedФайлы: Set<string>): string {
-  const slugs = checkedSlugs(checkedФайлы);
+function filterPaperclipYaml(yaml: string, checkedFiles: Set<string>): string {
+  const slugs = checkedSlugs(checkedFiles);
   const lines = yaml.split("\n");
   const out: string[] = [];
 
@@ -145,8 +145,8 @@ function filterPaperclipYaml(yaml: string, checkedФайлы: Set<string>): stri
       const sidebarMatch = line.match(/^  ([\w-]+):\s*$/);
       if (sidebarMatch && !line.startsWith("    ")) {
         flushSidebarSection();
-        const sidebarКлюч = sidebarMatch[1];
-        currentSidebarList = sidebarКлюч && sidebarSections.has(sidebarКлюч) ? sidebarКлюч : null;
+        const sidebarKey = sidebarMatch[1];
+        currentSidebarList = sidebarKey && sidebarSections.has(sidebarKey) ? sidebarKey : null;
         currentSidebarHeaderLine = currentSidebarList ? line : null;
         continue;
       }
@@ -199,22 +199,22 @@ function filterPaperclipYaml(yaml: string, checkedФайлы: Set<string>): stri
   flushSection();
 
   let filtered = out.join("\n");
-  const logoПутьMatch = filtered.match(/^\s{2}logoПуть:\s*["']?([^"'\n]+)["']?\s*$/m);
-  if (logoПутьMatch && !checkedФайлы.has(logoПутьMatch[1]!)) {
-    filtered = filtered.replace(/^\s{2}logoПуть:\s*["']?([^"'\n]+)["']?\s*\n?/m, "");
+  const logoPathMatch = filtered.match(/^\s{2}logoPath:\s*["']?([^"'\n]+)["']?\s*$/m);
+  if (logoPathMatch && !checkedFiles.has(logoPathMatch[1]!)) {
+    filtered = filtered.replace(/^\s{2}logoPath:\s*["']?([^"'\n]+)["']?\s*\n?/m, "");
   }
 
   return filtered;
 }
 
-/** Фильтр tree nodes whose path (or descendant paths) match a search string */
-function filterTree(nodes: FileTreeНетde[], query: string): FileTreeНетde[] {
+/** Filter tree nodes whose path (or descendant paths) match a search string */
+function filterTree(nodes: FileTreeNode[], query: string): FileTreeNode[] {
   if (!query) return nodes;
-  const lower = query.toНизкийerCase();
+  const lower = query.toLowerCase();
   return nodes
     .map((node) => {
       if (node.kind === "file") {
-        return node.name.toНизкийerCase().includes(lower) || node.path.toНизкийerCase().includes(lower)
+        return node.name.toLowerCase().includes(lower) || node.path.toLowerCase().includes(lower)
           ? node
           : null;
       }
@@ -223,17 +223,17 @@ function filterTree(nodes: FileTreeНетde[], query: string): FileTreeНетde[
         ? { ...node, children: filteredChildren }
         : null;
     })
-    .filter((n): n is FileTreeНетde => n !== null);
+    .filter((n): n is FileTreeNode => n !== null);
 }
 
 /** Collect all ancestor dir paths for files that match a filter */
-function collectMatchedРодительDirs(nodes: FileTreeНетde[], query: string): Set<string> {
+function collectMatchedParentDirs(nodes: FileTreeNode[], query: string): Set<string> {
   const dirs = new Set<string>();
-  const lower = query.toНизкийerCase();
+  const lower = query.toLowerCase();
 
-  function walk(node: FileTreeНетde, ancestors: string[]) {
+  function walk(node: FileTreeNode, ancestors: string[]) {
     if (node.kind === "file") {
-      if (node.name.toНизкийerCase().includes(lower) || node.path.toНизкийerCase().includes(lower)) {
+      if (node.name.toLowerCase().includes(lower) || node.path.toLowerCase().includes(lower)) {
         for (const a of ancestors) dirs.add(a);
       }
     } else {
@@ -247,18 +247,18 @@ function collectMatchedРодительDirs(nodes: FileTreeНетde[], query: st
   return dirs;
 }
 
-/** Сортировка tree: checked files first, then unchecked */
-function sortByChecked(nodes: FileTreeНетde[], checkedФайлы: Set<string>): FileTreeНетde[] {
+/** Sort tree: checked files first, then unchecked */
+function sortByChecked(nodes: FileTreeNode[], checkedFiles: Set<string>): FileTreeNode[] {
   return nodes.map((node) => {
     if (node.kind === "dir") {
-      return { ...node, children: sortByChecked(node.children, checkedФайлы) };
+      return { ...node, children: sortByChecked(node.children, checkedFiles) };
     }
     return node;
   }).sort((a, b) => {
     if (a.kind !== b.kind) return a.kind === "file" ? -1 : 1;
     if (a.kind === "file" && b.kind === "file") {
-      const aChecked = checkedФайлы.has(a.path);
-      const bChecked = checkedФайлы.has(b.path);
+      const aChecked = checkedFiles.has(a.path);
+      const bChecked = checkedFiles.has(b.path);
       if (aChecked !== bChecked) return aChecked ? -1 : 1;
     }
     return a.name.localeCompare(b.name);
@@ -272,34 +272,34 @@ const TASKS_PAGE_SIZE = 10;
  * but always include children that are checked or match the search query.
  * Returns the paginated tree and the total count of task children.
  */
-function paginateЗадачаНетdes(
-  nodes: FileTreeНетde[],
+function paginateTaskNodes(
+  nodes: FileTreeNode[],
   limit: number,
-  checkedФайлы: Set<string>,
+  checkedFiles: Set<string>,
   searchQuery: string,
-): { nodes: FileTreeНетde[]; totalЗадачаChildren: number; visibleЗадачаChildren: number } {
-  let totalЗадачаChildren = 0;
-  let visibleЗадачаChildren = 0;
+): { nodes: FileTreeNode[]; totalTaskChildren: number; visibleTaskChildren: number } {
+  let totalTaskChildren = 0;
+  let visibleTaskChildren = 0;
 
   const result = nodes.map((node) => {
     // Only paginate direct children of "tasks" directories
     if (node.kind === "dir" && node.name === "tasks") {
-      totalЗадачаChildren = node.children.length;
+      totalTaskChildren = node.children.length;
 
       // Partition children: pinned (checked or search-matched) vs rest
-      const pinned: FileTreeНетde[] = [];
-      const rest: FileTreeНетde[] = [];
-      const lower = searchQuery.toНизкийerCase();
+      const pinned: FileTreeNode[] = [];
+      const rest: FileTreeNode[] = [];
+      const lower = searchQuery.toLowerCase();
 
       for (const child of node.children) {
-        const childФайлы = collectВсеПутьs([child], "file");
-        const isChecked = [...childФайлы].some((p) => checkedФайлы.has(p));
-        const isПоискMatch = searchQuery && (
-          child.name.toНизкийerCase().includes(lower) ||
-          child.path.toНизкийerCase().includes(lower) ||
-          [...childФайлы].some((p) => p.toНизкийerCase().includes(lower))
+        const childFiles = collectAllPaths([child], "file");
+        const isChecked = [...childFiles].some((p) => checkedFiles.has(p));
+        const isSearchMatch = searchQuery && (
+          child.name.toLowerCase().includes(lower) ||
+          child.path.toLowerCase().includes(lower) ||
+          [...childFiles].some((p) => p.toLowerCase().includes(lower))
         );
-        if (isChecked || isПоискMatch) {
+        if (isChecked || isSearchMatch) {
           pinned.push(child);
         } else {
           rest.push(child);
@@ -309,33 +309,33 @@ function paginateЗадачаНетdes(
       // Show pinned + up to `limit` from rest
       const remaining = Math.max(0, limit - pinned.length);
       const visible = [...pinned, ...rest.slice(0, remaining)];
-      visibleЗадачаChildren = visible.length;
+      visibleTaskChildren = visible.length;
 
       return { ...node, children: visible };
     }
     return node;
   });
 
-  return { nodes: result, totalЗадачаChildren, visibleЗадачаChildren };
+  return { nodes: result, totalTaskChildren, visibleTaskChildren };
 }
 
 function downloadZip(
-  exported: КомпанияПортabilityЭкспортResult,
-  selectedФайлы: Set<string>,
-  effectiveФайлы: Record<string, КомпанияПортabilityFileEntry>,
+  exported: CompanyPortabilityExportResult,
+  selectedFiles: Set<string>,
+  effectiveFiles: Record<string, CompanyPortabilityFileEntry>,
 ) {
-  const filteredФайлы: Record<string, КомпанияПортabilityFileEntry> = {};
+  const filteredFiles: Record<string, CompanyPortabilityFileEntry> = {};
   for (const [path] of Object.entries(exported.files)) {
-    if (selectedФайлы.has(path)) filteredФайлы[path] = effectiveФайлы[path] ?? exported.files[path];
+    if (selectedFiles.has(path)) filteredFiles[path] = effectiveFiles[path] ?? exported.files[path];
   }
-  const zipBytes = createZipАрхивировать(filteredФайлы, exported.rootПуть);
+  const zipBytes = createZipArchive(filteredFiles, exported.rootPath);
   const zipBuffer = new ArrayBuffer(zipBytes.byteLength);
   new Uint8Array(zipBuffer).set(zipBytes);
   const blob = new Blob([zipBuffer], { type: "application/zip" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `${exported.rootПуть}.zip`;
+  anchor.download = `${exported.rootPath}.zip`;
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
@@ -346,31 +346,31 @@ function downloadZip(
 
 function FrontmatterCard({
   data,
-  onНавыкClick,
+  onSkillClick,
 }: {
   data: FrontmatterData;
-  onНавыкClick?: (skill: string) => void;
+  onSkillClick?: (skill: string) => void;
 }) {
   return (
-    <div classИмя="rounded-md border border-border bg-accent/20 px-4 py-3 mb-4">
-      <dl classИмя="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
+    <div className="rounded-md border border-border bg-accent/20 px-4 py-3 mb-4">
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
         {Object.entries(data).map(([key, value]) => (
-          <div key={key} classИмя="contents">
-            <dt classИмя="text-muted-foreground whitespace-nowrap py-0.5">
+          <div key={key} className="contents">
+            <dt className="text-muted-foreground whitespace-nowrap py-0.5">
               {FRONTMATTER_FIELD_LABELS[key] ?? key}
             </dt>
-            <dd classИмя="py-0.5">
+            <dd className="py-0.5">
               {Array.isArray(value) ? (
-                <div classИмя="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   {value.map((item) => (
                     <button
                       key={item}
                       type="button"
-                      classИмя={cn(
+                      className={cn(
                         "inline-flex items-center rounded-md border border-border bg-background px-2 py-0.5 text-xs",
-                        key === "skills" && onНавыкClick && "cursor-pointer hover:bg-accent/50 hover:border-foreground/30 transition-colors",
+                        key === "skills" && onSkillClick && "cursor-pointer hover:bg-accent/50 hover:border-foreground/30 transition-colors",
                       )}
-                      onClick={() => key === "skills" && onНавыкClick?.(item)}
+                      onClick={() => key === "skills" && onSkillClick?.(item)}
                     >
                       {item}
                     </button>
@@ -391,7 +391,7 @@ function FrontmatterCard({
 
 const ROLE_LABELS: Record<string, string> = {
   ceo: "CEO", cto: "CTO", cmo: "CMO", cfo: "CFO", coo: "COO",
-  vp: "VP", manager: "Manager", engineer: "Инженер", agent: "Агент",
+  vp: "VP", manager: "Manager", engineer: "Engineer", agent: "Agent",
 };
 
 /**
@@ -399,44 +399,44 @@ const ROLE_LABELS: Record<string, string> = {
  * Only counts/lists entities whose files are in the checked set.
  */
 function generateReadmeFromSelection(
-  manifest: КомпанияПортabilityManifest,
-  checkedФайлы: Set<string>,
-  companyИмя: string,
-  companyОписание: string | null,
+  manifest: CompanyPortabilityManifest,
+  checkedFiles: Set<string>,
+  companyName: string,
+  companyDescription: string | null,
 ): string {
-  const slugs = checkedSlugs(checkedФайлы);
+  const slugs = checkedSlugs(checkedFiles);
 
   const agents = manifest.agents.filter((a) => slugs.agents.has(a.slug));
   const projects = manifest.projects.filter((p) => slugs.projects.has(p.slug));
   const tasks = manifest.issues.filter((t) => slugs.tasks.has(t.slug));
   const skills = manifest.skills.filter((s) => {
-    // Навык files live under skills/{key}/...
-    return [...checkedФайлы].some((f) => f.startsWith(`skills/${s.key}/`) || f.startsWith(`skills/`) && f.includes(`/${s.slug}/`));
+    // Skill files live under skills/{key}/...
+    return [...checkedFiles].some((f) => f.startsWith(`skills/${s.key}/`) || f.startsWith(`skills/`) && f.includes(`/${s.slug}/`));
   });
 
   const lines: string[] = [];
-  lines.push(`# ${companyИмя}`);
+  lines.push(`# ${companyName}`);
   lines.push("");
-  if (companyОписание) {
-    lines.push(`> ${companyОписание}`);
+  if (companyDescription) {
+    lines.push(`> ${companyDescription}`);
     lines.push("");
   }
-  // Оргструктура chart image (generated during export as images/org-chart.png)
+  // Org chart image (generated during export as images/org-chart.png)
   if (agents.length > 0) {
-    lines.push("![Оргструктура Chart](images/org-chart.png)");
+    lines.push("![Org Chart](images/org-chart.png)");
     lines.push("");
   }
 
   lines.push("## What's Inside");
   lines.push("");
-  lines.push("This is an [Агент Компания](https://paperclip.ing) package.");
+  lines.push("This is an [Agent Company](https://paperclip.ing) package.");
   lines.push("");
 
   const counts: Array<[string, number]> = [];
-  if (agents.length > 0) counts.push(["Агенты", agents.length]);
-  if (projects.length > 0) counts.push(["Проекты", projects.length]);
-  if (skills.length > 0) counts.push(["Навыки", skills.length]);
-  if (tasks.length > 0) counts.push(["Задачи", tasks.length]);
+  if (agents.length > 0) counts.push(["Agents", agents.length]);
+  if (projects.length > 0) counts.push(["Projects", projects.length]);
+  if (skills.length > 0) counts.push(["Skills", skills.length]);
+  if (tasks.length > 0) counts.push(["Tasks", tasks.length]);
 
   if (counts.length > 0) {
     lines.push("| Content | Count |");
@@ -448,9 +448,9 @@ function generateReadmeFromSelection(
   }
 
   if (agents.length > 0) {
-    lines.push("### Агенты");
+    lines.push("### Agents");
     lines.push("");
-    lines.push("| Агент | Role | Репозиторийrts To |");
+    lines.push("| Agent | Role | Reports To |");
     lines.push("|-------|------|------------|");
     for (const agent of agents) {
       const roleLabel = ROLE_LABELS[agent.role] ?? agent.role;
@@ -461,7 +461,7 @@ function generateReadmeFromSelection(
   }
 
   if (projects.length > 0) {
-    lines.push("### Проекты");
+    lines.push("### Projects");
     lines.push("");
     for (const project of projects) {
       const desc = project.description ? ` \u2014 ${project.description}` : "";
@@ -470,7 +470,7 @@ function generateReadmeFromSelection(
     lines.push("");
   }
 
-  lines.push("## Getting Запущен");
+  lines.push("## Getting Started");
   lines.push("");
   lines.push("```bash");
   lines.push("pnpm paperclipai company import this-github-url-or-folder");
@@ -479,24 +479,24 @@ function generateReadmeFromSelection(
   lines.push("See [Paperclip](https://paperclip.ing) for more information.");
   lines.push("");
   lines.push("---");
-  lines.push(`Экспортed from [Paperclip](https://paperclip.ing) on ${new Date().toISOString().split("T")[0]}`);
+  lines.push(`Exported from [Paperclip](https://paperclip.ing) on ${new Date().toISOString().split("T")[0]}`);
   lines.push("");
 
   return lines.join("\n");
 }
 
-// ── Предпросмотр pane ──────────────────────────────────────────────────────
+// ── Preview pane ──────────────────────────────────────────────────────
 
-function ЭкспортПредпросмотрPane({
+function ExportPreviewPane({
   selectedFile,
   content,
-  allФайлы,
-  onНавыкClick,
+  allFiles,
+  onSkillClick,
 }: {
   selectedFile: string | null;
-  content: КомпанияПортabilityFileEntry | null;
-  allФайлы: Record<string, КомпанияПортabilityFileEntry>;
-  onНавыкClick?: (skill: string) => void;
+  content: CompanyPortabilityFileEntry | null;
+  allFiles: Record<string, CompanyPortabilityFileEntry>;
+  onSkillClick?: (skill: string) => void;
 }) {
   if (!selectedFile || content === null) {
     return (
@@ -504,10 +504,10 @@ function ЭкспортПредпросмотрPane({
     );
   }
 
-  const textContent = getПортableFileText(content);
+  const textContent = getPortableFileText(content);
   const isMarkdown = selectedFile.endsWith(".md") && textContent !== null;
   const parsed = isMarkdown && textContent ? parseFrontmatter(textContent) : null;
-  const imageSrc = isПортableImageFile(selectedFile, content) ? getПортableFileDataUrl(selectedFile, content) : null;
+  const imageSrc = isPortableImageFile(selectedFile, content) ? getPortableFileDataUrl(selectedFile, content) : null;
 
   // Resolve relative image paths within the export package (e.g. images/org-chart.png)
   const resolveImageSrc = isMarkdown
@@ -517,35 +517,35 @@ function ЭкспортПредпросмотрPane({
         // Resolve relative to the directory of the current markdown file
         const dir = selectedFile.includes("/") ? selectedFile.slice(0, selectedFile.lastIndexOf("/") + 1) : "";
         const resolved = dir + src;
-        const entry = allФайлы[resolved] ?? allФайлы[src];
+        const entry = allFiles[resolved] ?? allFiles[src];
         if (!entry) return null;
-        return getПортableFileDataUrl(resolved in allФайлы ? resolved : src, entry);
+        return getPortableFileDataUrl(resolved in allFiles ? resolved : src, entry);
       }
     : undefined;
 
   return (
-    <div classИмя="min-w-0">
-      <div classИмя="border-b border-border px-5 py-3">
-        <div classИмя="truncate font-mono text-sm">{selectedFile}</div>
+    <div className="min-w-0">
+      <div className="border-b border-border px-5 py-3">
+        <div className="truncate font-mono text-sm">{selectedFile}</div>
       </div>
-      <div classИмя="min-h-[560px] px-5 py-5">
+      <div className="min-h-[560px] px-5 py-5">
         {parsed ? (
           <>
-            <FrontmatterCard data={parsed.data} onНавыкClick={onНавыкClick} />
-            {parsed.body.trim() && <MarkdownBody resolveImageSrc={resolveImageSrc} softBreaks={false} linkЗадачаСсылки={false}>{parsed.body}</MarkdownBody>}
+            <FrontmatterCard data={parsed.data} onSkillClick={onSkillClick} />
+            {parsed.body.trim() && <MarkdownBody resolveImageSrc={resolveImageSrc} softBreaks={false} linkIssueReferences={false}>{parsed.body}</MarkdownBody>}
           </>
         ) : isMarkdown ? (
-          <MarkdownBody resolveImageSrc={resolveImageSrc} softBreaks={false} linkЗадачаСсылки={false}>{textContent ?? ""}</MarkdownBody>
+          <MarkdownBody resolveImageSrc={resolveImageSrc} softBreaks={false} linkIssueReferences={false}>{textContent ?? ""}</MarkdownBody>
         ) : imageSrc ? (
-          <div classИмя="flex min-h-[520px] items-center justify-center rounded-lg border border-border bg-accent/10 p-6">
-            <img src={imageSrc} alt={selectedFile} classИмя="max-h-[480px] max-w-full object-contain" />
+          <div className="flex min-h-[520px] items-center justify-center rounded-lg border border-border bg-accent/10 p-6">
+            <img src={imageSrc} alt={selectedFile} className="max-h-[480px] max-w-full object-contain" />
           </div>
         ) : textContent !== null ? (
-          <pre classИмя="overflow-x-auto whitespace-pre-wrap break-words border-0 bg-transparent p-0 font-mono text-sm text-foreground">
+          <pre className="overflow-x-auto whitespace-pre-wrap break-words border-0 bg-transparent p-0 font-mono text-sm text-foreground">
             <code>{textContent}</code>
           </pre>
         ) : (
-          <div classИмя="rounded-lg border border-border bg-accent/10 px-4 py-3 text-sm text-muted-foreground">
+          <div className="rounded-lg border border-border bg-accent/10 px-4 py-3 text-sm text-muted-foreground">
             Binary asset preview is not available for this file type.
           </div>
         )}
@@ -557,17 +557,17 @@ function ЭкспортПредпросмотрPane({
 // ── Main page ─────────────────────────────────────────────────────────
 
 /** Extract the file path from the current URL pathname (after /company/export/files/) */
-function fileПутьFromLocation(pathname: string): string | null {
+function filePathFromLocation(pathname: string): string | null {
   const marker = "/company/export/files/";
   const idx = pathname.indexOf(marker);
   if (idx === -1) return null;
-  const fileПуть = decodeURIComponent(pathname.slice(idx + marker.length));
-  return fileПуть || null;
+  const filePath = decodeURIComponent(pathname.slice(idx + marker.length));
+  return filePath || null;
 }
 
 /** Expand all ancestor directories for a given file path */
-function expandAncestors(fileПуть: string): string[] {
-  const parts = fileПуть.split("/").slice(0, -1);
+function expandAncestors(filePath: string): string[] {
+  const parts = filePath.split("/").slice(0, -1);
   const dirs: string[] = [];
   let current = "";
   for (const part of parts) {
@@ -577,64 +577,64 @@ function expandAncestors(fileПуть: string): string[] {
   return dirs;
 }
 
-export function КомпанияЭкспорт() {
-  const { selectedКомпанияId, selectedКомпания } = useКомпания();
+export function CompanyExport() {
+  const { selectedCompanyId, selectedCompany } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToastActions();
   const navigate = useNavigate();
   const location = useLocation();
   const { data: session, isFetched: isSessionFetched } = useQuery({
-    queryКлюч: queryКлючs.auth.session,
+    queryKey: queryKeys.auth.session,
     queryFn: () => authApi.getSession(),
   });
-  const { data: agents = [], isFetched: areАгентыFetched } = useQuery({
-    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
-    queryFn: () => agentsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+  const { data: agents = [], isFetched: areAgentsFetched } = useQuery({
+    queryKey: queryKeys.agents.list(selectedCompanyId!),
+    queryFn: () => agentsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
-  const { data: projects = [], isFetched: areПроектыFetched } = useQuery({
-    queryКлюч: queryКлючs.projects.list(selectedКомпанияId!),
-    queryFn: () => projectsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+  const { data: projects = [], isFetched: areProjectsFetched } = useQuery({
+    queryKey: queryKeys.projects.list(selectedCompanyId!),
+    queryFn: () => projectsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
 
-  const [exportData, setЭкспортData] = useState<КомпанияПортabilityЭкспортПредпросмотрResult | null>(null);
+  const [exportData, setExportData] = useState<CompanyPortabilityExportPreviewResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
-  const [checkedФайлы, setCheckedФайлы] = useState<Set<string>>(new Set());
-  const [treeПоиск, setTreeПоиск] = useState("");
-  const [taskLimit, setЗадачаLimit] = useState(TASKS_PAGE_SIZE);
+  const [checkedFiles, setCheckedFiles] = useState<Set<string>>(new Set());
+  const [treeSearch, setTreeSearch] = useState("");
+  const [taskLimit, setTaskLimit] = useState(TASKS_PAGE_SIZE);
   const savedExpandedRef = useRef<Set<string> | null>(null);
-  const initialFileFromUrl = useRef(fileПутьFromLocation(location.pathname));
+  const initialFileFromUrl = useRef(filePathFromLocation(location.pathname));
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
-  const visibleАгенты = useMemo(
-    () => agents.filter((agent: Агент) => agent.status !== "terminated"),
+  const visibleAgents = useMemo(
+    () => agents.filter((agent: Agent) => agent.status !== "terminated"),
     [agents],
   );
-  const visibleПроекты = useMemo(
+  const visibleProjects = useMemo(
     () => projects.filter((project: Project) => !project.archivedAt),
     [projects],
   );
-  const { orderedАгенты } = useАгентOrder({
-    agents: visibleАгенты,
-    companyId: selectedКомпанияId,
+  const { orderedAgents } = useAgentOrder({
+    agents: visibleAgents,
+    companyId: selectedCompanyId,
     userId: currentUserId,
   });
-  const { orderedПроекты } = useProjectOrder({
-    projects: visibleПроекты,
-    companyId: selectedКомпанияId,
+  const { orderedProjects } = useProjectOrder({
+    projects: visibleProjects,
+    companyId: selectedCompanyId,
     userId: currentUserId,
   });
   const sidebarOrder = useMemo(
-    () => buildПортableSidebarOrder({
-      agents: visibleАгенты,
-      orderedАгенты,
-      projects: visibleПроекты,
-      orderedПроекты,
+    () => buildPortableSidebarOrder({
+      agents: visibleAgents,
+      orderedAgents,
+      projects: visibleProjects,
+      orderedProjects,
     }),
-    [orderedАгенты, orderedПроекты, visibleАгенты, visibleПроекты],
+    [orderedAgents, orderedProjects, visibleAgents, visibleProjects],
   );
-  const sidebarOrderКлюч = useMemo(
+  const sidebarOrderKey = useMemo(
     () => JSON.stringify(sidebarOrder ?? null),
     [sidebarOrder],
   );
@@ -642,10 +642,10 @@ export function КомпанияЭкспорт() {
   // Navigate-aware file selection: updates state + URL without page reload.
   // `replace` = true skips history entry (used for initial load); false = pushes (used for clicks).
   const selectFile = useCallback(
-    (fileПуть: string | null, replace = false) => {
-      setSelectedFile(fileПуть);
-      if (fileПуть) {
-        navigate(`/company/export/files/${encodeURI(fileПуть)}`, { replace });
+    (filePath: string | null, replace = false) => {
+      setSelectedFile(filePath);
+      if (filePath) {
+        navigate(`/company/export/files/${encodeURI(filePath)}`, { replace });
       } else {
         navigate("/company/export", { replace });
       }
@@ -656,7 +656,7 @@ export function КомпанияЭкспорт() {
   // Sync selectedFile from URL on browser back/forward
   useEffect(() => {
     if (!exportData) return;
-    const urlFile = fileПутьFromLocation(location.pathname);
+    const urlFile = filePathFromLocation(location.pathname);
     if (urlFile && urlFile in exportData.files && urlFile !== selectedFile) {
       setSelectedFile(urlFile);
       // Expand ancestors so the file is visible in the tree
@@ -672,21 +672,21 @@ export function КомпанияЭкспорт() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Оргструктура Chart", href: "/org" },
-      { label: "Экспорт" },
+      { label: "Org Chart", href: "/org" },
+      { label: "Export" },
     ]);
   }, [setBreadcrumbs]);
 
-  const exportПредпросмотрMutation = useMutation({
+  const exportPreviewMutation = useMutation({
     mutationFn: () =>
-      companiesApi.exportПредпросмотр(selectedКомпанияId!, {
+      companiesApi.exportPreview(selectedCompanyId!, {
         include: { company: true, agents: true, projects: true, issues: true },
         sidebarOrder,
       }),
-    onУспешно: (result) => {
-      setЭкспортData(result);
-      setCheckedФайлы((prev) =>
-        buildInitialЭкспортCheckedФайлы(
+    onSuccess: (result) => {
+      setExportData(result);
+      setCheckedFiles((prev) =>
+        buildInitialExportCheckedFiles(
           Object.keys(result.files),
           result.manifest.issues,
           prev,
@@ -706,7 +706,7 @@ export function КомпанияЭкспорт() {
         const ancestors = expandAncestors(urlFile);
         setExpandedDirs(new Set([...topDirs, ...ancestors]));
       } else {
-        // По умолчанию to README.md if present, otherwise fall back to first file
+        // Default to README.md if present, otherwise fall back to first file
         const defaultFile = "README.md" in result.files
           ? "README.md"
           : Object.keys(result.files)[0];
@@ -716,96 +716,96 @@ export function КомпанияЭкспорт() {
         setExpandedDirs(topDirs);
       }
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
         tone: "error",
-        title: "Экспорт failed",
-        body: err instanceof Ошибка ? err.message : "Ошибка to load export data.",
+        title: "Export failed",
+        body: err instanceof Error ? err.message : "Failed to load export data.",
       });
     },
   });
 
   const downloadMutation = useMutation({
     mutationFn: () =>
-      companiesApi.exportBundle(selectedКомпанияId!, {
+      companiesApi.exportBundle(selectedCompanyId!, {
         include: { company: true, agents: true, projects: true, issues: true },
-        selectedФайлы: Array.from(checkedФайлы).sort(),
+        selectedFiles: Array.from(checkedFiles).sort(),
         sidebarOrder,
       }),
-    onУспешно: (result) => {
-      const resultCheckedФайлы = new Set(Object.keys(result.files));
-      downloadZip(result, resultCheckedФайлы, result.files);
+    onSuccess: (result) => {
+      const resultCheckedFiles = new Set(Object.keys(result.files));
+      downloadZip(result, resultCheckedFiles, result.files);
       pushToast({
         tone: "success",
-        title: "Экспорт downloaded",
-        body: `${resultCheckedФайлы.size} file${resultCheckedФайлы.size === 1 ? "" : "s"} exported as ${result.rootПуть}.zip`,
+        title: "Export downloaded",
+        body: `${resultCheckedFiles.size} file${resultCheckedFiles.size === 1 ? "" : "s"} exported as ${result.rootPath}.zip`,
       });
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
         tone: "error",
-        title: "Экспорт failed",
-        body: err instanceof Ошибка ? err.message : "Ошибка to build export package.",
+        title: "Export failed",
+        body: err instanceof Error ? err.message : "Failed to build export package.",
       });
     },
   });
 
   useEffect(() => {
-    if (!selectedКомпанияId || exportПредпросмотрMutation.isОжидание) return;
-    if (!isSessionFetched || !areАгентыFetched || !areПроектыFetched) return;
-    setЭкспортData(null);
-    exportПредпросмотрMutation.mutate();
+    if (!selectedCompanyId || exportPreviewMutation.isPending) return;
+    if (!isSessionFetched || !areAgentsFetched || !areProjectsFetched) return;
+    setExportData(null);
+    exportPreviewMutation.mutate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedКомпанияId, isSessionFetched, areАгентыFetched, areПроектыFetched, sidebarOrderКлюч]);
+  }, [selectedCompanyId, isSessionFetched, areAgentsFetched, areProjectsFetched, sidebarOrderKey]);
 
   const tree = useMemo(
     () => (exportData ? buildFileTree(exportData.files) : []),
     [exportData],
   );
 
-  const { displayTree, totalЗадачаChildren, visibleЗадачаChildren } = useMemo(() => {
+  const { displayTree, totalTaskChildren, visibleTaskChildren } = useMemo(() => {
     let result = tree;
-    if (treeПоиск) result = filterTree(result, treeПоиск);
-    result = sortByChecked(result, checkedФайлы);
-    const paginated = paginateЗадачаНетdes(result, taskLimit, checkedФайлы, treeПоиск);
+    if (treeSearch) result = filterTree(result, treeSearch);
+    result = sortByChecked(result, checkedFiles);
+    const paginated = paginateTaskNodes(result, taskLimit, checkedFiles, treeSearch);
     return {
       displayTree: paginated.nodes,
-      totalЗадачаChildren: paginated.totalЗадачаChildren,
-      visibleЗадачаChildren: paginated.visibleЗадачаChildren,
+      totalTaskChildren: paginated.totalTaskChildren,
+      visibleTaskChildren: paginated.visibleTaskChildren,
     };
-  }, [tree, treeПоиск, checkedФайлы, taskLimit]);
+  }, [tree, treeSearch, checkedFiles, taskLimit]);
 
   // Recompute .paperclip.yaml and README.md content whenever checked files
   // change so the preview & download always reflect the current selection.
-  const effectiveФайлы = useMemo(() => {
-    if (!exportData) return {} as Record<string, КомпанияПортabilityFileEntry>;
+  const effectiveFiles = useMemo(() => {
+    if (!exportData) return {} as Record<string, CompanyPortabilityFileEntry>;
     const filtered = { ...exportData.files };
 
-    // Фильтр .paperclip.yaml
-    const yamlПуть = exportData.paperclipExtensionПуть;
-    if (yamlПуть && typeof exportData.files[yamlПуть] === "string") {
-      filtered[yamlПуть] = filterPaperclipYaml(exportData.files[yamlПуть], checkedФайлы);
+    // Filter .paperclip.yaml
+    const yamlPath = exportData.paperclipExtensionPath;
+    if (yamlPath && typeof exportData.files[yamlPath] === "string") {
+      filtered[yamlPath] = filterPaperclipYaml(exportData.files[yamlPath], checkedFiles);
     }
 
     // Regenerate README.md based on checked selection
     if (typeof exportData.files["README.md"] === "string") {
-      const companyИмя = exportData.manifest.company?.name ?? selectedКомпания?.name ?? "Компания";
-      const companyОписание = exportData.manifest.company?.description ?? null;
+      const companyName = exportData.manifest.company?.name ?? selectedCompany?.name ?? "Company";
+      const companyDescription = exportData.manifest.company?.description ?? null;
       filtered["README.md"] = generateReadmeFromSelection(
         exportData.manifest,
-        checkedФайлы,
-        companyИмя,
-        companyОписание,
+        checkedFiles,
+        companyName,
+        companyDescription,
       );
     }
 
     return filtered;
-  }, [exportData, checkedФайлы, selectedКомпания?.name]);
+  }, [exportData, checkedFiles, selectedCompany?.name]);
 
-  const totalФайлы = useMemo(() => countФайлы(tree), [tree]);
-  const selectedCount = checkedФайлы.size;
+  const totalFiles = useMemo(() => countFiles(tree), [tree]);
+  const selectedCount = checkedFiles.size;
 
-  // Фильтр out terminated agent messages — they don't need to be shown
+  // Filter out terminated agent messages — they don't need to be shown
   const warnings = useMemo(() => {
     if (!exportData) return [] as string[];
     return exportData.warnings.filter((w) => !/terminated agent/i.test(w));
@@ -822,7 +822,7 @@ export function КомпанияЭкспорт() {
 
   function handleToggleCheck(path: string, kind: "file" | "dir") {
     if (!exportData) return;
-    setCheckedФайлы((prev) => {
+    setCheckedFiles((prev) => {
       const next = new Set(prev);
       if (kind === "file") {
         if (next.has(path)) next.delete(path);
@@ -830,23 +830,23 @@ export function КомпанияЭкспорт() {
       } else {
         // Find all child file paths under this dir
         const dirTree = buildFileTree(exportData.files);
-        const findНетde = (nodes: FileTreeНетde[], target: string): FileTreeНетde | null => {
+        const findNode = (nodes: FileTreeNode[], target: string): FileTreeNode | null => {
           for (const n of nodes) {
             if (n.path === target) return n;
-            const found = findНетde(n.children, target);
+            const found = findNode(n.children, target);
             if (found) return found;
           }
           return null;
         };
-        const dirНетde = findНетde(dirTree, path);
-        if (dirНетde) {
-          const childФайлы = collectВсеПутьs(dirНетde.children, "file");
-          // Добавить the dir's own file children
-          for (const child of dirНетde.children) {
-            if (child.kind === "file") childФайлы.add(child.path);
+        const dirNode = findNode(dirTree, path);
+        if (dirNode) {
+          const childFiles = collectAllPaths(dirNode.children, "file");
+          // Add the dir's own file children
+          for (const child of dirNode.children) {
+            if (child.kind === "file") childFiles.add(child.path);
           }
-          const allChecked = [...childФайлы].every((p) => next.has(p));
-          for (const f of childФайлы) {
+          const allChecked = [...childFiles].every((p) => next.has(p));
+          for (const f of childFiles) {
             if (allChecked) next.delete(f);
             else next.add(f);
           }
@@ -856,26 +856,26 @@ export function КомпанияЭкспорт() {
     });
   }
 
-  function handleПоискChange(query: string) {
-    const wasПоискing = treeПоиск.length > 0;
-    const isПоискing = query.length > 0;
+  function handleSearchChange(query: string) {
+    const wasSearching = treeSearch.length > 0;
+    const isSearching = query.length > 0;
 
-    if (isПоискing && !wasПоискing) {
-      // Сохранить current expansion state before search
+    if (isSearching && !wasSearching) {
+      // Save current expansion state before search
       savedExpandedRef.current = new Set(expandedDirs);
     }
 
-    setTreeПоиск(query);
+    setTreeSearch(query);
 
-    if (isПоискing) {
+    if (isSearching) {
       // Expand all parent dirs of matched files
-      const matchedРодительs = collectMatchedРодительDirs(tree, query);
+      const matchedParents = collectMatchedParentDirs(tree, query);
       setExpandedDirs((prev) => {
         const next = new Set(prev);
-        for (const d of matchedРодительs) next.add(d);
+        for (const d of matchedParents) next.add(d);
         return next;
       });
-    } else if (wasПоискing) {
+    } else if (wasSearching) {
       // Restore pre-search expansion state
       if (savedExpandedRef.current) {
         setExpandedDirs(savedExpandedRef.current);
@@ -884,18 +884,18 @@ export function КомпанияЭкспорт() {
     }
   }
 
-  function handleНавыкClick(skillКлюч: string) {
+  function handleSkillClick(skillKey: string) {
     if (!exportData) return;
-    const manifestНавык = exportData.manifest.skills.find(
-      (skill) => skill.key === skillКлюч || skill.slug === skillКлюч,
+    const manifestSkill = exportData.manifest.skills.find(
+      (skill) => skill.key === skillKey || skill.slug === skillKey,
     );
-    const skillПуть = manifestНавык?.path ?? `skills/${skillКлюч}/SKILL.md`;
-    if (!(skillПуть in exportData.files)) return;
-    selectFile(skillПуть);
+    const skillPath = manifestSkill?.path ?? `skills/${skillKey}/SKILL.md`;
+    if (!(skillPath in exportData.files)) return;
+    selectFile(skillPath);
     setExpandedDirs((prev) => {
       const next = new Set(prev);
       next.add("skills");
-      const parts = skillПуть.split("/").slice(0, -1);
+      const parts = skillPath.split("/").slice(0, -1);
       let current = "";
       for (const part of parts) {
         current = current ? `${current}/${part}` : part;
@@ -905,114 +905,114 @@ export function КомпанияЭкспорт() {
     });
   }
 
-  function handleСкачать() {
-    if (!exportData || checkedФайлы.size === 0 || downloadMutation.isОжидание) return;
+  function handleDownload() {
+    if (!exportData || checkedFiles.size === 0 || downloadMutation.isPending) return;
     downloadMutation.mutate();
   }
 
-  if (!selectedКомпанияId) {
+  if (!selectedCompanyId) {
     return <EmptyState icon={Package} message="Select a company to export." />;
   }
 
-  if (exportПредпросмотрMutation.isОжидание && !exportData) {
+  if (exportPreviewMutation.isPending && !exportData) {
     return <PageSkeleton variant="detail" />;
   }
 
   if (!exportData) {
-    return <EmptyState icon={Package} message="Загрузка export data..." />;
+    return <EmptyState icon={Package} message="Loading export data..." />;
   }
 
   const previewContent = selectedFile
     ? (() => {
-        return effectiveФайлы[selectedFile] ?? null;
+        return effectiveFiles[selectedFile] ?? null;
       })()
     : null;
 
   return (
     <div>
       {/* Sticky top action bar */}
-      <div classИмя="sticky top-0 z-10 border-b border-border bg-background px-5 py-3">
-        <div classИмя="flex flex-wrap items-center justify-between gap-3">
-          <div classИмя="flex items-center gap-4 text-sm">
-            <span classИмя="font-medium">
-              {selectedКомпания?.name ?? "Компания"} export
+      <div className="sticky top-0 z-10 border-b border-border bg-background px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-4 text-sm">
+            <span className="font-medium">
+              {selectedCompany?.name ?? "Company"} export
             </span>
-            <span classИмя="text-muted-foreground">
-              {selectedCount} / {totalФайлы} file{totalФайлы === 1 ? "" : "s"} selected
+            <span className="text-muted-foreground">
+              {selectedCount} / {totalFiles} file{totalFiles === 1 ? "" : "s"} selected
             </span>
             {warnings.length > 0 && (
-              <span classИмя="text-amber-500">
+              <span className="text-amber-500">
                 {warnings.length} warning{warnings.length === 1 ? "" : "s"}
               </span>
             )}
           </div>
           <Button
             size="sm"
-            onClick={handleСкачать}
-            disabled={selectedCount === 0 || downloadMutation.isОжидание}
+            onClick={handleDownload}
+            disabled={selectedCount === 0 || downloadMutation.isPending}
           >
-            <Скачать classИмя="mr-1.5 h-3.5 w-3.5" />
-            {downloadMutation.isОжидание
+            <Download className="mr-1.5 h-3.5 w-3.5" />
+            {downloadMutation.isPending
               ? "Building export..."
-              : `Экспорт ${selectedCount} file${selectedCount === 1 ? "" : "s"}`}
+              : `Export ${selectedCount} file${selectedCount === 1 ? "" : "s"}`}
           </Button>
         </div>
       </div>
 
-      {/* Предупреждениеs */}
+      {/* Warnings */}
       {warnings.length > 0 && (
-        <div classИмя="mx-5 mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+        <div className="mx-5 mt-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
           {warnings.map((w) => (
-            <div key={w} classИмя="text-xs text-amber-500">{w}</div>
+            <div key={w} className="text-xs text-amber-500">{w}</div>
           ))}
         </div>
       )}
 
       {/* Two-column layout */}
-      <div classИмя="grid h-[calc(100vh-12rem)] gap-0 xl:grid-cols-[19rem_minmax(0,1fr)]">
-        <aside classИмя="flex flex-col border-r border-border overflow-hidden">
-          <div classИмя="border-b border-border px-4 py-3 shrink-0">
-            <h2 classИмя="text-base font-semibold">Package files</h2>
+      <div className="grid h-[calc(100vh-12rem)] gap-0 xl:grid-cols-[19rem_minmax(0,1fr)]">
+        <aside className="flex flex-col border-r border-border overflow-hidden">
+          <div className="border-b border-border px-4 py-3 shrink-0">
+            <h2 className="text-base font-semibold">Package files</h2>
           </div>
-          <div classИмя="border-b border-border px-3 py-2 shrink-0">
-            <div classИмя="flex items-center gap-2 rounded-md border border-border px-2 py-1">
-              <Поиск classИмя="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <div className="border-b border-border px-3 py-2 shrink-0">
+            <div className="flex items-center gap-2 rounded-md border border-border px-2 py-1">
+              <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <input
                 type="text"
-                value={treeПоиск}
-                onChange={(e) => handleПоискChange(e.target.value)}
-                placeholder="Поиск files..."
-                classИмя="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                value={treeSearch}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search files..."
+                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 data-page-search-target="true"
               />
             </div>
           </div>
-          <div classИмя="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto">
             <FileTree
               nodes={displayTree}
               selectedFile={selectedFile}
               expandedDirs={expandedDirs}
-              checkedФайлы={checkedФайлы}
+              checkedFiles={checkedFiles}
               onToggleDir={handleToggleDir}
               onSelectFile={selectFile}
               onToggleCheck={handleToggleCheck}
-              wrapЯрлыки={false}
+              wrapLabels={false}
             />
-            {totalЗадачаChildren > visibleЗадачаChildren && !treeПоиск && (
-              <div classИмя="px-4 py-2">
+            {totalTaskChildren > visibleTaskChildren && !treeSearch && (
+              <div className="px-4 py-2">
                 <button
                   type="button"
-                  onClick={() => setЗадачаLimit((prev) => prev + TASKS_PAGE_SIZE)}
-                  classИмя="w-full rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors"
+                  onClick={() => setTaskLimit((prev) => prev + TASKS_PAGE_SIZE)}
+                  className="w-full rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors"
                 >
-                  Показать больше issues ({visibleЗадачаChildren} of {totalЗадачаChildren})
+                  Show more issues ({visibleTaskChildren} of {totalTaskChildren})
                 </button>
               </div>
             )}
           </div>
         </aside>
-        <div classИмя="min-w-0 overflow-y-auto pl-6">
-          <ЭкспортПредпросмотрPane selectedFile={selectedFile} content={previewContent} allФайлы={effectiveФайлы} onНавыкClick={handleНавыкClick} />
+        <div className="min-w-0 overflow-y-auto pl-6">
+          <ExportPreviewPane selectedFile={selectedFile} content={previewContent} allFiles={effectiveFiles} onSkillClick={handleSkillClick} />
         </div>
       </div>
     </div>

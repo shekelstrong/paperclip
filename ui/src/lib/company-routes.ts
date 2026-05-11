@@ -23,11 +23,11 @@ const BOARD_ROUTE_ROOTS = new Set([
 
 const GLOBAL_ROUTE_ROOTS = new Set(["auth", "invite", "board-claim", "cli-auth", "docs", "instance"]);
 
-export function normalizeКомпанияPrefix(prefix: string): string {
+export function normalizeCompanyPrefix(prefix: string): string {
   return prefix.trim().toUpperCase();
 }
 
-function splitПуть(path: string): { pathname: string; search: string; hash: string } {
+function splitPath(path: string): { pathname: string; search: string; hash: string } {
   const match = path.match(/^([^?#]*)(\?[^#]*)?(#.*)?$/);
   return {
     pathname: match?.[1] ?? path,
@@ -41,49 +41,49 @@ function getRootSegment(pathname: string): string | null {
   return segment ?? null;
 }
 
-export function isGlobalПуть(pathname: string): boolean {
+export function isGlobalPath(pathname: string): boolean {
   if (pathname === "/") return true;
   const root = getRootSegment(pathname);
   if (!root) return true;
-  return GLOBAL_ROUTE_ROOTS.has(root.toНизкийerCase());
+  return GLOBAL_ROUTE_ROOTS.has(root.toLowerCase());
 }
 
-export function isСоветПутьWithoutPrefix(pathname: string): boolean {
+export function isBoardPathWithoutPrefix(pathname: string): boolean {
   const root = getRootSegment(pathname);
   if (!root) return false;
-  return BOARD_ROUTE_ROOTS.has(root.toНизкийerCase());
+  return BOARD_ROUTE_ROOTS.has(root.toLowerCase());
 }
 
-export function extractКомпанияPrefixFromПуть(pathname: string): string | null {
+export function extractCompanyPrefixFromPath(pathname: string): string | null {
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length === 0) return null;
-  const first = segments[0]!.toНизкийerCase();
+  const first = segments[0]!.toLowerCase();
   if (GLOBAL_ROUTE_ROOTS.has(first) || BOARD_ROUTE_ROOTS.has(first)) {
     return null;
   }
-  return normalizeКомпанияPrefix(segments[0]!);
+  return normalizeCompanyPrefix(segments[0]!);
 }
 
-export function applyКомпанияPrefix(path: string, companyPrefix: string | null | undefined): string {
-  const { pathname, search, hash } = splitПуть(path);
+export function applyCompanyPrefix(path: string, companyPrefix: string | null | undefined): string {
+  const { pathname, search, hash } = splitPath(path);
   if (!pathname.startsWith("/")) return path;
-  if (isGlobalПуть(pathname)) return path;
+  if (isGlobalPath(pathname)) return path;
   if (!companyPrefix) return path;
 
-  const prefix = normalizeКомпанияPrefix(companyPrefix);
-  const activePrefix = extractКомпанияPrefixFromПуть(pathname);
+  const prefix = normalizeCompanyPrefix(companyPrefix);
+  const activePrefix = extractCompanyPrefixFromPath(pathname);
   if (activePrefix) return path;
 
   return `/${prefix}${pathname}${search}${hash}`;
 }
 
-export function toКомпанияRelativeПуть(path: string): string {
-  const { pathname, search, hash } = splitПуть(path);
+export function toCompanyRelativePath(path: string): string {
+  const { pathname, search, hash } = splitPath(path);
   const segments = pathname.split("/").filter(Boolean);
 
   if (segments.length >= 2) {
-    const second = segments[1]!.toНизкийerCase();
-    if (!GLOBAL_ROUTE_ROOTS.has(segments[0]!.toНизкийerCase()) && BOARD_ROUTE_ROOTS.has(second)) {
+    const second = segments[1]!.toLowerCase();
+    if (!GLOBAL_ROUTE_ROOTS.has(segments[0]!.toLowerCase()) && BOARD_ROUTE_ROOTS.has(second)) {
       return `/${segments.slice(1).join("/")}${search}${hash}`;
     }
   }

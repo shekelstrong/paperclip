@@ -1,6 +1,6 @@
-import type { Панель управленияSummary } from "@paperclipai/shared";
+import type { DashboardSummary } from "@paperclipai/shared";
 import { api } from "./client";
 
 export const dashboardApi = {
-  summary: (companyId: string) => api.get<Панель управленияSummary>(`/companies/${companyId}/dashboard`),
+  summary: (companyId: string) => api.get<DashboardSummary>(`/companies/${companyId}/dashboard`),
 };

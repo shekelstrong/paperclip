@@ -1,43 +1,43 @@
-import type { АктивенЗапуститьForЗадача, LiveЗапуститьForЗадача } from "../api/heartbeats";
-import type { ЗапуститьTranscriptSource } from "../components/transcript/useLiveЗапуститьTranscripts";
-import type { ЗадачаChatLinkedЗапустить } from "./issue-chat-messages";
+import type { ActiveRunForIssue, LiveRunForIssue } from "../api/heartbeats";
+import type { RunTranscriptSource } from "../components/transcript/useLiveRunTranscripts";
+import type { IssueChatLinkedRun } from "./issue-chat-messages";
 
-export function resolveЗадачаChatTranscriptЗапуститьs(args: {
-  linkedЗапуститьs?: readonly ЗадачаChatLinkedЗапустить[];
-  liveЗапуститьs?: readonly LiveЗапуститьForЗадача[];
-  activeЗапустить?: АктивенЗапуститьForЗадача | null;
-}): ЗапуститьTranscriptSource[] {
-  const { linkedЗапуститьs = [], liveЗапуститьs = [], activeЗапустить = null } = args;
-  const combined = new Map<string, ЗапуститьTranscriptSource>();
+export function resolveIssueChatTranscriptRuns(args: {
+  linkedRuns?: readonly IssueChatLinkedRun[];
+  liveRuns?: readonly LiveRunForIssue[];
+  activeRun?: ActiveRunForIssue | null;
+}): RunTranscriptSource[] {
+  const { linkedRuns = [], liveRuns = [], activeRun = null } = args;
+  const combined = new Map<string, RunTranscriptSource>();
 
-  for (const run of liveЗапуститьs) {
+  for (const run of liveRuns) {
     combined.set(run.id, {
       id: run.id,
       status: run.status,
-      adapterТип: run.adapterТип,
+      adapterType: run.adapterType,
       logBytes: run.logBytes,
       lastOutputBytes: run.lastOutputBytes,
     });
   }
 
-  if (activeЗапустить) {
-    combined.set(activeЗапустить.id, {
-      id: activeЗапустить.id,
-      status: activeЗапустить.status,
-      adapterТип: activeЗапустить.adapterТип,
-      logBytes: activeЗапустить.logBytes,
-      lastOutputBytes: activeЗапустить.lastOutputBytes,
+  if (activeRun) {
+    combined.set(activeRun.id, {
+      id: activeRun.id,
+      status: activeRun.status,
+      adapterType: activeRun.adapterType,
+      logBytes: activeRun.logBytes,
+      lastOutputBytes: activeRun.lastOutputBytes,
     });
   }
 
-  for (const run of linkedЗапуститьs) {
+  for (const run of linkedRuns) {
     if (combined.has(run.runId)) continue;
-    const adapterТип = run.adapterТип;
-    if (!adapterТип) continue;
+    const adapterType = run.adapterType;
+    if (!adapterType) continue;
     combined.set(run.runId, {
       id: run.runId,
       status: run.status,
-      adapterТип,
+      adapterType,
       hasStoredOutput: run.hasStoredOutput,
       logBytes: run.logBytes,
     });

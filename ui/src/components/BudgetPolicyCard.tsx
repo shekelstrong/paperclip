@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import type { БюджетPolicySummary } from "@paperclipai/shared";
-import { AlertTriangle, ПаузаCircle, ShieldAlert, Wallet } from "lucide-react";
+import type { BudgetPolicySummary } from "@paperclipai/shared";
+import { AlertTriangle, PauseCircle, ShieldAlert, Wallet } from "lucide-react";
 import { cn, formatCents } from "../lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardОписание, CardHeader, CardНазвание } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-function centsInputЗначение(value: number) {
+function centsInputValue(value: number) {
   return (value / 100).toFixed(2);
 }
 
@@ -18,75 +18,75 @@ function parseDollarInput(value: string) {
   return Math.round(parsed * 100);
 }
 
-function windowLabel(windowKind: БюджетPolicySummary["windowKind"]) {
+function windowLabel(windowKind: BudgetPolicySummary["windowKind"]) {
   return windowKind === "lifetime" ? "Lifetime budget" : "Monthly UTC budget";
 }
 
-function statusTone(status: БюджетPolicySummary["status"]) {
+function statusTone(status: BudgetPolicySummary["status"]) {
   if (status === "hard_stop") return "text-red-300 border-red-500/30 bg-red-500/10";
   if (status === "warning") return "text-amber-200 border-amber-500/30 bg-amber-500/10";
   return "text-emerald-200 border-emerald-500/30 bg-emerald-500/10";
 }
 
-export function БюджетPolicyCard({
+export function BudgetPolicyCard({
   summary,
-  onСохранить,
+  onSave,
   isSaving,
   compact = false,
   variant = "card",
 }: {
-  summary: БюджетPolicySummary;
-  onСохранить?: (amountCents: number) => void;
+  summary: BudgetPolicySummary;
+  onSave?: (amountCents: number) => void;
   isSaving?: boolean;
   compact?: boolean;
   variant?: "card" | "plain";
 }) {
-  const [draftБюджет, setЧерновикБюджет] = useState(centsInputЗначение(summary.amount));
+  const [draftBudget, setDraftBudget] = useState(centsInputValue(summary.amount));
 
   useEffect(() => {
-    setЧерновикБюджет(centsInputЗначение(summary.amount));
+    setDraftBudget(centsInputValue(summary.amount));
   }, [summary.amount]);
 
-  const parsedЧерновик = parseDollarInput(draftБюджет);
-  const canСохранить = typeof parsedЧерновик === "number" && parsedЧерновик !== summary.amount && Boolean(onСохранить);
+  const parsedDraft = parseDollarInput(draftBudget);
+  const canSave = typeof parsedDraft === "number" && parsedDraft !== summary.amount && Boolean(onSave);
   const progress = summary.amount > 0 ? Math.min(100, summary.utilizationPercent) : 0;
-  const СтатусIcon = summary.status === "hard_stop" ? ShieldAlert : summary.status === "warning" ? AlertTriangle : Wallet;
+  const StatusIcon = summary.status === "hard_stop" ? ShieldAlert : summary.status === "warning" ? AlertTriangle : Wallet;
   const isPlain = variant === "plain";
 
-  const observedБюджетGrid = isPlain ? (
-    <div classИмя="grid gap-6 sm:grid-cols-2">
+  const observedBudgetGrid = isPlain ? (
+    <div className="grid gap-6 sm:grid-cols-2">
       <div>
-        <div classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Observed</div>
-        <div classИмя="mt-2 text-xl font-semibold tabular-nums">{formatCents(summary.observedAmount)}</div>
-        <div classИмя="mt-1 text-xs text-muted-foreground">
-          {summary.amount > 0 ? `${summary.utilizationPercent}% of limit` : "Нет cap configured"}
+        <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Observed</div>
+        <div className="mt-2 text-xl font-semibold tabular-nums">{formatCents(summary.observedAmount)}</div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          {summary.amount > 0 ? `${summary.utilizationPercent}% of limit` : "No cap configured"}
         </div>
       </div>
       <div>
-        <div classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Бюджет</div>
-        <div classИмя="mt-2 text-xl font-semibold tabular-nums">
-          {summary.amount > 0 ? formatCents(summary.amount) : "Отключитьd"}
+        <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Budget</div>
+        <div className="mt-2 text-xl font-semibold tabular-nums">
+          {summary.amount > 0 ? formatCents(summary.amount) : "Disabled"}
         </div>
-        <div classИмя="mt-1 text-xs text-muted-foreground">
+        <div className="mt-1 text-xs text-muted-foreground">
           Soft alert at {summary.warnPercent}%{summary.paused && summary.pauseReason ? ` · ${summary.pauseReason} pause` : ""}
         </div>
       </div>
     </div>
   ) : (
-    <div classИмя="grid gap-3 sm:grid-cols-2">
-      <div classИмя="rounded-xl border border-border/70 bg-black/[0.18] px-4 py-3">
-        <div classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Observed</div>
-        <div classИмя="mt-2 text-xl font-semibold tabular-nums">{formatCents(summary.observedAmount)}</div>
-        <div classИмя="mt-1 text-xs text-muted-foreground">
-          {summary.amount > 0 ? `${summary.utilizationPercent}% of limit` : "Нет cap configured"}
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="rounded-xl border border-border/70 bg-black/[0.18] px-4 py-3">
+        <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Observed</div>
+        <div className="mt-2 text-xl font-semibold tabular-nums">{formatCents(summary.observedAmount)}</div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          {summary.amount > 0 ? `${summary.utilizationPercent}% of limit` : "No cap configured"}
         </div>
       </div>
-      <div classИмя="rounded-xl border border-border/70 bg-black/[0.18] px-4 py-3">
-        <div classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Бюджет</div>
-        <div classИмя="mt-2 text-xl font-semibold tabular-nums">
-          {summary.amount > 0 ? formatCents(summary.amount) : "Отключитьd"}
+      <div className="rounded-xl border border-border/70 bg-black/[0.18] px-4 py-3">
+        <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Budget</div>
+        <div className="mt-2 text-xl font-semibold tabular-nums">
+          {summary.amount > 0 ? formatCents(summary.amount) : "Disabled"}
         </div>
-        <div classИмя="mt-1 text-xs text-muted-foreground">
+        <div className="mt-1 text-xs text-muted-foreground">
           Soft alert at {summary.warnPercent}%{summary.paused && summary.pauseReason ? ` · ${summary.pauseReason} pause` : ""}
         </div>
       </div>
@@ -94,14 +94,14 @@ export function БюджетPolicyCard({
   );
 
   const progressSection = (
-    <div classИмя="space-y-2">
-      <div classИмя="flex items-center justify-between text-xs text-muted-foreground">
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>Remaining</span>
         <span>{summary.amount > 0 ? formatCents(summary.remainingAmount) : "Безлимит"}</span>
       </div>
-      <div classИмя={cn("h-2 overflow-hidden rounded-full", isPlain ? "bg-border/70" : "bg-muted/70")}>
+      <div className={cn("h-2 overflow-hidden rounded-full", isPlain ? "bg-border/70" : "bg-muted/70")}>
         <div
-          classИмя={cn(
+          className={cn(
             "h-full rounded-full transition-[width,background-color] duration-200",
             summary.status === "hard_stop"
               ? "bg-red-400"
@@ -116,54 +116,54 @@ export function БюджетPolicyCard({
   );
 
   const pausedPane = summary.paused ? (
-    <div classИмя="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
-      <ПаузаCircle classИмя="mt-0.5 h-4 w-4 shrink-0" />
+    <div className="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+      <PauseCircle className="mt-0.5 h-4 w-4 shrink-0" />
       <div>
-        {summary.scopeТип === "project"
+        {summary.scopeType === "project"
           ? "Execution is paused for this project until the budget is raised or the incident is dismissed."
           : "Heartbeats are paused for this scope until the budget is raised or the incident is dismissed."}
       </div>
     </div>
   ) : null;
 
-  const saveSection = onСохранить ? (
-    <div classИмя={cn("flex flex-col gap-3 sm:flex-row sm:items-end", isPlain ? "" : "rounded-xl border border-border/70 bg-background/50 p-3")}>
-      <div classИмя="min-w-0 flex-1">
-        <label classИмя="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          Бюджет (USD)
+  const saveSection = onSave ? (
+    <div className={cn("flex flex-col gap-3 sm:flex-row sm:items-end", isPlain ? "" : "rounded-xl border border-border/70 bg-background/50 p-3")}>
+      <div className="min-w-0 flex-1">
+        <label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          Budget (USD)
         </label>
         <Input
-          value={draftБюджет}
-          onChange={(event) => setЧерновикБюджет(event.target.value)}
-          classИмя="mt-2"
+          value={draftBudget}
+          onChange={(event) => setDraftBudget(event.target.value)}
+          className="mt-2"
           inputMode="decimal"
           placeholder="0.00"
         />
       </div>
       <Button
         onClick={() => {
-          if (typeof parsedЧерновик === "number" && onСохранить) onСохранить(parsedЧерновик);
+          if (typeof parsedDraft === "number" && onSave) onSave(parsedDraft);
         }}
-        disabled={!canСохранить || isSaving || parsedЧерновик === null}
+        disabled={!canSave || isSaving || parsedDraft === null}
       >
-        {isSaving ? "Saving..." : summary.amount > 0 ? "Обновить бюджет" : "Установить бюджет"}
+        {isSaving ? "Saving..." : summary.amount > 0 ? "Update budget" : "Set budget"}
       </Button>
     </div>
   ) : null;
 
   if (isPlain) {
     return (
-      <div classИмя="space-y-6">
-        <div classИмя="flex items-start justify-between gap-6">
+      <div className="space-y-6">
+        <div className="flex items-start justify-between gap-6">
           <div>
-            <div classИмя="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-              {summary.scopeТип}
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              {summary.scopeType}
             </div>
-            <div classИмя="mt-2 text-xl font-semibold">{summary.scopeИмя}</div>
-            <div classИмя="mt-2 text-sm text-muted-foreground">{windowLabel(summary.windowKind)}</div>
+            <div className="mt-2 text-xl font-semibold">{summary.scopeName}</div>
+            <div className="mt-2 text-sm text-muted-foreground">{windowLabel(summary.windowKind)}</div>
           </div>
           <div
-            classИмя={cn(
+            className={cn(
               "inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em]",
               summary.status === "hard_stop"
                 ? "text-red-300"
@@ -172,46 +172,46 @@ export function БюджетPolicyCard({
                   : "text-muted-foreground",
             )}
           >
-            <СтатусIcon classИмя="h-3.5 w-3.5" />
-            {summary.paused ? "Приостановлен" : summary.status === "warning" ? "Предупреждение" : summary.status === "hard_stop" ? "Hard stop" : "Работает"}
+            <StatusIcon className="h-3.5 w-3.5" />
+            {summary.paused ? "Приостановлено" : summary.status === "warning" ? "Предупреждение" : summary.status === "hard_stop" ? "Hard stop" : "Healthy"}
           </div>
         </div>
 
-        {observedБюджетGrid}
+        {observedBudgetGrid}
         {progressSection}
         {pausedPane}
         {saveSection}
-        {parsedЧерновик === null ? (
-          <p classИмя="text-xs text-destructive">Enter a valid non-negative dollar amount.</p>
+        {parsedDraft === null ? (
+          <p className="text-xs text-destructive">Enter a valid non-negative dollar amount.</p>
         ) : null}
       </div>
     );
   }
 
   return (
-    <Card classИмя={cn("overflow-hidden border-border/70 bg-card/80", compact ? "" : "shadow-[0_20px_80px_-40px_rgba(0,0,0,0.55)]")}>
-      <CardHeader classИмя={cn("gap-3", compact ? "px-4 pt-4 pb-2" : "px-5 pt-5 pb-3")}>
-        <div classИмя="flex items-start justify-between gap-3">
+    <Card className={cn("overflow-hidden border-border/70 bg-card/80", compact ? "" : "shadow-[0_20px_80px_-40px_rgba(0,0,0,0.55)]")}>
+      <CardHeader className={cn("gap-3", compact ? "px-4 pt-4 pb-2" : "px-5 pt-5 pb-3")}>
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <div classИмя="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-              {summary.scopeТип}
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              {summary.scopeType}
             </div>
-            <CardНазвание classИмя="mt-1 text-base">{summary.scopeИмя}</CardНазвание>
-            <CardОписание classИмя="mt-1">{windowLabel(summary.windowKind)}</CardОписание>
+            <CardTitle className="mt-1 text-base">{summary.scopeName}</CardTitle>
+            <CardDescription className="mt-1">{windowLabel(summary.windowKind)}</CardDescription>
           </div>
-          <div classИмя={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.18em]", statusTone(summary.status))}>
-            <СтатусIcon classИмя="h-3.5 w-3.5" />
-            {summary.paused ? "Приостановлен" : summary.status === "warning" ? "Предупреждение" : summary.status === "hard_stop" ? "Hard stop" : "Работает"}
+          <div className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.18em]", statusTone(summary.status))}>
+            <StatusIcon className="h-3.5 w-3.5" />
+            {summary.paused ? "Приостановлено" : summary.status === "warning" ? "Предупреждение" : summary.status === "hard_stop" ? "Hard stop" : "Healthy"}
           </div>
         </div>
       </CardHeader>
-      <CardContent classИмя={cn("space-y-4", compact ? "px-4 pb-4 pt-0" : "px-5 pb-5 pt-0")}>
-        {observedБюджетGrid}
+      <CardContent className={cn("space-y-4", compact ? "px-4 pb-4 pt-0" : "px-5 pb-5 pt-0")}>
+        {observedBudgetGrid}
         {progressSection}
         {pausedPane}
         {saveSection}
-        {parsedЧерновик === null ? (
-          <p classИмя="text-xs text-destructive">Enter a valid non-negative dollar amount.</p>
+        {parsedDraft === null ? (
+          <p className="text-xs text-destructive">Enter a valid non-negative dollar amount.</p>
         ) : null}
       </CardContent>
     </Card>

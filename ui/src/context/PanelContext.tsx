@@ -1,30 +1,17 @@
-import { createContext, useCallback, useContext, useState, type ReactНетde } from "react";
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 
 const STORAGE_KEY = "paperclip:panel-visible";
 
-export interface PanelLayoutOptions {
-  /** localStorage key under which the user's preferred panel width is saved. */
-  storageКлюч?: string;
-  /** Width applied when no stored value exists. */
-  defaultWidth?: number;
-  minWidth?: number;
-  maxWidth?: number;
-  /** Below this viewport width, clamp the panel to compactMaxWidth. */
-  compactBelowViewport?: number;
-  compactMaxWidth?: number;
-}
-
-interface PanelContextЗначение {
-  panelContent: ReactНетde | null;
-  panelLayout: PanelLayoutOptions;
+interface PanelContextValue {
+  panelContent: ReactNode | null;
   panelVisible: boolean;
-  openPanel: (content: ReactНетde, layout?: PanelLayoutOptions) => void;
+  openPanel: (content: ReactNode) => void;
   closePanel: () => void;
   setPanelVisible: (visible: boolean) => void;
   togglePanelVisible: () => void;
 }
 
-const PanelContext = createContext<PanelContextЗначение | null>(null);
+const PanelContext = createContext<PanelContextValue | null>(null);
 
 function readPreference(): boolean {
   try {
@@ -43,21 +30,16 @@ function writePreference(visible: boolean) {
   }
 }
 
-const EMPTY_LAYOUT: PanelLayoutOptions = {};
-
-export function PanelПровайдер({ children }: { children: ReactНетde }) {
-  const [panelContent, setPanelContent] = useState<ReactНетde | null>(null);
-  const [panelLayout, setPanelLayout] = useState<PanelLayoutOptions>(EMPTY_LAYOUT);
+export function PanelProvider({ children }: { children: ReactNode }) {
+  const [panelContent, setPanelContent] = useState<ReactNode | null>(null);
   const [panelVisible, setPanelVisibleState] = useState(readPreference);
 
-  const openPanel = useCallback((content: ReactНетde, layout?: PanelLayoutOptions) => {
+  const openPanel = useCallback((content: ReactNode) => {
     setPanelContent(content);
-    setPanelLayout(layout ?? EMPTY_LAYOUT);
   }, []);
 
   const closePanel = useCallback(() => {
     setPanelContent(null);
-    setPanelLayout(EMPTY_LAYOUT);
   }, []);
 
   const setPanelVisible = useCallback((visible: boolean) => {
@@ -74,18 +56,18 @@ export function PanelПровайдер({ children }: { children: ReactНетde 
   }, []);
 
   return (
-    <PanelContext.Провайдер
-      value={{ panelContent, panelLayout, panelVisible, openPanel, closePanel, setPanelVisible, togglePanelVisible }}
+    <PanelContext.Provider
+      value={{ panelContent, panelVisible, openPanel, closePanel, setPanelVisible, togglePanelVisible }}
     >
       {children}
-    </PanelContext.Провайдер>
+    </PanelContext.Provider>
   );
 }
 
 export function usePanel() {
   const ctx = useContext(PanelContext);
   if (!ctx) {
-    throw new Ошибка("usePanel must be used within PanelПровайдер");
+    throw new Error("usePanel must be used within PanelProvider");
   }
   return ctx;
 }

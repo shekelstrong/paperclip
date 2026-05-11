@@ -20,7 +20,7 @@ jobs:
           script: |
             set -e
             cd /opt/paperclip-ru
-            git config user.email "privatenedopekin@gmail.com"
+            git config user.email "bot@shekelstrong.dev"
             git config user.name "shekelstrong"
             git pull origin master
 

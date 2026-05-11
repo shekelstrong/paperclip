@@ -1,61 +1,61 @@
 import type {
-  Компания,
-  КомпанияПортabilityЭкспортRequest,
-  КомпанияПортabilityЭкспортПредпросмотрResult,
-  КомпанияПортabilityЭкспортResult,
-  КомпанияПортabilityИмпортRequest,
-  КомпанияПортabilityИмпортResult,
-  КомпанияПортabilityПредпросмотрRequest,
-  КомпанияПортabilityПредпросмотрResult,
-  ОбновитьКомпанияBranding,
+  Company,
+  CompanyPortabilityExportRequest,
+  CompanyPortabilityExportPreviewResult,
+  CompanyPortabilityExportResult,
+  CompanyPortabilityImportRequest,
+  CompanyPortabilityImportResult,
+  CompanyPortabilityPreviewRequest,
+  CompanyPortabilityPreviewResult,
+  UpdateCompanyBranding,
 } from "@paperclipai/shared";
 import { api } from "./client";
 
-export type КомпанияStats = Record<string, { agentCount: number; issueCount: number }>;
+export type CompanyStats = Record<string, { agentCount: number; issueCount: number }>;
 
 export const companiesApi = {
-  list: () => api.get<Компания[]>("/companies"),
-  get: (companyId: string) => api.get<Компания>(`/companies/${companyId}`),
-  stats: () => api.get<КомпанияStats>("/companies/stats"),
+  list: () => api.get<Company[]>("/companies"),
+  get: (companyId: string) => api.get<Company>(`/companies/${companyId}`),
+  stats: () => api.get<CompanyStats>("/companies/stats"),
   create: (data: {
     name: string;
     description?: string | null;
     budgetMonthlyCents?: number;
   }) =>
-    api.post<Компания>("/companies", data),
+    api.post<Company>("/companies", data),
   update: (
     companyId: string,
     data: Partial<
       Pick<
-        Компания,
+        Company,
         | "name"
         | "description"
         | "status"
         | "budgetMonthlyCents"
         | "attachmentMaxBytes"
-        | "requireСоветСогласованиеForNewАгенты"
-        | "feedbackDataSharingВключитьd"
+        | "requireBoardApprovalForNewAgents"
+        | "feedbackDataSharingEnabled"
         | "brandColor"
         | "logoAssetId"
       >
     >,
-  ) => api.patch<Компания>(`/companies/${companyId}`, data),
-  updateBranding: (companyId: string, data: ОбновитьКомпанияBranding) =>
-    api.patch<Компания>(`/companies/${companyId}/branding`, data),
-  archive: (companyId: string) => api.post<Компания>(`/companies/${companyId}/archive`, {}),
+  ) => api.patch<Company>(`/companies/${companyId}`, data),
+  updateBranding: (companyId: string, data: UpdateCompanyBranding) =>
+    api.patch<Company>(`/companies/${companyId}/branding`, data),
+  archive: (companyId: string) => api.post<Company>(`/companies/${companyId}/archive`, {}),
   remove: (companyId: string) => api.delete<{ ok: true }>(`/companies/${companyId}`),
   exportBundle: (
     companyId: string,
-    data: КомпанияПортabilityЭкспортRequest,
+    data: CompanyPortabilityExportRequest,
   ) =>
-    api.post<КомпанияПортabilityЭкспортResult>(`/companies/${companyId}/exports`, data),
-  exportПредпросмотр: (
+    api.post<CompanyPortabilityExportResult>(`/companies/${companyId}/exports`, data),
+  exportPreview: (
     companyId: string,
-    data: КомпанияПортabilityЭкспортRequest,
+    data: CompanyPortabilityExportRequest,
   ) =>
-    api.post<КомпанияПортabilityЭкспортПредпросмотрResult>(`/companies/${companyId}/exports/preview`, data),
-  importПредпросмотр: (data: КомпанияПортabilityПредпросмотрRequest) =>
-    api.post<КомпанияПортabilityПредпросмотрResult>("/companies/import/preview", data),
-  importBundle: (data: КомпанияПортabilityИмпортRequest) =>
-    api.post<КомпанияПортabilityИмпортResult>("/companies/import", data),
+    api.post<CompanyPortabilityExportPreviewResult>(`/companies/${companyId}/exports/preview`, data),
+  importPreview: (data: CompanyPortabilityPreviewRequest) =>
+    api.post<CompanyPortabilityPreviewResult>("/companies/import/preview", data),
+  importBundle: (data: CompanyPortabilityImportRequest) =>
+    api.post<CompanyPortabilityImportResult>("/companies/import", data),
 };

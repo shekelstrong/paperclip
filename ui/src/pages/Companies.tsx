@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { useDialogActions } from "../context/DialogContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { companiesApi } from "../api/companies";
-import { queryКлючs } from "../lib/queryКлючs";
+import { queryKeys } from "../lib/queryKeys";
 import { formatCents, relativeTime } from "../lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,84 +28,84 @@ import {
   Calendar,
 } from "lucide-react";
 
-export function Компании() {
+export function Companies() {
   const {
     companies,
-    selectedКомпанияId,
-    setSelectedКомпанияId,
+    selectedCompanyId,
+    setSelectedCompanyId,
     loading,
     error,
-  } = useКомпания();
+  } = useCompany();
   const { openOnboarding } = useDialogActions();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
 
   const { data: stats } = useQuery({
-    queryКлюч: queryКлючs.companies.stats,
+    queryKey: queryKeys.companies.stats,
     queryFn: () => companiesApi.stats(),
   });
 
   // Inline edit state
-  const [editingId, setИзменитьingId] = useState<string | null>(null);
-  const [editИмя, setИзменитьИмя] = useState("");
-  const [confirmУдалитьId, setПодтвердитьУдалитьId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const editMutation = useMutation({
-    mutationFn: ({ id, newИмя }: { id: string; newИмя: string }) =>
-      companiesApi.update(id, { name: newИмя }),
-    onУспешно: () => {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
-      setИзменитьingId(null);
+    mutationFn: ({ id, newName }: { id: string; newName: string }) =>
+      companiesApi.update(id, { name: newName }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      setEditingId(null);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => companiesApi.remove(id),
-    onУспешно: () => {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.stats });
-      setПодтвердитьУдалитьId(null);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.stats });
+      setConfirmDeleteId(null);
     },
   });
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Компании" }]);
+    setBreadcrumbs([{ label: "Companies" }]);
   }, [setBreadcrumbs]);
 
-  function startИзменить(companyId: string, currentИмя: string) {
-    setИзменитьingId(companyId);
-    setИзменитьИмя(currentИмя);
+  function startEdit(companyId: string, currentName: string) {
+    setEditingId(companyId);
+    setEditName(currentName);
   }
 
-  function saveИзменить() {
-    if (!editingId || !editИмя.trim()) return;
-    editMutation.mutate({ id: editingId, newИмя: editИмя.trim() });
+  function saveEdit() {
+    if (!editingId || !editName.trim()) return;
+    editMutation.mutate({ id: editingId, newName: editName.trim() });
   }
 
-  function cancelИзменить() {
-    setИзменитьingId(null);
-    setИзменитьИмя("");
+  function cancelEdit() {
+    setEditingId(null);
+    setEditName("");
   }
 
   return (
-    <div classИмя="space-y-6">
-      <div classИмя="flex items-center justify-end">
+    <div className="space-y-6">
+      <div className="flex items-center justify-end">
         <Button size="sm" onClick={() => openOnboarding()}>
-          <Plus classИмя="h-3.5 w-3.5 mr-1.5" />
-          New Компания
+          <Plus className="h-3.5 w-3.5 mr-1.5" />
+          New Company
         </Button>
       </div>
 
-      <div classИмя="h-6">
-        {loading && <p classИмя="text-sm text-muted-foreground">Загрузка companies...</p>}
-        {error && <p classИмя="text-sm text-destructive">{error.message}</p>}
+      <div className="h-6">
+        {loading && <p className="text-sm text-muted-foreground">Loading companies...</p>}
+        {error && <p className="text-sm text-destructive">{error.message}</p>}
       </div>
 
-      <div classИмя="grid gap-4">
+      <div className="grid gap-4">
         {companies.map((company) => {
-          const selected = company.id === selectedКомпанияId;
-          const isИзменитьing = editingId === company.id;
-          const isПодтвердитьingУдалить = confirmУдалитьId === company.id;
+          const selected = company.id === selectedCompanyId;
+          const isEditing = editingId === company.id;
+          const isConfirmingDelete = confirmDeleteId === company.id;
           const companyStats = stats?.[company.id];
           const agentCount = companyStats?.agentCount ?? 0;
           const issueCount = companyStats?.issueCount ?? 0;
@@ -121,54 +121,54 @@ export function Компании() {
               key={company.id}
               role="button"
               tabIndex={0}
-              onClick={() => setSelectedКомпанияId(company.id)}
-              onКлючDown={(e) => {
+              onClick={() => setSelectedCompanyId(company.id)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
-                  e.preventПо умолчанию();
-                  setSelectedКомпанияId(company.id);
+                  e.preventDefault();
+                  setSelectedCompanyId(company.id);
                 }
               }}
-              classИмя={`group text-left bg-card border rounded-lg p-5 transition-colors cursor-pointer ${
+              className={`group text-left bg-card border rounded-lg p-5 transition-colors cursor-pointer ${
                 selected
                   ? "border-primary ring-1 ring-primary"
                   : "border-border hover:border-muted-foreground/30"
               }`}
             >
               {/* Header row: name + menu */}
-              <div classИмя="flex items-start justify-between gap-3">
-                <div classИмя="flex-1 min-w-0">
-                  {isИзменитьing ? (
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  {isEditing ? (
                     <div
-                      classИмя="flex items-center gap-2"
+                      className="flex items-center gap-2"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Input
-                        value={editИмя}
-                        onChange={(e) => setИзменитьИмя(e.target.value)}
-                        classИмя="h-7 text-sm"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="h-7 text-sm"
                         autoFocus
-                        onКлючDown={(e) => {
-                          if (e.key === "Enter") saveИзменить();
-                          if (e.key === "Escape") cancelИзменить();
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveEdit();
+                          if (e.key === "Escape") cancelEdit();
                         }}
                       />
                       <Button
                         variant="ghost"
                         size="icon-xs"
-                        onClick={saveИзменить}
-                        disabled={editMutation.isОжидание}
+                        onClick={saveEdit}
+                        disabled={editMutation.isPending}
                       >
-                        <Check classИмя="h-3.5 w-3.5 text-green-500" />
+                        <Check className="h-3.5 w-3.5 text-green-500" />
                       </Button>
-                      <Button variant="ghost" size="icon-xs" onClick={cancelИзменить}>
-                        <X classИмя="h-3.5 w-3.5 text-muted-foreground" />
+                      <Button variant="ghost" size="icon-xs" onClick={cancelEdit}>
+                        <X className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </div>
                   ) : (
-                    <div classИмя="flex items-center gap-2">
-                      <h3 classИмя="font-semibold text-base">{company.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-base">{company.name}</h3>
                       <span
-                        classИмя={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
                           company.status === "active"
                             ? "bg-green-500/10 text-green-600 dark:text-green-400"
                             : company.status === "paused"
@@ -181,18 +181,18 @@ export function Компании() {
                       <Button
                         variant="ghost"
                         size="icon-xs"
-                        classИмя="text-muted-foreground opacity-0 group-hover:opacity-100"
+                        className="text-muted-foreground opacity-0 group-hover:opacity-100"
                         onClick={(e) => {
                           e.stopPropagation();
-                          startИзменить(company.id, company.name);
+                          startEdit(company.id, company.name);
                         }}
                       >
-                        <Pencil classИмя="h-3 w-3" />
+                        <Pencil className="h-3 w-3" />
                       </Button>
                     </div>
                   )}
-                  {company.description && !isИзменитьing && (
-                    <p classИмя="text-sm text-muted-foreground mt-1 line-clamp-2">
+                  {company.description && !isEditing && (
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                       {company.description}
                     </p>
                   )}
@@ -205,25 +205,25 @@ export function Компании() {
                       <Button
                         variant="ghost"
                         size="icon-xs"
-                        classИмя="text-muted-foreground opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
+                        className="text-muted-foreground opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
                       >
-                        <MoreHorizontal classИмя="h-4 w-4" />
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => startИзменить(company.id, company.name)}
+                        onClick={() => startEdit(company.id, company.name)}
                       >
-                        <Pencil classИмя="h-3.5 w-3.5" />
+                        <Pencil className="h-3.5 w-3.5" />
                         Rename
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         variant="destructive"
-                        onClick={() => setПодтвердитьУдалитьId(company.id)}
+                        onClick={() => setConfirmDeleteId(company.id)}
                       >
-                        <Trash2 classИмя="h-3.5 w-3.5" />
-                        Удалить Компания
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete Company
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -231,59 +231,59 @@ export function Компании() {
               </div>
 
               {/* Stats row */}
-              <div classИмя="flex items-center gap-3 sm:gap-5 mt-4 text-sm text-muted-foreground flex-wrap">
-                <div classИмя="flex items-center gap-1.5">
-                  <Users classИмя="h-3.5 w-3.5" />
+              <div className="flex items-center gap-3 sm:gap-5 mt-4 text-sm text-muted-foreground flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
                   <span>
                     {agentCount} {agentCount === 1 ? "agent" : "agents"}
                   </span>
                 </div>
-                <div classИмя="flex items-center gap-1.5">
-                  <CircleDot classИмя="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5">
+                  <CircleDot className="h-3.5 w-3.5" />
                   <span>
                     {issueCount} {issueCount === 1 ? "issue" : "issues"}
                   </span>
                 </div>
-                <div classИмя="flex items-center gap-1.5 tabular-nums">
-                  <DollarSign classИмя="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5 tabular-nums">
+                  <DollarSign className="h-3.5 w-3.5" />
                   <span>
                     {formatCents(company.spentMonthlyCents)}
                     {company.budgetMonthlyCents > 0
-                      ? <> / {formatCents(company.budgetMonthlyCents)} <span classИмя="text-xs">({budgetPct}%)</span></>
-                      : <span classИмя="text-xs ml-1">Безлимит budget</span>}
+                      ? <> / {formatCents(company.budgetMonthlyCents)} <span className="text-xs">({budgetPct}%)</span></>
+                      : <span className="text-xs ml-1">Unlimited budget</span>}
                   </span>
                 </div>
-                <div classИмя="flex items-center gap-1.5 ml-auto">
-                  <Calendar classИмя="h-3.5 w-3.5" />
-                  <span>Создано {relativeTime(company.createdAt)}</span>
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Created {relativeTime(company.createdAt)}</span>
                 </div>
               </div>
 
-              {/* Удалить confirmation */}
-              {isПодтвердитьingУдалить && (
+              {/* Delete confirmation */}
+              {isConfirmingDelete && (
                 <div
-                  classИмя="mt-4 flex items-center justify-between bg-destructive/5 border border-destructive/20 rounded-md px-4 py-3"
+                  className="mt-4 flex items-center justify-between bg-destructive/5 border border-destructive/20 rounded-md px-4 py-3"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <p classИмя="text-sm text-destructive font-medium">
-                    Удалить this company and all its data? This cannot be undone.
+                  <p className="text-sm text-destructive font-medium">
+                    Delete this company and all its data? This cannot be undone.
                   </p>
-                  <div classИмя="flex items-center gap-2 ml-4 shrink-0">
+                  <div className="flex items-center gap-2 ml-4 shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setПодтвердитьУдалитьId(null)}
-                      disabled={deleteMutation.isОжидание}
+                      onClick={() => setConfirmDeleteId(null)}
+                      disabled={deleteMutation.isPending}
                     >
-                      Отмена
+                      Cancel
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => deleteMutation.mutate(company.id)}
-                      disabled={deleteMutation.isОжидание}
+                      disabled={deleteMutation.isPending}
                     >
-                      {deleteMutation.isОжидание ? "Deleting…" : "Удалить"}
+                      {deleteMutation.isPending ? "Deleting…" : "Удалить"}
                     </Button>
                   </div>
                 </div>

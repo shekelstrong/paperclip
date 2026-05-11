@@ -1,85 +1,85 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type Ref } from "react";
 import { pickTextColorForPillBg } from "@/lib/color-contrast";
-import { Link, useLocation, useNavigate, useNavigationТип, useParams } from "@/lib/router";
+import { Link, useLocation, useNavigate, useNavigationType, useParams } from "@/lib/router";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
-import { ApiОшибка } from "../api/client";
+import { ApiError } from "../api/client";
 import { issuesApi } from "../api/issues";
 import { approvalsApi } from "../api/approvals";
-import { activityApi, type ЗапуститьForЗадача } from "../api/activity";
-import { heartbeatsApi, type АктивенЗапуститьForЗадача, type LiveЗапуститьForЗадача } from "../api/heartbeats";
-import { instanceНастройкиApi } from "../api/instanceНастройки";
+import { activityApi, type RunForIssue } from "../api/activity";
+import { heartbeatsApi, type ActiveRunForIssue, type LiveRunForIssue } from "../api/heartbeats";
+import { instanceSettingsApi } from "../api/instanceSettings";
 import { accessApi } from "../api/access";
 import { agentsApi } from "../api/agents";
 import { authApi } from "../api/auth";
 import { projectsApi } from "../api/projects";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { useDialogActions } from "../context/DialogContext";
 import { usePanel } from "../context/PanelContext";
 import { useSidebar } from "../context/SidebarContext";
 import { useToastActions } from "../context/ToastContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { assigneeЗначениеFromSelection, suggestedCommentИсполнительЗначение } from "../lib/assignees";
-import { buildКомпанияUserInlineOptions, buildКомпанияUserLabelMap, buildКомпанияUserПрофильMap, buildMarkdownMentionOptions } from "../lib/company-members";
-import { extractЗадачаTimelineEvents } from "../lib/issue-timeline-events";
-import { queryКлючs } from "../lib/queryКлючs";
+import { assigneeValueFromSelection, suggestedCommentAssigneeValue } from "../lib/assignees";
+import { buildCompanyUserInlineOptions, buildCompanyUserLabelMap, buildCompanyUserProfileMap, buildMarkdownMentionOptions } from "../lib/company-members";
+import { extractIssueTimelineEvents } from "../lib/issue-timeline-events";
+import { queryKeys } from "../lib/queryKeys";
 import { keepPreviousDataForSameQueryTail } from "../lib/query-placeholder-data";
-import { collectLiveЗадачаIds } from "../lib/liveЗадачаIds";
+import { collectLiveIssueIds } from "../lib/liveIssueIds";
 import {
-  hasLegacyЗадачаDetailQuery,
-  createЗадачаDetailПуть,
-  readЗадачаDetailLocationState,
-  readЗадачаDetailBreadcrumb,
-  readЗадачаDetailHeaderSeed,
-  rememberЗадачаDetailLocationState,
+  hasLegacyIssueDetailQuery,
+  createIssueDetailPath,
+  readIssueDetailLocationState,
+  readIssueDetailBreadcrumb,
+  readIssueDetailHeaderSeed,
+  rememberIssueDetailLocationState,
 } from "../lib/issueDetailBreadcrumb";
-import { resolveЗадачаАктивенЗапустить, shouldTrackЗадачаАктивенЗапустить } from "../lib/issueАктивенЗапустить";
-import { getЗадачаDetailQueryOptions } from "../lib/issueDetailCache";
+import { resolveIssueActiveRun, shouldTrackIssueActiveRun } from "../lib/issueActiveRun";
+import { getIssueDetailQueryOptions } from "../lib/issueDetailCache";
 import {
   hasBlockingShortcutDialog,
-  resolveЗадачаDetailGoКлючAction,
-  resolveВходящиеQuickАрхивироватьКлючAction,
+  resolveIssueDetailGoKeyAction,
+  resolveInboxQuickArchiveKeyAction,
 } from "../lib/keyboardShortcuts";
 import {
-  applyOptimisticЗадачаFieldОбновить,
-  applyOptimisticЗадачаFieldОбновитьToCollection,
-  applyOptimisticЗадачаCommentОбновить,
-  applyLocalQueuedЗадачаCommentState,
-  createOptimisticЗадачаComment,
-  flattenЗадачаCommentPages,
-  getДалееЗадачаCommentPageParam,
-  isQueuedЗадачаComment,
-  loadRemainingЗадачаCommentPages,
-  matchesЗадачаRef,
-  mergeЗадачаКомментарии,
-  removeЗадачаCommentFromPages,
-  shouldАвтоloadOlderЗадачаКомментарии,
-  takeOptimisticЗадачаComment,
-  upsertЗадачаCommentInPages,
-  type ЗадачаCommentReassignment,
-  type OptimisticЗадачаComment,
+  applyOptimisticIssueFieldUpdate,
+  applyOptimisticIssueFieldUpdateToCollection,
+  applyOptimisticIssueCommentUpdate,
+  applyLocalQueuedIssueCommentState,
+  createOptimisticIssueComment,
+  flattenIssueCommentPages,
+  getNextIssueCommentPageParam,
+  isQueuedIssueComment,
+  loadRemainingIssueCommentPages,
+  matchesIssueRef,
+  mergeIssueComments,
+  removeIssueCommentFromPages,
+  shouldAutoloadOlderIssueComments,
+  takeOptimisticIssueComment,
+  upsertIssueCommentInPages,
+  type IssueCommentReassignment,
+  type OptimisticIssueComment,
 } from "../lib/optimistic-issue-comments";
-import { clearЗадачаExecutionЗапустить, removeLiveЗапуститьById, upsertInterruptedЗапустить } from "../lib/optimistic-issue-runs";
+import { clearIssueExecutionRun, removeLiveRunById, upsertInterruptedRun } from "../lib/optimistic-issue-runs";
 import { useProjectOrder } from "../hooks/useProjectOrder";
-import { relativeTime, cn, formatDurationMs, formatТокенs, visibleЗапуститьCostUsd } from "../lib/utils";
-import { СогласованиеCard } from "../components/СогласованиеCard";
-import { InlineИзменитьor } from "../components/InlineИзменитьor";
-import { ЗадачаChatThread, type ЗадачаChatComposerHandle } from "../components/ЗадачаChatThread";
-import { ЗадачаContinuationHandoff } from "../components/ЗадачаContinuationHandoff";
-import { ЗадачаДокументыSection } from "../components/ЗадачаДокументыSection";
-import { ЗадачиList } from "../components/ЗадачиList";
-import { АгентIcon } from "../components/АгентIconPicker";
-import { ЗадачаReferenceАктивностьSummary } from "../components/ЗадачаReferenceАктивностьSummary";
-import { ЗадачаRelatedРаботаPanel } from "../components/ЗадачаRelatedРаботаPanel";
-import { ЗадачаMonitorАктивностьCard } from "../components/ЗадачаMonitorАктивностьCard";
-import { ЗадачаРасписаниеdПовторитьCard } from "../components/ЗадачаРасписаниеdПовторитьCard";
-import { ЗадачаProperties } from "../components/ЗадачаProperties";
-import { ЗадачаЗапуститьLedger } from "../components/ЗадачаЗапуститьLedger";
-import { ЗадачаРабочая областьCard } from "../components/ЗадачаРабочая областьCard";
-import type { MentionOption } from "../components/MarkdownИзменитьor";
+import { relativeTime, cn, formatDurationMs, formatTokens, visibleRunCostUsd } from "../lib/utils";
+import { ApprovalCard } from "../components/ApprovalCard";
+import { InlineEditor } from "../components/InlineEditor";
+import { IssueChatThread, type IssueChatComposerHandle } from "../components/IssueChatThread";
+import { IssueContinuationHandoff } from "../components/IssueContinuationHandoff";
+import { IssueDocumentsSection } from "../components/IssueDocumentsSection";
+import { IssuesList } from "../components/IssuesList";
+import { AgentIcon } from "../components/AgentIconPicker";
+import { IssueReferenceActivitySummary } from "../components/IssueReferenceActivitySummary";
+import { IssueRelatedWorkPanel } from "../components/IssueRelatedWorkPanel";
+import { IssueMonitorActivityCard } from "../components/IssueMonitorActivityCard";
+import { IssueScheduledRetryCard } from "../components/IssueScheduledRetryCard";
+import { IssueProperties } from "../components/IssueProperties";
+import { IssueRunLedger } from "../components/IssueRunLedger";
+import { IssueWorkspaceCard } from "../components/IssueWorkspaceCard";
+import type { MentionOption } from "../components/MarkdownEditor";
 import { ImageGalleryModal } from "../components/ImageGalleryModal";
-import { ScrollToБотtom } from "../components/ScrollToБотtom";
-import { СтатусIcon } from "../components/СтатусIcon";
-import { ПриоритетIcon } from "../components/ПриоритетIcon";
+import { ScrollToBottom } from "../components/ScrollToBottom";
+import { StatusIcon } from "../components/StatusIcon";
+import { PriorityIcon } from "../components/PriorityIcon";
 import { ProductivityReviewBadge } from "../components/ProductivityReviewBadge";
 import { Identity } from "../components/Identity";
 import { PluginSlotMount, PluginSlotOutlet, usePluginSlots } from "@/plugins/slots";
@@ -87,38 +87,38 @@ import { PluginLauncherOutlet } from "@/plugins/launchers";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetНазвание } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
-  DialogОписание,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogНазвание,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { formatЗадачаАктивностьAction } from "@/lib/activity-format";
-import { buildЗадачаPropertiesPanelКлюч } from "../lib/issue-properties-panel-key";
-import { shouldRenderRichSubЗадачиSection } from "../lib/issue-detail-subissues";
-import { filterЗадачаDescendants } from "../lib/issue-tree";
-import { buildSubЗадачаПо умолчаниюsForViewer } from "../lib/subЗадачаПо умолчаниюs";
+import { formatIssueActivityAction } from "@/lib/activity-format";
+import { buildIssuePropertiesPanelKey } from "../lib/issue-properties-panel-key";
+import { shouldRenderRichSubIssuesSection } from "../lib/issue-detail-subissues";
+import { filterIssueDescendants } from "../lib/issue-tree";
+import { buildSubIssueDefaultsForViewer } from "../lib/subIssueDefaults";
 import {
   SUCCESSFUL_RUN_HANDOFF_ESCALATED_ACTION,
   SUCCESSFUL_RUN_HANDOFF_REQUIRED_ACTION,
-  successfulЗапуститьHandoffАктивностьTone,
+  successfulRunHandoffActivityTone,
 } from "../lib/successful-run-handoff";
-import { hasAssignedНазадlogBlocker } from "../lib/issue-blockers";
+import { hasAssignedBacklogBlocker } from "../lib/issue-blockers";
 import {
-  Активность as АктивностьIcon,
+  Activity as ActivityIcon,
   AlertTriangle,
-  Архивировать,
+  Archive,
   ArrowLeft,
   Check,
   ChevronRight,
-  Копировать,
+  Copy,
   Eye,
   EyeOff,
   Flag,
@@ -127,7 +127,7 @@ import {
   MessageSquare,
   MoreHorizontal,
   MoreVertical,
-  ПаузаCircle,
+  PauseCircle,
   Paperclip,
   PlayCircle,
   Plus,
@@ -137,32 +137,32 @@ import {
   XCircle,
 } from "lucide-react";
 import {
-  getЗакрытьdIsolatedExecutionРабочая областьMessage,
-  isЗакрытьdIsolatedExecutionРабочая область,
+  getClosedIsolatedExecutionWorkspaceMessage,
+  isClosedIsolatedExecutionWorkspace,
   ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY,
   type AskUserQuestionsAnswer,
   type AskUserQuestionsInteraction,
-  type АктивностьEvent,
-  type Агент,
+  type ActivityEvent,
+  type Agent,
   type FeedbackVote,
-  type Задача,
-  type ЗадачаAttachment,
-  type ЗадачаComment,
-  type ЗадачаРаботаMode,
-  type ЗадачаThreadInteraction,
-  type RequestПодтвердитьationInteraction,
-  type SuggestЗадачиInteraction,
-  type ЗадачаTreeControlMode,
+  type Issue,
+  type IssueAttachment,
+  type IssueComment,
+  type IssueWorkMode,
+  type IssueThreadInteraction,
+  type RequestConfirmationInteraction,
+  type SuggestTasksInteraction,
+  type IssueTreeControlMode,
 } from "@paperclipai/shared";
 
-type CommentReassignment = ЗадачаCommentReassignment;
-type ActionableЗадачаThreadInteraction = SuggestЗадачиInteraction | RequestПодтвердитьationInteraction;
-type ЗадачаDetailComment = (ЗадачаComment | OptimisticЗадачаComment) & {
+type CommentReassignment = IssueCommentReassignment;
+type ActionableIssueThreadInteraction = SuggestTasksInteraction | RequestConfirmationInteraction;
+type IssueDetailComment = (IssueComment | OptimisticIssueComment) & {
   runId?: string | null;
-  runАгентId?: string | null;
-  interruptedЗапуститьId?: string | null;
+  runAgentId?: string | null;
+  interruptedRunId?: string | null;
   queueState?: "queued";
-  queueЦельЗапуститьId?: string | null;
+  queueTargetRunId?: string | null;
   queueReason?: "hold" | "active_run" | "other";
 };
 
@@ -170,76 +170,76 @@ const FEEDBACK_TERMS_URL = import.meta.env.VITE_FEEDBACK_TERMS_URL?.trim() || "h
 const ISSUE_COMMENT_PAGE_SIZE = 50;
 const ISSUE_COMMENT_AUTOLOAD_LIMIT = ISSUE_COMMENT_PAGE_SIZE * 3;
 const JUMP_TO_LATEST_MAX_COMMENT_PAGES = 10;
-const TREE_CONTROL_MODE_LABEL: Record<ЗадачаTreeControlMode, string> = {
-  pause: "Пауза subtree",
-  resume: "Продолжить subtree",
-  cancel: "Отмена subtree",
+const TREE_CONTROL_MODE_LABEL: Record<IssueTreeControlMode, string> = {
+  pause: "Pause subtree",
+  resume: "Resume subtree",
+  cancel: "Cancel subtree",
   restore: "Restore subtree",
 };
-const LEAF_WORK_CONTROL_MODE_LABEL: Partial<Record<ЗадачаTreeControlMode, string>> = {
-  pause: "Пауза work",
-  resume: "Продолжить work",
+const LEAF_WORK_CONTROL_MODE_LABEL: Partial<Record<IssueTreeControlMode, string>> = {
+  pause: "Pause work",
+  resume: "Resume work",
 };
-const TREE_CONTROL_MODE_HELP_TEXT: Record<ЗадачаTreeControlMode, string> = {
-  pause: "Пауза active execution in this issue subtree until an explicit resume.",
+const TREE_CONTROL_MODE_HELP_TEXT: Record<IssueTreeControlMode, string> = {
+  pause: "Pause active execution in this issue subtree until an explicit resume.",
   resume: "Release the active subtree pause hold so held work can continue.",
-  cancel: "Отмена non-terminal issues in this subtree and stop queued/running work where possible.",
+  cancel: "Cancel non-terminal issues in this subtree and stop queued/running work where possible.",
   restore: "Restore issues cancelled by this subtree operation so work can resume.",
 };
-const LEAF_WORK_CONTROL_MODE_HELP_TEXT: Partial<Record<ЗадачаTreeControlMode, string>> = {
-  pause: "Пауза active execution on this issue until an explicit resume.",
+const LEAF_WORK_CONTROL_MODE_HELP_TEXT: Partial<Record<IssueTreeControlMode, string>> = {
+  pause: "Pause active execution on this issue until an explicit resume.",
   resume: "Release the active pause hold so this issue can continue.",
 };
-function issueTreeControlLabel(mode: ЗадачаTreeControlMode, scope: "leaf" | "subtree") {
+function issueTreeControlLabel(mode: IssueTreeControlMode, scope: "leaf" | "subtree") {
   return scope === "leaf"
     ? LEAF_WORK_CONTROL_MODE_LABEL[mode] ?? TREE_CONTROL_MODE_LABEL[mode]
     : TREE_CONTROL_MODE_LABEL[mode];
 }
 
-function issueTreeControlHelpText(mode: ЗадачаTreeControlMode, scope: "leaf" | "subtree") {
+function issueTreeControlHelpText(mode: IssueTreeControlMode, scope: "leaf" | "subtree") {
   return scope === "leaf"
     ? LEAF_WORK_CONTROL_MODE_HELP_TEXT[mode] ?? TREE_CONTROL_MODE_HELP_TEXT[mode]
     : TREE_CONTROL_MODE_HELP_TEXT[mode];
 }
 
-function treeControlПредпросмотрОшибкаКопировать(error: unknown): string {
-  if (error instanceof ApiОшибка) {
+function treeControlPreviewErrorCopy(error: unknown): string {
+  if (error instanceof ApiError) {
     if (error.status === 403) return "Only board users can preview subtree controls.";
-    if (error.status === 409) return "Предпросмотр is stale because subtree hold state changed. Повторить to refresh.";
+    if (error.status === 409) return "Preview is stale because subtree hold state changed. Retry to refresh.";
     if (error.status === 422) return "This subtree action is currently invalid for the selected issues.";
   }
-  return error instanceof Ошибка ? error.message : "Unable to load preview.";
+  return error instanceof Error ? error.message : "Unable to load preview.";
 }
 
-function resolveВыполняетсяЗадачаЗапустить(
-  activeЗапустить: АктивенЗапуститьForЗадача | null | undefined,
-  liveЗапуститьs: readonly LiveЗапуститьForЗадача[] | undefined,
+function resolveRunningIssueRun(
+  activeRun: ActiveRunForIssue | null | undefined,
+  liveRuns: readonly LiveRunForIssue[] | undefined,
 ) {
-  return activeЗапустить?.status === "running"
-    ? activeЗапустить
-    : (liveЗапуститьs ?? []).find((run) => run.status === "running") ?? null;
+  return activeRun?.status === "running"
+    ? activeRun
+    : (liveRuns ?? []).find((run) => run.status === "running") ?? null;
 }
 
-function dedupeLiveЗапуститьsById(liveЗапуститьs: readonly LiveЗапуститьForЗадача[]) {
+function dedupeLiveRunsById(liveRuns: readonly LiveRunForIssue[]) {
   const seen = new Set<string>();
-  return liveЗапуститьs.filter((run) => {
+  return liveRuns.filter((run) => {
     if (seen.has(run.id)) return false;
     seen.add(run.id);
     return true;
   });
 }
 
-function readЗадачаЗапуститьStateFromCache(queryClient: QueryClient, issueId: string) {
-  const liveЗапуститьs = queryClient.getQueryData<LiveЗапуститьForЗадача[]>(
-    queryКлючs.issues.liveЗапуститьs(issueId),
+function readIssueRunStateFromCache(queryClient: QueryClient, issueId: string) {
+  const liveRuns = queryClient.getQueryData<LiveRunForIssue[]>(
+    queryKeys.issues.liveRuns(issueId),
   );
-  const activeЗапустить = queryClient.getQueryData<АктивенЗапуститьForЗадача | null>(
-    queryКлючs.issues.activeЗапустить(issueId),
+  const activeRun = queryClient.getQueryData<ActiveRunForIssue | null>(
+    queryKeys.issues.activeRun(issueId),
   );
   return {
-    liveЗапуститьs,
-    activeЗапустить,
-    runningЗадачаЗапустить: resolveВыполняетсяЗадачаЗапустить(activeЗапустить, liveЗапуститьs),
+    liveRuns,
+    activeRun,
+    runningIssueRun: resolveRunningIssueRun(activeRun, liveRuns),
   };
 }
 
@@ -263,7 +263,7 @@ function truncate(text: string, max: number): string {
 }
 
 function isMarkdownFile(file: File) {
-  const name = file.name.toНизкийerCase();
+  const name = file.name.toLowerCase();
   return (
     name.endsWith(".md") ||
     name.endsWith(".markdown") ||
@@ -271,14 +271,14 @@ function isMarkdownFile(file: File) {
   );
 }
 
-function fileBaseИмя(filename: string) {
+function fileBaseName(filename: string) {
   return filename.replace(/\.[^.]+$/, "");
 }
 
-function slugifyDocumentКлюч(input: string) {
+function slugifyDocumentKey(input: string) {
   const slug = input
     .trim()
-    .toНизкийerCase()
+    .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return slug || "document";
@@ -296,7 +296,7 @@ function mergeOptimisticFeedbackVote(
   previousVotes: FeedbackVote[] | undefined,
   nextVote: {
     issueId: string;
-    targetТип: "issue_comment" | "issue_document_revision";
+    targetType: "issue_comment" | "issue_document_revision";
     targetId: string;
     vote: "up" | "down";
     reason?: string;
@@ -307,7 +307,7 @@ function mergeOptimisticFeedbackVote(
   const existingVotes = previousVotes ?? [];
   const existingIndex = existingVotes.findIndex(
     (feedbackVote) =>
-      feedbackVote.targetТип === nextVote.targetТип &&
+      feedbackVote.targetType === nextVote.targetType &&
       feedbackVote.targetId === nextVote.targetId &&
       (!currentUserId || feedbackVote.authorUserId === currentUserId),
   );
@@ -331,17 +331,17 @@ function mergeOptimisticFeedbackVote(
   return [
     ...existingVotes,
     {
-      id: `optimistic:${nextVote.targetТип}:${nextVote.targetId}`,
+      id: `optimistic:${nextVote.targetType}:${nextVote.targetId}`,
       companyId: "",
       issueId: nextVote.issueId,
-      targetТип: nextVote.targetТип,
+      targetType: nextVote.targetType,
       targetId: nextVote.targetId,
       authorUserId: currentUserId ?? "current-user",
       vote: nextVote.vote,
       reason: nextVote.reason?.trim() || null,
       sharedWithLabs: false,
       sharedAt: null,
-      consentВерсия: null,
+      consentVersion: null,
       redactionSummary: null,
       createdAt: now,
       updatedAt: now,
@@ -349,21 +349,21 @@ function mergeOptimisticFeedbackVote(
   ];
 }
 
-function ActorIdentity({ evt, agentMap, userПрофильMap }: { evt: АктивностьEvent; agentMap: Map<string, Агент>; userПрофильMap?: Map<string, import("../lib/company-members").КомпанияUserПрофиль> }) {
+function ActorIdentity({ evt, agentMap, userProfileMap }: { evt: ActivityEvent; agentMap: Map<string, Agent>; userProfileMap?: Map<string, import("../lib/company-members").CompanyUserProfile> }) {
   const id = evt.actorId;
-  if (evt.actorТип === "agent") {
+  if (evt.actorType === "agent") {
     const agent = agentMap.get(id);
     return <Identity name={agent?.name ?? id.slice(0, 8)} size="sm" />;
   }
-  if (evt.actorТип === "system") return <Identity name="System" size="sm" />;
-  if (evt.actorТип === "user") {
-    const profile = userПрофильMap?.get(id);
-    return <Identity name={profile?.label ?? "Совет"} avatarUrl={profile?.image} size="sm" />;
+  if (evt.actorType === "system") return <Identity name="System" size="sm" />;
+  if (evt.actorType === "user") {
+    const profile = userProfileMap?.get(id);
+    return <Identity name={profile?.label ?? "Board"} avatarUrl={profile?.image} size="sm" />;
   }
   return <Identity name={id || "Неизвестно"} size="sm" />;
 }
 
-function ЗадачаSectionSkeleton({
+function IssueSectionSkeleton({
   titleWidth = "w-28",
   rows = 3,
 }: {
@@ -371,155 +371,155 @@ function ЗадачаSectionSkeleton({
   rows?: number;
 }) {
   return (
-    <div classИмя="space-y-3 rounded-lg border border-border p-3">
-      <Skeleton classИмя={cn("h-4", titleWidth)} />
-      <div classИмя="space-y-2">
+    <div className="space-y-3 rounded-lg border border-border p-3">
+      <Skeleton className={cn("h-4", titleWidth)} />
+      <div className="space-y-2">
         {Array.from({ length: rows }).map((_, index) => (
-          <Skeleton key={index} classИмя="h-12 w-full rounded-md" />
+          <Skeleton key={index} className="h-12 w-full rounded-md" />
         ))}
       </div>
     </div>
   );
 }
 
-function ЗадачаChatSkeleton() {
+function IssueChatSkeleton() {
   return (
-    <div classИмя="space-y-3 rounded-lg border border-border p-3">
-      <div classИмя="space-y-2">
-        <div classИмя="flex items-center gap-2">
-          <Skeleton classИмя="h-8 w-8 rounded-full" />
-          <div classИмя="space-y-2">
-            <Skeleton classИмя="h-3 w-24" />
-            <Skeleton classИмя="h-3 w-16" />
+    <div className="space-y-3 rounded-lg border border-border p-3">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3 w-16" />
           </div>
         </div>
-        <Skeleton classИмя="h-20 w-full rounded-xl" />
+        <Skeleton className="h-20 w-full rounded-xl" />
       </div>
-      <div classИмя="space-y-2">
-        <div classИмя="flex items-center justify-end gap-2">
-          <div classИмя="space-y-2 text-right">
-            <Skeleton classИмя="ml-auto h-3 w-20" />
-            <Skeleton classИмя="ml-auto h-3 w-14" />
+      <div className="space-y-2">
+        <div className="flex items-center justify-end gap-2">
+          <div className="space-y-2 text-right">
+            <Skeleton className="ml-auto h-3 w-20" />
+            <Skeleton className="ml-auto h-3 w-14" />
           </div>
-          <Skeleton classИмя="h-8 w-8 rounded-full" />
+          <Skeleton className="h-8 w-8 rounded-full" />
         </div>
-        <Skeleton classИмя="ml-auto h-16 w-[85%] rounded-xl" />
+        <Skeleton className="ml-auto h-16 w-[85%] rounded-xl" />
       </div>
-      <div classИмя="space-y-2 border-t border-border pt-3">
-        <Skeleton classИмя="h-3 w-28" />
-        <Skeleton classИмя="h-24 w-full rounded-xl" />
+      <div className="space-y-2 border-t border-border pt-3">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-24 w-full rounded-xl" />
       </div>
     </div>
   );
 }
 
-function ЗадачаDetailЗагрузкаState({
+function IssueDetailLoadingState({
   headerSeed,
 }: {
-  headerSeed: ReturnТип<typeof readЗадачаDetailHeaderSeed>;
+  headerSeed: ReturnType<typeof readIssueDetailHeaderSeed>;
 }) {
   const identifier = headerSeed?.identifier ?? headerSeed?.id.slice(0, 8) ?? null;
 
   return (
-    <div classИмя="max-w-3xl space-y-6">
-      <div classИмя="space-y-3">
-        <Skeleton classИмя="h-3 w-40" />
+    <div className="max-w-3xl space-y-6">
+      <div className="space-y-3">
+        <Skeleton className="h-3 w-40" />
 
-        <div classИмя="flex items-center gap-2 min-w-0 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0 flex-wrap">
           {headerSeed ? (
             <>
-              <СтатусIcon status={headerSeed.status} blockerAttention={headerSeed.blockerAttention} />
-              <ПриоритетIcon priority={headerSeed.priority} />
+              <StatusIcon status={headerSeed.status} blockerAttention={headerSeed.blockerAttention} />
+              <PriorityIcon priority={headerSeed.priority} />
               {identifier ? (
-                <span classИмя="text-sm font-mono text-muted-foreground shrink-0">{identifier}</span>
+                <span className="text-sm font-mono text-muted-foreground shrink-0">{identifier}</span>
               ) : null}
               {headerSeed.originKind === "routine_execution" && headerSeed.originId ? (
-                <span classИмя="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-400 shrink-0">
-                  <Repeat classИмя="h-3 w-3" />
-                  Процедура
+                <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-400 shrink-0">
+                  <Repeat className="h-3 w-3" />
+                  Routine
                 </span>
               ) : null}
               {headerSeed.projectId ? (
-                <span classИмя="inline-flex items-center gap-1 text-xs text-muted-foreground rounded px-1 -mx-1 py-0.5 min-w-0">
-                  <Hexagon classИмя="h-3 w-3 shrink-0" />
-                  <span classИмя="truncate">
-                    {headerSeed.projectИмя ?? headerSeed.projectId.slice(0, 8)}
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground rounded px-1 -mx-1 py-0.5 min-w-0">
+                  <Hexagon className="h-3 w-3 shrink-0" />
+                  <span className="truncate">
+                    {headerSeed.projectName ?? headerSeed.projectId.slice(0, 8)}
                   </span>
                 </span>
               ) : (
-                <span classИмя="inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50 px-1 -mx-1 py-0.5">
-                  <Hexagon classИмя="h-3 w-3 shrink-0" />
-                  Нет project
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50 px-1 -mx-1 py-0.5">
+                  <Hexagon className="h-3 w-3 shrink-0" />
+                  No project
                 </span>
               )}
             </>
           ) : (
             <>
-              <Skeleton classИмя="h-6 w-6" />
-              <Skeleton classИмя="h-6 w-6" />
-              <Skeleton classИмя="h-4 w-20" />
-              <Skeleton classИмя="h-4 w-28" />
+              <Skeleton className="h-6 w-6" />
+              <Skeleton className="h-6 w-6" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-28" />
             </>
           )}
         </div>
 
         {headerSeed ? (
           <>
-            <h2 classИмя="text-xl font-bold leading-tight">{headerSeed.title}</h2>
-            <div classИмя="space-y-2">
-              <Skeleton classИмя="h-4 w-full max-w-xl" />
-              <Skeleton classИмя="h-4 w-[72%]" />
+            <h2 className="text-xl font-bold leading-tight">{headerSeed.title}</h2>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full max-w-xl" />
+              <Skeleton className="h-4 w-[72%]" />
             </div>
           </>
         ) : (
           <>
-            <Skeleton classИмя="h-8 w-[min(100%,22rem)]" />
-            <Skeleton classИмя="h-16 w-full" />
+            <Skeleton className="h-8 w-[min(100%,22rem)]" />
+            <Skeleton className="h-16 w-full" />
           </>
         )}
       </div>
 
-      <Skeleton classИмя="h-28 w-full rounded-lg border border-border" />
+      <Skeleton className="h-28 w-full rounded-lg border border-border" />
 
-      <div classИмя="space-y-3">
-        <div classИмя="flex items-center gap-2">
-          <Skeleton classИмя="h-8 w-20" />
-          <Skeleton classИмя="h-8 w-20" />
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20" />
         </div>
-        <ЗадачаChatSkeleton />
+        <IssueChatSkeleton />
       </div>
 
-      <ЗадачаSectionSkeleton titleWidth="w-24" rows={3} />
+      <IssueSectionSkeleton titleWidth="w-24" rows={3} />
     </div>
   );
 }
 
-interface ВходящиеMobileToolbarProps {
+interface InboxMobileToolbarProps {
   backHref: string;
   issueId: string | undefined;
   issueHidden: boolean;
-  onАрхивировать: () => void;
-  archiveОжидание: boolean;
-  onКопировать: () => void;
+  onArchive: () => void;
+  archivePending: boolean;
+  onCopy: () => void;
   onProperties: () => void;
   onHide: () => void;
 }
 
-function ВходящиеMobileToolbar({
+function InboxMobileToolbar({
   backHref,
   issueId: issueIdProp,
   issueHidden,
-  onАрхивировать,
-  archiveОжидание,
-  onКопировать,
+  onArchive,
+  archivePending,
+  onCopy,
   onProperties,
   onHide,
-}: ВходящиеMobileToolbarProps) {
+}: InboxMobileToolbarProps) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div classИмя="flex items-center w-full">
+    <div className="flex items-center w-full">
       <Button
         variant="ghost"
         size="icon-sm"
@@ -533,51 +533,51 @@ function ВходящиеMobileToolbar({
             navigate(backHref);
           }
         }}
-        aria-label="Назад к входящим"
+        aria-label="Back to inbox"
       >
-        <ArrowLeft classИмя="h-5 w-5" />
+        <ArrowLeft className="h-5 w-5" />
       </Button>
 
-      <div classИмя="ml-auto flex items-center gap-0.5">
+      <div className="ml-auto flex items-center gap-0.5">
         {issueIdProp && !issueHidden && (
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={onАрхивировать}
-            disabled={archiveОжидание}
-            aria-label="Архивировать from inbox"
+            onClick={onArchive}
+            disabled={archivePending}
+            aria-label="Archive from inbox"
           >
-            <Архивировать classИмя="h-5 w-5" />
+            <Archive className="h-5 w-5" />
           </Button>
         )}
 
         <Popover open={menuOpen} onOpenChange={setMenuOpen}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label="More actions">
-              <MoreVertical classИмя="h-5 w-5" />
+              <MoreVertical className="h-5 w-5" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent classИмя="w-44 p-1" align="end">
+          <PopoverContent className="w-44 p-1" align="end">
             <button
-              classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
-              onClick={() => { onКопировать(); setMenuOpen(false); }}
+              className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
+              onClick={() => { onCopy(); setMenuOpen(false); }}
             >
-              <Копировать classИмя="h-3 w-3" />
-              Копировать as markdown
+              <Copy className="h-3 w-3" />
+              Copy as markdown
             </button>
             <button
-              classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
+              className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
               onClick={() => { onProperties(); setMenuOpen(false); }}
             >
-              <SlidersHorizontal classИмя="h-3 w-3" />
+              <SlidersHorizontal className="h-3 w-3" />
               Properties
             </button>
             {issueIdProp && (
               <button
-                classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-destructive"
+                className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-destructive"
                 onClick={() => { onHide(); setMenuOpen(false); }}
               >
-                <EyeOff classИмя="h-3 w-3" />
+                <EyeOff className="h-3 w-3" />
                 Hide this issue
               </button>
             )}
@@ -588,38 +588,38 @@ function ВходящиеMobileToolbar({
   );
 }
 
-type ЗадачаDetailChatTabProps = {
+type IssueDetailChatTabProps = {
   issueId: string;
   companyId: string;
   projectId: string | null;
-  issueСтатус: Задача["status"];
-  issueРаботаMode: ЗадачаРаботаMode;
-  executionЗапуститьId: string | null;
-  blockedBy: Задача["blockedBy"];
-  blockerAttention: Задача["blockerAttention"] | null;
-  successfulЗапуститьHandoff: Задача["successfulЗапуститьHandoff"] | null;
-  comments: ЗадачаDetailComment[];
-  locallyQueuedCommentЗапуститьIds: ReadonlyMap<string, string>;
-  interactions: ЗадачаThreadInteraction[];
-  hasOlderКомментарии: boolean;
-  commentsЗагрузкаOlder: boolean;
-  onLoadOlderКомментарии: () => void;
-  onОбновитьLatestКомментарии: () => Promise<unknown> | void;
-  onРаботаModeChange?: (workMode: ЗадачаРаботаMode) => Promise<void> | void;
-  composerRef: Ref<ЗадачаChatComposerHandle>;
+  issueStatus: Issue["status"];
+  issueWorkMode: IssueWorkMode;
+  executionRunId: string | null;
+  blockedBy: Issue["blockedBy"];
+  blockerAttention: Issue["blockerAttention"] | null;
+  successfulRunHandoff: Issue["successfulRunHandoff"] | null;
+  comments: IssueDetailComment[];
+  locallyQueuedCommentRunIds: ReadonlyMap<string, string>;
+  interactions: IssueThreadInteraction[];
+  hasOlderComments: boolean;
+  commentsLoadingOlder: boolean;
+  onLoadOlderComments: () => void;
+  onRefreshLatestComments: () => Promise<unknown> | void;
+  onWorkModeChange?: (workMode: IssueWorkMode) => Promise<void> | void;
+  composerRef: Ref<IssueChatComposerHandle>;
   feedbackVotes?: FeedbackVote[];
   feedbackDataSharingPreference: "allowed" | "not_allowed" | "prompt";
   feedbackTermsUrl: string | null;
-  agentMap: Map<string, Агент>;
+  agentMap: Map<string, Agent>;
   currentUserId: string | null;
   userLabelMap: ReadonlyMap<string, string> | null;
-  userПрофильMap: ReadonlyMap<string, import("../lib/company-members").КомпанияUserПрофиль> | null;
-  draftКлюч: string;
+  userProfileMap: ReadonlyMap<string, import("../lib/company-members").CompanyUserProfile> | null;
+  draftKey: string;
   reassignOptions: Array<{ id: string; label: string; searchText?: string }>;
-  currentИсполнительЗначение: string;
-  suggestedИсполнительЗначение: string;
+  currentAssigneeValue: string;
+  suggestedAssigneeValue: string;
   mentions: MentionOption[];
-  composerОтключитьdReason: string | null;
+  composerDisabledReason: string | null;
   composerHint: string | null;
   queuedCommentReason: "hold" | "active_run" | "other";
   onVote: (
@@ -627,48 +627,48 @@ type ЗадачаDetailChatTabProps = {
     vote: "up" | "down",
     options?: { allowSharing?: boolean; reason?: string },
   ) => Promise<void>;
-  onДобавить: (body: string, reopen?: boolean, reassignment?: CommentReassignment) => Promise<void>;
-  onImageЗагрузить: (file: File) => Promise<string>;
-  onAttachImage: (file: File) => Promise<ЗадачаAttachment | void>;
+  onAdd: (body: string, reopen?: boolean, reassignment?: CommentReassignment) => Promise<void>;
+  onImageUpload: (file: File) => Promise<string>;
+  onAttachImage: (file: File) => Promise<IssueAttachment | void>;
   onInterruptQueued: (runId: string) => Promise<void>;
-  onПаузаРаботаЗапустить?: (runId: string) => Promise<void>;
-  onОтменаQueued: (commentId: string) => void;
-  interruptingQueuedЗапуститьId: string | null;
-  pausingРаботаЗапуститьId: string | null;
+  onPauseWorkRun?: (runId: string) => Promise<void>;
+  onCancelQueued: (commentId: string) => void;
+  interruptingQueuedRunId: string | null;
+  pausingWorkRunId: string | null;
   onImageClick: (src: string) => void;
-  onПринятьInteraction: (
-    interaction: ActionableЗадачаThreadInteraction,
-    selectedClientКлючs?: string[],
+  onAcceptInteraction: (
+    interaction: ActionableIssueThreadInteraction,
+    selectedClientKeys?: string[],
   ) => Promise<void>;
-  onОтклонитьInteraction: (interaction: ActionableЗадачаThreadInteraction, reason?: string) => Promise<void>;
-  onОтправитьInteractionAnswers: (
-    interaction: ЗадачаThreadInteraction,
+  onRejectInteraction: (interaction: ActionableIssueThreadInteraction, reason?: string) => Promise<void>;
+  onSubmitInteractionAnswers: (
+    interaction: IssueThreadInteraction,
     answers: AskUserQuestionsAnswer[],
   ) => Promise<void>;
-  onОтменаInteraction: (interaction: AskUserQuestionsInteraction) => Promise<void>;
+  onCancelInteraction: (interaction: AskUserQuestionsInteraction) => Promise<void>;
   assigneeUserId: string | null;
-  onПродолжитьFromНазадlog?: () => Promise<void> | void;
-  resumeFromНазадlogОжидание?: boolean;
+  onResumeFromBacklog?: () => Promise<void> | void;
+  resumeFromBacklogPending?: boolean;
 };
 
-const ЗадачаDetailChatTab = memo(function ЗадачаDetailChatTab({
+const IssueDetailChatTab = memo(function IssueDetailChatTab({
   issueId,
   companyId,
   projectId,
-  issueРаботаMode,
-  issueСтатус,
-  executionЗапуститьId,
+  issueWorkMode,
+  issueStatus,
+  executionRunId,
   blockedBy,
   blockerAttention,
-  successfulЗапуститьHandoff,
+  successfulRunHandoff,
   comments,
-  locallyQueuedCommentЗапуститьIds,
+  locallyQueuedCommentRunIds,
   interactions,
-  hasOlderКомментарии,
-  commentsЗагрузкаOlder,
-  onLoadOlderКомментарии,
-  onОбновитьLatestКомментарии,
-  onРаботаModeChange,
+  hasOlderComments,
+  commentsLoadingOlder,
+  onLoadOlderComments,
+  onRefreshLatestComments,
+  onWorkModeChange,
   composerRef,
   feedbackVotes,
   feedbackDataSharingPreference,
@@ -676,110 +676,110 @@ const ЗадачаDetailChatTab = memo(function ЗадачаDetailChatTab({
   agentMap,
   currentUserId,
   userLabelMap,
-  userПрофильMap,
-  draftКлюч,
+  userProfileMap,
+  draftKey,
   reassignOptions,
-  currentИсполнительЗначение,
-  suggestedИсполнительЗначение,
+  currentAssigneeValue,
+  suggestedAssigneeValue,
   mentions,
-  composerОтключитьdReason,
+  composerDisabledReason,
   composerHint,
   queuedCommentReason,
   onVote,
-  onДобавить,
-  onImageЗагрузить,
+  onAdd,
+  onImageUpload,
   onAttachImage,
   onInterruptQueued,
-  onПаузаРаботаЗапустить,
-  onОтменаQueued,
-  interruptingQueuedЗапуститьId,
-  pausingРаботаЗапуститьId,
+  onPauseWorkRun,
+  onCancelQueued,
+  interruptingQueuedRunId,
+  pausingWorkRunId,
   onImageClick,
-  onПринятьInteraction,
-  onОтклонитьInteraction,
-  onОтправитьInteractionAnswers,
-  onОтменаInteraction,
+  onAcceptInteraction,
+  onRejectInteraction,
+  onSubmitInteractionAnswers,
+  onCancelInteraction,
   assigneeUserId,
-  onПродолжитьFromНазадlog,
-  resumeFromНазадlogОжидание,
-}: ЗадачаDetailChatTabProps) {
+  onResumeFromBacklog,
+  resumeFromBacklogPending,
+}: IssueDetailChatTabProps) {
   const { data: activity } = useQuery({
-    queryКлюч: queryКлючs.issues.activity(issueId),
-    queryFn: () => activityApi.forЗадача(issueId),
-    placeholderData: keepPreviousDataForSameQueryTail<АктивностьEvent[]>(issueId),
+    queryKey: queryKeys.issues.activity(issueId),
+    queryFn: () => activityApi.forIssue(issueId),
+    placeholderData: keepPreviousDataForSameQueryTail<ActivityEvent[]>(issueId),
   });
-  const { data: liveЗапуститьs } = useQuery({
-    queryКлюч: queryКлючs.issues.liveЗапуститьs(issueId),
-    queryFn: () => heartbeatsApi.liveЗапуститьsForЗадача(issueId),
+  const { data: liveRuns } = useQuery({
+    queryKey: queryKeys.issues.liveRuns(issueId),
+    queryFn: () => heartbeatsApi.liveRunsForIssue(issueId),
     refetchInterval: 3000,
-    placeholderData: keepPreviousDataForSameQueryTail<LiveЗапуститьForЗадача[]>(issueId),
+    placeholderData: keepPreviousDataForSameQueryTail<LiveRunForIssue[]>(issueId),
   });
-  const resolvedLiveЗапуститьs = liveЗапуститьs ?? [];
-  const liveЗапуститьCount = resolvedLiveЗапуститьs.length;
-  const { data: activeЗапустить = null } = useQuery({
-    queryКлюч: queryКлючs.issues.activeЗапустить(issueId),
-    queryFn: () => heartbeatsApi.activeЗапуститьForЗадача(issueId),
-    enabled: !!executionЗапуститьId || issueСтатус === "in_progress",
-    refetchInterval: liveЗапуститьCount > 0 ? false : 3000,
-    placeholderData: keepPreviousDataForSameQueryTail<АктивенЗапуститьForЗадача | null>(issueId),
+  const resolvedLiveRuns = liveRuns ?? [];
+  const liveRunCount = resolvedLiveRuns.length;
+  const { data: activeRun = null } = useQuery({
+    queryKey: queryKeys.issues.activeRun(issueId),
+    queryFn: () => heartbeatsApi.activeRunForIssue(issueId),
+    enabled: !!executionRunId || issueStatus === "in_progress",
+    refetchInterval: liveRunCount > 0 ? false : 3000,
+    placeholderData: keepPreviousDataForSameQueryTail<ActiveRunForIssue | null>(issueId),
   });
-  const resolvedАктивенЗапустить = useMemo(
-    () => resolveЗадачаАктивенЗапустить({ status: issueСтатус, executionЗапуститьId }, activeЗапустить),
-    [activeЗапустить, executionЗапуститьId, issueСтатус],
+  const resolvedActiveRun = useMemo(
+    () => resolveIssueActiveRun({ status: issueStatus, executionRunId }, activeRun),
+    [activeRun, executionRunId, issueStatus],
   );
-  const hasLiveЗапуститьs = liveЗапуститьCount > 0 || !!resolvedАктивенЗапустить;
-  const { data: linkedЗапуститьs } = useQuery({
-    queryКлюч: queryКлючs.issues.runs(issueId),
-    queryFn: () => activityApi.runsForЗадача(issueId),
-    refetchInterval: hasLiveЗапуститьs ? 5000 : false,
-    placeholderData: keepPreviousDataForSameQueryTail<ЗапуститьForЗадача[]>(issueId),
+  const hasLiveRuns = liveRunCount > 0 || !!resolvedActiveRun;
+  const { data: linkedRuns } = useQuery({
+    queryKey: queryKeys.issues.runs(issueId),
+    queryFn: () => activityApi.runsForIssue(issueId),
+    refetchInterval: hasLiveRuns ? 5000 : false,
+    placeholderData: keepPreviousDataForSameQueryTail<RunForIssue[]>(issueId),
   });
-  const resolvedАктивность = activity ?? [];
-  const resolvedLinkedЗапуститьs = linkedЗапуститьs ?? [];
+  const resolvedActivity = activity ?? [];
+  const resolvedLinkedRuns = linkedRuns ?? [];
 
-  const runningЗадачаЗапустить = useMemo(
-    () => resolveВыполняетсяЗадачаЗапустить(resolvedАктивенЗапустить, resolvedLiveЗапуститьs),
-    [resolvedАктивенЗапустить, resolvedLiveЗапуститьs],
+  const runningIssueRun = useMemo(
+    () => resolveRunningIssueRun(resolvedActiveRun, resolvedLiveRuns),
+    [resolvedActiveRun, resolvedLiveRuns],
   );
-  const liveЗапуститьIds = useMemo(() => {
+  const liveRunIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const run of resolvedLiveЗапуститьs) ids.add(run.id);
-    if (resolvedАктивенЗапустить) ids.add(resolvedАктивенЗапустить.id);
+    for (const run of resolvedLiveRuns) ids.add(run.id);
+    if (resolvedActiveRun) ids.add(resolvedActiveRun.id);
     return ids;
-  }, [resolvedАктивенЗапустить, resolvedLiveЗапуститьs]);
-  const timelineЗапуститьs = useMemo(() => {
-    const historicalЗапуститьs = liveЗапуститьIds.size === 0
-      ? resolvedLinkedЗапуститьs
-      : resolvedLinkedЗапуститьs.filter((run) => !liveЗапуститьIds.has(run.runId));
-    return historicalЗапуститьs.map((run) => ({
+  }, [resolvedActiveRun, resolvedLiveRuns]);
+  const timelineRuns = useMemo(() => {
+    const historicalRuns = liveRunIds.size === 0
+      ? resolvedLinkedRuns
+      : resolvedLinkedRuns.filter((run) => !liveRunIds.has(run.runId));
+    return historicalRuns.map((run) => ({
       ...run,
-      adapterТип: run.adapterТип,
+      adapterType: run.adapterType,
       hasStoredOutput: (run.logBytes ?? 0) > 0,
     }));
-  }, [liveЗапуститьIds, resolvedLinkedЗапуститьs]);
-  const commentsWithЗапуститьMeta = useMemo<ЗадачаDetailComment[]>(() => {
-    const activeЗапуститьЗапущенAt = runningЗадачаЗапустить?.startedAt ?? runningЗадачаЗапустить?.createdAt ?? null;
-    const runMetaByCommentId = new Map<string, { runId: string; runАгентId: string | null; interruptedЗапуститьId: string | null }>();
+  }, [liveRunIds, resolvedLinkedRuns]);
+  const commentsWithRunMeta = useMemo<IssueDetailComment[]>(() => {
+    const activeRunStartedAt = runningIssueRun?.startedAt ?? runningIssueRun?.createdAt ?? null;
+    const runMetaByCommentId = new Map<string, { runId: string; runAgentId: string | null; interruptedRunId: string | null }>();
     const followUpCommentIds = new Set<string>();
-    const agentIdByЗапуститьId = new Map<string, string>();
+    const agentIdByRunId = new Map<string, string>();
 
-    for (const run of resolvedLinkedЗапуститьs) {
-      agentIdByЗапуститьId.set(run.runId, run.agentId);
+    for (const run of resolvedLinkedRuns) {
+      agentIdByRunId.set(run.runId, run.agentId);
     }
-    for (const evt of resolvedАктивность) {
+    for (const evt of resolvedActivity) {
       if (evt.action !== "issue.comment_added" || !evt.runId) continue;
       const details = evt.details ?? {};
       const commentId = typeof details["commentId"] === "string" ? details["commentId"] : null;
       if (!commentId || runMetaByCommentId.has(commentId)) continue;
-      const interruptedЗапуститьId =
-        typeof details["interruptedЗапуститьId"] === "string" ? details["interruptedЗапуститьId"] : null;
+      const interruptedRunId =
+        typeof details["interruptedRunId"] === "string" ? details["interruptedRunId"] : null;
       runMetaByCommentId.set(commentId, {
         runId: evt.runId,
-        runАгентId: evt.agentId ?? agentIdByЗапуститьId.get(evt.runId) ?? null,
-        interruptedЗапуститьId,
+        runAgentId: evt.agentId ?? agentIdByRunId.get(evt.runId) ?? null,
+        interruptedRunId,
       });
     }
-    for (const evt of resolvedАктивность) {
+    for (const evt of resolvedActivity) {
       if (evt.action !== "issue.comment_added") continue;
       const details = evt.details ?? {};
       const commentId = typeof details["commentId"] === "string" ? details["commentId"] : null;
@@ -791,34 +791,34 @@ const ЗадачаDetailChatTab = memo(function ЗадачаDetailChatTab({
 
     return comments.map((comment) => {
       const meta = runMetaByCommentId.get(comment.id);
-      const nextComment: ЗадачаDetailComment = meta ? { ...comment, ...meta } : { ...comment };
+      const nextComment: IssueDetailComment = meta ? { ...comment, ...meta } : { ...comment };
       if (followUpCommentIds.has(comment.id)) {
         nextComment.followUpRequested = true;
       }
-      const queuedЦельЗапуститьId = locallyQueuedCommentЗапуститьIds.get(comment.id) ?? null;
-      const locallyQueuedComment = applyLocalQueuedЗадачаCommentState(nextComment, {
-        queuedЦельЗапуститьId,
-        targetЗапуститьIsLive: queuedЦельЗапуститьId ? liveЗапуститьIds.has(queuedЦельЗапуститьId) : false,
-        runningЗапуститьId: runningЗадачаЗапустить?.id ?? null,
+      const queuedTargetRunId = locallyQueuedCommentRunIds.get(comment.id) ?? null;
+      const locallyQueuedComment = applyLocalQueuedIssueCommentState(nextComment, {
+        queuedTargetRunId,
+        targetRunIsLive: queuedTargetRunId ? liveRunIds.has(queuedTargetRunId) : false,
+        runningRunId: runningIssueRun?.id ?? null,
       });
       if (locallyQueuedComment !== nextComment) {
         return locallyQueuedComment;
       }
       if (
-        isQueuedЗадачаComment({
+        isQueuedIssueComment({
           comment: nextComment,
-          activeЗапуститьЗапущенAt,
-          activeЗапуститьАгентId: runningЗадачаЗапустить?.agentId ?? null,
-          activeЗапуститьCommentId: runningЗадачаЗапустить?.contextCommentId ?? null,
-          activeЗапуститьWakeCommentId: runningЗадачаЗапустить?.contextWakeCommentId ?? null,
+          activeRunStartedAt,
+          activeRunAgentId: runningIssueRun?.agentId ?? null,
+          activeRunCommentId: runningIssueRun?.contextCommentId ?? null,
+          activeRunWakeCommentId: runningIssueRun?.contextWakeCommentId ?? null,
           runId: meta?.runId ?? nextComment.runId ?? null,
-          interruptedЗапуститьId: meta?.interruptedЗапуститьId ?? nextComment.interruptedЗапуститьId ?? null,
+          interruptedRunId: meta?.interruptedRunId ?? nextComment.interruptedRunId ?? null,
         })
       ) {
         return {
           ...nextComment,
           queueState: "queued" as const,
-          queueЦельЗапуститьId: runningЗадачаЗапустить?.id ?? nextComment.queueЦельЗапуститьId ?? null,
+          queueTargetRunId: runningIssueRun?.id ?? nextComment.queueTargetRunId ?? null,
           queueReason: queuedCommentReason,
         };
       }
@@ -826,168 +826,168 @@ const ЗадачаDetailChatTab = memo(function ЗадачаDetailChatTab({
     });
   }, [
     comments,
-    liveЗапуститьIds,
-    locallyQueuedCommentЗапуститьIds,
+    liveRunIds,
+    locallyQueuedCommentRunIds,
     queuedCommentReason,
-    resolvedАктивность,
-    resolvedLinkedЗапуститьs,
-    runningЗадачаЗапустить,
+    resolvedActivity,
+    resolvedLinkedRuns,
+    runningIssueRun,
   ]);
   const timelineEvents = useMemo(
-    () => extractЗадачаTimelineEvents(resolvedАктивность),
-    [resolvedАктивность],
+    () => extractIssueTimelineEvents(resolvedActivity),
+    [resolvedActivity],
   );
 
   return (
-    <div classИмя="space-y-3">
-      {hasOlderКомментарии ? (
-        <div classИмя="flex justify-center">
+    <div className="space-y-3">
+      {hasOlderComments ? (
+        <div className="flex justify-center">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={commentsЗагрузкаOlder}
-            onClick={onLoadOlderКомментарии}
+            disabled={commentsLoadingOlder}
+            onClick={onLoadOlderComments}
           >
-            {commentsЗагрузкаOlder ? "Загрузка earlier comments..." : "Load earlier comments"}
+            {commentsLoadingOlder ? "Loading earlier comments..." : "Load earlier comments"}
           </Button>
         </div>
       ) : null}
-      <ЗадачаChatThread
+      <IssueChatThread
         composerRef={composerRef}
-        comments={commentsWithЗапуститьMeta}
+        comments={commentsWithRunMeta}
         interactions={interactions}
         feedbackVotes={feedbackVotes}
         feedbackDataSharingPreference={feedbackDataSharingPreference}
         feedbackTermsUrl={feedbackTermsUrl}
-        linkedЗапуститьs={timelineЗапуститьs}
+        linkedRuns={timelineRuns}
         timelineEvents={timelineEvents}
-        liveЗапуститьs={resolvedLiveЗапуститьs}
-        activeЗапустить={resolvedАктивенЗапустить}
+        liveRuns={resolvedLiveRuns}
+        activeRun={resolvedActiveRun}
         blockedBy={blockedBy ?? []}
         blockerAttention={blockerAttention}
-        successfulЗапуститьHandoff={successfulЗапуститьHandoff}
+        successfulRunHandoff={successfulRunHandoff}
         companyId={companyId}
         projectId={projectId}
-        issueСтатус={issueСтатус}
+        issueStatus={issueStatus}
         agentMap={agentMap}
         currentUserId={currentUserId}
         userLabelMap={userLabelMap}
-        userПрофильMap={userПрофильMap}
-        draftКлюч={draftКлюч}
+        userProfileMap={userProfileMap}
+        draftKey={draftKey}
         enableReassign
         reassignOptions={reassignOptions}
-        currentИсполнительЗначение={currentИсполнительЗначение}
-        suggestedИсполнительЗначение={suggestedИсполнительЗначение}
+        currentAssigneeValue={currentAssigneeValue}
+        suggestedAssigneeValue={suggestedAssigneeValue}
         mentions={mentions}
-        composerОтключитьdReason={composerОтключитьdReason}
+        composerDisabledReason={composerDisabledReason}
         composerHint={composerHint}
         onVote={onVote}
-        onДобавить={onДобавить}
-        imageЗагрузитьHandler={onImageЗагрузить}
+        onAdd={onAdd}
+        imageUploadHandler={onImageUpload}
         onAttachImage={onAttachImage}
         onInterruptQueued={onInterruptQueued}
-        onОтменаQueued={onОтменаQueued}
-        interruptingQueuedЗапуститьId={interruptingQueuedЗапуститьId}
-        stoppingЗапуститьId={pausingРаботаЗапуститьId}
-        onОстановитьЗапустить={onПаузаРаботаЗапустить}
-        stopЗапуститьLabel="Пауза work"
-        stoppingЗапуститьLabel="Pausing..."
-        stopЗапуститьVariant="pause"
-        onПринятьInteraction={onПринятьInteraction}
-        onОтклонитьInteraction={onОтклонитьInteraction}
-        onОтправитьInteractionAnswers={(interaction, answers) =>
-          onОтправитьInteractionAnswers(interaction, answers)
+        onCancelQueued={onCancelQueued}
+        interruptingQueuedRunId={interruptingQueuedRunId}
+        stoppingRunId={pausingWorkRunId}
+        onStopRun={onPauseWorkRun}
+        stopRunLabel="Pause work"
+        stoppingRunLabel="Pausing..."
+        stopRunVariant="pause"
+        onAcceptInteraction={onAcceptInteraction}
+        onRejectInteraction={onRejectInteraction}
+        onSubmitInteractionAnswers={(interaction, answers) =>
+          onSubmitInteractionAnswers(interaction, answers)
         }
-        onОтменаInteraction={onОтменаInteraction}
-        issueРаботаMode={issueРаботаMode}
-        onРаботаModeChange={onРаботаModeChange}
-        onОтменаЗапустить={runningЗадачаЗапустить && onПаузаРаботаЗапустить
+        onCancelInteraction={onCancelInteraction}
+        issueWorkMode={issueWorkMode}
+        onWorkModeChange={onWorkModeChange}
+        onCancelRun={runningIssueRun && onPauseWorkRun
           ? async () => {
-              await onПаузаРаботаЗапустить(runningЗадачаЗапустить.id);
+              await onPauseWorkRun(runningIssueRun.id);
             }
           : undefined}
         onImageClick={onImageClick}
-        onОбновитьLatestКомментарии={onОбновитьLatestКомментарии}
+        onRefreshLatestComments={onRefreshLatestComments}
         assigneeUserId={assigneeUserId}
-        onПродолжитьFromНазадlog={onПродолжитьFromНазадlog}
-        resumeFromНазадlogОжидание={resumeFromНазадlogОжидание}
+        onResumeFromBacklog={onResumeFromBacklog}
+        resumeFromBacklogPending={resumeFromBacklogPending}
       />
     </div>
   );
 });
 
-type ЗадачаDetailАктивностьTabProps = {
-  issue: Задача;
+type IssueDetailActivityTabProps = {
+  issue: Issue;
   issueId: string;
   companyId: string;
-  issueСтатус: Задача["status"];
-  childЗадачи: Задача[];
-  agentMap: Map<string, Агент>;
-  hasLiveЗапуститьs: boolean;
+  issueStatus: Issue["status"];
+  childIssues: Issue[];
+  agentMap: Map<string, Agent>;
+  hasLiveRuns: boolean;
   currentUserId: string | null;
-  userПрофильMap: Map<string, import("../lib/company-members").КомпанияUserПрофиль>;
-  pendingСогласованиеAction: { approvalId: string; action: "approve" | "reject" } | null;
-  onСогласованиеAction: (approvalId: string, action: "approve" | "reject") => void;
-  onCheckMonitorСейчас: () => void;
-  checkingMonitorСейчас: boolean;
+  userProfileMap: Map<string, import("../lib/company-members").CompanyUserProfile>;
+  pendingApprovalAction: { approvalId: string; action: "approve" | "reject" } | null;
+  onApprovalAction: (approvalId: string, action: "approve" | "reject") => void;
+  onCheckMonitorNow: () => void;
+  checkingMonitorNow: boolean;
   handoffFocusSignal?: number;
 };
 
-function ЗадачаDetailАктивностьTab({
+function IssueDetailActivityTab({
   issue,
   issueId,
   companyId,
-  issueСтатус,
-  childЗадачи,
+  issueStatus,
+  childIssues,
   agentMap,
-  hasLiveЗапуститьs,
+  hasLiveRuns,
   currentUserId,
-  userПрофильMap,
-  pendingСогласованиеAction,
-  onСогласованиеAction,
-  onCheckMonitorСейчас,
-  checkingMonitorСейчас,
+  userProfileMap,
+  pendingApprovalAction,
+  onApprovalAction,
+  onCheckMonitorNow,
+  checkingMonitorNow,
   handoffFocusSignal = 0,
-}: ЗадачаDetailАктивностьTabProps) {
-  const { data: activity, isЗагрузка: activityЗагрузка } = useQuery({
-    queryКлюч: queryКлючs.issues.activity(issueId),
-    queryFn: () => activityApi.forЗадача(issueId),
-    placeholderData: keepPreviousDataForSameQueryTail<АктивностьEvent[]>(issueId),
+}: IssueDetailActivityTabProps) {
+  const { data: activity, isLoading: activityLoading } = useQuery({
+    queryKey: queryKeys.issues.activity(issueId),
+    queryFn: () => activityApi.forIssue(issueId),
+    placeholderData: keepPreviousDataForSameQueryTail<ActivityEvent[]>(issueId),
   });
-  const { data: linkedЗапуститьs, isЗагрузка: linkedЗапуститьsЗагрузка } = useQuery({
-    queryКлюч: queryКлючs.issues.runs(issueId),
-    queryFn: () => activityApi.runsForЗадача(issueId),
-    placeholderData: keepPreviousDataForSameQueryTail<ЗапуститьForЗадача[]>(issueId),
+  const { data: linkedRuns, isLoading: linkedRunsLoading } = useQuery({
+    queryKey: queryKeys.issues.runs(issueId),
+    queryFn: () => activityApi.runsForIssue(issueId),
+    placeholderData: keepPreviousDataForSameQueryTail<RunForIssue[]>(issueId),
   });
-  const { data: linkedСогласования } = useQuery({
-    queryКлюч: queryКлючs.issues.approvals(issueId),
-    queryFn: () => issuesApi.listСогласования(issueId),
-    placeholderData: keepPreviousDataForSameQueryTail<Awaited<ReturnТип<typeof issuesApi.listСогласования>>>(issueId),
+  const { data: linkedApprovals } = useQuery({
+    queryKey: queryKeys.issues.approvals(issueId),
+    queryFn: () => issuesApi.listApprovals(issueId),
+    placeholderData: keepPreviousDataForSameQueryTail<Awaited<ReturnType<typeof issuesApi.listApprovals>>>(issueId),
   });
   const { data: continuationHandoff } = useQuery({
-    queryКлюч: queryКлючs.issues.document(issueId, ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY),
+    queryKey: queryKeys.issues.document(issueId, ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY),
     queryFn: async () => {
       try {
         return await issuesApi.getDocument(issueId, ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY);
       } catch (error) {
-        if (error instanceof ApiОшибка && error.status === 404) return null;
+        if (error instanceof ApiError && error.status === 404) return null;
         throw error;
       }
     },
     retry: false,
-    placeholderData: keepPreviousDataForSameQueryTail<Awaited<ReturnТип<typeof issuesApi.getDocument>> | null>(
+    placeholderData: keepPreviousDataForSameQueryTail<Awaited<ReturnType<typeof issuesApi.getDocument>> | null>(
       issueId,
     ),
   });
   const { data: issueTreeCostSummary } = useQuery({
-    queryКлюч: queryКлючs.issues.costSummary(issueId),
+    queryKey: queryKeys.issues.costSummary(issueId),
     queryFn: () => issuesApi.getCostSummary(issueId),
-    placeholderData: keepPreviousDataForSameQueryTail<Awaited<ReturnТип<typeof issuesApi.getCostSummary>>>(issueId),
+    placeholderData: keepPreviousDataForSameQueryTail<Awaited<ReturnType<typeof issuesApi.getCostSummary>>>(issueId),
   });
-  const initialЗагрузка =
-    (activityЗагрузка && activity === undefined)
-    || (linkedЗапуститьsЗагрузка && linkedЗапуститьs === undefined);
+  const initialLoading =
+    (activityLoading && activity === undefined)
+    || (linkedRunsLoading && linkedRuns === undefined);
   const issueCostSummary = useMemo(() => {
     let input = 0;
     let output = 0;
@@ -996,23 +996,23 @@ function ЗадачаDetailАктивностьTab({
     let runtimeMs = 0;
     let runCount = 0;
     let hasCost = false;
-    let hasТокенs = false;
+    let hasTokens = false;
     const nowMs = Date.now();
 
-    for (const run of linkedЗапуститьs ?? []) {
+    for (const run of linkedRuns ?? []) {
       const usage = asRecord(run.usageJson);
       const result = asRecord(run.resultJson);
-      const runInput = usageNumber(usage, "inputТокенs", "input_tokens");
-      const runOutput = usageNumber(usage, "outputТокенs", "output_tokens");
+      const runInput = usageNumber(usage, "inputTokens", "input_tokens");
+      const runOutput = usageNumber(usage, "outputTokens", "output_tokens");
       const runCached = usageNumber(
         usage,
-        "cachedInputТокенs",
+        "cachedInputTokens",
         "cached_input_tokens",
         "cache_read_input_tokens",
       );
-      const runCost = visibleЗапуститьCostUsd(usage, result);
+      const runCost = visibleRunCostUsd(usage, result);
       if (runCost > 0) hasCost = true;
-      if (runInput + runOutput + runCached > 0) hasТокенs = true;
+      if (runInput + runOutput + runCached > 0) hasTokens = true;
       input += runInput;
       output += runOutput;
       cached += runCached;
@@ -1033,67 +1033,67 @@ function ЗадачаDetailАктивностьTab({
       output,
       cached,
       cost,
-      totalТокенs: input + output,
+      totalTokens: input + output,
       hasCost,
-      hasТокенs,
+      hasTokens,
       runtimeMs,
       runCount,
-      hasЗапуститьtime: runtimeMs > 0,
+      hasRuntime: runtimeMs > 0,
     };
-  }, [linkedЗапуститьs]);
-  const issueTreeCostТокенs =
-    (issueTreeCostSummary?.inputТокенs ?? 0) + (issueTreeCostSummary?.outputТокенs ?? 0);
-  const hasЗадачаTreeCost =
+  }, [linkedRuns]);
+  const issueTreeCostTokens =
+    (issueTreeCostSummary?.inputTokens ?? 0) + (issueTreeCostSummary?.outputTokens ?? 0);
+  const hasIssueTreeCost =
     !!issueTreeCostSummary
     && (issueTreeCostSummary.costCents > 0
-      || issueTreeCostТокенs > 0
-      || issueTreeCostSummary.cachedInputТокенs > 0
+      || issueTreeCostTokens > 0
+      || issueTreeCostSummary.cachedInputTokens > 0
       || issueTreeCostSummary.runtimeMs > 0
       || issueTreeCostSummary.issueCount > 1);
   const shouldShowCostSummary =
-    (linkedЗапуститьs && linkedЗапуститьs.length > 0) || hasЗадачаTreeCost;
+    (linkedRuns && linkedRuns.length > 0) || hasIssueTreeCost;
 
-  if (initialЗагрузка) {
-    return <ЗадачаSectionSkeleton titleWidth="w-20" rows={4} />;
+  if (initialLoading) {
+    return <IssueSectionSkeleton titleWidth="w-20" rows={4} />;
   }
 
   return (
     <>
       {shouldShowCostSummary && (
-        <div classИмя="mb-3 px-3 py-2 rounded-lg border border-border">
-          <div classИмя="text-sm font-medium text-muted-foreground mb-1">Cost Summary</div>
-          {!issueCostSummary.hasCost && !issueCostSummary.hasТокенs && !hasЗадачаTreeCost ? (
-            <div classИмя="text-xs text-muted-foreground">Нет cost data yet.</div>
+        <div className="mb-3 px-3 py-2 rounded-lg border border-border">
+          <div className="text-sm font-medium text-muted-foreground mb-1">Cost Summary</div>
+          {!issueCostSummary.hasCost && !issueCostSummary.hasTokens && !hasIssueTreeCost ? (
+            <div className="text-xs text-muted-foreground">No cost data yet.</div>
           ) : (
-            <div classИмя="space-y-1 text-xs text-muted-foreground tabular-nums">
-              <div classИмя="flex flex-wrap gap-3">
-                <span classИмя="font-medium text-foreground">This issue</span>
+            <div className="space-y-1 text-xs text-muted-foreground tabular-nums">
+              <div className="flex flex-wrap gap-3">
+                <span className="font-medium text-foreground">This issue</span>
                 {issueCostSummary.hasCost ? (
-                  <span classИмя="font-medium text-foreground">
+                  <span className="font-medium text-foreground">
                     ${issueCostSummary.cost.toFixed(4)}
                   </span>
                 ) : null}
-                {issueCostSummary.hasТокенs ? (
+                {issueCostSummary.hasTokens ? (
                   <span>
-                    Токенs {formatТокенs(issueCostSummary.totalТокенs)}
+                    Tokens {formatTokens(issueCostSummary.totalTokens)}
                     {issueCostSummary.cached > 0
-                      ? ` (in ${formatТокенs(issueCostSummary.input)}, out ${formatТокенs(issueCostSummary.output)}, cached ${formatТокенs(issueCostSummary.cached)})`
-                      : ` (in ${formatТокенs(issueCostSummary.input)}, out ${formatТокенs(issueCostSummary.output)})`}
+                      ? ` (in ${formatTokens(issueCostSummary.input)}, out ${formatTokens(issueCostSummary.output)}, cached ${formatTokens(issueCostSummary.cached)})`
+                      : ` (in ${formatTokens(issueCostSummary.input)}, out ${formatTokens(issueCostSummary.output)})`}
                   </span>
                 ) : null}
-                {issueCostSummary.hasЗапуститьtime ? (
+                {issueCostSummary.hasRuntime ? (
                   <span>
-                    Запуститьtime {formatDurationMs(issueCostSummary.runtimeMs)}
+                    Runtime {formatDurationMs(issueCostSummary.runtimeMs)}
                     {` (${issueCostSummary.runCount} run${issueCostSummary.runCount === 1 ? "" : "s"})`}
                   </span>
                 ) : null}
-                {!issueCostSummary.hasCost && !issueCostSummary.hasТокенs && !issueCostSummary.hasЗапуститьtime ? (
-                  <span>Нет direct cost data.</span>
+                {!issueCostSummary.hasCost && !issueCostSummary.hasTokens && !issueCostSummary.hasRuntime ? (
+                  <span>No direct cost data.</span>
                 ) : null}
               </div>
-              {hasЗадачаTreeCost && issueTreeCostSummary ? (
-                <div classИмя="flex flex-wrap gap-3">
-                  <span classИмя="font-medium text-foreground">
+              {hasIssueTreeCost && issueTreeCostSummary ? (
+                <div className="flex flex-wrap gap-3">
+                  <span className="font-medium text-foreground">
                     Including sub-issues {(issueTreeCostSummary.costCents / 100).toLocaleString(undefined, {
                       style: "currency",
                       currency: "USD",
@@ -1102,14 +1102,14 @@ function ЗадачаDetailАктивностьTab({
                     })}
                   </span>
                   <span>
-                    Токенs {formatТокенs(issueTreeCostТокенs)}
-                    {issueTreeCostSummary.cachedInputТокенs > 0
-                      ? ` (in ${formatТокенs(issueTreeCostSummary.inputТокенs)}, out ${formatТокенs(issueTreeCostSummary.outputТокенs)}, cached ${formatТокенs(issueTreeCostSummary.cachedInputТокенs)})`
-                      : ` (in ${formatТокенs(issueTreeCostSummary.inputТокенs)}, out ${formatТокенs(issueTreeCostSummary.outputТокенs)})`}
+                    Tokens {formatTokens(issueTreeCostTokens)}
+                    {issueTreeCostSummary.cachedInputTokens > 0
+                      ? ` (in ${formatTokens(issueTreeCostSummary.inputTokens)}, out ${formatTokens(issueTreeCostSummary.outputTokens)}, cached ${formatTokens(issueTreeCostSummary.cachedInputTokens)})`
+                      : ` (in ${formatTokens(issueTreeCostSummary.inputTokens)}, out ${formatTokens(issueTreeCostSummary.outputTokens)})`}
                   </span>
                   {issueTreeCostSummary.runCount > 0 ? (
                     <span>
-                      Запуститьtime {formatDurationMs(issueTreeCostSummary.runtimeMs)}
+                      Runtime {formatDurationMs(issueTreeCostSummary.runtimeMs)}
                       {` (${issueTreeCostSummary.runCount} run${issueTreeCostSummary.runCount === 1 ? "" : "s"})`}
                     </span>
                   ) : null}
@@ -1120,76 +1120,76 @@ function ЗадачаDetailАктивностьTab({
           )}
         </div>
       )}
-      <div classИмя="mb-3">
-        <ЗадачаЗапуститьLedger
+      <div className="mb-3">
+        <IssueRunLedger
           issueId={issueId}
           companyId={companyId}
-          issueСтатус={issueСтатус}
-          childЗадачи={childЗадачи}
+          issueStatus={issueStatus}
+          childIssues={childIssues}
           agentMap={agentMap}
-          hasLiveЗапуститьs={hasLiveЗапуститьs}
+          hasLiveRuns={hasLiveRuns}
           activityEvents={activity ?? []}
-          renderАктивностьEvent={(evt) => {
-            const tone = successfulЗапуститьHandoffАктивностьTone(evt.action);
-            const isHandoffПредупреждение =
+          renderActivityEvent={(evt) => {
+            const tone = successfulRunHandoffActivityTone(evt.action);
+            const isHandoffWarning =
               evt.action === SUCCESSFUL_RUN_HANDOFF_REQUIRED_ACTION
               || evt.action === SUCCESSFUL_RUN_HANDOFF_ESCALATED_ACTION;
             return (
-              <div classИмя={cn("space-y-1.5 rounded-lg border px-3 py-2 text-xs", tone.classИмя)}>
-                <div classИмя="flex items-center gap-1.5">
-                  {isHandoffПредупреждение ? (
-                    <AlertTriangle classИмя={cn("h-3.5 w-3.5 shrink-0", tone.iconClassИмя)} />
+              <div className={cn("space-y-1.5 rounded-lg border px-3 py-2 text-xs", tone.className)}>
+                <div className="flex items-center gap-1.5">
+                  {isHandoffWarning ? (
+                    <AlertTriangle className={cn("h-3.5 w-3.5 shrink-0", tone.iconClassName)} />
                   ) : null}
-                  <ActorIdentity evt={evt} agentMap={agentMap} userПрофильMap={userПрофильMap} />
-                  <span>{formatЗадачаАктивностьAction(evt.action, evt.details, { agentMap, userПрофильMap, currentUserId })}</span>
-                  <span classИмя="ml-auto shrink-0">{relativeTime(evt.createdAt)}</span>
+                  <ActorIdentity evt={evt} agentMap={agentMap} userProfileMap={userProfileMap} />
+                  <span>{formatIssueActivityAction(evt.action, evt.details, { agentMap, userProfileMap, currentUserId })}</span>
+                  <span className="ml-auto shrink-0">{relativeTime(evt.createdAt)}</span>
                 </div>
-                <ЗадачаReferenceАктивностьSummary event={evt} />
+                <IssueReferenceActivitySummary event={evt} />
               </div>
             );
           }}
         />
       </div>
-      {linkedСогласования && linkedСогласования.length > 0 && (
-        <div classИмя="mb-3 space-y-3">
-          {linkedСогласования.map((approval) => (
-            <СогласованиеCard
+      {linkedApprovals && linkedApprovals.length > 0 && (
+        <div className="mb-3 space-y-3">
+          {linkedApprovals.map((approval) => (
+            <ApprovalCard
               key={approval.id}
               approval={approval}
-              requesterАгент={approval.requestedByАгентId ? agentMap.get(approval.requestedByАгентId) ?? null : null}
-              onОдобрить={() => onСогласованиеAction(approval.id, "approve")}
-              onОтклонить={() => onСогласованиеAction(approval.id, "reject")}
+              requesterAgent={approval.requestedByAgentId ? agentMap.get(approval.requestedByAgentId) ?? null : null}
+              onApprove={() => onApprovalAction(approval.id, "approve")}
+              onReject={() => onApprovalAction(approval.id, "reject")}
               detailLink={`/approvals/${approval.id}`}
-              isОжидание={pendingСогласованиеAction?.approvalId === approval.id}
+              isPending={pendingApprovalAction?.approvalId === approval.id}
               pendingAction={
-                pendingСогласованиеAction?.approvalId === approval.id
-                  ? pendingСогласованиеAction.action
+                pendingApprovalAction?.approvalId === approval.id
+                  ? pendingApprovalAction.action
                   : null
               }
             />
           ))}
         </div>
       )}
-      <ЗадачаContinuationHandoff document={continuationHandoff} focusSignal={handoffFocusSignal} />
-      <ЗадачаРасписаниеdПовторитьCard issueId={issue.id} scheduledПовторить={issue.scheduledПовторить ?? null} />
-      <ЗадачаMonitorАктивностьCard
+      <IssueContinuationHandoff document={continuationHandoff} focusSignal={handoffFocusSignal} />
+      <IssueScheduledRetryCard issueId={issue.id} scheduledRetry={issue.scheduledRetry ?? null} />
+      <IssueMonitorActivityCard
         issue={issue}
-        onCheckСейчас={onCheckMonitorСейчас}
-        checkingСейчас={checkingMonitorСейчас}
+        onCheckNow={onCheckMonitorNow}
+        checkingNow={checkingMonitorNow}
       />
     </>
   );
 }
 
-export function ЗадачаDetail() {
+export function IssueDetail() {
   const { issueId } = useParams<{ issueId: string }>();
-  const { selectedКомпанияId } = useКомпания();
-  const { openNewЗадача } = useDialogActions();
+  const { selectedCompanyId } = useCompany();
+  const { openNewIssue } = useDialogActions();
   const { openPanel, closePanel, panelVisible, setPanelVisible } = usePanel();
   const { setBreadcrumbs, setMobileToolbar } = useBreadcrumbs();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const navigationТип = useNavigationТип();
+  const navigationType = useNavigationType();
   const location = useLocation();
   const { pushToast } = useToastActions();
   const { isMobile } = useSidebar();
@@ -1198,222 +1198,222 @@ export function ЗадачаDetail() {
   const [mobilePropsOpen, setMobilePropsOpen] = useState(false);
   const [detailTab, setDetailTab] = useState("chat");
   const [handoffFocusSignal, setHandoffFocusSignal] = useState(0);
-  const [pendingСогласованиеAction, setОжиданиеСогласованиеAction] = useState<{
+  const [pendingApprovalAction, setPendingApprovalAction] = useState<{
     approvalId: string;
     action: "approve" | "reject";
   } | null>(null);
-  const [confirmУдалитьId, setПодтвердитьУдалитьId] = useState<string | null>(null);
-  const [attachmentОшибка, setAttachmentОшибка] = useState<string | null>(null);
-  const [attachmentDragАктивен, setAttachmentDragАктивен] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [attachmentDragActive, setAttachmentDragActive] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [treeControlOpen, setTreeControlOpen] = useState(false);
-  const [treeControlMode, setTreeControlMode] = useState<ЗадачаTreeControlMode>("pause");
+  const [treeControlMode, setTreeControlMode] = useState<IssueTreeControlMode>("pause");
   const [treeControlReason, setTreeControlReason] = useState("");
-  const [treeControlWakeАгентыOnПродолжить, setTreeControlWakeАгентыOnПродолжить] = useState(false);
-  const [treeControlОтменаПодтвердитьed, setTreeControlОтменаПодтвердитьed] = useState(false);
-  const [optimisticКомментарии, setOptimisticКомментарии] = useState<OptimisticЗадачаComment[]>([]);
-  const [locallyQueuedCommentЗапуститьIds, setLocallyQueuedCommentЗапуститьIds] = useState<Map<string, string>>(() => new Map());
-  const [pendingCommentComposerFocusКлюч, setОжиданиеCommentComposerFocusКлюч] = useState(0);
+  const [treeControlWakeAgentsOnResume, setTreeControlWakeAgentsOnResume] = useState(false);
+  const [treeControlCancelConfirmed, setTreeControlCancelConfirmed] = useState(false);
+  const [optimisticComments, setOptimisticComments] = useState<OptimisticIssueComment[]>([]);
+  const [locallyQueuedCommentRunIds, setLocallyQueuedCommentRunIds] = useState<Map<string, string>>(() => new Map());
+  const [pendingCommentComposerFocusKey, setPendingCommentComposerFocusKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const lastMarkedReadЗадачаIdRef = useRef<string | null>(null);
-  const commentComposerRef = useRef<ЗадачаChatComposerHandle | null>(null);
+  const lastMarkedReadIssueIdRef = useRef<string | null>(null);
+  const commentComposerRef = useRef<IssueChatComposerHandle | null>(null);
   const cancelledQueuedOptimisticCommentIdsRef = useRef(new Set<string>());
-  const resolvedЗадачаDetailState = useMemo(
-    () => readЗадачаDetailLocationState(issueId, location.state, location.search),
+  const resolvedIssueDetailState = useMemo(
+    () => readIssueDetailLocationState(issueId, location.state, location.search),
     [issueId, location.state, location.search],
   );
   const issueHeaderSeed = useMemo(
-    () => readЗадачаDetailHeaderSeed(location.state) ?? readЗадачаDetailHeaderSeed(resolvedЗадачаDetailState),
-    [location.state, resolvedЗадачаDetailState],
+    () => readIssueDetailHeaderSeed(location.state) ?? readIssueDetailHeaderSeed(resolvedIssueDetailState),
+    [location.state, resolvedIssueDetailState],
   );
 
-  const { data: issue, isЗагрузка, error } = useQuery({
-    ...getЗадачаDetailQueryOptions(queryClient, issueId!, {
-      placeholderЗадача: issueHeaderSeed ? {
+  const { data: issue, isLoading, error } = useQuery({
+    ...getIssueDetailQueryOptions(queryClient, issueId!, {
+      placeholderIssue: issueHeaderSeed ? {
         id: issueHeaderSeed.id,
         identifier: issueHeaderSeed.identifier,
       } : null,
     }),
     enabled: !!issueId,
   });
-  const resolvedКомпанияId = issue?.companyId ?? selectedКомпанияId;
-  const commentComposerОтключитьdReason = useMemo(() => {
-    if (!issue?.currentExecutionРабочая область || !isЗакрытьdIsolatedExecutionРабочая область(issue.currentExecutionРабочая область)) {
+  const resolvedCompanyId = issue?.companyId ?? selectedCompanyId;
+  const commentComposerDisabledReason = useMemo(() => {
+    if (!issue?.currentExecutionWorkspace || !isClosedIsolatedExecutionWorkspace(issue.currentExecutionWorkspace)) {
       return null;
     }
-    return getЗакрытьdIsolatedExecutionРабочая областьMessage(issue.currentExecutionРабочая область);
-  }, [issue?.currentExecutionРабочая область]);
+    return getClosedIsolatedExecutionWorkspaceMessage(issue.currentExecutionWorkspace);
+  }, [issue?.currentExecutionWorkspace]);
 
   const {
     data: commentPages,
-    isЗагрузка: commentsЗагрузка,
-    isFetchingДалееPage: commentsЗагрузкаOlder,
-    hasДалееPage: hasOlderКомментарии,
-    fetchДалееPage: fetchOlderКомментарии,
-    refetch: refetchКомментарии,
+    isLoading: commentsLoading,
+    isFetchingNextPage: commentsLoadingOlder,
+    hasNextPage: hasOlderComments,
+    fetchNextPage: fetchOlderComments,
+    refetch: refetchComments,
   } = useInfiniteQuery({
-    queryКлюч: queryКлючs.issues.comments(issueId!),
+    queryKey: queryKeys.issues.comments(issueId!),
     queryFn: ({ pageParam }) =>
-      issuesApi.listКомментарии(issueId!, {
+      issuesApi.listComments(issueId!, {
         order: "desc",
         limit: ISSUE_COMMENT_PAGE_SIZE,
         ...(pageParam ? { after: pageParam } : {}),
       }),
     enabled: !!issueId,
     initialPageParam: null as string | null,
-    getДалееPageParam: (lastPage) =>
-      getДалееЗадачаCommentPageParam(lastPage, ISSUE_COMMENT_PAGE_SIZE),
-    placeholderData: keepPreviousDataForSameQueryTail<InfiniteData<ЗадачаComment[], string | null>>(issueId ?? "pending"),
+    getNextPageParam: (lastPage) =>
+      getNextIssueCommentPageParam(lastPage, ISSUE_COMMENT_PAGE_SIZE),
+    placeholderData: keepPreviousDataForSameQueryTail<InfiniteData<IssueComment[], string | null>>(issueId ?? "pending"),
   });
   const comments = useMemo(
-    () => flattenЗадачаCommentPages(commentPages?.pages),
+    () => flattenIssueCommentPages(commentPages?.pages),
     [commentPages?.pages],
   );
-  const shouldPrefetchOlderКомментарии = useMemo(
+  const shouldPrefetchOlderComments = useMemo(
     () =>
-      shouldАвтоloadOlderЗадачаКомментарии({
+      shouldAutoloadOlderIssueComments({
         activeDetailTab: detailTab,
-        hasOlderКомментарии: hasOlderКомментарии ?? false,
+        hasOlderComments: hasOlderComments ?? false,
         loadedCommentCount: comments.length,
-        initialPageЗагрузка: commentsЗагрузка,
-        olderPageЗагрузка: commentsЗагрузкаOlder,
+        initialPageLoading: commentsLoading,
+        olderPageLoading: commentsLoadingOlder,
         autoLoadLimit: ISSUE_COMMENT_AUTOLOAD_LIMIT,
       }),
-    [comments.length, commentsЗагрузка, commentsЗагрузкаOlder, detailTab, hasOlderКомментарии],
+    [comments.length, commentsLoading, commentsLoadingOlder, detailTab, hasOlderComments],
   );
   const { data: interactions = [] } = useQuery({
-    queryКлюч: queryКлючs.issues.interactions(issueId!),
+    queryKey: queryKeys.issues.interactions(issueId!),
     queryFn: () => issuesApi.listInteractions(issueId!),
     enabled: !!issueId,
-    placeholderData: keepPreviousDataForSameQueryTail<ЗадачаThreadInteraction[]>(issueId ?? "pending"),
+    placeholderData: keepPreviousDataForSameQueryTail<IssueThreadInteraction[]>(issueId ?? "pending"),
   });
 
-  const { data: attachments, isЗагрузка: attachmentsЗагрузка } = useQuery({
-    queryКлюч: queryКлючs.issues.attachments(issueId!),
+  const { data: attachments, isLoading: attachmentsLoading } = useQuery({
+    queryKey: queryKeys.issues.attachments(issueId!),
     queryFn: () => issuesApi.listAttachments(issueId!),
     enabled: !!issueId,
-    placeholderData: keepPreviousDataForSameQueryTail<ЗадачаAttachment[]>(issueId ?? "pending"),
+    placeholderData: keepPreviousDataForSameQueryTail<IssueAttachment[]>(issueId ?? "pending"),
   });
 
-  const { data: liveЗапуститьCount = 0 } = useQuery<LiveЗапуститьForЗадача[], Ошибка, number>({
-    queryКлюч: queryКлючs.issues.liveЗапуститьs(issueId!),
-    queryFn: () => heartbeatsApi.liveЗапуститьsForЗадача(issueId!),
+  const { data: liveRunCount = 0 } = useQuery<LiveRunForIssue[], Error, number>({
+    queryKey: queryKeys.issues.liveRuns(issueId!),
+    queryFn: () => heartbeatsApi.liveRunsForIssue(issueId!),
     enabled: !!issueId,
     refetchInterval: 3000,
     select: (runs) => runs.length,
-    placeholderData: keepPreviousDataForSameQueryTail<LiveЗапуститьForЗадача[]>(issueId ?? "pending"),
+    placeholderData: keepPreviousDataForSameQueryTail<LiveRunForIssue[]>(issueId ?? "pending"),
   });
 
-  const { data: hasАктивенЗапустить = false } = useQuery<АктивенЗапуститьForЗадача | null, Ошибка, boolean>({
-    queryКлюч: queryКлючs.issues.activeЗапустить(issueId!),
-    queryFn: () => heartbeatsApi.activeЗапуститьForЗадача(issueId!),
-    enabled: !!issueId && (!!issue?.executionЗапуститьId || issue?.status === "in_progress"),
-    refetchInterval: liveЗапуститьCount > 0 ? false : 3000,
+  const { data: hasActiveRun = false } = useQuery<ActiveRunForIssue | null, Error, boolean>({
+    queryKey: queryKeys.issues.activeRun(issueId!),
+    queryFn: () => heartbeatsApi.activeRunForIssue(issueId!),
+    enabled: !!issueId && (!!issue?.executionRunId || issue?.status === "in_progress"),
+    refetchInterval: liveRunCount > 0 ? false : 3000,
     select: (run) => !!run,
-    placeholderData: keepPreviousDataForSameQueryTail<АктивенЗапуститьForЗадача | null>(issueId ?? "pending"),
+    placeholderData: keepPreviousDataForSameQueryTail<ActiveRunForIssue | null>(issueId ?? "pending"),
   });
-  const resolvedHasАктивенЗапустить = issue ? shouldTrackЗадачаАктивенЗапустить(issue) && hasАктивенЗапустить : hasАктивенЗапустить;
-  const hasLiveЗапуститьs = liveЗапуститьCount > 0 || resolvedHasАктивенЗапустить;
+  const resolvedHasActiveRun = issue ? shouldTrackIssueActiveRun(issue) && hasActiveRun : hasActiveRun;
+  const hasLiveRuns = liveRunCount > 0 || resolvedHasActiveRun;
   useEffect(() => {
-    if (!hasLiveЗапуститьs && locallyQueuedCommentЗапуститьIds.size > 0) {
-      setLocallyQueuedCommentЗапуститьIds(new Map());
+    if (!hasLiveRuns && locallyQueuedCommentRunIds.size > 0) {
+      setLocallyQueuedCommentRunIds(new Map());
     }
-  }, [hasLiveЗапуститьs, locallyQueuedCommentЗапуститьIds.size]);
+  }, [hasLiveRuns, locallyQueuedCommentRunIds.size]);
   const sourceBreadcrumb = useMemo(
-    () => readЗадачаDetailBreadcrumb(issueId, location.state, location.search) ?? { label: "Задачи", href: "/issues" },
+    () => readIssueDetailBreadcrumb(issueId, location.state, location.search) ?? { label: "Issues", href: "/issues" },
     [issueId, location.state, location.search],
   );
 
-  const { data: rawChildЗадачи = [], isЗагрузка: childЗадачиЗагрузка } = useQuery({
-    queryКлюч:
-      issue?.id && resolvedКомпанияId
-        ? queryКлючs.issues.listByDescendantRoot(resolvedКомпанияId, issue.id)
+  const { data: rawChildIssues = [], isLoading: childIssuesLoading } = useQuery({
+    queryKey:
+      issue?.id && resolvedCompanyId
+        ? queryKeys.issues.listByDescendantRoot(resolvedCompanyId, issue.id)
         : ["issues", "parent", "pending"],
-    queryFn: () => issuesApi.list(resolvedКомпанияId!, { descendantOf: issue!.id, includeЗаблокированBy: true }),
-    enabled: !!resolvedКомпанияId && !!issue?.id,
-    placeholderData: keepPreviousDataForSameQueryTail<Задача[]>(issue?.id ?? "pending"),
+    queryFn: () => issuesApi.list(resolvedCompanyId!, { descendantOf: issue!.id, includeBlockedBy: true }),
+    enabled: !!resolvedCompanyId && !!issue?.id,
+    placeholderData: keepPreviousDataForSameQueryTail<Issue[]>(issue?.id ?? "pending"),
   });
-  const { data: companyLiveЗапуститьs } = useQuery({
-    queryКлюч: resolvedКомпанияId ? queryКлючs.liveЗапуститьs(resolvedКомпанияId) : ["live-runs", "pending"],
-    queryFn: () => heartbeatsApi.liveЗапуститьsForКомпания(resolvedКомпанияId!),
-    enabled: !!resolvedКомпанияId,
+  const { data: companyLiveRuns } = useQuery({
+    queryKey: resolvedCompanyId ? queryKeys.liveRuns(resolvedCompanyId) : ["live-runs", "pending"],
+    queryFn: () => heartbeatsApi.liveRunsForCompany(resolvedCompanyId!),
+    enabled: !!resolvedCompanyId,
     refetchInterval: 5000,
-    placeholderData: keepPreviousDataForSameQueryTail<LiveЗапуститьForЗадача[]>(resolvedКомпанияId ?? "pending"),
+    placeholderData: keepPreviousDataForSameQueryTail<LiveRunForIssue[]>(resolvedCompanyId ?? "pending"),
   });
 
   const { data: agents } = useQuery({
-    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
-    queryFn: () => agentsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.agents.list(selectedCompanyId!),
+    queryFn: () => agentsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
   const { data: companyMembers } = useQuery({
-    queryКлюч: queryКлючs.access.companyUserDirectory(selectedКомпанияId!),
-    queryFn: () => accessApi.listUserDirectory(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.access.companyUserDirectory(selectedCompanyId!),
+    queryFn: () => accessApi.listUserDirectory(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
 
   const { data: session } = useQuery({
-    queryКлюч: queryКлючs.auth.session,
+    queryKey: queryKeys.auth.session,
     queryFn: () => authApi.getSession(),
   });
 
   const { data: projects } = useQuery({
-    queryКлюч: queryКлючs.projects.list(selectedКомпанияId!),
-    queryFn: () => projectsApi.list(selectedКомпанияId!),
-    enabled: !!selectedКомпанияId,
+    queryKey: queryKeys.projects.list(selectedCompanyId!),
+    queryFn: () => projectsApi.list(selectedCompanyId!),
+    enabled: !!selectedCompanyId,
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
-  const { data: boardДоступ } = useQuery({
-    queryКлюч: queryКлючs.access.currentСоветДоступ,
-    queryFn: () => accessApi.getCurrentСоветДоступ(),
+  const { data: boardAccess } = useQuery({
+    queryKey: queryKeys.access.currentBoardAccess,
+    queryFn: () => accessApi.getCurrentBoardAccess(),
     enabled: !!session?.user?.id,
     retry: false,
   });
   const canManageTreeControl = Boolean(
-    selectedКомпанияId
-    && boardДоступ?.companyIds?.includes(selectedКомпанияId),
+    selectedCompanyId
+    && boardAccess?.companyIds?.includes(selectedCompanyId),
   );
   const { data: feedbackVotes } = useQuery({
-    queryКлюч: queryКлючs.issues.feedbackVotes(issueId!),
+    queryKey: queryKeys.issues.feedbackVotes(issueId!),
     queryFn: () => issuesApi.listFeedbackVotes(issueId!),
     enabled: !!issueId && !!currentUserId,
   });
-  const { data: instanceОбщиеНастройки } = useQuery({
-    queryКлюч: queryКлючs.instance.generalНастройки,
-    queryFn: () => instanceНастройкиApi.getОбщие(),
+  const { data: instanceGeneralSettings } = useQuery({
+    queryKey: queryKeys.instance.generalSettings,
+    queryFn: () => instanceSettingsApi.getGeneral(),
     enabled: !!issueId,
     retry: false,
   });
-  const keyboardShortcutsВключитьd = instanceОбщиеНастройки?.keyboardShortcuts === true;
-  const feedbackDataSharingPreference = instanceОбщиеНастройки?.feedbackDataSharingPreference ?? "prompt";
-  const { orderedПроекты } = useProjectOrder({
+  const keyboardShortcutsEnabled = instanceGeneralSettings?.keyboardShortcuts === true;
+  const feedbackDataSharingPreference = instanceGeneralSettings?.feedbackDataSharingPreference ?? "prompt";
+  const { orderedProjects } = useProjectOrder({
     projects: projects ?? [],
-    companyId: selectedКомпанияId,
+    companyId: selectedCompanyId,
     userId: currentUserId,
   });
   const { slots: issuePluginDetailSlots } = usePluginSlots({
-    slotТипs: ["detailTab"],
-    entityТип: "issue",
-    companyId: resolvedКомпанияId,
-    enabled: !!resolvedКомпанияId,
+    slotTypes: ["detailTab"],
+    entityType: "issue",
+    companyId: resolvedCompanyId,
+    enabled: !!resolvedCompanyId,
   });
   const issuePluginTabItems = useMemo(
     () => issuePluginDetailSlots.map((slot) => ({
-      value: `plugin:${slot.pluginКлюч}:${slot.id}`,
-      label: slot.displayИмя,
+      value: `plugin:${slot.pluginKey}:${slot.id}`,
+      label: slot.displayName,
       slot,
     })),
     [issuePluginDetailSlots],
   );
   const activePluginTab = issuePluginTabItems.find((item) => item.value === detailTab) ?? null;
   const {
-    data: treeControlПредпросмотр,
-    isFetching: treeControlПредпросмотрЗагрузка,
-    error: treeControlПредпросмотрОшибка,
-    refetch: refetchTreeControlПредпросмотр,
+    data: treeControlPreview,
+    isFetching: treeControlPreviewLoading,
+    error: treeControlPreviewError,
+    refetch: refetchTreeControlPreview,
   } = useQuery({
-    queryКлюч: [
+    queryKey: [
       "issues",
       "tree-control-preview",
       issueId ?? "pending",
@@ -1431,23 +1431,23 @@ export function ЗадачаDetail() {
     retry: false,
   });
   const { data: treeControlState } = useQuery({
-    queryКлюч: ["issues", "tree-control-state", issueId ?? "pending"],
+    queryKey: ["issues", "tree-control-state", issueId ?? "pending"],
     queryFn: () => issuesApi.getTreeControlState(issueId!),
     enabled: !!issueId && canManageTreeControl,
     retry: false,
   });
-  const { data: activeRootПаузаHolds = [] } = useQuery({
-    queryКлюч: ["issues", "tree-holds", issueId ?? "pending", "active-pause-with-members"],
+  const { data: activeRootPauseHolds = [] } = useQuery({
+    queryKey: ["issues", "tree-holds", issueId ?? "pending", "active-pause-with-members"],
     queryFn: () =>
       issuesApi.listTreeHolds(issueId!, {
         status: "active",
         mode: "pause",
         includeMembers: true,
       }),
-    enabled: !!issueId && treeControlState?.activeПаузаHold?.isRoot === true,
+    enabled: !!issueId && treeControlState?.activePauseHold?.isRoot === true,
   });
-  const { data: activeОтменаHolds = [] } = useQuery({
-    queryКлюч: ["issues", "tree-holds", issueId ?? "pending", "active-cancel"],
+  const { data: activeCancelHolds = [] } = useQuery({
+    queryKey: ["issues", "tree-holds", issueId ?? "pending", "active-cancel"],
     queryFn: () =>
       issuesApi.listTreeHolds(issueId!, {
         status: "active",
@@ -1457,67 +1457,67 @@ export function ЗадачаDetail() {
   });
 
   const agentMap = useMemo(() => {
-    const map = new Map<string, Агент>();
+    const map = new Map<string, Agent>();
     for (const a of agents ?? []) map.set(a.id, a);
     return map;
   }, [agents]);
-  const userПрофильMap = useMemo(
-    () => buildКомпанияUserПрофильMap(companyMembers?.users),
+  const userProfileMap = useMemo(
+    () => buildCompanyUserProfileMap(companyMembers?.users),
     [companyMembers?.users],
   );
   const userLabelMap = useMemo(
-    () => buildКомпанияUserLabelMap(companyMembers?.users),
+    () => buildCompanyUserLabelMap(companyMembers?.users),
     [companyMembers?.users],
   );
   const mentionOptions = useMemo<MentionOption[]>(() => {
     return buildMarkdownMentionOptions({
       agents,
-      projects: orderedПроекты,
+      projects: orderedProjects,
       members: companyMembers?.users,
     });
-  }, [agents, companyMembers?.users, orderedПроекты]);
+  }, [agents, companyMembers?.users, orderedProjects]);
 
   const resolvedProject = useMemo(
-    () => (issue?.projectId ? orderedПроекты.find((project) => project.id === issue.projectId) ?? issue.project ?? null : null),
-    [issue?.project, issue?.projectId, orderedПроекты],
+    () => (issue?.projectId ? orderedProjects.find((project) => project.id === issue.projectId) ?? issue.project ?? null : null),
+    [issue?.project, issue?.projectId, orderedProjects],
   );
-  const childЗадачи = useMemo(
+  const childIssues = useMemo(
     () => {
-      const descendants = issue?.id ? filterЗадачаDescendants(issue.id, rawChildЗадачи) : rawChildЗадачи;
+      const descendants = issue?.id ? filterIssueDescendants(issue.id, rawChildIssues) : rawChildIssues;
       return [...descendants].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     },
-    [issue?.id, rawChildЗадачи],
+    [issue?.id, rawChildIssues],
   );
-  const liveЗадачаIds = useMemo(() => collectLiveЗадачаIds(companyLiveЗапуститьs), [companyLiveЗапуститьs]);
-  const issuePanelКлюч = useMemo(
-    () => buildЗадачаPropertiesPanelКлюч(issue ?? null, childЗадачи),
-    [childЗадачи, issue],
+  const liveIssueIds = useMemo(() => collectLiveIssueIds(companyLiveRuns), [companyLiveRuns]);
+  const issuePanelKey = useMemo(
+    () => buildIssuePropertiesPanelKey(issue ?? null, childIssues),
+    [childIssues, issue],
   );
-  const panelЗадача = useMemo(
+  const panelIssue = useMemo(
     () => issue ?? null,
-    [issue?.id, issuePanelКлюч],
+    [issue?.id, issuePanelKey],
   );
-  const panelChildЗадачи = useMemo(
-    () => childЗадачи,
-    [issuePanelКлюч],
+  const panelChildIssues = useMemo(
+    () => childIssues,
+    [issuePanelKey],
   );
-  const showRichSubЗадачиSection = shouldRenderRichSubЗадачиSection(childЗадачиЗагрузка, childЗадачи.length);
-  const openNewSubЗадача = useCallback(() => {
+  const showRichSubIssuesSection = shouldRenderRichSubIssuesSection(childIssuesLoading, childIssues.length);
+  const openNewSubIssue = useCallback(() => {
     if (!issue) return;
-    openNewЗадача(buildSubЗадачаПо умолчаниюsForViewer(issue, currentUserId));
+    openNewIssue(buildSubIssueDefaultsForViewer(issue, currentUserId));
   }, [
     currentUserId,
     issue,
-    openNewЗадача,
+    openNewIssue,
   ]);
 
   const commentReassignOptions = useMemo(() => {
     const options: Array<{ id: string; label: string; searchText?: string }> = [];
-    options.push(...buildКомпанияUserInlineOptions(companyMembers?.users, { excludeUserIds: [currentUserId] }));
-    const activeАгенты = [...(agents ?? [])]
+    options.push(...buildCompanyUserInlineOptions(companyMembers?.users, { excludeUserIds: [currentUserId] }));
+    const activeAgents = [...(agents ?? [])]
       .filter((agent) => agent.status !== "terminated")
       .sort((a, b) => a.name.localeCompare(b.name));
-    for (const agent of activeАгенты) {
+    for (const agent of activeAgents) {
       options.push({ id: `agent:${agent.id}`, label: agent.name });
     }
     if (currentUserId) {
@@ -1526,26 +1526,26 @@ export function ЗадачаDetail() {
     return options;
   }, [agents, companyMembers?.users, currentUserId]);
 
-  const actualИсполнительЗначение = useMemo(
-    () => assigneeЗначениеFromSelection(issue ?? {}),
+  const actualAssigneeValue = useMemo(
+    () => assigneeValueFromSelection(issue ?? {}),
     [issue],
   );
 
-  const suggestedИсполнительЗначение = useMemo(
+  const suggestedAssigneeValue = useMemo(
     () =>
-      suggestedCommentИсполнительЗначение(
+      suggestedCommentAssigneeValue(
         issue ?? {},
-        mergeЗадачаКомментарии(comments ?? [], optimisticКомментарии),
+        mergeIssueComments(comments ?? [], optimisticComments),
         currentUserId,
       ),
-    [issue, comments, optimisticКомментарии, currentUserId],
+    [issue, comments, optimisticComments, currentUserId],
   );
 
-  const threadКомментарии = useMemo(
-    () => mergeЗадачаКомментарии(comments ?? [], optimisticКомментарии),
-    [comments, optimisticКомментарии],
+  const threadComments = useMemo(
+    () => mergeIssueComments(comments ?? [], optimisticComments),
+    [comments, optimisticComments],
   );
-  const breadcrumbНазвание = issue?.title ?? issueId ?? "Задача";
+  const breadcrumbTitle = issue?.title ?? issueId ?? "Issue";
   const issueCacheRefs = useMemo(() => {
     const refs = new Set<string>();
     if (issueId) refs.add(issueId);
@@ -1554,58 +1554,58 @@ export function ЗадачаDetail() {
     return [...refs];
   }, [issue?.id, issue?.identifier, issueId]);
 
-  const invalidateЗадачаDetail = useCallback(() => {
+  const invalidateIssueDetail = useCallback(() => {
     for (const ref of issueCacheRefs) {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(ref) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activity(ref) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.interactions(ref) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(ref) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(ref) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.interactions(ref) });
     }
   }, [issueCacheRefs, queryClient]);
-  const invalidateЗадачаThreadLazily = useCallback(() => {
+  const invalidateIssueThreadLazily = useCallback(() => {
     for (const ref of issueCacheRefs) {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(ref), refetchТип: "inactive" });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activity(ref), refetchТип: "inactive" });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.interactions(ref), refetchТип: "inactive" });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(ref), refetchType: "inactive" });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(ref), refetchType: "inactive" });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.interactions(ref), refetchType: "inactive" });
     }
   }, [issueCacheRefs, queryClient]);
 
-  const invalidateЗадачаЗапуститьState = useCallback(() => {
+  const invalidateIssueRunState = useCallback(() => {
     for (const ref of issueCacheRefs) {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.runs(ref) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.liveЗапуститьs(ref) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activeЗапустить(ref) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.runs(ref) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.liveRuns(ref) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.activeRun(ref) });
     }
   }, [issueCacheRefs, queryClient]);
 
   const removeCommentFromCache = useCallback((commentId: string) => {
-    queryClient.setQueryData<InfiniteData<ЗадачаComment[], string | null> | undefined>(
-      queryКлючs.issues.comments(issueId!),
+    queryClient.setQueryData<InfiniteData<IssueComment[], string | null> | undefined>(
+      queryKeys.issues.comments(issueId!),
       (current) => {
         if (!current) return current;
         return {
           ...current,
-          pages: removeЗадачаCommentFromPages(current.pages, commentId),
+          pages: removeIssueCommentFromPages(current.pages, commentId),
         };
       },
     );
   }, [issueId, queryClient]);
 
-  const restoreQueuedCommentЧерновик = useCallback((body: string) => {
-    commentComposerRef.current?.restoreЧерновик(body);
+  const restoreQueuedCommentDraft = useCallback((body: string) => {
+    commentComposerRef.current?.restoreDraft(body);
   }, []);
 
-  const invalidateЗадачаCollections = useCallback(() => {
-    if (selectedКомпанияId) {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(selectedКомпанияId) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listMineByMe(selectedКомпанияId) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listTouchedByMe(selectedКомпанияId) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listUnreadTouchedByMe(selectedКомпанияId) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(selectedКомпанияId) });
+  const invalidateIssueCollections = useCallback(() => {
+    if (selectedCompanyId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(selectedCompanyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listMineByMe(selectedCompanyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(selectedCompanyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listUnreadTouchedByMe(selectedCompanyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(selectedCompanyId) });
     }
-  }, [queryClient, selectedКомпанияId]);
-  const upsertInteractionInCache = useCallback((interaction: ЗадачаThreadInteraction) => {
-    queryClient.setQueryData<ЗадачаThreadInteraction[] | undefined>(
-      queryКлючs.issues.interactions(issueId!),
+  }, [queryClient, selectedCompanyId]);
+  const upsertInteractionInCache = useCallback((interaction: IssueThreadInteraction) => {
+    queryClient.setQueryData<IssueThreadInteraction[] | undefined>(
+      queryKeys.issues.interactions(issueId!),
       (current) => {
         const existing = current ?? [];
         const next = existing.filter((entry) => entry.id !== interaction.id);
@@ -1620,106 +1620,106 @@ export function ЗадачаDetail() {
     );
   }, [issueId, queryClient]);
 
-  const applyOptimisticЗадачаCacheОбновить = useCallback((refs: Iterable<string>, data: Record<string, unknown>) => {
-    queryClient.setQueriesData<Задача>(
-      { queryКлюч: ["issues", "detail"] },
-      (cached) => (cached && matchesЗадачаRef(cached, refs) ? applyOptimisticЗадачаFieldОбновить(cached, data) : cached),
+  const applyOptimisticIssueCacheUpdate = useCallback((refs: Iterable<string>, data: Record<string, unknown>) => {
+    queryClient.setQueriesData<Issue>(
+      { queryKey: ["issues", "detail"] },
+      (cached) => (cached && matchesIssueRef(cached, refs) ? applyOptimisticIssueFieldUpdate(cached, data) : cached),
     );
 
-    if (!selectedКомпанияId) return;
-    queryClient.setQueryData<Задача[] | undefined>(
-      queryКлючs.issues.list(selectedКомпанияId),
-      (cached) => applyOptimisticЗадачаFieldОбновитьToCollection(cached, refs, data),
+    if (!selectedCompanyId) return;
+    queryClient.setQueryData<Issue[] | undefined>(
+      queryKeys.issues.list(selectedCompanyId),
+      (cached) => applyOptimisticIssueFieldUpdateToCollection(cached, refs, data),
     );
-  }, [queryClient, selectedКомпанияId]);
+  }, [queryClient, selectedCompanyId]);
 
-  const mergeЗадачаResponseIntoCaches = useCallback((refs: Iterable<string>, nextЗадача: Задача) => {
-    queryClient.setQueriesData<Задача>(
-      { queryКлюч: ["issues", "detail"] },
-      (cached) => (cached && matchesЗадачаRef(cached, refs) ? { ...cached, ...nextЗадача } : cached),
+  const mergeIssueResponseIntoCaches = useCallback((refs: Iterable<string>, nextIssue: Issue) => {
+    queryClient.setQueriesData<Issue>(
+      { queryKey: ["issues", "detail"] },
+      (cached) => (cached && matchesIssueRef(cached, refs) ? { ...cached, ...nextIssue } : cached),
     );
 
-    if (!selectedКомпанияId) return;
-    queryClient.setQueryData<Задача[] | undefined>(
-      queryКлючs.issues.list(selectedКомпанияId),
-      (cached) => cached?.map((item) => (matchesЗадачаRef(item, refs) ? { ...item, ...nextЗадача } : item)),
+    if (!selectedCompanyId) return;
+    queryClient.setQueryData<Issue[] | undefined>(
+      queryKeys.issues.list(selectedCompanyId),
+      (cached) => cached?.map((item) => (matchesIssueRef(item, refs) ? { ...item, ...nextIssue } : item)),
     );
-  }, [queryClient, selectedКомпанияId]);
+  }, [queryClient, selectedCompanyId]);
 
-  const markЗадачаRead = useMutation({
+  const markIssueRead = useMutation({
     mutationFn: (id: string) => issuesApi.markRead(id),
-    onУспешно: () => {
-      if (selectedКомпанияId) {
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listMineByMe(selectedКомпанияId) });
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listTouchedByMe(selectedКомпанияId) });
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listUnreadTouchedByMe(selectedКомпанияId) });
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(selectedКомпанияId) });
+    onSuccess: () => {
+      if (selectedCompanyId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listMineByMe(selectedCompanyId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(selectedCompanyId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listUnreadTouchedByMe(selectedCompanyId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(selectedCompanyId) });
       }
     },
   });
 
-  const updateЗадача = useMutation({
+  const updateIssue = useMutation({
     mutationFn: (data: Record<string, unknown>) => issuesApi.update(issueId!, data),
     onMutate: async (data) => {
-      await queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.detail(issueId!) });
-      if (selectedКомпанияId) {
-        await queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.list(selectedКомпанияId) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.issues.detail(issueId!) });
+      if (selectedCompanyId) {
+        await queryClient.cancelQueries({ queryKey: queryKeys.issues.list(selectedCompanyId) });
       }
 
-      const previousЗадача = queryClient.getQueryData<Задача>(queryКлючs.issues.detail(issueId!));
+      const previousIssue = queryClient.getQueryData<Issue>(queryKeys.issues.detail(issueId!));
       const issueRefs = new Set<string>([issueId!]);
-      if (previousЗадача?.id) issueRefs.add(previousЗадача.id);
-      if (previousЗадача?.identifier) issueRefs.add(previousЗадача.identifier);
+      if (previousIssue?.id) issueRefs.add(previousIssue.id);
+      if (previousIssue?.identifier) issueRefs.add(previousIssue.identifier);
 
       const previousDetailQueries = queryClient
-        .getQueriesData<Задача>({ queryКлюч: ["issues", "detail"] })
-        .filter(([, cachedЗадача]) => cachedЗадача && matchesЗадачаRef(cachedЗадача, issueRefs));
-      const previousList = selectedКомпанияId
-        ? queryClient.getQueryData<Задача[]>(queryКлючs.issues.list(selectedКомпанияId))
+        .getQueriesData<Issue>({ queryKey: ["issues", "detail"] })
+        .filter(([, cachedIssue]) => cachedIssue && matchesIssueRef(cachedIssue, issueRefs));
+      const previousList = selectedCompanyId
+        ? queryClient.getQueryData<Issue[]>(queryKeys.issues.list(selectedCompanyId))
         : undefined;
 
-      applyOptimisticЗадачаCacheОбновить(issueRefs, data);
+      applyOptimisticIssueCacheUpdate(issueRefs, data);
 
-      return { previousDetailQueries, previousList, selectedКомпанияId };
+      return { previousDetailQueries, previousList, selectedCompanyId };
     },
-    onУспешно: ({ comment: _comment, ...nextЗадача }) => {
-      const issueRefs = new Set<string>([issueId!, nextЗадача.id]);
-      if (nextЗадача.identifier) issueRefs.add(nextЗадача.identifier);
-      mergeЗадачаResponseIntoCaches(issueRefs, nextЗадача);
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activity(issueId!) });
-      invalidateЗадачаCollections();
+    onSuccess: ({ comment: _comment, ...nextIssue }) => {
+      const issueRefs = new Set<string>([issueId!, nextIssue.id]);
+      if (nextIssue.identifier) issueRefs.add(nextIssue.identifier);
+      mergeIssueResponseIntoCaches(issueRefs, nextIssue);
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(issueId!) });
+      invalidateIssueCollections();
     },
-    onОшибка: (err, _variables, context) => {
-      for (const [queryКлюч, previousЗадача] of context?.previousDetailQueries ?? []) {
-        queryClient.setQueryData(queryКлюч, previousЗадача);
+    onError: (err, _variables, context) => {
+      for (const [queryKey, previousIssue] of context?.previousDetailQueries ?? []) {
+        queryClient.setQueryData(queryKey, previousIssue);
       }
-      if (context?.selectedКомпанияId) {
-        queryClient.setQueryData(queryКлючs.issues.list(context.selectedКомпанияId), context.previousList);
+      if (context?.selectedCompanyId) {
+        queryClient.setQueryData(queryKeys.issues.list(context.selectedCompanyId), context.previousList);
       }
       pushToast({
-        title: "Задача update failed",
-        body: err instanceof Ошибка ? err.message : "Unable to save issue changes",
+        title: "Issue update failed",
+        body: err instanceof Error ? err.message : "Unable to save issue changes",
         tone: "error",
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(issueId!) });
-      if (selectedКомпанияId) {
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(selectedКомпанияId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId!) });
+      if (selectedCompanyId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(selectedCompanyId) });
       }
     },
   });
   const executeTreeControl = useMutation({
     mutationFn: async () => {
       if (treeControlMode === "resume") {
-        const pauseHoldId = treeControlState?.activeПаузаHold?.holdId;
+        const pauseHoldId = treeControlState?.activePauseHold?.holdId;
         if (!pauseHoldId) {
-          throw new Ошибка("Нет active subtree pause hold is available to resume.");
+          throw new Error("No active subtree pause hold is available to resume.");
         }
         const releasedHold = await issuesApi.releaseTreeHold(issueId!, pauseHoldId, {
           reason: treeControlReason.trim() || null,
           metadata: {
-            wakeАгенты: treeControlWakeАгентыOnПродолжить,
+            wakeAgents: treeControlWakeAgentsOnResume,
           },
         });
         return { kind: "release" as const, hold: releasedHold };
@@ -1729,28 +1729,28 @@ export function ЗадачаDetail() {
         reason: treeControlReason.trim() || null,
         releasePolicy: {
           strategy: "manual",
-          ...(treeControlMode === "pause" ? { note: treeControlОбласть === "leaf" ? "leaf_pause" : "full_pause" } : {}),
+          ...(treeControlMode === "pause" ? { note: treeControlScope === "leaf" ? "leaf_pause" : "full_pause" } : {}),
         },
         ...(treeControlMode === "restore"
-          ? { metadata: { wakeАгенты: treeControlWakeАгентыOnПродолжить } }
+          ? { metadata: { wakeAgents: treeControlWakeAgentsOnResume } }
           : {}),
       });
       return { kind: "create" as const, hold: created.hold, preview: created.preview };
     },
-    onУспешно: async (result) => {
-      const modeLabel = issueTreeControlLabel(result.hold.mode, treeControlОбласть);
-      const cancelCount = result.preview?.totals.activeЗапуститьs ?? 0;
+    onSuccess: async (result) => {
+      const modeLabel = issueTreeControlLabel(result.hold.mode, treeControlScope);
+      const cancelCount = result.preview?.totals.activeRuns ?? 0;
       pushToast({
         title: result.kind === "release"
-          ? treeControlОбласть === "leaf" ? "Работа resumed" : "Subtree resumed"
+          ? treeControlScope === "leaf" ? "Work resumed" : "Subtree resumed"
           : result.hold.mode === "pause"
-            ? treeControlОбласть === "leaf" ? "Работа paused" : "Subtree paused"
+            ? treeControlScope === "leaf" ? "Work paused" : "Subtree paused"
             : `${modeLabel} applied`,
         body: result.kind === "release"
-          ? (result.hold.releaseReason?.trim() || (treeControlОбласть === "leaf" ? "Активен issue pause released." : "Активен subtree pause released."))
+          ? (result.hold.releaseReason?.trim() || (treeControlScope === "leaf" ? "Active issue pause released." : "Active subtree pause released."))
           : result.hold.mode === "pause"
-            ? treeControlОбласть === "leaf"
-              ? `Работа paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
+            ? treeControlScope === "leaf"
+              ? `Work paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
               : `Subtree paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
             : result.hold.reason?.trim()
               ? result.hold.reason
@@ -1758,116 +1758,116 @@ export function ЗадачаDetail() {
       });
       setTreeControlOpen(false);
       setTreeControlReason("");
-      setTreeControlWakeАгентыOnПродолжить(false);
-      setTreeControlОтменаПодтвердитьed(false);
+      setTreeControlWakeAgentsOnResume(false);
+      setTreeControlCancelConfirmed(false);
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activity(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.liveЗапуститьs(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activeЗапустить(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.runs(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: ["issues", "tree-control-state", issueId ?? "pending"] }),
-        queryClient.invalidateQueries({ queryКлюч: ["issues", "tree-holds", issueId ?? "pending"] }),
-        queryClient.invalidateQueries({ queryКлюч: ["issues", "tree-control-preview", issueId ?? "pending"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.liveRuns(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.activeRun(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.runs(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: ["issues", "tree-control-state", issueId ?? "pending"] }),
+        queryClient.invalidateQueries({ queryKey: ["issues", "tree-holds", issueId ?? "pending"] }),
+        queryClient.invalidateQueries({ queryKey: ["issues", "tree-control-preview", issueId ?? "pending"] }),
       ]);
-      if (selectedКомпанияId) {
+      if (selectedCompanyId) {
         await Promise.all([
-          queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(selectedКомпанияId) }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(selectedCompanyId) }),
           ...(issue?.id
             ? [
-                queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listByРодитель(selectedКомпанияId, issue.id) }),
-                queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listByDescendantRoot(selectedКомпанияId, issue.id) }),
+                queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByParent(selectedCompanyId, issue.id) }),
+                queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByDescendantRoot(selectedCompanyId, issue.id) }),
               ]
             : []),
         ]);
       }
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
         title: "Unable to apply subtree control",
-        body: err instanceof Ошибка ? err.message : "Please try again.",
+        body: err instanceof Error ? err.message : "Please try again.",
         tone: "error",
       });
     },
   });
-  const pauseЗадачаРаботаЗапустить = useMutation({
+  const pauseIssueWorkRun = useMutation({
     mutationFn: async ({ runId, scope }: { runId: string; scope: "leaf" | "subtree" }) => {
       const created = await issuesApi.createTreeHold(issueId!, {
         mode: "pause",
-        reason: "Приостановлен from active run controls.",
+        reason: "Paused from active run controls.",
         releasePolicy: { strategy: "manual", note: scope === "leaf" ? "leaf_pause" : "full_pause" },
         metadata: { source: "issue_active_run_control", runId },
       });
       return created;
     },
-    onУспешно: async (result) => {
-      const cancelCount = result.preview?.totals.activeЗапуститьs ?? 0;
+    onSuccess: async (result) => {
+      const cancelCount = result.preview?.totals.activeRuns ?? 0;
       pushToast({
-        title: "Работа paused",
+        title: "Work paused",
         body: cancelCount > 0
-          ? `Работа paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
-          : "Работа paused. This issue is held until resume.",
+          ? `Work paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
+          : "Work paused. This issue is held until resume.",
         tone: "success",
       });
       await Promise.all([
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activity(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.liveЗапуститьs(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activeЗапустить(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.runs(issueId!) }),
-        queryClient.invalidateQueries({ queryКлюч: ["issues", "tree-control-state", issueId ?? "pending"] }),
-        queryClient.invalidateQueries({ queryКлюч: ["issues", "tree-holds", issueId ?? "pending"] }),
-        queryClient.invalidateQueries({ queryКлюч: ["issues", "tree-control-preview", issueId ?? "pending"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.liveRuns(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.activeRun(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.runs(issueId!) }),
+        queryClient.invalidateQueries({ queryKey: ["issues", "tree-control-state", issueId ?? "pending"] }),
+        queryClient.invalidateQueries({ queryKey: ["issues", "tree-holds", issueId ?? "pending"] }),
+        queryClient.invalidateQueries({ queryKey: ["issues", "tree-control-preview", issueId ?? "pending"] }),
       ]);
-      invalidateЗадачаCollections();
+      invalidateIssueCollections();
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
         title: "Unable to pause work",
-        body: err instanceof Ошибка ? err.message : "Please try again.",
+        body: err instanceof Error ? err.message : "Please try again.",
         tone: "error",
       });
     },
   });
-  const handleЗадачаPropertiesОбновить = useCallback((data: Record<string, unknown>) => {
-    updateЗадача.mutate(data);
-  }, [updateЗадача.mutate]);
+  const handleIssuePropertiesUpdate = useCallback((data: Record<string, unknown>) => {
+    updateIssue.mutate(data);
+  }, [updateIssue.mutate]);
 
-  const updateChildЗадача = useMutation({
+  const updateChildIssue = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => issuesApi.update(id, data),
-    onУспешно: () => {
-      if (resolvedКомпанияId) {
-        queryClient.invalidateQueries({ queryКлюч: ["issues", resolvedКомпанияId] });
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(resolvedКомпанияId) });
+    onSuccess: () => {
+      if (resolvedCompanyId) {
+        queryClient.invalidateQueries({ queryKey: ["issues", resolvedCompanyId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(resolvedCompanyId) });
       }
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
-        title: "Задача update failed",
-        body: err instanceof Ошибка ? err.message : "Unable to save sub-issue changes",
+        title: "Issue update failed",
+        body: err instanceof Error ? err.message : "Unable to save sub-issue changes",
         tone: "error",
       });
     },
   });
-  const handleChildЗадачаОбновить = useCallback((id: string, data: Record<string, unknown>) => {
-    updateChildЗадача.mutate({ id, data });
-  }, [updateChildЗадача]);
+  const handleChildIssueUpdate = useCallback((id: string, data: Record<string, unknown>) => {
+    updateChildIssue.mutate({ id, data });
+  }, [updateChildIssue]);
 
-  const checkЗадачаMonitorСейчас = useMutation({
-    mutationFn: () => issuesApi.checkMonitorСейчас(issueId!),
-    onУспешно: () => {
-      invalidateЗадачаDetail();
-      invalidateЗадачаЗапуститьState();
-      invalidateЗадачаCollections();
+  const checkIssueMonitorNow = useMutation({
+    mutationFn: () => issuesApi.checkMonitorNow(issueId!),
+    onSuccess: () => {
+      invalidateIssueDetail();
+      invalidateIssueRunState();
+      invalidateIssueCollections();
       pushToast({
         title: "Monitor check queued",
         tone: "success",
       });
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
         title: "Monitor check failed",
-        body: err instanceof Ошибка ? err.message : "Unable to trigger the monitor right now",
+        body: err instanceof Error ? err.message : "Unable to trigger the monitor right now",
         tone: "error",
       });
     },
@@ -1881,30 +1881,30 @@ export function ЗадачаDetail() {
       return approvalsApi.reject(approvalId);
     },
     onMutate: ({ approvalId, action }) => {
-      setОжиданиеСогласованиеAction({ approvalId, action });
+      setPendingApprovalAction({ approvalId, action });
     },
-    onУспешно: (_approval, variables) => {
-      invalidateЗадачаDetail();
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.approvals(issueId!) });
-      invalidateЗадачаCollections();
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.detail(variables.approvalId) });
-      if (resolvedКомпанияId) {
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.list(resolvedКомпанияId) });
+    onSuccess: (_approval, variables) => {
+      invalidateIssueDetail();
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.approvals(issueId!) });
+      invalidateIssueCollections();
+      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.detail(variables.approvalId) });
+      if (resolvedCompanyId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list(resolvedCompanyId) });
       }
       pushToast({
-        title: variables.action === "approve" ? "Согласование approved" : "Согласование rejected",
+        title: variables.action === "approve" ? "Approval approved" : "Approval rejected",
         tone: "success",
       });
     },
-    onОшибка: (err, variables) => {
+    onError: (err, variables) => {
       pushToast({
-        title: variables.action === "approve" ? "Согласование failed" : "Отклонитьion failed",
-        body: err instanceof Ошибка ? err.message : "Unable to update approval",
+        title: variables.action === "approve" ? "Approval failed" : "Rejection failed",
+        body: err instanceof Error ? err.message : "Unable to update approval",
         tone: "error",
       });
     },
     onSettled: () => {
-      setОжиданиеСогласованиеAction(null);
+      setPendingApprovalAction(null);
     },
   });
 
@@ -1912,41 +1912,41 @@ export function ЗадачаDetail() {
     mutationFn: ({ body, reopen, interrupt }: { body: string; reopen?: boolean; interrupt?: boolean }) =>
       issuesApi.addComment(issueId!, body, reopen, interrupt),
     onMutate: async ({ body, reopen, interrupt }) => {
-      await queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.comments(issueId!) });
-      await queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.detail(issueId!) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.issues.comments(issueId!) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.issues.detail(issueId!) });
 
-      const previousЗадача = queryClient.getQueryData<Задача>(queryКлючs.issues.detail(issueId!));
-      const queuedComment = !interrupt ? readЗадачаЗапуститьStateFromCache(queryClient, issueId!).runningЗадачаЗапустить : null;
+      const previousIssue = queryClient.getQueryData<Issue>(queryKeys.issues.detail(issueId!));
+      const queuedComment = !interrupt ? readIssueRunStateFromCache(queryClient, issueId!).runningIssueRun : null;
       const optimisticComment = issue
-        ? createOptimisticЗадачаComment({
+        ? createOptimisticIssueComment({
             companyId: issue.companyId,
             issueId: issue.id,
             body,
             authorUserId: currentUserId,
-            clientСтатус: queuedComment ? "queued" : "pending",
-            queueЦельЗапуститьId: queuedComment?.id ?? null,
+            clientStatus: queuedComment ? "queued" : "pending",
+            queueTargetRunId: queuedComment?.id ?? null,
           })
         : null;
 
       if (optimisticComment) {
-        setOptimisticКомментарии((current) => [...current, optimisticComment]);
+        setOptimisticComments((current) => [...current, optimisticComment]);
       }
-      if (previousЗадача) {
+      if (previousIssue) {
         queryClient.setQueryData(
-          queryКлючs.issues.detail(issueId!),
-          applyOptimisticЗадачаCommentОбновить(previousЗадача, { reopen }),
+          queryKeys.issues.detail(issueId!),
+          applyOptimisticIssueCommentUpdate(previousIssue, { reopen }),
         );
       }
 
       return {
         optimisticCommentId: optimisticComment?.clientId ?? null,
-        queuedCommentЦельЗапуститьId: queuedComment?.id ?? null,
-        previousЗадача,
+        queuedCommentTargetRunId: queuedComment?.id ?? null,
+        previousIssue,
       };
     },
-    onУспешно: async (comment, _variables, context) => {
+    onSuccess: async (comment, _variables, context) => {
       if (context?.optimisticCommentId) {
-        setOptimisticКомментарии((current) =>
+        setOptimisticComments((current) =>
           current.filter((entry) => entry.clientId !== context.optimisticCommentId),
         );
       }
@@ -1954,115 +1954,115 @@ export function ЗадачаDetail() {
         cancelledQueuedOptimisticCommentIdsRef.current.delete(context.optimisticCommentId);
         try {
           await issuesApi.cancelComment(issueId!, comment.id);
-          invalidateЗадачаDetail();
-          invalidateЗадачаThreadLazily();
-          invalidateЗадачаCollections();
+          invalidateIssueDetail();
+          invalidateIssueThreadLazily();
+          invalidateIssueCollections();
           return;
         } catch (err) {
           pushToast({
-            title: "Отмена failed",
-            body: err instanceof Ошибка ? err.message : "Unable to cancel the queued comment",
+            title: "Cancel failed",
+            body: err instanceof Error ? err.message : "Unable to cancel the queued comment",
             tone: "error",
           });
         }
       }
-      if (context?.queuedCommentЦельЗапуститьId) {
-        setLocallyQueuedCommentЗапуститьIds((current) => {
+      if (context?.queuedCommentTargetRunId) {
+        setLocallyQueuedCommentRunIds((current) => {
           const next = new Map(current);
-          next.set(comment.id, context.queuedCommentЦельЗапуститьId!);
+          next.set(comment.id, context.queuedCommentTargetRunId!);
           return next;
         });
       }
-      queryClient.setQueryData<InfiniteData<ЗадачаComment[], string | null>>(
-        queryКлючs.issues.comments(issueId!),
+      queryClient.setQueryData<InfiniteData<IssueComment[], string | null>>(
+        queryKeys.issues.comments(issueId!),
         (current) => current ? {
           ...current,
-          pages: upsertЗадачаCommentInPages(current.pages, comment),
+          pages: upsertIssueCommentInPages(current.pages, comment),
         } : {
           pageParams: [null],
-          pages: upsertЗадачаCommentInPages(undefined, comment),
+          pages: upsertIssueCommentInPages(undefined, comment),
         },
       );
     },
-    onОшибка: (err, _variables, context) => {
+    onError: (err, _variables, context) => {
       if (context?.optimisticCommentId) {
-        setOptimisticКомментарии((current) =>
+        setOptimisticComments((current) =>
           current.filter((entry) => entry.clientId !== context.optimisticCommentId),
         );
       }
-      if (context?.previousЗадача) {
-        queryClient.setQueryData(queryКлючs.issues.detail(issueId!), context.previousЗадача);
+      if (context?.previousIssue) {
+        queryClient.setQueryData(queryKeys.issues.detail(issueId!), context.previousIssue);
       }
       pushToast({
         title: "Comment failed",
-        body: err instanceof Ошибка ? err.message : "Unable to post comment",
+        body: err instanceof Error ? err.message : "Unable to post comment",
         tone: "error",
       });
     },
     onSettled: (_result, _error, variables) => {
-      invalidateЗадачаThreadLazily();
+      invalidateIssueThreadLazily();
       if (variables.interrupt) {
-        invalidateЗадачаЗапуститьState();
+        invalidateIssueRunState();
       }
       if (variables.reopen) {
-        invalidateЗадачаCollections();
+        invalidateIssueCollections();
       }
     },
   });
   const acceptInteraction = useMutation({
     mutationFn: ({
       interaction,
-      selectedClientКлючs,
+      selectedClientKeys,
     }: {
-      interaction: ActionableЗадачаThreadInteraction;
-      selectedClientКлючs?: string[];
-    }) => issuesApi.acceptInteraction(issueId!, interaction.id, { selectedClientКлючs }),
-    onУспешно: (interaction) => {
+      interaction: ActionableIssueThreadInteraction;
+      selectedClientKeys?: string[];
+    }) => issuesApi.acceptInteraction(issueId!, interaction.id, { selectedClientKeys }),
+    onSuccess: (interaction) => {
       upsertInteractionInCache(interaction);
-      if (interaction.kind === "suggest_tasks" && resolvedКомпанияId && issue?.id) {
-        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listByРодитель(resolvedКомпанияId, issue.id) });
+      if (interaction.kind === "suggest_tasks" && resolvedCompanyId && issue?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByParent(resolvedCompanyId, issue.id) });
       }
-      invalidateЗадачаDetail();
-      invalidateЗадачаCollections();
+      invalidateIssueDetail();
+      invalidateIssueCollections();
       const createdCount = interaction.kind === "suggest_tasks"
-        ? interaction.result?.createdЗадачи?.length ?? 0
+        ? interaction.result?.createdTasks?.length ?? 0
         : 0;
       const skippedCount = interaction.kind === "suggest_tasks"
-        ? interaction.result?.skippedClientКлючs?.length ?? 0
+        ? interaction.result?.skippedClientKeys?.length ?? 0
         : 0;
       pushToast({
         title: interaction.kind === "request_confirmation"
           ? "Request confirmed"
           : skippedCount > 0
-          ? `Принятьed ${createdCount} draft${createdCount === 1 ? "" : "s"} and skipped ${skippedCount}`
+          ? `Accepted ${createdCount} draft${createdCount === 1 ? "" : "s"} and skipped ${skippedCount}`
           : "Suggested tasks accepted",
         tone: "success",
       });
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
-        title: "Принять failed",
-        body: err instanceof Ошибка ? err.message : "Unable to accept the suggested tasks",
+        title: "Accept failed",
+        body: err instanceof Error ? err.message : "Unable to accept the suggested tasks",
         tone: "error",
       });
     },
   });
   const rejectInteraction = useMutation({
-    mutationFn: ({ interaction, reason }: { interaction: ActionableЗадачаThreadInteraction; reason?: string }) =>
+    mutationFn: ({ interaction, reason }: { interaction: ActionableIssueThreadInteraction; reason?: string }) =>
       issuesApi.rejectInteraction(issueId!, interaction.id, reason),
-    onУспешно: (interaction) => {
+    onSuccess: (interaction) => {
       upsertInteractionInCache(interaction);
-      invalidateЗадачаDetail();
-      invalidateЗадачаCollections();
+      invalidateIssueDetail();
+      invalidateIssueCollections();
       pushToast({
         title: interaction.kind === "request_confirmation" ? "Request declined" : "Suggestion rejected",
         tone: "success",
       });
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
-        title: "Отклонить failed",
-        body: err instanceof Ошибка ? err.message : "Unable to reject the suggested tasks",
+        title: "Reject failed",
+        body: err instanceof Error ? err.message : "Unable to reject the suggested tasks",
         tone: "error",
       });
     },
@@ -2072,22 +2072,22 @@ export function ЗадачаDetail() {
       interaction,
       answers,
     }: {
-      interaction: ЗадачаThreadInteraction;
+      interaction: IssueThreadInteraction;
       answers: AskUserQuestionsAnswer[];
     }) => issuesApi.respondToInteraction(issueId!, interaction.id, { answers }),
-    onУспешно: (interaction) => {
+    onSuccess: (interaction) => {
       upsertInteractionInCache(interaction);
-      invalidateЗадачаDetail();
-      invalidateЗадачаCollections();
+      invalidateIssueDetail();
+      invalidateIssueCollections();
       pushToast({
         title: "Answers submitted",
         tone: "success",
       });
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
-        title: "Отправить failed",
-        body: err instanceof Ошибка ? err.message : "Unable to submit answers",
+        title: "Submit failed",
+        body: err instanceof Error ? err.message : "Unable to submit answers",
         tone: "error",
       });
     },
@@ -2096,19 +2096,19 @@ export function ЗадачаDetail() {
   const cancelInteraction = useMutation({
     mutationFn: ({ interaction }: { interaction: AskUserQuestionsInteraction }) =>
       issuesApi.cancelInteraction(issueId!, interaction.id),
-    onУспешно: (interaction) => {
+    onSuccess: (interaction) => {
       upsertInteractionInCache(interaction);
-      invalidateЗадачаDetail();
-      invalidateЗадачаCollections();
+      invalidateIssueDetail();
+      invalidateIssueCollections();
       pushToast({
         title: "Question cancelled",
         tone: "success",
       });
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
-        title: "Отмена failed",
-        body: err instanceof Ошибка ? err.message : "Unable to cancel the question",
+        title: "Cancel failed",
+        body: err instanceof Error ? err.message : "Unable to cancel the question",
         tone: "error",
       });
     },
@@ -2128,110 +2128,110 @@ export function ЗадачаDetail() {
     }) =>
       issuesApi.update(issueId!, {
         comment: body,
-        assigneeАгентId: reassignment.assigneeАгентId,
+        assigneeAgentId: reassignment.assigneeAgentId,
         assigneeUserId: reassignment.assigneeUserId,
         ...(reopen ? { status: "todo" } : {}),
         ...(interrupt ? { interrupt } : {}),
       }),
     onMutate: async ({ body, reopen, reassignment, interrupt }) => {
-      await queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.comments(issueId!) });
-      await queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.detail(issueId!) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.issues.comments(issueId!) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.issues.detail(issueId!) });
 
-      const previousЗадача = queryClient.getQueryData<Задача>(queryКлючs.issues.detail(issueId!));
-      const queuedComment = !interrupt ? readЗадачаЗапуститьStateFromCache(queryClient, issueId!).runningЗадачаЗапустить : null;
+      const previousIssue = queryClient.getQueryData<Issue>(queryKeys.issues.detail(issueId!));
+      const queuedComment = !interrupt ? readIssueRunStateFromCache(queryClient, issueId!).runningIssueRun : null;
       const optimisticComment = issue
-        ? createOptimisticЗадачаComment({
+        ? createOptimisticIssueComment({
             companyId: issue.companyId,
             issueId: issue.id,
             body,
             authorUserId: currentUserId,
-            clientСтатус: queuedComment ? "queued" : "pending",
-            queueЦельЗапуститьId: queuedComment?.id ?? null,
+            clientStatus: queuedComment ? "queued" : "pending",
+            queueTargetRunId: queuedComment?.id ?? null,
           })
         : null;
 
       if (optimisticComment) {
-        setOptimisticКомментарии((current) => [...current, optimisticComment]);
+        setOptimisticComments((current) => [...current, optimisticComment]);
       }
-      if (previousЗадача) {
+      if (previousIssue) {
         queryClient.setQueryData(
-          queryКлючs.issues.detail(issueId!),
-          applyOptimisticЗадачаCommentОбновить(previousЗадача, { reopen, reassignment }),
+          queryKeys.issues.detail(issueId!),
+          applyOptimisticIssueCommentUpdate(previousIssue, { reopen, reassignment }),
         );
       }
 
       return {
         optimisticCommentId: optimisticComment?.clientId ?? null,
-        queuedCommentЦельЗапуститьId: queuedComment?.id ?? null,
-        previousЗадача,
+        queuedCommentTargetRunId: queuedComment?.id ?? null,
+        previousIssue,
       };
     },
-    onУспешно: async (result, _variables, context) => {
+    onSuccess: async (result, _variables, context) => {
       if (context?.optimisticCommentId) {
-        setOptimisticКомментарии((current) =>
+        setOptimisticComments((current) =>
           current.filter((entry) => entry.clientId !== context.optimisticCommentId),
         );
       }
 
-      const { comment, ...nextЗадача } = result;
-      queryClient.setQueryData(queryКлючs.issues.detail(issueId!), nextЗадача);
+      const { comment, ...nextIssue } = result;
+      queryClient.setQueryData(queryKeys.issues.detail(issueId!), nextIssue);
       if (comment && context?.optimisticCommentId && cancelledQueuedOptimisticCommentIdsRef.current.has(context.optimisticCommentId)) {
         cancelledQueuedOptimisticCommentIdsRef.current.delete(context.optimisticCommentId);
         try {
           await issuesApi.cancelComment(issueId!, comment.id);
-          invalidateЗадачаDetail();
-          invalidateЗадачаThreadLazily();
-          invalidateЗадачаCollections();
+          invalidateIssueDetail();
+          invalidateIssueThreadLazily();
+          invalidateIssueCollections();
           return;
         } catch (err) {
           pushToast({
-            title: "Отмена failed",
-            body: err instanceof Ошибка ? err.message : "Unable to cancel the queued comment",
+            title: "Cancel failed",
+            body: err instanceof Error ? err.message : "Unable to cancel the queued comment",
             tone: "error",
           });
         }
       }
-      if (comment && context?.queuedCommentЦельЗапуститьId) {
-        setLocallyQueuedCommentЗапуститьIds((current) => {
+      if (comment && context?.queuedCommentTargetRunId) {
+        setLocallyQueuedCommentRunIds((current) => {
           const next = new Map(current);
-          next.set(comment.id, context.queuedCommentЦельЗапуститьId!);
+          next.set(comment.id, context.queuedCommentTargetRunId!);
           return next;
         });
       }
       if (comment) {
-        queryClient.setQueryData<InfiniteData<ЗадачаComment[], string | null>>(
-          queryКлючs.issues.comments(issueId!),
+        queryClient.setQueryData<InfiniteData<IssueComment[], string | null>>(
+          queryKeys.issues.comments(issueId!),
           (current) => current ? {
             ...current,
-            pages: upsertЗадачаCommentInPages(current.pages, comment),
+            pages: upsertIssueCommentInPages(current.pages, comment),
           } : {
             pageParams: [null],
-            pages: upsertЗадачаCommentInPages(undefined, comment),
+            pages: upsertIssueCommentInPages(undefined, comment),
           },
         );
       }
     },
-    onОшибка: (err, _variables, context) => {
+    onError: (err, _variables, context) => {
       if (context?.optimisticCommentId) {
-        setOptimisticКомментарии((current) =>
+        setOptimisticComments((current) =>
           current.filter((entry) => entry.clientId !== context.optimisticCommentId),
         );
       }
-      if (context?.previousЗадача) {
-        queryClient.setQueryData(queryКлючs.issues.detail(issueId!), context.previousЗадача);
+      if (context?.previousIssue) {
+        queryClient.setQueryData(queryKeys.issues.detail(issueId!), context.previousIssue);
       }
       pushToast({
         title: "Comment failed",
-        body: err instanceof Ошибка ? err.message : "Unable to post comment",
+        body: err instanceof Error ? err.message : "Unable to post comment",
         tone: "error",
       });
     },
     onSettled: (_result, _error, variables) => {
-      invalidateЗадачаThreadLazily();
+      invalidateIssueThreadLazily();
       if (variables.interrupt) {
-        invalidateЗадачаЗапуститьState();
+        invalidateIssueRunState();
       }
-      invalidateЗадачаCollections();
+      invalidateIssueCollections();
     },
   });
 
@@ -2239,87 +2239,87 @@ export function ЗадачаDetail() {
     mutationFn: (runId: string) => heartbeatsApi.cancel(runId),
     onMutate: async (runId) => {
       await Promise.all(issueCacheRefs.flatMap((ref) => [
-        queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.runs(ref) }),
-        queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.liveЗапуститьs(ref) }),
-        queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.activeЗапустить(ref) }),
-        queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.detail(ref) }),
+        queryClient.cancelQueries({ queryKey: queryKeys.issues.runs(ref) }),
+        queryClient.cancelQueries({ queryKey: queryKeys.issues.liveRuns(ref) }),
+        queryClient.cancelQueries({ queryKey: queryKeys.issues.activeRun(ref) }),
+        queryClient.cancelQueries({ queryKey: queryKeys.issues.detail(ref) }),
       ]));
 
-      const previousЗапуститьState = issueCacheRefs.map((ref) => ({
+      const previousRunState = issueCacheRefs.map((ref) => ({
         ref,
-        runs: queryClient.getQueryData<ЗапуститьForЗадача[]>(queryКлючs.issues.runs(ref)),
-        liveЗапуститьs: queryClient.getQueryData<LiveЗапуститьForЗадача[]>(queryКлючs.issues.liveЗапуститьs(ref)),
-        activeЗапустить: queryClient.getQueryData<АктивенЗапуститьForЗадача | null>(queryКлючs.issues.activeЗапустить(ref)),
-        issue: queryClient.getQueryData<Задача>(queryКлючs.issues.detail(ref)),
+        runs: queryClient.getQueryData<RunForIssue[]>(queryKeys.issues.runs(ref)),
+        liveRuns: queryClient.getQueryData<LiveRunForIssue[]>(queryKeys.issues.liveRuns(ref)),
+        activeRun: queryClient.getQueryData<ActiveRunForIssue | null>(queryKeys.issues.activeRun(ref)),
+        issue: queryClient.getQueryData<Issue>(queryKeys.issues.detail(ref)),
       }));
-      const previousLocalQueuedCommentЗапуститьIds = locallyQueuedCommentЗапуститьIds;
-      const cachedАктивенЗапустить =
-        previousЗапуститьState.find((state) => state.activeЗапустить?.id === runId)?.activeЗапустить ??
-        previousЗапуститьState.find((state) => state.activeЗапустить)?.activeЗапустить ??
+      const previousLocalQueuedCommentRunIds = locallyQueuedCommentRunIds;
+      const cachedActiveRun =
+        previousRunState.find((state) => state.activeRun?.id === runId)?.activeRun ??
+        previousRunState.find((state) => state.activeRun)?.activeRun ??
         null;
-      const liveЗапуститьList = dedupeLiveЗапуститьsById(previousЗапуститьState.flatMap((state) => state.liveЗапуститьs ?? []));
-      const runningЗадачаЗапустить = resolveВыполняетсяЗадачаЗапустить(cachedАктивенЗапустить, liveЗапуститьList);
-      const targetЗапустить =
-        cachedАктивенЗапустить?.id === runId
-          ? cachedАктивенЗапустить
-          : liveЗапуститьList?.find((run) => run.id === runId) ?? runningЗадачаЗапустить ?? null;
+      const liveRunList = dedupeLiveRunsById(previousRunState.flatMap((state) => state.liveRuns ?? []));
+      const runningIssueRun = resolveRunningIssueRun(cachedActiveRun, liveRunList);
+      const targetRun =
+        cachedActiveRun?.id === runId
+          ? cachedActiveRun
+          : liveRunList?.find((run) => run.id === runId) ?? runningIssueRun ?? null;
 
-      if (targetЗапустить) {
+      if (targetRun) {
         const interruptedAt = new Date().toISOString();
         for (const ref of issueCacheRefs) {
-          queryClient.setQueryData<ЗапуститьForЗадача[] | undefined>(
-            queryКлючs.issues.runs(ref),
-            (current) => upsertInterruptedЗапустить(current, targetЗапустить, interruptedAt),
+          queryClient.setQueryData<RunForIssue[] | undefined>(
+            queryKeys.issues.runs(ref),
+            (current) => upsertInterruptedRun(current, targetRun, interruptedAt),
           );
         }
       }
 
       for (const ref of issueCacheRefs) {
         queryClient.setQueryData(
-          queryКлючs.issues.liveЗапуститьs(ref),
-          (current: LiveЗапуститьForЗадача[] | undefined) => removeLiveЗапуститьById(current, runId),
+          queryKeys.issues.liveRuns(ref),
+          (current: LiveRunForIssue[] | undefined) => removeLiveRunById(current, runId),
         );
         queryClient.setQueryData(
-          queryКлючs.issues.activeЗапустить(ref),
-          (current: АктивенЗапуститьForЗадача | null | undefined) => (current?.id === runId ? null : current),
+          queryKeys.issues.activeRun(ref),
+          (current: ActiveRunForIssue | null | undefined) => (current?.id === runId ? null : current),
         );
         queryClient.setQueryData(
-          queryКлючs.issues.detail(ref),
-          (current: Задача | undefined) => clearЗадачаExecutionЗапустить(current, runId),
+          queryKeys.issues.detail(ref),
+          (current: Issue | undefined) => clearIssueExecutionRun(current, runId),
         );
       }
-      setLocallyQueuedCommentЗапуститьIds((current) => {
-        const next = new Map([...current].filter(([, targetЗапуститьId]) => targetЗапуститьId !== runId));
+      setLocallyQueuedCommentRunIds((current) => {
+        const next = new Map([...current].filter(([, targetRunId]) => targetRunId !== runId));
         return next.size === current.size ? current : next;
       });
 
       return {
-        previousЗапуститьState,
-        previousLocalQueuedCommentЗапуститьIds,
+        previousRunState,
+        previousLocalQueuedCommentRunIds,
       };
     },
-    onУспешно: () => {
-      invalidateЗадачаDetail();
-      invalidateЗадачаЗапуститьState();
+    onSuccess: () => {
+      invalidateIssueDetail();
+      invalidateIssueRunState();
       pushToast({
         title: "Interrupt requested",
         body: "The active run is stopping so queued comments can continue next.",
         tone: "success",
       });
     },
-    onОшибка: (err, _runId, context) => {
-      for (const state of context?.previousЗапуститьState ?? []) {
-        queryClient.setQueryData(queryКлючs.issues.runs(state.ref), state.runs);
-        queryClient.setQueryData(queryКлючs.issues.liveЗапуститьs(state.ref), state.liveЗапуститьs);
-        queryClient.setQueryData(queryКлючs.issues.activeЗапустить(state.ref), state.activeЗапустить);
-        queryClient.setQueryData(queryКлючs.issues.detail(state.ref), state.issue);
+    onError: (err, _runId, context) => {
+      for (const state of context?.previousRunState ?? []) {
+        queryClient.setQueryData(queryKeys.issues.runs(state.ref), state.runs);
+        queryClient.setQueryData(queryKeys.issues.liveRuns(state.ref), state.liveRuns);
+        queryClient.setQueryData(queryKeys.issues.activeRun(state.ref), state.activeRun);
+        queryClient.setQueryData(queryKeys.issues.detail(state.ref), state.issue);
       }
-      if (context?.previousLocalQueuedCommentЗапуститьIds) {
-        setLocallyQueuedCommentЗапуститьIds(context.previousLocalQueuedCommentЗапуститьIds);
+      if (context?.previousLocalQueuedCommentRunIds) {
+        setLocallyQueuedCommentRunIds(context.previousLocalQueuedCommentRunIds);
       }
       pushToast({
         title: "Interrupt failed",
-        body: err instanceof Ошибка ? err.message : "Unable to interrupt the active run",
+        body: err instanceof Error ? err.message : "Unable to interrupt the active run",
         tone: "error",
       });
     },
@@ -2327,44 +2327,44 @@ export function ЗадачаDetail() {
 
   const cancelQueuedComment = useMutation({
     mutationFn: async ({ commentId }: { commentId: string }) => issuesApi.cancelComment(issueId!, commentId),
-    onУспешно: (comment) => {
-      setLocallyQueuedCommentЗапуститьIds((current) => {
+    onSuccess: (comment) => {
+      setLocallyQueuedCommentRunIds((current) => {
         if (!current.has(comment.id)) return current;
         const next = new Map(current);
         next.delete(comment.id);
         return next;
       });
       removeCommentFromCache(comment.id);
-      restoreQueuedCommentЧерновик(comment.body);
-      invalidateЗадачаDetail();
-      invalidateЗадачаThreadLazily();
-      invalidateЗадачаCollections();
+      restoreQueuedCommentDraft(comment.body);
+      invalidateIssueDetail();
+      invalidateIssueThreadLazily();
+      invalidateIssueCollections();
       pushToast({
         title: "Queued comment canceled",
         body: "The queued message was restored to the composer.",
         tone: "success",
       });
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
-        title: "Отмена failed",
-        body: err instanceof Ошибка ? err.message : "Unable to cancel the queued comment",
+        title: "Cancel failed",
+        body: err instanceof Error ? err.message : "Unable to cancel the queued comment",
         tone: "error",
       });
     },
   });
 
-  const handleОтменаQueuedComment = useCallback((commentId: string) => {
+  const handleCancelQueuedComment = useCallback((commentId: string) => {
     if (commentId.startsWith("optimistic-")) {
       cancelledQueuedOptimisticCommentIdsRef.current.add(commentId);
       let cancelledCommentBody: string | null = null;
-      setOptimisticКомментарии((current) => {
-        const next = takeOptimisticЗадачаComment(current, commentId);
+      setOptimisticComments((current) => {
+        const next = takeOptimisticIssueComment(current, commentId);
         cancelledCommentBody = next.comment?.body ?? null;
         return next.comments;
       });
       if (cancelledCommentBody) {
-        restoreQueuedCommentЧерновик(cancelledCommentBody);
+        restoreQueuedCommentDraft(cancelledCommentBody);
         pushToast({
           title: "Queued comment canceled",
           body: "The queued message was restored to the composer.",
@@ -2375,36 +2375,36 @@ export function ЗадачаDetail() {
     }
 
     void cancelQueuedComment.mutateAsync({ commentId });
-  }, [cancelQueuedComment, restoreQueuedCommentЧерновик, pushToast]);
+  }, [cancelQueuedComment, restoreQueuedCommentDraft, pushToast]);
 
   const feedbackVoteMutation = useMutation({
     mutationFn: (variables: {
-      targetТип: "issue_comment" | "issue_document_revision";
+      targetType: "issue_comment" | "issue_document_revision";
       targetId: string;
       vote: "up" | "down";
       reason?: string;
       allowSharing?: boolean;
-      sharingPreferenceAtОтправить: "allowed" | "not_allowed" | "prompt";
+      sharingPreferenceAtSubmit: "allowed" | "not_allowed" | "prompt";
     }) =>
       issuesApi.upsertFeedbackVote(issueId!, {
-        targetТип: variables.targetТип,
+        targetType: variables.targetType,
         targetId: variables.targetId,
         vote: variables.vote,
         ...(variables.reason ? { reason: variables.reason } : {}),
         ...(variables.allowSharing ? { allowSharing: true } : {}),
       }),
     onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryКлюч: queryКлючs.issues.feedbackVotes(issueId!) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.issues.feedbackVotes(issueId!) });
       const previousVotes = queryClient.getQueryData<FeedbackVote[]>(
-        queryКлючs.issues.feedbackVotes(issueId!),
+        queryKeys.issues.feedbackVotes(issueId!),
       );
       queryClient.setQueryData<FeedbackVote[]>(
-        queryКлючs.issues.feedbackVotes(issueId!),
+        queryKeys.issues.feedbackVotes(issueId!),
         mergeOptimisticFeedbackVote(
           previousVotes,
           {
             issueId: issueId!,
-            targetТип: variables.targetТип,
+            targetType: variables.targetType,
             targetId: variables.targetId,
             vote: variables.vote,
             reason: variables.reason,
@@ -2414,13 +2414,13 @@ export function ЗадачаDetail() {
       );
       return { previousVotes };
     },
-    onУспешно: (_savedVote, variables) => {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.feedbackVotes(issueId!) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.instance.generalНастройки });
+    onSuccess: (_savedVote, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.feedbackVotes(issueId!) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.instance.generalSettings });
       pushToast({
         title:
-          variables.sharingPreferenceAtОтправить === "prompt"
+          variables.sharingPreferenceAtSubmit === "prompt"
             ? variables.allowSharing
               ? "Feedback saved. Future votes will share"
               : "Feedback saved. Future votes will stay local"
@@ -2430,13 +2430,13 @@ export function ЗадачаDetail() {
         tone: "success",
       });
     },
-    onОшибка: (err, _variables, context) => {
+    onError: (err, _variables, context) => {
       if (context?.previousVotes) {
-        queryClient.setQueryData(queryКлючs.issues.feedbackVotes(issueId!), context.previousVotes);
+        queryClient.setQueryData(queryKeys.issues.feedbackVotes(issueId!), context.previousVotes);
       }
       pushToast({
-        title: "Ошибка to save feedback",
-        body: err instanceof Ошибка ? err.message : "Неизвестно error",
+        title: "Failed to save feedback",
+        body: err instanceof Error ? err.message : "Unknown error",
         tone: "error",
       });
     },
@@ -2444,67 +2444,67 @@ export function ЗадачаDetail() {
 
   const uploadAttachment = useMutation({
     mutationFn: async (file: File) => {
-      if (!selectedКомпанияId) throw new Ошибка("Нет company selected");
-      return issuesApi.uploadAttachment(selectedКомпанияId, issueId!, file);
+      if (!selectedCompanyId) throw new Error("No company selected");
+      return issuesApi.uploadAttachment(selectedCompanyId, issueId!, file);
     },
-    onУспешно: () => {
-      setAttachmentОшибка(null);
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.attachments(issueId!) });
-      invalidateЗадачаDetail();
+    onSuccess: () => {
+      setAttachmentError(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.attachments(issueId!) });
+      invalidateIssueDetail();
     },
-    onОшибка: (err) => {
-      setAttachmentОшибка(err instanceof Ошибка ? err.message : "Загрузить failed");
+    onError: (err) => {
+      setAttachmentError(err instanceof Error ? err.message : "Upload failed");
     },
   });
 
   const importMarkdownDocument = useMutation({
     mutationFn: async (file: File) => {
-      const baseИмя = fileBaseИмя(file.name);
-      const key = slugifyDocumentКлюч(baseИмя);
+      const baseName = fileBaseName(file.name);
+      const key = slugifyDocumentKey(baseName);
       const existing = (issue?.documentSummaries ?? []).find((doc) => doc.key === key) ?? null;
       const body = await file.text();
-      const inferredНазвание = titleizeFilename(baseИмя);
-      const nextНазвание = existing?.title ?? inferredНазвание ?? null;
+      const inferredTitle = titleizeFilename(baseName);
+      const nextTitle = existing?.title ?? inferredTitle ?? null;
       return issuesApi.upsertDocument(issueId!, key, {
-        title: key === "plan" ? null : nextНазвание,
+        title: key === "plan" ? null : nextTitle,
         format: "markdown",
         body,
         baseRevisionId: existing?.latestRevisionId ?? null,
       });
     },
-    onУспешно: () => {
-      setAttachmentОшибка(null);
-      invalidateЗадачаDetail();
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.documents(issueId!) });
+    onSuccess: () => {
+      setAttachmentError(null);
+      invalidateIssueDetail();
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.documents(issueId!) });
     },
-    onОшибка: (err) => {
-      setAttachmentОшибка(err instanceof Ошибка ? err.message : "Document import failed");
+    onError: (err) => {
+      setAttachmentError(err instanceof Error ? err.message : "Document import failed");
     },
   });
 
   const deleteAttachment = useMutation({
     mutationFn: (attachmentId: string) => issuesApi.deleteAttachment(attachmentId),
-    onУспешно: () => {
-      setAttachmentОшибка(null);
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.attachments(issueId!) });
-      invalidateЗадачаDetail();
+    onSuccess: () => {
+      setAttachmentError(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.attachments(issueId!) });
+      invalidateIssueDetail();
     },
-    onОшибка: (err) => {
-      setAttachmentОшибка(err instanceof Ошибка ? err.message : "Ошибка удаления");
+    onError: (err) => {
+      setAttachmentError(err instanceof Error ? err.message : "Delete failed");
     },
   });
 
-  const archiveFromВходящие = useMutation({
-    mutationFn: (id: string) => issuesApi.archiveFromВходящие(id),
-    onУспешно: () => {
-      invalidateЗадачаCollections();
+  const archiveFromInbox = useMutation({
+    mutationFn: (id: string) => issuesApi.archiveFromInbox(id),
+    onSuccess: () => {
+      invalidateIssueCollections();
       navigate(sourceBreadcrumb.href.startsWith("/inbox") ? sourceBreadcrumb.href : "/inbox", { replace: true });
-      pushToast({ title: "Задача archived from inbox", tone: "success" });
+      pushToast({ title: "Issue archived from inbox", tone: "success" });
     },
-    onОшибка: (err) => {
+    onError: (err) => {
       pushToast({
-        title: "Архивировать failed",
-        body: err instanceof Ошибка ? err.message : "Unable to archive this issue from the inbox",
+        title: "Archive failed",
+        body: err instanceof Error ? err.message : "Unable to archive this issue from the inbox",
         tone: "error",
       });
     },
@@ -2513,141 +2513,141 @@ export function ЗадачаDetail() {
   useEffect(() => {
     setBreadcrumbs([
       sourceBreadcrumb,
-      { label: hasLiveЗапуститьs ? `🔵 ${breadcrumbНазвание}` : breadcrumbНазвание },
+      { label: hasLiveRuns ? `🔵 ${breadcrumbTitle}` : breadcrumbTitle },
     ]);
   }, [
-    breadcrumbНазвание,
-    hasLiveЗапуститьs,
+    breadcrumbTitle,
+    hasLiveRuns,
     setBreadcrumbs,
     sourceBreadcrumb.href,
     sourceBreadcrumb.label,
   ]);
 
-  const isFromВходящие = resolvedЗадачаDetailState?.issueDetailSource === "inbox";
+  const isFromInbox = resolvedIssueDetailState?.issueDetailSource === "inbox";
 
   // Scroll to top on forward navigation (PUSH/REPLACE) so issue doesn't
   // inherit the inbox/issues-list scroll position on mobile.
   useEffect(() => {
-    if (navigationТип === "POP") return;
+    if (navigationType === "POP") return;
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     const main = document.getElementById("main-content");
     if (main) main.scrollTop = 0;
-  }, [issueId, navigationТип]);
+  }, [issueId, navigationType]);
 
   // Redirect to identifier-based URL if navigated via UUID
   useEffect(() => {
-    const nextState = resolvedЗадачаDetailState ?? location.state;
+    const nextState = resolvedIssueDetailState ?? location.state;
     if (issue?.identifier && issueId !== issue.identifier) {
-      rememberЗадачаDetailLocationState(issue.identifier, nextState, location.search);
-      navigate(createЗадачаDetailПуть(issue.identifier), {
+      rememberIssueDetailLocationState(issue.identifier, nextState, location.search);
+      navigate(createIssueDetailPath(issue.identifier), {
         replace: true,
         state: nextState,
       });
       return;
     }
 
-    if (issueId && hasLegacyЗадачаDetailQuery(location.search)) {
-      rememberЗадачаDetailLocationState(issueId, nextState, location.search);
-      navigate(createЗадачаDetailПуть(issueId), {
+    if (issueId && hasLegacyIssueDetailQuery(location.search)) {
+      rememberIssueDetailLocationState(issueId, nextState, location.search);
+      navigate(createIssueDetailPath(issueId), {
         replace: true,
         state: nextState,
       });
     }
-  }, [issue, issueId, navigate, location.state, location.search, resolvedЗадачаDetailState]);
+  }, [issue, issueId, navigate, location.state, location.search, resolvedIssueDetailState]);
 
   useEffect(() => {
     if (!issue?.id) return;
-    if (lastMarkedReadЗадачаIdRef.current === issue.id) return;
-    lastMarkedReadЗадачаIdRef.current = issue.id;
-    markЗадачаRead.mutate(issue.id);
+    if (lastMarkedReadIssueIdRef.current === issue.id) return;
+    lastMarkedReadIssueIdRef.current = issue.id;
+    markIssueRead.mutate(issue.id);
   }, [issue?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!panelЗадача) {
+    if (!panelIssue) {
       closePanel();
       return;
     }
     openPanel(
-      <ЗадачаProperties
-        issue={panelЗадача}
-        childЗадачи={panelChildЗадачи}
-        onДобавитьSubЗадача={openNewSubЗадача}
-        onОбновить={handleЗадачаPropertiesОбновить}
+      <IssueProperties
+        issue={panelIssue}
+        childIssues={panelChildIssues}
+        onAddSubIssue={openNewSubIssue}
+        onUpdate={handleIssuePropertiesUpdate}
       />
     );
     return () => closePanel();
   }, [
     closePanel,
-    handleЗадачаPropertiesОбновить,
-    issuePanelКлюч,
-    openNewSubЗадача,
+    handleIssuePropertiesUpdate,
+    issuePanelKey,
+    openNewSubIssue,
     openPanel,
-    panelChildЗадачи,
-    panelЗадача,
+    panelChildIssues,
+    panelIssue,
   ]);
 
-  const goToВходящиеShortcutArmedRef = useRef(false);
-  const goToВходящиеShortcutTimeoutRef = useRef<number | null>(null);
-  const canQuickАрхивироватьFromВходящие =
-    keyboardShortcutsВключитьd &&
+  const goToInboxShortcutArmedRef = useRef(false);
+  const goToInboxShortcutTimeoutRef = useRef<number | null>(null);
+  const canQuickArchiveFromInbox =
+    keyboardShortcutsEnabled &&
     !issue?.hiddenAt;
 
   useEffect(() => {
-    if (!issue?.id || !canQuickАрхивироватьFromВходящие) return;
-    const handleКлючDown = (event: КлючboardEvent) => {
-      const action = resolveВходящиеQuickАрхивироватьКлючAction({
-        armed: canQuickАрхивироватьFromВходящие,
+    if (!issue?.id || !canQuickArchiveFromInbox) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const action = resolveInboxQuickArchiveKeyAction({
+        armed: canQuickArchiveFromInbox,
         defaultPrevented: event.defaultPrevented,
         key: event.key,
-        metaКлюч: event.metaКлюч,
-        ctrlКлюч: event.ctrlКлюч,
-        altКлюч: event.altКлюч,
+        metaKey: event.metaKey,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
         target: event.target,
         hasOpenDialog: hasBlockingShortcutDialog(document),
       });
 
       if (action !== "archive") return;
 
-      event.preventПо умолчанию();
-      if (!archiveFromВходящие.isОжидание) {
-        archiveFromВходящие.mutate(issue.id);
+      event.preventDefault();
+      if (!archiveFromInbox.isPending) {
+        archiveFromInbox.mutate(issue.id);
       }
     };
 
-    document.addEventListener("keydown", handleКлючDown, true);
+    document.addEventListener("keydown", handleKeyDown, true);
     return () => {
-      document.removeEventListener("keydown", handleКлючDown, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [archiveFromВходящие, canQuickАрхивироватьFromВходящие, issue?.id]);
+  }, [archiveFromInbox, canQuickArchiveFromInbox, issue?.id]);
 
   useEffect(() => {
-    if (!keyboardShortcutsВключитьd) {
-      goToВходящиеShortcutArmedRef.current = false;
-      if (goToВходящиеShortcutTimeoutRef.current !== null) {
-        window.clearTimeout(goToВходящиеShortcutTimeoutRef.current);
-        goToВходящиеShortcutTimeoutRef.current = null;
+    if (!keyboardShortcutsEnabled) {
+      goToInboxShortcutArmedRef.current = false;
+      if (goToInboxShortcutTimeoutRef.current !== null) {
+        window.clearTimeout(goToInboxShortcutTimeoutRef.current);
+        goToInboxShortcutTimeoutRef.current = null;
       }
       return;
     }
 
     const clearArmTimeout = () => {
-      if (goToВходящиеShortcutTimeoutRef.current !== null) {
-        window.clearTimeout(goToВходящиеShortcutTimeoutRef.current);
-        goToВходящиеShortcutTimeoutRef.current = null;
+      if (goToInboxShortcutTimeoutRef.current !== null) {
+        window.clearTimeout(goToInboxShortcutTimeoutRef.current);
+        goToInboxShortcutTimeoutRef.current = null;
       }
     };
 
     const disarm = () => {
-      goToВходящиеShortcutArmedRef.current = false;
+      goToInboxShortcutArmedRef.current = false;
       clearArmTimeout();
     };
 
     const arm = () => {
-      goToВходящиеShortcutArmedRef.current = true;
+      goToInboxShortcutArmedRef.current = true;
       clearArmTimeout();
-      goToВходящиеShortcutTimeoutRef.current = window.setTimeout(() => {
-        goToВходящиеShortcutArmedRef.current = false;
-        goToВходящиеShortcutTimeoutRef.current = null;
+      goToInboxShortcutTimeoutRef.current = window.setTimeout(() => {
+        goToInboxShortcutArmedRef.current = false;
+        goToInboxShortcutTimeoutRef.current = null;
       }, 1200);
     };
 
@@ -2661,14 +2661,14 @@ export function ЗадачаDetail() {
       }
     };
 
-    const handleКлючDown = (event: КлючboardEvent) => {
-      const action = resolveЗадачаDetailGoКлючAction({
-        armed: goToВходящиеShortcutArmedRef.current,
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const action = resolveIssueDetailGoKeyAction({
+        armed: goToInboxShortcutArmedRef.current,
         defaultPrevented: event.defaultPrevented,
         key: event.key,
-        metaКлюч: event.metaКлюч,
-        ctrlКлюч: event.ctrlКлюч,
-        altКлюч: event.altКлюч,
+        metaKey: event.metaKey,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
         target: event.target,
         hasOpenDialog: hasBlockingShortcutDialog(document),
       });
@@ -2681,54 +2681,54 @@ export function ЗадачаDetail() {
 
       disarm();
       if (action === "navigate_inbox") {
-        event.preventПо умолчанию();
+        event.preventDefault();
         event.stopPropagation();
         navigate(sourceBreadcrumb.href.startsWith("/inbox") ? sourceBreadcrumb.href : "/inbox");
         return;
       }
       if (action === "focus_comment") {
-        event.preventПо умолчанию();
+        event.preventDefault();
         event.stopPropagation();
         setDetailTab("chat");
-        setОжиданиеCommentComposerFocusКлюч((current) => current + 1);
+        setPendingCommentComposerFocusKey((current) => current + 1);
       }
     };
 
     document.addEventListener("pointerdown", handlePointerDown, true);
     document.addEventListener("focusin", handleFocusIn, true);
-    document.addEventListener("keydown", handleКлючDown, true);
+    document.addEventListener("keydown", handleKeyDown, true);
     return () => {
       disarm();
       document.removeEventListener("pointerdown", handlePointerDown, true);
       document.removeEventListener("focusin", handleFocusIn, true);
-      document.removeEventListener("keydown", handleКлючDown, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [keyboardShortcutsВключитьd, navigate, sourceBreadcrumb.href]);
+  }, [keyboardShortcutsEnabled, navigate, sourceBreadcrumb.href]);
 
   useEffect(() => {
     const hash = location.hash;
     if (!hash.startsWith("#document-")) return;
-    const documentКлюч = decodeURIComponent(hash.slice("#document-".length));
-    if (documentКлюч !== ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY) return;
+    const documentKey = decodeURIComponent(hash.slice("#document-".length));
+    if (documentKey !== ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY) return;
     setDetailTab("activity");
     setHandoffFocusSignal((current) => current + 1);
   }, [location.hash]);
 
   useEffect(() => {
-    if (pendingCommentComposerFocusКлюч === 0) return;
+    if (pendingCommentComposerFocusKey === 0) return;
     if (detailTab !== "chat") return;
     commentComposerRef.current?.focus();
-  }, [detailTab, pendingCommentComposerFocusКлюч]);
+  }, [detailTab, pendingCommentComposerFocusKey]);
 
-  const isImageAttachment = (attachment: ЗадачаAttachment) => attachment.contentТип.startsWith("image/");
+  const isImageAttachment = (attachment: IssueAttachment) => attachment.contentType.startsWith("image/");
   const attachmentList = attachments ?? [];
   const imageAttachments = attachmentList.filter(isImageAttachment);
   const nonImageAttachments = attachmentList.filter((a) => !isImageAttachment(a));
 
   const handleChatImageClick = useCallback(
     (src: string) => {
-      // Try exact contentПуть match first
-      let idx = imageAttachments.findIndex((a) => a.contentПуть === src);
+      // Try exact contentPath match first
+      let idx = imageAttachments.findIndex((a) => a.contentPath === src);
       if (idx < 0) {
         // Try matching by asset ID extracted from /api/assets/{assetId}/content URLs
         const assetMatch = src.match(/\/api\/assets\/([^/]+)\/content/);
@@ -2747,7 +2747,7 @@ export function ЗадачаDetail() {
     [imageAttachments],
   );
 
-  const copyЗадачаToClipboard = async () => {
+  const copyIssueToClipboard = async () => {
     if (!issue) return;
     const decodeEntities = (text: string) => {
       const el = document.createElement("textarea");
@@ -2768,84 +2768,84 @@ export function ЗадачаDetail() {
   // don't trigger an infinite render loop (useMutation results and
   // non-memoized functions change identity every render).
   const inboxToolbarCallbacksRef = useRef({
-    onАрхивировать: () => {
-      if (!archiveFromВходящие.isОжидание && issue?.id) archiveFromВходящие.mutate(issue.id);
+    onArchive: () => {
+      if (!archiveFromInbox.isPending && issue?.id) archiveFromInbox.mutate(issue.id);
     },
-    onКопировать: () => copyЗадачаToClipboard(),
+    onCopy: () => copyIssueToClipboard(),
     onProperties: () => setMobilePropsOpen(true),
     onHide: () => {
-      updateЗадача.mutate(
+      updateIssue.mutate(
         { hiddenAt: new Date().toISOString() },
-        { onУспешно: () => navigate("/issues/all") },
+        { onSuccess: () => navigate("/issues/all") },
       );
     },
   });
   inboxToolbarCallbacksRef.current = {
-    onАрхивировать: () => {
-      if (!archiveFromВходящие.isОжидание && issue?.id) archiveFromВходящие.mutate(issue.id);
+    onArchive: () => {
+      if (!archiveFromInbox.isPending && issue?.id) archiveFromInbox.mutate(issue.id);
     },
-    onКопировать: () => copyЗадачаToClipboard(),
+    onCopy: () => copyIssueToClipboard(),
     onProperties: () => setMobilePropsOpen(true),
     onHide: () => {
-      updateЗадача.mutate(
+      updateIssue.mutate(
         { hiddenAt: new Date().toISOString() },
-        { onУспешно: () => navigate("/issues/all") },
+        { onSuccess: () => navigate("/issues/all") },
       );
     },
   };
 
   const backHref = sourceBreadcrumb.href ?? "/inbox";
-  const showВходящиеToolbar = isMobile && isFromВходящие;
-  const archiveОжидание = archiveFromВходящие.isОжидание;
+  const showInboxToolbar = isMobile && isFromInbox;
+  const archivePending = archiveFromInbox.isPending;
   const issueHidden = !!issue?.hiddenAt;
-  const canАрхивироватьFromВходящие = isFromВходящие && !!issue?.id && !issueHidden;
+  const canArchiveFromInbox = isFromInbox && !!issue?.id && !issueHidden;
 
   useEffect(() => {
-    if (!showВходящиеToolbar) {
+    if (!showInboxToolbar) {
       setMobileToolbar(null);
       return;
     }
 
     setMobileToolbar(
-      <ВходящиеMobileToolbar
+      <InboxMobileToolbar
         backHref={backHref}
         issueId={issue?.id}
         issueHidden={issueHidden}
-        archiveОжидание={archiveОжидание}
-        onАрхивировать={() => inboxToolbarCallbacksRef.current.onАрхивировать()}
-        onКопировать={() => inboxToolbarCallbacksRef.current.onКопировать()}
+        archivePending={archivePending}
+        onArchive={() => inboxToolbarCallbacksRef.current.onArchive()}
+        onCopy={() => inboxToolbarCallbacksRef.current.onCopy()}
         onProperties={() => inboxToolbarCallbacksRef.current.onProperties()}
         onHide={() => inboxToolbarCallbacksRef.current.onHide()}
       />,
     );
 
     return () => setMobileToolbar(null);
-  }, [showВходящиеToolbar, backHref, issue?.id, issueHidden, archiveОжидание, setMobileToolbar]);
+  }, [showInboxToolbar, backHref, issue?.id, issueHidden, archivePending, setMobileToolbar]);
 
-  const attachmentsInitialЗагрузка = attachmentsЗагрузка && attachments === undefined;
-  const loadOlderКомментарии = useCallback(() => {
-    void fetchOlderКомментарии();
-  }, [fetchOlderКомментарии]);
-  const refetchLatestКомментарии = useCallback(async () => {
+  const attachmentsInitialLoading = attachmentsLoading && attachments === undefined;
+  const loadOlderComments = useCallback(() => {
+    void fetchOlderComments();
+  }, [fetchOlderComments]);
+  const refetchLatestComments = useCallback(async () => {
     // Refetch page 0 first so comments that arrived after initial load are
     // visible, then load every remaining older page. The chat thread is
     // paginated and virtualized, so "latest" must be resolved against the
     // complete comment set rather than the current loaded window.
-    const refreshed = await refetchКомментарии();
-    const loaded = await loadRemainingЗадачаCommentPages<ЗадачаComment>({
+    const refreshed = await refetchComments();
+    const loaded = await loadRemainingIssueCommentPages<IssueComment>({
       pages: refreshed.data?.pages,
       pageParams: refreshed.data?.pageParams as Array<string | null> | undefined,
       pageSize: ISSUE_COMMENT_PAGE_SIZE,
       maxPages: JUMP_TO_LATEST_MAX_COMMENT_PAGES,
       fetchPage: (afterCommentId) =>
-        issuesApi.listКомментарии(issueId!, {
+        issuesApi.listComments(issueId!, {
           order: "desc",
           limit: ISSUE_COMMENT_PAGE_SIZE,
           after: afterCommentId,
         }),
     });
-    queryClient.setQueryData<InfiniteData<ЗадачаComment[], string | null>>(
-      queryКлючs.issues.comments(issueId!),
+    queryClient.setQueryData<InfiniteData<IssueComment[], string | null>>(
+      queryKeys.issues.comments(issueId!),
       loaded,
     );
     await new Promise<void>((resolve) => {
@@ -2855,117 +2855,117 @@ export function ЗадачаDetail() {
       }
       window.requestAnimationFrame(() => resolve());
     });
-  }, [issueId, queryClient, refetchКомментарии]);
+  }, [issueId, queryClient, refetchComments]);
   useEffect(() => {
-    if (!shouldPrefetchOlderКомментарии) return;
-    void fetchOlderКомментарии();
-  }, [fetchOlderКомментарии, shouldPrefetchOlderКомментарии]);
+    if (!shouldPrefetchOlderComments) return;
+    void fetchOlderComments();
+  }, [fetchOlderComments, shouldPrefetchOlderComments]);
   const handleCommentVote = useCallback(async (commentId: string, vote: "up" | "down", options?: { allowSharing?: boolean; reason?: string }) => {
     await feedbackVoteMutation.mutateAsync({
-      targetТип: "issue_comment",
+      targetType: "issue_comment",
       targetId: commentId,
       vote,
       reason: options?.reason,
       allowSharing: options?.allowSharing,
-      sharingPreferenceAtОтправить: feedbackDataSharingPreference,
+      sharingPreferenceAtSubmit: feedbackDataSharingPreference,
     });
   }, [feedbackDataSharingPreference, feedbackVoteMutation]);
-  const handleChatДобавить = useCallback(async (body: string, reopen?: boolean, reassignment?: CommentReassignment) => {
+  const handleChatAdd = useCallback(async (body: string, reopen?: boolean, reassignment?: CommentReassignment) => {
     if (reassignment) {
       await addCommentAndReassign.mutateAsync({ body, reopen, reassignment });
       return;
     }
     await addComment.mutateAsync({ body, reopen });
   }, [addComment, addCommentAndReassign]);
-  const handleCommentImageЗагрузить = useCallback(async (file: File) => {
+  const handleCommentImageUpload = useCallback(async (file: File) => {
     const attachment = await uploadAttachment.mutateAsync(file);
-    return attachment.contentПуть;
+    return attachment.contentPath;
   }, [uploadAttachment]);
   const handleCommentAttachImage = useCallback(async (file: File) => {
     return uploadAttachment.mutateAsync(file);
   }, [uploadAttachment]);
-  const handleInterruptQueuedЗапустить = useCallback(async (runId: string) => {
+  const handleInterruptQueuedRun = useCallback(async (runId: string) => {
     await interruptQueuedComment.mutateAsync(runId);
   }, [interruptQueuedComment]);
-  const handleПринятьInteraction = useCallback(async (
-    interaction: ActionableЗадачаThreadInteraction,
-    selectedClientКлючs?: string[],
+  const handleAcceptInteraction = useCallback(async (
+    interaction: ActionableIssueThreadInteraction,
+    selectedClientKeys?: string[],
   ) => {
-    await acceptInteraction.mutateAsync({ interaction, selectedClientКлючs });
+    await acceptInteraction.mutateAsync({ interaction, selectedClientKeys });
   }, [acceptInteraction]);
-  const handleОтклонитьInteraction = useCallback(async (interaction: ActionableЗадачаThreadInteraction, reason?: string) => {
+  const handleRejectInteraction = useCallback(async (interaction: ActionableIssueThreadInteraction, reason?: string) => {
     await rejectInteraction.mutateAsync({ interaction, reason });
   }, [rejectInteraction]);
-  const handleОтправитьInteractionAnswers = useCallback(async (
-    interaction: ЗадачаThreadInteraction,
+  const handleSubmitInteractionAnswers = useCallback(async (
+    interaction: IssueThreadInteraction,
     answers: AskUserQuestionsAnswer[],
   ) => {
     await answerInteraction.mutateAsync({ interaction, answers });
   }, [answerInteraction]);
-  const handleОтменаInteraction = useCallback(async (interaction: AskUserQuestionsInteraction) => {
+  const handleCancelInteraction = useCallback(async (interaction: AskUserQuestionsInteraction) => {
     await cancelInteraction.mutateAsync({ interaction });
   }, [cancelInteraction]);
-  const canПродолжитьFromНазадlog = issue?.status === "backlog" && Boolean(issue.assigneeАгентId || issue.assigneeUserId);
-  const handleПродолжитьFromНазадlog = useCallback(async () => {
-    await updateЗадача.mutateAsync({ status: "todo" });
-  }, [updateЗадача.mutateAsync]);
+  const canResumeFromBacklog = issue?.status === "backlog" && Boolean(issue.assigneeAgentId || issue.assigneeUserId);
+  const handleResumeFromBacklog = useCallback(async () => {
+    await updateIssue.mutateAsync({ status: "todo" });
+  }, [updateIssue.mutateAsync]);
 
-  const treeПредпросмотрAffectedЗадачи = useMemo(
-    () => (treeControlПредпросмотр?.issues ?? []).filter((candidate) => !candidate.skipped),
-    [treeControlПредпросмотр],
+  const treePreviewAffectedIssues = useMemo(
+    () => (treeControlPreview?.issues ?? []).filter((candidate) => !candidate.skipped),
+    [treeControlPreview],
   );
-  const treeПредпросмотрDisplayЗадачи = useMemo(
+  const treePreviewDisplayIssues = useMemo(
     () => {
-      const previewЗадачи = treeControlПредпросмотр?.issues ?? [];
+      const previewIssues = treeControlPreview?.issues ?? [];
       if (treeControlMode !== "pause") {
-        return previewЗадачи.filter((candidate) => !candidate.skipped);
+        return previewIssues.filter((candidate) => !candidate.skipped);
       }
-      return previewЗадачи.filter((candidate) => !candidate.skipped || candidate.skipReason === "terminal_status");
+      return previewIssues.filter((candidate) => !candidate.skipped || candidate.skipReason === "terminal_status");
     },
-    [treeControlMode, treeControlПредпросмотр],
+    [treeControlMode, treeControlPreview],
   );
-  const activeПаузаHold = treeControlState?.activeПаузаHold ?? null;
-  const activeRootПаузаHoldsForDisplay = useMemo(
-    () => activeПаузаHold?.isRoot === true ? activeRootПаузаHolds : [],
-    [activeПаузаHold?.isRoot, activeRootПаузаHolds],
+  const activePauseHold = treeControlState?.activePauseHold ?? null;
+  const activeRootPauseHoldsForDisplay = useMemo(
+    () => activePauseHold?.isRoot === true ? activeRootPauseHolds : [],
+    [activePauseHold?.isRoot, activeRootPauseHolds],
   );
-  const heldЗадачаIds = useMemo(() => {
+  const heldIssueIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const hold of activeRootПаузаHoldsForDisplay) {
+    for (const hold of activeRootPauseHoldsForDisplay) {
       for (const member of hold.members ?? []) {
         if (member.skipped) continue;
         ids.add(member.issueId);
       }
     }
     return ids;
-  }, [activeRootПаузаHoldsForDisplay]);
-  const mutedChildЗадачаIds = useMemo(() => {
+  }, [activeRootPauseHoldsForDisplay]);
+  const mutedChildIssueIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const child of childЗадачи) {
-      if (heldЗадачаIds.has(child.id)) ids.add(child.id);
+    for (const child of childIssues) {
+      if (heldIssueIds.has(child.id)) ids.add(child.id);
     }
     return ids;
-  }, [childЗадачи, heldЗадачаIds]);
-  const childПаузаBadgeById = useMemo(() => {
+  }, [childIssues, heldIssueIds]);
+  const childPauseBadgeById = useMemo(() => {
     const badges = new Map<string, string>();
-    for (const child of childЗадачи) {
-      if (!heldЗадачаIds.has(child.id)) continue;
-      badges.set(child.id, "Приостановлен");
+    for (const child of childIssues) {
+      if (!heldIssueIds.has(child.id)) continue;
+      badges.set(child.id, "Приостановлено");
     }
     return badges;
-  }, [childЗадачи, heldЗадачаIds]);
-  const activeПаузаHoldRoot = useMemo(() => {
-    if (!activeПаузаHold) return null;
-    if (activeПаузаHold.rootЗадачаId === issue?.id) return issue ?? null;
-    return issue?.ancestors?.find((ancestor) => ancestor.id === activeПаузаHold.rootЗадачаId) ?? null;
-  }, [activeПаузаHold, issue]);
-  const activeRootПаузаHold = useMemo(
-    () => activeRootПаузаHoldsForDisplay.find((hold) => hold.id === activeПаузаHold?.holdId) ?? null,
-    [activeПаузаHold?.holdId, activeRootПаузаHoldsForDisplay],
+  }, [childIssues, heldIssueIds]);
+  const activePauseHoldRoot = useMemo(() => {
+    if (!activePauseHold) return null;
+    if (activePauseHold.rootIssueId === issue?.id) return issue ?? null;
+    return issue?.ancestors?.find((ancestor) => ancestor.id === activePauseHold.rootIssueId) ?? null;
+  }, [activePauseHold, issue]);
+  const activeRootPauseHold = useMemo(
+    () => activeRootPauseHoldsForDisplay.find((hold) => hold.id === activePauseHold?.holdId) ?? null,
+    [activePauseHold?.holdId, activeRootPauseHoldsForDisplay],
   );
 
-  if (isЗагрузка) return <ЗадачаDetailЗагрузкаState headerSeed={issueHeaderSeed} />;
-  if (error) return <p classИмя="text-sm text-destructive">{error.message}</p>;
+  if (isLoading) return <IssueDetailLoadingState headerSeed={issueHeaderSeed} />;
+  if (error) return <p className="text-sm text-destructive">{error.message}</p>;
   if (!issue) return null;
 
   // Ancestors are returned oldest-first from the server (root at end, immediate parent at start)
@@ -2986,8 +2986,8 @@ export function ЗадачаDetail() {
   };
 
   const handleAttachmentDrop = async (evt: DragEvent<HTMLDivElement>) => {
-    evt.preventПо умолчанию();
-    setAttachmentDragАктивен(false);
+    evt.preventDefault();
+    setAttachmentDragActive(false);
     const files = evt.dataTransfer.files;
     if (!files || files.length === 0) return;
     for (const file of Array.from(files)) {
@@ -3000,32 +3000,32 @@ export function ЗадачаDetail() {
   };
 
   const hasAttachments = attachmentList.length > 0;
-  const treeПредпросмотрПредупреждениеs = treeControlПредпросмотр?.warnings ?? [];
-  const heldDescendantCount = activeRootПаузаHold?.members?.filter((member) => member.depth > 0 && !member.skipped).length
-    ?? Math.max(heldЗадачаIds.size - 1, 0);
-  const canShowSubtreeControls = canManageTreeControl && childЗадачи.length > 0;
-  const canПродолжитьSubtree = canShowSubtreeControls && activeПаузаHold?.isRoot === true;
-  const canRestoreSubtree = canShowSubtreeControls && activeОтменаHolds.length > 0;
-  const isTerminalЗадача = issue.status === "done" || issue.status === "cancelled";
-  const isАгентOwnedНетnTerminalЗадача = Boolean(issue.assigneeАгентId) && !isTerminalЗадача;
-  const canПаузаLeafРабота = canManageTreeControl && childЗадачи.length === 0 && !activeПаузаHold && !isTerminalЗадача;
-  const canПродолжитьLeafРабота = canManageTreeControl && childЗадачи.length === 0 && activeПаузаHold?.isRoot === true;
-  const treeControlОбласть: "leaf" | "subtree" = childЗадачи.length === 0 ? "leaf" : "subtree";
-  const previewAffectedЗадачаCount = treeПредпросмотрAffectedЗадачи.length;
-  const previewAffectedАгентCount = treeControlПредпросмотр?.totals.affectedАгенты ?? 0;
+  const treePreviewWarnings = treeControlPreview?.warnings ?? [];
+  const heldDescendantCount = activeRootPauseHold?.members?.filter((member) => member.depth > 0 && !member.skipped).length
+    ?? Math.max(heldIssueIds.size - 1, 0);
+  const canShowSubtreeControls = canManageTreeControl && childIssues.length > 0;
+  const canResumeSubtree = canShowSubtreeControls && activePauseHold?.isRoot === true;
+  const canRestoreSubtree = canShowSubtreeControls && activeCancelHolds.length > 0;
+  const isTerminalIssue = issue.status === "done" || issue.status === "cancelled";
+  const isAgentOwnedNonTerminalIssue = Boolean(issue.assigneeAgentId) && !isTerminalIssue;
+  const canPauseLeafWork = canManageTreeControl && childIssues.length === 0 && !activePauseHold && !isTerminalIssue;
+  const canResumeLeafWork = canManageTreeControl && childIssues.length === 0 && activePauseHold?.isRoot === true;
+  const treeControlScope: "leaf" | "subtree" = childIssues.length === 0 ? "leaf" : "subtree";
+  const previewAffectedIssueCount = treePreviewAffectedIssues.length;
+  const previewAffectedAgentCount = treeControlPreview?.totals.affectedAgents ?? 0;
   const treeControlPrimaryButtonLabel =
     treeControlMode === "pause"
-      ? treeControlОбласть === "leaf"
-        ? "Пауза work"
-        : "Пауза and stop work"
+      ? treeControlScope === "leaf"
+        ? "Pause work"
+        : "Pause and stop work"
       : treeControlMode === "cancel"
-        ? `Отмена ${previewAffectedЗадачаCount} issues`
+        ? `Cancel ${previewAffectedIssueCount} issues`
       : treeControlMode === "restore"
-          ? `Restore ${previewAffectedЗадачаCount} issues`
-          : treeControlОбласть === "leaf"
-            ? "Продолжить work"
-            : "Продолжить subtree";
-  const treeПредпросмотрAffectedЗадачаRows = treeПредпросмотрDisplayЗадачи.map((candidate) => ({
+          ? `Restore ${previewAffectedIssueCount} issues`
+          : treeControlScope === "leaf"
+            ? "Resume work"
+            : "Resume subtree";
+  const treePreviewAffectedIssueRows = treePreviewDisplayIssues.map((candidate) => ({
     candidate,
     issue: {
       ...issue,
@@ -3034,36 +3034,36 @@ export function ЗадачаDetail() {
       title: candidate.title,
       status: candidate.status,
       parentId: candidate.parentId,
-      assigneeАгентId: candidate.assigneeАгентId,
+      assigneeAgentId: candidate.assigneeAgentId,
       assigneeUserId: candidate.assigneeUserId,
-      executionЗапуститьId: candidate.activeЗапустить?.id ?? null,
-    } satisfies Задача,
+      executionRunId: candidate.activeRun?.id ?? null,
+    } satisfies Issue,
   }));
-  const treeПредпросмотрAffectedАгентRows = (treeControlПредпросмотр?.affectedАгенты ?? [])
-    .map((previewАгент) => ({
-      ...previewАгент,
-      agent: agentMap.get(previewАгент.agentId) ?? null,
+  const treePreviewAffectedAgentRows = (treeControlPreview?.affectedAgents ?? [])
+    .map((previewAgent) => ({
+      ...previewAgent,
+      agent: agentMap.get(previewAgent.agentId) ?? null,
     }))
     .sort((a, b) => (a.agent?.name ?? a.agentId).localeCompare(b.agent?.name ?? b.agentId));
-  const pausedComposerHint = activeПаузаHold
+  const pausedComposerHint = activePauseHold
     ? (
-      issue.assigneeАгентId
-        ? `Отправитьing this comment will wake ${agentMap.get(issue.assigneeАгентId)?.name ?? "the assignee"} for triage while the subtree remains paused.`
+      issue.assigneeAgentId
+        ? `Sending this comment will wake ${agentMap.get(issue.assigneeAgentId)?.name ?? "the assignee"} for triage while the subtree remains paused.`
         : "Assign an agent to wake them for triage while the subtree remains paused."
     )
     : null;
   const composerHint = pausedComposerHint;
-  const queuedCommentReason: "hold" | "active_run" | "other" = activeПаузаHold ? "hold" : "active_run";
+  const queuedCommentReason: "hold" | "active_run" | "other" = activePauseHold ? "hold" : "active_run";
   const canApplyTreeControl =
-    Boolean(treeControlПредпросмотр)
-    && !treeControlПредпросмотрЗагрузка
-    && (treeControlMode !== "cancel" || treeControlОтменаПодтвердитьed);
-  const attachmentЗагрузитьButton = (
+    Boolean(treeControlPreview)
+    && !treeControlPreviewLoading
+    && (treeControlMode !== "cancel" || treeControlCancelConfirmed);
+  const attachmentUploadButton = (
     <>
       <input
         ref={fileInputRef}
         type="file"
-        classИмя="hidden"
+        className="hidden"
         onChange={handleFilePicked}
         multiple
       />
@@ -3071,17 +3071,17 @@ export function ЗадачаDetail() {
         variant="outline"
         size="sm"
         onClick={() => fileInputRef.current?.click()}
-        disabled={uploadAttachment.isОжидание || importMarkdownDocument.isОжидание}
-        classИмя={cn(
+        disabled={uploadAttachment.isPending || importMarkdownDocument.isPending}
+        className={cn(
           "shadow-none",
-          attachmentDragАктивен && "border-primary bg-primary/5",
+          attachmentDragActive && "border-primary bg-primary/5",
         )}
       >
-        <Paperclip classИмя="h-3.5 w-3.5 mr-1.5" />
-        {uploadAttachment.isОжидание || importMarkdownDocument.isОжидание ? "Загрузитьing..." : (
+        <Paperclip className="h-3.5 w-3.5 mr-1.5" />
+        {uploadAttachment.isPending || importMarkdownDocument.isPending ? "Uploading..." : (
           <>
-            <span classИмя="hidden sm:inline">Загрузить attachment</span>
-            <span classИмя="sm:hidden">Загрузить</span>
+            <span className="hidden sm:inline">Upload attachment</span>
+            <span className="sm:hidden">Upload</span>
           </>
         )}
       </Button>
@@ -3089,134 +3089,134 @@ export function ЗадачаDetail() {
   );
 
   return (
-    <div classИмя="max-w-3xl space-y-6">
-      {/* Родитель chain breadcrumb */}
+    <div className="max-w-3xl space-y-6">
+      {/* Parent chain breadcrumb */}
       {ancestors.length > 0 && (
-        <nav classИмя="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
+        <nav className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
           {[...ancestors].reverse().map((ancestor, i) => (
-            <span key={ancestor.id} classИмя="flex items-center gap-1">
-              {i > 0 && <ChevronRight classИмя="h-3 w-3 shrink-0" />}
+            <span key={ancestor.id} className="flex items-center gap-1">
+              {i > 0 && <ChevronRight className="h-3 w-3 shrink-0" />}
               <Link
-                to={createЗадачаDetailПуть(ancestor.identifier ?? ancestor.id)}
-                state={resolvedЗадачаDetailState ?? location.state}
+                to={createIssueDetailPath(ancestor.identifier ?? ancestor.id)}
+                state={resolvedIssueDetailState ?? location.state}
                 onClickCapture={() =>
-                  rememberЗадачаDetailLocationState(
+                  rememberIssueDetailLocationState(
                     ancestor.identifier ?? ancestor.id,
-                    resolvedЗадачаDetailState ?? location.state,
+                    resolvedIssueDetailState ?? location.state,
                     location.search,
                   )}
-                classИмя="hover:text-foreground transition-colors truncate max-w-[200px]"
+                className="hover:text-foreground transition-colors truncate max-w-[200px]"
                 title={ancestor.title}
               >
                 {ancestor.title}
               </Link>
             </span>
           ))}
-          <ChevronRight classИмя="h-3 w-3 shrink-0" />
-          <span classИмя="text-foreground/60 truncate max-w-[200px]">{issue.title}</span>
+          <ChevronRight className="h-3 w-3 shrink-0" />
+          <span className="text-foreground/60 truncate max-w-[200px]">{issue.title}</span>
         </nav>
       )}
 
       {issue.hiddenAt && (
-        <div classИмя="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          <EyeOff classИмя="h-4 w-4 shrink-0" />
+        <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <EyeOff className="h-4 w-4 shrink-0" />
           This issue is hidden
         </div>
       )}
-      {activeПаузаHold && (
-        <div classИмя="rounded-md border border-amber-500/35 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
-          {activeПаузаHold.isRoot ? (
-            <div classИмя="space-y-2">
-              <div classИмя="flex flex-wrap items-center gap-2">
-                <span classИмя="font-medium">
-                  {childЗадачи.length === 0 ? "Приостановлен by board." : "Subtree pause is active."}
+      {activePauseHold && (
+        <div className="rounded-md border border-amber-500/35 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
+          {activePauseHold.isRoot ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">
+                  {childIssues.length === 0 ? "Paused by board." : "Subtree pause is active."}
                 </span>
-                <span classИмя="text-xs text-amber-900/80 dark:text-amber-100/80">
-                  {childЗадачи.length === 0
-                    ? "Задача execution is held until resume. Человек comments can still wake the assignee for triage."
-                    : "Root and descendant execution is held until resume. Человек comments can still wake assignees for triage."}
+                <span className="text-xs text-amber-900/80 dark:text-amber-100/80">
+                  {childIssues.length === 0
+                    ? "Issue execution is held until resume. Human comments can still wake the assignee for triage."
+                    : "Root and descendant execution is held until resume. Human comments can still wake assignees for triage."}
                 </span>
               </div>
-              <div classИмя="text-xs text-amber-900/80 dark:text-amber-100/80">
-                {childЗадачи.length === 0
+              <div className="text-xs text-amber-900/80 dark:text-amber-100/80">
+                {childIssues.length === 0
                   ? "1 issue held"
                   : `${heldDescendantCount} descendant${heldDescendantCount === 1 ? "" : "s"} held`}
-                {activeRootПаузаHold?.createdAt ? ` · started ${relativeTime(activeRootПаузаHold.createdAt)}` : ""}
+                {activeRootPauseHold?.createdAt ? ` · started ${relativeTime(activeRootPauseHold.createdAt)}` : ""}
               </div>
-              {canShowSubtreeControls || canПродолжитьLeafРабота ? (
-                <div classИмя="flex flex-wrap items-center gap-2">
+              {canShowSubtreeControls || canResumeLeafWork ? (
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     size="sm"
                     onClick={() => {
                       setTreeControlMode("resume");
-                      setTreeControlWakeАгентыOnПродолжить(isАгентOwnedНетnTerminalЗадача || canShowSubtreeControls);
+                      setTreeControlWakeAgentsOnResume(isAgentOwnedNonTerminalIssue || canShowSubtreeControls);
                       setTreeControlOpen(true);
                     }}
                   >
-                    {childЗадачи.length === 0 ? "Продолжить work" : "Продолжить subtree"}
+                    {childIssues.length === 0 ? "Resume work" : "Resume subtree"}
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setTreeControlMode("resume");
-                      setTreeControlWakeАгентыOnПродолжить(isАгентOwnedНетnTerminalЗадача || canShowSubtreeControls);
+                      setTreeControlWakeAgentsOnResume(isAgentOwnedNonTerminalIssue || canShowSubtreeControls);
                       setTreeControlOpen(true);
                     }}
                   >
-                    View affected ({childЗадачи.length === 0 ? 1 : heldDescendantCount})
+                    View affected ({childIssues.length === 0 ? 1 : heldDescendantCount})
                   </Button>
                   {canShowSubtreeControls ? (
                     <Button
                       variant="ghost"
                       size="sm"
-                      classИмя="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive"
                       onClick={() => {
                         setTreeControlMode("cancel");
-                        setTreeControlОтменаПодтвердитьed(false);
+                        setTreeControlCancelConfirmed(false);
                         setTreeControlOpen(true);
                       }}
                     >
-                      Отмена subtree...
+                      Cancel subtree...
                     </Button>
                   ) : null}
                 </div>
               ) : null}
             </div>
           ) : (
-            <div classИмя="text-xs">
+            <div className="text-xs">
               This issue is paused by ancestor{" "}
-              {activeПаузаHoldRoot?.identifier ? (
-                <Link to={createЗадачаDetailПуть(activeПаузаHoldRoot.identifier)} classИмя="underline">
-                  {activeПаузаHoldRoot.identifier}
+              {activePauseHoldRoot?.identifier ? (
+                <Link to={createIssueDetailPath(activePauseHoldRoot.identifier)} className="underline">
+                  {activePauseHoldRoot.identifier}
                 </Link>
               ) : (
-                activeПаузаHold.rootЗадачаId.slice(0, 8)
+                activePauseHold.rootIssueId.slice(0, 8)
               )}
-              . Продолжить from the root issue to deliver deferred work.
+              . Resume from the root issue to deliver deferred work.
             </div>
           )}
         </div>
       )}
 
-      <div classИмя="space-y-3">
-        <div classИмя="flex items-center gap-2 min-w-0 flex-wrap">
-          <СтатусIcon
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 min-w-0 flex-wrap">
+          <StatusIcon
             status={issue.status}
             blockerAttention={issue.blockerAttention}
-            onChange={(status) => updateЗадача.mutate({ status })}
+            onChange={(status) => updateIssue.mutate({ status })}
           />
-          <ПриоритетIcon
+          <PriorityIcon
             priority={issue.priority}
-            onChange={(priority) => updateЗадача.mutate({ priority })}
+            onChange={(priority) => updateIssue.mutate({ priority })}
           />
-          <span classИмя="text-sm font-mono text-muted-foreground shrink-0">{issue.identifier ?? issue.id.slice(0, 8)}</span>
+          <span className="text-sm font-mono text-muted-foreground shrink-0">{issue.identifier ?? issue.id.slice(0, 8)}</span>
 
-          {hasLiveЗапуститьs && (
-            <span classИмя="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 text-[10px] font-medium text-cyan-600 dark:text-cyan-400 shrink-0">
-              <span classИмя="relative flex h-1.5 w-1.5">
-                <span classИмя="animate-pulse absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-                <span classИмя="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400" />
+          {hasLiveRuns && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 text-[10px] font-medium text-cyan-600 dark:text-cyan-400 shrink-0">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400" />
               </span>
               Live
             </span>
@@ -3225,10 +3225,10 @@ export function ЗадачаDetail() {
           {issue.originKind === "routine_execution" && issue.originId && (
             <Link
               to={`/routines/${issue.originId}`}
-              classИмя="inline-flex items-center gap-1 rounded-full bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-400 shrink-0 hover:bg-violet-500/20 transition-colors"
+              className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-400 shrink-0 hover:bg-violet-500/20 transition-colors"
             >
-              <Repeat classИмя="h-3 w-3" />
-              Процедура
+              <Repeat className="h-3 w-3" />
+              Routine
             </Link>
           )}
 
@@ -3238,55 +3238,55 @@ export function ЗадачаDetail() {
 
           {issue.originKind === "issue_productivity_review" ? (
             <span
-              classИмя="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 shrink-0"
+              className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 shrink-0"
               title="This task is a productivity review."
             >
-              <Eye classИмя="h-3 w-3" />
+              <Eye className="h-3 w-3" />
               Productivity review
             </span>
           ) : null}
 
           {issue.workMode === "planning" ? (
             <span
-              classИмя="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 shrink-0"
+              className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 shrink-0"
               title="This issue is in planning mode."
             >
               Planning
             </span>
           ) : null}
 
-          {hasAssignedНазадlogBlocker(issue.blockedBy) ? (
+          {hasAssignedBacklogBlocker(issue.blockedBy) ? (
             <span
               data-testid="issue-detail-parked-blocker"
-              classИмя="inline-flex items-center gap-1 rounded-full border border-amber-500/60 bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 shrink-0"
-              title="Заблокирован by parked work — at least one assigned blocker is in backlog and will not wake its assignee."
+              className="inline-flex items-center gap-1 rounded-full border border-amber-500/60 bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 shrink-0"
+              title="Blocked by parked work — at least one assigned blocker is in backlog and will not wake its assignee."
             >
-              <Flag classИмя="h-3 w-3" />
-              Заблокирован by parked work
+              <Flag className="h-3 w-3" />
+              Blocked by parked work
             </span>
           ) : null}
 
           {issue.projectId ? (
             <Link
               to={`/projects/${issue.projectId}`}
-              classИмя="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors rounded px-1 -mx-1 py-0.5 min-w-0"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors rounded px-1 -mx-1 py-0.5 min-w-0"
             >
-              <Hexagon classИмя="h-3 w-3 shrink-0" />
-              <span classИмя="truncate">{resolvedProject?.name ?? issue.project?.name ?? issue.projectId.slice(0, 8)}</span>
+              <Hexagon className="h-3 w-3 shrink-0" />
+              <span className="truncate">{resolvedProject?.name ?? issue.project?.name ?? issue.projectId.slice(0, 8)}</span>
             </Link>
           ) : (
-            <span classИмя="inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50 px-1 -mx-1 py-0.5">
-              <Hexagon classИмя="h-3 w-3 shrink-0" />
-              Нет project
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground opacity-50 px-1 -mx-1 py-0.5">
+              <Hexagon className="h-3 w-3 shrink-0" />
+              No project
             </span>
           )}
 
           {(issue.labels ?? []).length > 0 && (
-            <div classИмя="hidden sm:flex items-center gap-1">
+            <div className="hidden sm:flex items-center gap-1">
               {(issue.labels ?? []).slice(0, 4).map((label) => (
                 <span
                   key={label.id}
-                  classИмя="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                  className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium"
                   style={{
                     borderColor: label.color,
                     color: pickTextColorForPillBg(label.color, 0.12),
@@ -3297,20 +3297,20 @@ export function ЗадачаDetail() {
                 </span>
               ))}
               {(issue.labels ?? []).length > 4 && (
-                <span classИмя="text-[10px] text-muted-foreground">+{(issue.labels ?? []).length - 4}</span>
+                <span className="text-[10px] text-muted-foreground">+{(issue.labels ?? []).length - 4}</span>
               )}
             </div>
           )}
 
-          {!(isMobile && isFromВходящие) && (
-            <div classИмя="ml-auto flex items-center gap-0.5 md:hidden shrink-0">
+          {!(isMobile && isFromInbox) && (
+            <div className="ml-auto flex items-center gap-0.5 md:hidden shrink-0">
               <Button
                 variant="ghost"
                 size="icon-xs"
-                onClick={copyЗадачаToClipboard}
-                title="Копировать issue as markdown"
+                onClick={copyIssueToClipboard}
+                title="Copy issue as markdown"
               >
-                {copied ? <Check classИмя="h-4 w-4 text-green-500" /> : <Копировать classИмя="h-4 w-4" />}
+                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
               <Button
                 variant="ghost"
@@ -3318,45 +3318,45 @@ export function ЗадачаDetail() {
                 onClick={() => setMobilePropsOpen(true)}
                 title="Properties"
               >
-                <SlidersHorizontal classИмя="h-4 w-4" />
+                <SlidersHorizontal className="h-4 w-4" />
               </Button>
             </div>
           )}
 
-          <div classИмя="hidden md:flex items-center md:ml-auto shrink-0">
-            {canАрхивироватьFromВходящие && (
+          <div className="hidden md:flex items-center md:ml-auto shrink-0">
+            {canArchiveFromInbox && (
               <Button
                 variant="ghost"
                 size="icon-xs"
                 onClick={() => {
-                  if (!archiveОжидание && issue?.id) archiveFromВходящие.mutate(issue.id);
+                  if (!archivePending && issue?.id) archiveFromInbox.mutate(issue.id);
                 }}
-                disabled={archiveОжидание}
-                title="Архивировать from inbox"
-                aria-label="Архивировать from inbox"
+                disabled={archivePending}
+                title="Archive from inbox"
+                aria-label="Archive from inbox"
               >
-                <Архивировать classИмя="h-4 w-4" />
+                <Archive className="h-4 w-4" />
               </Button>
             )}
             <Button
               variant="ghost"
               size="icon-xs"
-              onClick={copyЗадачаToClipboard}
-              title="Копировать issue as markdown"
+              onClick={copyIssueToClipboard}
+              title="Copy issue as markdown"
             >
-              {copied ? <Check classИмя="h-4 w-4 text-green-500" /> : <Копировать classИмя="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </Button>
             <Button
               variant="ghost"
               size="icon-xs"
-              classИмя={cn(
+              className={cn(
                 "shrink-0 transition-opacity duration-200",
                 panelVisible ? "opacity-0 pointer-events-none w-0 overflow-hidden" : "opacity-100",
               )}
               onClick={() => setPanelVisible(true)}
-              title="Показать свойства"
+              title="Show properties"
             >
-              <SlidersHorizontal classИмя="h-4 w-4" />
+              <SlidersHorizontal className="h-4 w-4" />
             </Button>
 
             <Popover open={moreOpen} onOpenChange={setMoreOpen}>
@@ -3364,142 +3364,142 @@ export function ЗадачаDetail() {
                 <Button
                   variant="ghost"
                   size="icon-xs"
-                  classИмя="shrink-0"
+                  className="shrink-0"
                   aria-label="More issue actions"
                   title="More issue actions"
-                  onКлючDown={(event) => {
+                  onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
-                      event.preventПо умолчанию();
+                      event.preventDefault();
                       setMoreOpen(true);
                     }
                   }}
                 >
-                  <MoreHorizontal classИмя="h-4 w-4" />
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-            <PopoverContent classИмя="w-52 p-1" align="end">
-              {canПаузаLeafРабота ? (
+            <PopoverContent className="w-52 p-1" align="end">
+              {canPauseLeafWork ? (
                 <button
-                  classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
+                  className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
                   onClick={() => {
                     setTreeControlMode("pause");
-                    setTreeControlОтменаПодтвердитьed(false);
+                    setTreeControlCancelConfirmed(false);
                     setTreeControlOpen(true);
                     setMoreOpen(false);
                   }}
                 >
-                  <ПаузаCircle classИмя="h-3 w-3" />
-                  Пауза work...
+                  <PauseCircle className="h-3 w-3" />
+                  Pause work...
                 </button>
               ) : null}
-              {canПродолжитьLeafРабота ? (
+              {canResumeLeafWork ? (
                 <button
-                  classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
+                  className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
                   onClick={() => {
                     setTreeControlMode("resume");
-                    setTreeControlWakeАгентыOnПродолжить(isАгентOwnedНетnTerminalЗадача);
+                    setTreeControlWakeAgentsOnResume(isAgentOwnedNonTerminalIssue);
                     setTreeControlOpen(true);
                     setMoreOpen(false);
                   }}
                 >
-                  <PlayCircle classИмя="h-3 w-3" />
-                  Продолжить work
+                  <PlayCircle className="h-3 w-3" />
+                  Resume work
                 </button>
               ) : null}
               {canShowSubtreeControls ? (
                 <>
                   <button
-                    classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
+                    className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
                     onClick={() => {
                       setTreeControlMode("pause");
-                      setTreeControlОтменаПодтвердитьed(false);
+                      setTreeControlCancelConfirmed(false);
                       setTreeControlOpen(true);
                       setMoreOpen(false);
                     }}
                   >
-                    <ПаузаCircle classИмя="h-3 w-3" />
-                    Пауза subtree...
+                    <PauseCircle className="h-3 w-3" />
+                    Pause subtree...
                   </button>
-                  {canПродолжитьSubtree ? (
+                  {canResumeSubtree ? (
                     <button
-                      classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
+                      className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
                       onClick={() => {
                         setTreeControlMode("resume");
-                        setTreeControlWakeАгентыOnПродолжить(true);
+                        setTreeControlWakeAgentsOnResume(true);
                         setTreeControlOpen(true);
                         setMoreOpen(false);
                       }}
                     >
-                      <PlayCircle classИмя="h-3 w-3" />
-                      Продолжить subtree
+                      <PlayCircle className="h-3 w-3" />
+                      Resume subtree
                     </button>
                   ) : null}
                   <button
-                    classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-destructive"
+                    className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-destructive"
                     onClick={() => {
                       setTreeControlMode("cancel");
-                      setTreeControlОтменаПодтвердитьed(false);
+                      setTreeControlCancelConfirmed(false);
                       setTreeControlOpen(true);
                       setMoreOpen(false);
                     }}
                   >
-                    <XCircle classИмя="h-3 w-3" />
-                    Отмена subtree...
+                    <XCircle className="h-3 w-3" />
+                    Cancel subtree...
                   </button>
                   {canRestoreSubtree ? (
                     <button
-                      classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
+                      className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
                       onClick={() => {
                         setTreeControlMode("restore");
-                        setTreeControlWakeАгентыOnПродолжить(false);
-                        setTreeControlОтменаПодтвердитьed(false);
+                        setTreeControlWakeAgentsOnResume(false);
+                        setTreeControlCancelConfirmed(false);
                         setTreeControlOpen(true);
                         setMoreOpen(false);
                       }}
                     >
-                      <Repeat classИмя="h-3 w-3" />
+                      <Repeat className="h-3 w-3" />
                       Restore subtree...
                     </button>
                   ) : null}
                 </>
               ) : null}
               <button
-                classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-destructive"
+                className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-destructive"
                 onClick={() => {
-                  updateЗадача.mutate(
+                  updateIssue.mutate(
                     { hiddenAt: new Date().toISOString() },
-                    { onУспешно: () => navigate("/issues/all") },
+                    { onSuccess: () => navigate("/issues/all") },
                   );
                   setMoreOpen(false);
                 }}
               >
-                <EyeOff classИмя="h-3 w-3" />
-                Hide this Задача
+                <EyeOff className="h-3 w-3" />
+                Hide this Issue
               </button>
             </PopoverContent>
             </Popover>
           </div>
         </div>
 
-        <InlineИзменитьor
+        <InlineEditor
           value={issue.title}
-          onСохранить={(title) => updateЗадача.mutateAsync({ title })}
+          onSave={(title) => updateIssue.mutateAsync({ title })}
           as="h2"
-          classИмя="text-xl font-bold"
+          className="text-xl font-bold"
         />
 
-        <InlineИзменитьor
+        <InlineEditor
           value={issue.description ?? ""}
-          onСохранить={(description) => updateЗадача.mutateAsync({ description })}
+          onSave={(description) => updateIssue.mutateAsync({ description })}
           as="p"
-          classИмя="text-[15px] leading-7 text-foreground"
-          placeholder="Добавить a description..."
+          className="text-[15px] leading-7 text-foreground"
+          placeholder="Add a description..."
           multiline
           foldable
           mentions={mentionOptions}
-          imageЗагрузитьHandler={async (file) => {
+          imageUploadHandler={async (file) => {
             const attachment = await uploadAttachment.mutateAsync(file);
-            return attachment.contentПуть;
+            return attachment.contentPath;
           }}
           onDropFile={async (file) => {
             await uploadAttachment.mutateAsync(file);
@@ -3508,141 +3508,141 @@ export function ЗадачаDetail() {
       </div>
 
       <PluginSlotOutlet
-        slotТипs={["toolbarButton", "contextMenuItem"]}
-        entityТип="issue"
+        slotTypes={["toolbarButton", "contextMenuItem"]}
+        entityType="issue"
         context={{
           companyId: issue.companyId,
           projectId: issue.projectId ?? null,
           entityId: issue.id,
-          entityТип: "issue",
+          entityType: "issue",
         }}
-        classИмя="flex flex-wrap gap-2"
-        itemClassИмя="inline-flex"
+        className="flex flex-wrap gap-2"
+        itemClassName="inline-flex"
         missingBehavior="placeholder"
       />
 
       <PluginLauncherOutlet
         placementZones={["toolbarButton"]}
-        entityТип="issue"
+        entityType="issue"
         context={{
           companyId: issue.companyId,
           projectId: issue.projectId ?? null,
           entityId: issue.id,
-          entityТип: "issue",
+          entityType: "issue",
         }}
-        classИмя="flex flex-wrap gap-2"
-        itemClassИмя="inline-flex"
+        className="flex flex-wrap gap-2"
+        itemClassName="inline-flex"
       />
 
       <PluginSlotOutlet
-        slotТипs={["taskDetailView"]}
-        entityТип="issue"
+        slotTypes={["taskDetailView"]}
+        entityType="issue"
         context={{
           companyId: issue.companyId,
           projectId: issue.projectId ?? null,
           entityId: issue.id,
-          entityТип: "issue",
+          entityType: "issue",
         }}
-        classИмя="space-y-3"
-        itemClassИмя="rounded-lg border border-border p-3"
+        className="space-y-3"
+        itemClassName="rounded-lg border border-border p-3"
         missingBehavior="placeholder"
       />
 
-      {showRichSubЗадачиSection ? (
-        <div classИмя="space-y-3">
-          <div classИмя="flex items-center justify-between gap-2">
-            <h3 classИмя="text-sm font-medium text-muted-foreground">Подзадачи</h3>
+      {showRichSubIssuesSection ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Sub-issues</h3>
           </div>
-          <ЗадачиList
-            issues={childЗадачи}
-            isЗагрузка={childЗадачиЗагрузка}
+          <IssuesList
+            issues={childIssues}
+            isLoading={childIssuesLoading}
             agents={agents}
             projects={projects}
-            liveЗадачаIds={liveЗадачаIds}
-            mutedЗадачаIds={mutedChildЗадачаIds}
-            issueBadgeById={childПаузаBadgeById}
+            liveIssueIds={liveIssueIds}
+            mutedIssueIds={mutedChildIssueIds}
+            issueBadgeById={childPauseBadgeById}
             projectId={issue.projectId ?? undefined}
-            viewStateКлюч={`paperclip:issue-detail:${issue.id}:subissues-view`}
-            issueLinkState={resolvedЗадачаDetailState ?? location.state}
-            searchФильтрs={{ descendantOf: issue.id, includeЗаблокированBy: true }}
-            searchWithinLoadedЗадачи
-            baseСоздатьЗадачаПо умолчаниюs={buildSubЗадачаПо умолчаниюsForViewer(issue, currentUserId)}
-            createЗадачаLabel="Подзадача"
-            defaultСортировкаField="workflow"
+            viewStateKey={`paperclip:issue-detail:${issue.id}:subissues-view`}
+            issueLinkState={resolvedIssueDetailState ?? location.state}
+            searchFilters={{ descendantOf: issue.id, includeBlockedBy: true }}
+            searchWithinLoadedIssues
+            baseCreateIssueDefaults={buildSubIssueDefaultsForViewer(issue, currentUserId)}
+            createIssueLabel="Sub-issue"
+            defaultSortField="workflow"
             showProgressSummary
-            parentЗадачаIdForCostSummary={issue.id}
-            onОбновитьЗадача={handleChildЗадачаОбновить}
+            parentIssueIdForCostSummary={issue.id}
+            onUpdateIssue={handleChildIssueUpdate}
           />
         </div>
       ) : (
-        <div classИмя="flex flex-wrap items-center justify-end gap-2 min-w-0">
-          <Button variant="outline" size="sm" onClick={openNewSubЗадача} classИмя="shrink-0 shadow-none">
-            <Plus classИмя="mr-1.5 h-3.5 w-3.5" />
-            New Подзадача
+        <div className="flex flex-wrap items-center justify-end gap-2 min-w-0">
+          <Button variant="outline" size="sm" onClick={openNewSubIssue} className="shrink-0 shadow-none">
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            New Sub-issue
           </Button>
         </div>
       )}
 
-      <ЗадачаДокументыSection
+      <IssueDocumentsSection
         issue={issue}
-        canУдалитьДокументы={Boolean(session?.user?.id)}
+        canDeleteDocuments={Boolean(session?.user?.id)}
         feedbackVotes={feedbackVotes}
         feedbackDataSharingPreference={feedbackDataSharingPreference}
         feedbackTermsUrl={FEEDBACK_TERMS_URL}
         mentions={mentionOptions}
-        imageЗагрузитьHandler={async (file) => {
+        imageUploadHandler={async (file) => {
           const attachment = await uploadAttachment.mutateAsync(file);
-          return attachment.contentПуть;
+          return attachment.contentPath;
         }}
         onVote={async (revisionId, vote, options) => {
           await feedbackVoteMutation.mutateAsync({
-            targetТип: "issue_document_revision",
+            targetType: "issue_document_revision",
             targetId: revisionId,
             vote,
             reason: options?.reason,
             allowSharing: options?.allowSharing,
-            sharingPreferenceAtОтправить: feedbackDataSharingPreference,
+            sharingPreferenceAtSubmit: feedbackDataSharingPreference,
           });
         }}
-        extraActions={!hasAttachments ? attachmentЗагрузитьButton : null}
+        extraActions={!hasAttachments ? attachmentUploadButton : null}
       />
 
-      {attachmentsInitialЗагрузка ? (
-        <ЗадачаSectionSkeleton titleWidth="w-24" rows={2} />
+      {attachmentsInitialLoading ? (
+        <IssueSectionSkeleton titleWidth="w-24" rows={2} />
       ) : hasAttachments ? (
         <div
-        classИмя={cn(
+        className={cn(
           "space-y-3 rounded-lg transition-colors",
         )}
         onDragEnter={(evt) => {
-          evt.preventПо умолчанию();
-          setAttachmentDragАктивен(true);
+          evt.preventDefault();
+          setAttachmentDragActive(true);
         }}
         onDragOver={(evt) => {
-          evt.preventПо умолчанию();
-          setAttachmentDragАктивен(true);
+          evt.preventDefault();
+          setAttachmentDragActive(true);
         }}
         onDragLeave={(evt) => {
-          if (evt.currentЦель.contains(evt.relatedЦель as Нетde | null)) return;
-          setAttachmentDragАктивен(false);
+          if (evt.currentTarget.contains(evt.relatedTarget as Node | null)) return;
+          setAttachmentDragActive(false);
         }}
         onDrop={(evt) => void handleAttachmentDrop(evt)}
       >
-        <div classИмя="flex items-center justify-between gap-2">
-          <h3 classИмя="text-sm font-medium text-muted-foreground">Attachments</h3>
-          {attachmentЗагрузитьButton}
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-medium text-muted-foreground">Attachments</h3>
+          {attachmentUploadButton}
         </div>
 
-        {attachmentОшибка && (
-          <p classИмя="text-xs text-destructive">{attachmentОшибка}</p>
+        {attachmentError && (
+          <p className="text-xs text-destructive">{attachmentError}</p>
         )}
 
         {imageAttachments.length > 0 && (
-          <div classИмя="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {imageAttachments.map((attachment) => (
               <div
                 key={attachment.id}
-                classИмя="group relative aspect-square rounded-lg overflow-hidden border border-border bg-accent/10 cursor-pointer"
+                className="group relative aspect-square rounded-lg overflow-hidden border border-border bg-accent/10 cursor-pointer"
                 onClick={() => {
                   const idx = imageAttachments.findIndex((a) => a.id === attachment.id);
                   setGalleryIndex(idx >= 0 ? idx : 0);
@@ -3650,54 +3650,54 @@ export function ЗадачаDetail() {
                 }}
               >
                 <img
-                  src={attachment.contentПуть}
+                  src={attachment.contentPath}
                   alt={attachment.originalFilename ?? "attachment"}
-                  classИмя="h-full w-full object-cover"
+                  className="h-full w-full object-cover"
                   loading="lazy"
                 />
-                <div classИмя="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
-                {confirmУдалитьId === attachment.id ? (
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+                {confirmDeleteId === attachment.id ? (
                   <div
-                    classИмя="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/60"
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/60"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <p classИмя="text-xs text-white font-medium">Удалить?</p>
-                    <div classИмя="flex gap-1.5">
+                    <p className="text-xs text-white font-medium">Delete?</p>
+                    <div className="flex gap-1.5">
                       <button
                         type="button"
-                        classИмя="rounded bg-destructive px-2 py-0.5 text-xs text-white hover:bg-destructive/80"
+                        className="rounded bg-destructive px-2 py-0.5 text-xs text-white hover:bg-destructive/80"
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteAttachment.mutate(attachment.id);
-                          setПодтвердитьУдалитьId(null);
+                          setConfirmDeleteId(null);
                         }}
-                        disabled={deleteAttachment.isОжидание}
+                        disabled={deleteAttachment.isPending}
                       >
-                        Да
+                        Yes
                       </button>
                       <button
                         type="button"
-                        classИмя="rounded bg-muted px-2 py-0.5 text-xs hover:bg-muted/80"
+                        className="rounded bg-muted px-2 py-0.5 text-xs hover:bg-muted/80"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setПодтвердитьУдалитьId(null);
+                          setConfirmDeleteId(null);
                         }}
                       >
-                        Нет
+                        No
                       </button>
                     </div>
                   </div>
                 ) : (
                   <button
                     type="button"
-                    classИмя="absolute top-1.5 right-1.5 rounded-md bg-black/50 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
+                    className="absolute top-1.5 right-1.5 rounded-md bg-black/50 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setПодтвердитьУдалитьId(attachment.id);
+                      setConfirmDeleteId(attachment.id);
                     }}
-                    title="Удалить attachment"
+                    title="Delete attachment"
                   >
-                    <Trash2 classИмя="h-3.5 w-3.5" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
@@ -3706,31 +3706,31 @@ export function ЗадачаDetail() {
         )}
 
         {nonImageAttachments.length > 0 && (
-          <div classИмя="space-y-2">
+          <div className="space-y-2">
             {nonImageAttachments.map((attachment) => (
-              <div key={attachment.id} classИмя="border border-border rounded-md p-2">
-                <div classИмя="flex items-center justify-between gap-2">
+              <div key={attachment.id} className="border border-border rounded-md p-2">
+                <div className="flex items-center justify-between gap-2">
                   <a
-                    href={attachment.contentПуть}
+                    href={attachment.contentPath}
                     target="_blank"
                     rel="noreferrer"
-                    classИмя="text-xs hover:underline truncate"
+                    className="text-xs hover:underline truncate"
                     title={attachment.originalFilename ?? attachment.id}
                   >
                     {attachment.originalFilename ?? attachment.id}
                   </a>
                   <button
                     type="button"
-                    classИмя="text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive"
                     onClick={() => deleteAttachment.mutate(attachment.id)}
-                    disabled={deleteAttachment.isОжидание}
-                    title="Удалить attachment"
+                    disabled={deleteAttachment.isPending}
+                    title="Delete attachment"
                   >
-                    <Trash2 classИмя="h-3.5 w-3.5" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <p classИмя="text-[11px] text-muted-foreground">
-                  {attachment.contentТип} · {(attachment.byteSize / 1024).toFixed(1)} KB
+                <p className="text-[11px] text-muted-foreground">
+                  {attachment.contentType} · {(attachment.byteSize / 1024).toFixed(1)} KB
                 </p>
               </div>
             ))}
@@ -3746,26 +3746,26 @@ export function ЗадачаDetail() {
         onOpenChange={setGalleryOpen}
       />
 
-      <ЗадачаРабочая областьCard
+      <IssueWorkspaceCard
         issue={issue}
         project={resolvedProject}
-        onОбновить={(data) => updateЗадача.mutate(data)}
+        onUpdate={(data) => updateIssue.mutate(data)}
       />
 
       <Separator />
 
-      <Tabs value={detailTab} onЗначениеChange={setDetailTab} classИмя="space-y-3">
-        <TabsList variant="line" classИмя="w-full justify-start gap-1">
-          <TabsTrigger value="chat" classИмя="gap-1.5">
-            <MessageSquare classИмя="h-3.5 w-3.5" />
+      <Tabs value={detailTab} onValueChange={setDetailTab} className="space-y-3">
+        <TabsList variant="line" className="w-full justify-start gap-1">
+          <TabsTrigger value="chat" className="gap-1.5">
+            <MessageSquare className="h-3.5 w-3.5" />
             Chat
           </TabsTrigger>
-          <TabsTrigger value="activity" classИмя="gap-1.5">
-            <АктивностьIcon classИмя="h-3.5 w-3.5" />
-            Активность
+          <TabsTrigger value="activity" className="gap-1.5">
+            <ActivityIcon className="h-3.5 w-3.5" />
+            Activity
           </TabsTrigger>
-          <TabsTrigger value="related-work" classИмя="gap-1.5">
-            <ListTree classИмя="h-3.5 w-3.5" />
+          <TabsTrigger value="related-work" className="gap-1.5">
+            <ListTree className="h-3.5 w-3.5" />
             Related work
           </TabsTrigger>
           {issuePluginTabItems.map((item) => (
@@ -3777,23 +3777,23 @@ export function ЗадачаDetail() {
 
         <TabsContent value="chat">
           {detailTab === "chat" ? (
-            <ЗадачаDetailChatTab
+            <IssueDetailChatTab
               issueId={issue.id}
               companyId={issue.companyId}
               projectId={issue.projectId ?? null}
-              issueСтатус={issue.status}
-              issueРаботаMode={issue.workMode ?? "standard"}
-              executionЗапуститьId={issue.executionЗапуститьId ?? null}
+              issueStatus={issue.status}
+              issueWorkMode={issue.workMode ?? "standard"}
+              executionRunId={issue.executionRunId ?? null}
               blockedBy={issue.blockedBy ?? []}
               blockerAttention={issue.blockerAttention ?? null}
-              successfulЗапуститьHandoff={issue.successfulЗапуститьHandoff ?? null}
-              comments={threadКомментарии}
-              locallyQueuedCommentЗапуститьIds={locallyQueuedCommentЗапуститьIds}
+              successfulRunHandoff={issue.successfulRunHandoff ?? null}
+              comments={threadComments}
+              locallyQueuedCommentRunIds={locallyQueuedCommentRunIds}
               interactions={interactions}
-              hasOlderКомментарии={hasOlderКомментарии}
-              commentsЗагрузкаOlder={commentsЗагрузкаOlder}
-              onLoadOlderКомментарии={loadOlderКомментарии}
-              onОбновитьLatestКомментарии={refetchLatestКомментарии}
+              hasOlderComments={hasOlderComments}
+              commentsLoadingOlder={commentsLoadingOlder}
+              onLoadOlderComments={loadOlderComments}
+              onRefreshLatestComments={refetchLatestComments}
               composerRef={commentComposerRef}
               feedbackVotes={feedbackVotes}
               feedbackDataSharingPreference={feedbackDataSharingPreference}
@@ -3801,40 +3801,40 @@ export function ЗадачаDetail() {
               agentMap={agentMap}
               currentUserId={currentUserId}
               userLabelMap={userLabelMap}
-              userПрофильMap={userПрофильMap}
-              draftКлюч={`paperclip:issue-comment-draft:${issue.id}`}
+              userProfileMap={userProfileMap}
+              draftKey={`paperclip:issue-comment-draft:${issue.id}`}
               reassignOptions={commentReassignOptions}
-              currentИсполнительЗначение={actualИсполнительЗначение}
-              suggestedИсполнительЗначение={suggestedИсполнительЗначение}
+              currentAssigneeValue={actualAssigneeValue}
+              suggestedAssigneeValue={suggestedAssigneeValue}
               mentions={mentionOptions}
-              composerОтключитьdReason={commentComposerОтключитьdReason}
+              composerDisabledReason={commentComposerDisabledReason}
               composerHint={composerHint}
               queuedCommentReason={queuedCommentReason}
               onVote={handleCommentVote}
-              onДобавить={handleChatДобавить}
-              onImageЗагрузить={handleCommentImageЗагрузить}
+              onAdd={handleChatAdd}
+              onImageUpload={handleCommentImageUpload}
               onAttachImage={handleCommentAttachImage}
-              onInterruptQueued={handleInterruptQueuedЗапустить}
-              onПаузаРаботаЗапустить={canManageTreeControl
-                ? (runId) => pauseЗадачаРаботаЗапустить.mutateAsync({ runId, scope: treeControlОбласть }).then(() => undefined)
+              onInterruptQueued={handleInterruptQueuedRun}
+              onPauseWorkRun={canManageTreeControl
+                ? (runId) => pauseIssueWorkRun.mutateAsync({ runId, scope: treeControlScope }).then(() => undefined)
                 : undefined}
-              onРаботаModeChange={(nextMode) => {
-                const currentMode: ЗадачаРаботаMode = issue.workMode ?? "standard";
+              onWorkModeChange={(nextMode) => {
+                const currentMode: IssueWorkMode = issue.workMode ?? "standard";
                 if (currentMode === nextMode) return;
-                return updateЗадача.mutateAsync({ workMode: nextMode }).then(() => undefined);
+                return updateIssue.mutateAsync({ workMode: nextMode }).then(() => undefined);
               }}
-              onОтменаQueued={handleОтменаQueuedComment}
-              interruptingQueuedЗапуститьId={interruptQueuedComment.isОжидание ? interruptQueuedComment.variables ?? null : null}
-              pausingРаботаЗапуститьId={pauseЗадачаРаботаЗапустить.isОжидание ? pauseЗадачаРаботаЗапустить.variables?.runId ?? null : null}
+              onCancelQueued={handleCancelQueuedComment}
+              interruptingQueuedRunId={interruptQueuedComment.isPending ? interruptQueuedComment.variables ?? null : null}
+              pausingWorkRunId={pauseIssueWorkRun.isPending ? pauseIssueWorkRun.variables?.runId ?? null : null}
               onImageClick={handleChatImageClick}
-              onПринятьInteraction={handleПринятьInteraction}
-              onОтклонитьInteraction={handleОтклонитьInteraction}
-              onОтправитьInteractionAnswers={handleОтправитьInteractionAnswers}
-              onОтменаInteraction={handleОтменаInteraction}
+              onAcceptInteraction={handleAcceptInteraction}
+              onRejectInteraction={handleRejectInteraction}
+              onSubmitInteractionAnswers={handleSubmitInteractionAnswers}
+              onCancelInteraction={handleCancelInteraction}
               assigneeUserId={issue.assigneeUserId ?? null}
-              onПродолжитьFromНазадlog={canПродолжитьFromНазадlog ? handleПродолжитьFromНазадlog : undefined}
-              resumeFromНазадlogОжидание={
-                updateЗадача.isОжидание && updateЗадача.variables?.status === "todo"
+              onResumeFromBacklog={canResumeFromBacklog ? handleResumeFromBacklog : undefined}
+              resumeFromBacklogPending={
+                updateIssue.isPending && updateIssue.variables?.status === "todo"
               }
             />
           ) : null}
@@ -3842,29 +3842,29 @@ export function ЗадачаDetail() {
 
         <TabsContent value="activity">
           {detailTab === "activity" ? (
-            <ЗадачаDetailАктивностьTab
+            <IssueDetailActivityTab
               issue={issue}
               issueId={issue.id}
               companyId={issue.companyId}
-              issueСтатус={issue.status}
-              childЗадачи={childЗадачи}
+              issueStatus={issue.status}
+              childIssues={childIssues}
               agentMap={agentMap}
-              hasLiveЗапуститьs={hasLiveЗапуститьs}
+              hasLiveRuns={hasLiveRuns}
               currentUserId={currentUserId}
-              userПрофильMap={userПрофильMap}
-              pendingСогласованиеAction={pendingСогласованиеAction}
+              userProfileMap={userProfileMap}
+              pendingApprovalAction={pendingApprovalAction}
               handoffFocusSignal={handoffFocusSignal}
-              onСогласованиеAction={(approvalId, action) => {
+              onApprovalAction={(approvalId, action) => {
                 approvalDecision.mutate({ approvalId, action });
               }}
-              onCheckMonitorСейчас={() => checkЗадачаMonitorСейчас.mutate()}
-              checkingMonitorСейчас={checkЗадачаMonitorСейчас.isОжидание}
+              onCheckMonitorNow={() => checkIssueMonitorNow.mutate()}
+              checkingMonitorNow={checkIssueMonitorNow.isPending}
             />
           ) : null}
         </TabsContent>
 
         <TabsContent value="related-work">
-          <ЗадачаRelatedРаботаPanel relatedРабота={issue.relatedРабота} />
+          <IssueRelatedWorkPanel relatedWork={issue.relatedWork} />
         </TabsContent>
 
         {activePluginTab && (
@@ -3875,7 +3875,7 @@ export function ЗадачаDetail() {
                 companyId: issue.companyId,
                 projectId: issue.projectId ?? null,
                 entityId: issue.id,
-                entityТип: "issue",
+                entityType: "issue",
               }}
               missingBehavior="placeholder"
             />
@@ -3884,59 +3884,59 @@ export function ЗадачаDetail() {
       </Tabs>
 
       <Dialog open={treeControlOpen} onOpenChange={setTreeControlOpen}>
-        <DialogContent classИмя="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[560px]">
-          <DialogHeader classИмя="border-b border-border/60 px-6 pb-4 pr-12 pt-6">
-            <DialogНазвание>{issueTreeControlLabel(treeControlMode, treeControlОбласть)}</DialogНазвание>
-            <DialogОписание>
-              {issueTreeControlHelpText(treeControlMode, treeControlОбласть)}
-            </DialogОписание>
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[560px]">
+          <DialogHeader className="border-b border-border/60 px-6 pb-4 pr-12 pt-6">
+            <DialogTitle>{issueTreeControlLabel(treeControlMode, treeControlScope)}</DialogTitle>
+            <DialogDescription>
+              {issueTreeControlHelpText(treeControlMode, treeControlScope)}
+            </DialogDescription>
           </DialogHeader>
-          <div classИмя="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
             {treeControlMode === "cancel" ? (
-              <div classИмя="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
-                Отменаling a subtree is destructive. Нетn-terminal issues will be marked cancelled, and running or queued work will be interrupted where possible.
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                Cancelling a subtree is destructive. Non-terminal issues will be marked cancelled, and running or queued work will be interrupted where possible.
               </div>
             ) : null}
 
-            <div classИмя="space-y-1.5">
-              <label classИмя="text-xs text-muted-foreground">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">
                 Reason (optional)
               </label>
               <Textarea
                 value={treeControlReason}
                 onChange={(event) => setTreeControlReason(event.target.value)}
                 placeholder="Explain why this subtree control is being applied..."
-                classИмя="min-h-[88px]"
+                className="min-h-[88px]"
               />
             </div>
 
             {(treeControlMode === "resume" || treeControlMode === "restore") ? (
-              <div classИмя="space-y-2">
-                <label classИмя="flex items-start gap-2 text-sm">
+              <div className="space-y-2">
+                <label className="flex items-start gap-2 text-sm">
                   <input
                     type="checkbox"
-                    classИмя="mt-0.5"
-                    disabled={previewAffectedАгентCount === 0}
-                    checked={treeControlWakeАгентыOnПродолжить}
-                    onChange={(event) => setTreeControlWakeАгентыOnПродолжить(event.target.checked)}
+                    className="mt-0.5"
+                    disabled={previewAffectedAgentCount === 0}
+                    checked={treeControlWakeAgentsOnResume}
+                    onChange={(event) => setTreeControlWakeAgentsOnResume(event.target.checked)}
                   />
                   <span>
-                    <span classИмя="block font-medium">Wake affected agents ({previewAffectedАгентCount})</span>
-                    <span classИмя="text-xs text-muted-foreground">
-                      {previewAffectedАгентCount === 0
-                        ? "Нет assigned agents are eligible to wake from this preview."
+                    <span className="block font-medium">Wake affected agents ({previewAffectedAgentCount})</span>
+                    <span className="text-xs text-muted-foreground">
+                      {previewAffectedAgentCount === 0
+                        ? "No assigned agents are eligible to wake from this preview."
                         : "Wake assigned agents after this operation completes."}
                     </span>
                   </span>
                 </label>
-                {treeControlWakeАгентыOnПродолжить && treeПредпросмотрAffectedАгентRows.length > 0 ? (
-                  <div classИмя="max-h-32 space-y-1 overflow-y-auto overscroll-contain">
-                    {treeПредпросмотрAffectedАгентRows.map(({ agentId, agent }) => (
-                      <div key={agentId} classИмя="flex items-center gap-2 rounded-sm px-1 py-1 text-sm hover:bg-accent/50">
-                        <span classИмя="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-background">
-                          <АгентIcon icon={agent?.icon} classИмя="h-3.5 w-3.5 text-muted-foreground" />
+                {treeControlWakeAgentsOnResume && treePreviewAffectedAgentRows.length > 0 ? (
+                  <div className="max-h-32 space-y-1 overflow-y-auto overscroll-contain">
+                    {treePreviewAffectedAgentRows.map(({ agentId, agent }) => (
+                      <div key={agentId} className="flex items-center gap-2 rounded-sm px-1 py-1 text-sm hover:bg-accent/50">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-background">
+                          <AgentIcon icon={agent?.icon} className="h-3.5 w-3.5 text-muted-foreground" />
                         </span>
-                        <span classИмя="min-w-0 flex-1 truncate">{agent?.name ?? agentId.slice(0, 8)}</span>
+                        <span className="min-w-0 flex-1 truncate">{agent?.name ?? agentId.slice(0, 8)}</span>
                       </div>
                     ))}
                   </div>
@@ -3945,68 +3945,68 @@ export function ЗадачаDetail() {
             ) : null}
 
             {treeControlMode === "cancel" ? (
-              <label classИмя="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-sm">
+              <label className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-sm">
                 <input
                   type="checkbox"
-                  classИмя="mt-0.5"
-                  checked={treeControlОтменаПодтвердитьed}
-                  onChange={(event) => setTreeControlОтменаПодтвердитьed(event.target.checked)}
+                  className="mt-0.5"
+                  checked={treeControlCancelConfirmed}
+                  onChange={(event) => setTreeControlCancelConfirmed(event.target.checked)}
                 />
-                <span>I understand this will cancel {previewAffectedЗадачаCount} issues.</span>
+                <span>I understand this will cancel {previewAffectedIssueCount} issues.</span>
               </label>
             ) : null}
 
-            <div classИмя="space-y-2">
-              {treeControlПредпросмотрЗагрузка ? (
-                <div classИмя="space-y-2">
-                  <Skeleton classИмя="h-4 w-40" />
-                  <Skeleton classИмя="h-3 w-full" />
-                  <Skeleton classИмя="h-3 w-4/5" />
-                  <Skeleton classИмя="h-3 w-2/3" />
+            <div className="space-y-2">
+              {treeControlPreviewLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-4/5" />
+                  <Skeleton className="h-3 w-2/3" />
                 </div>
-              ) : treeControlПредпросмотрОшибка ? (
-                <div classИмя="space-y-2">
-                  <p classИмя="text-xs text-destructive">{treeControlПредпросмотрОшибкаКопировать(treeControlПредпросмотрОшибка)}</p>
+              ) : treeControlPreviewError ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-destructive">{treeControlPreviewErrorCopy(treeControlPreviewError)}</p>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      void refetchTreeControlПредпросмотр();
+                      void refetchTreeControlPreview();
                     }}
                   >
-                    Повторить preview
+                    Retry preview
                   </Button>
                 </div>
-              ) : treeControlПредпросмотр ? (
-                <div classИмя="space-y-2">
-                  {treeПредпросмотрПредупреждениеs.length > 0 ? (
-                    <div classИмя="space-y-1">
-                      {treeПредпросмотрПредупреждениеs.map((warning) => (
-                        <p key={warning.code} classИмя="text-xs text-amber-700 dark:text-amber-300">
+              ) : treeControlPreview ? (
+                <div className="space-y-2">
+                  {treePreviewWarnings.length > 0 ? (
+                    <div className="space-y-1">
+                      {treePreviewWarnings.map((warning) => (
+                        <p key={warning.code} className="text-xs text-amber-700 dark:text-amber-300">
                           {warning.message}
                         </p>
                       ))}
                     </div>
                   ) : null}
-                  {treeПредпросмотрAffectedЗадачаRows.length > 0 ? (
-                    <div classИмя="max-h-56 overflow-y-auto overscroll-contain">
-                      {treeПредпросмотрAffectedЗадачаRows.map(({ candidate, issue: previewЗадача }) => (
+                  {treePreviewAffectedIssueRows.length > 0 ? (
+                    <div className="max-h-56 overflow-y-auto overscroll-contain">
+                      {treePreviewAffectedIssueRows.map(({ candidate, issue: previewIssue }) => (
                         <div key={candidate.id} style={candidate.depth > 0 ? { paddingLeft: `${Math.min(candidate.depth, 6) * 14}px` } : undefined}>
                           <Link
-                            to={createЗадачаDetailПуть(candidate.identifier ?? candidate.id)}
-                            issuePrefetch={previewЗадача}
-                            classИмя={cn(
+                            to={createIssueDetailPath(candidate.identifier ?? candidate.id)}
+                            issuePrefetch={previewIssue}
+                            className={cn(
                               "group flex items-start gap-2 border-b border-border py-2 pl-1 pr-2 text-sm no-underline text-inherit transition-colors last:border-b-0 hover:bg-accent/50 sm:items-center",
                               candidate.skipped && "opacity-60",
                             )}
                           >
-                            <СтатусIcon status={candidate.status} />
-                            <span classИмя="shrink-0 font-mono text-xs text-muted-foreground">
+                            <StatusIcon status={candidate.status} />
+                            <span className="shrink-0 font-mono text-xs text-muted-foreground">
                               {candidate.identifier ?? candidate.id.slice(0, 8)}
                             </span>
-                            <span classИмя="min-w-0 flex-1 truncate">{candidate.title}</span>
+                            <span className="min-w-0 flex-1 truncate">{candidate.title}</span>
                             {candidate.skipped && candidate.skipReason === "terminal_status" ? (
-                              <span classИмя="shrink-0 text-xs text-muted-foreground">Complete</span>
+                              <span className="shrink-0 text-xs text-muted-foreground">Complete</span>
                             ) : null}
                           </Link>
                         </div>
@@ -4015,20 +4015,20 @@ export function ЗадачаDetail() {
                   ) : null}
                 </div>
               ) : (
-                <p classИмя="text-xs text-muted-foreground">Предпросмотр unavailable.</p>
+                <p className="text-xs text-muted-foreground">Preview unavailable.</p>
               )}
             </div>
           </div>
-          <DialogFooter classИмя="border-t border-border/60 bg-background px-6 py-4">
-            <Button variant="outline" onClick={() => setTreeControlOpen(false)} disabled={executeTreeControl.isОжидание}>
-              Закрыть
+          <DialogFooter className="border-t border-border/60 bg-background px-6 py-4">
+            <Button variant="outline" onClick={() => setTreeControlOpen(false)} disabled={executeTreeControl.isPending}>
+              Close
             </Button>
             <Button
               onClick={() => executeTreeControl.mutate()}
-              disabled={executeTreeControl.isОжидание || !canApplyTreeControl}
+              disabled={executeTreeControl.isPending || !canApplyTreeControl}
               variant={treeControlMode === "cancel" ? "destructive" : "default"}
             >
-              {executeTreeControl.isОжидание ? "Applying..." : treeControlPrimaryButtonLabel}
+              {executeTreeControl.isPending ? "Applying..." : treeControlPrimaryButtonLabel}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -4036,24 +4036,24 @@ export function ЗадачаDetail() {
 
       {/* Mobile properties drawer */}
       <Sheet open={mobilePropsOpen} onOpenChange={setMobilePropsOpen}>
-        <SheetContent side="bottom" classИмя="max-h-[85dvh] pb-[env(safe-area-inset-bottom)]">
+        <SheetContent side="bottom" className="max-h-[85dvh] pb-[env(safe-area-inset-bottom)]">
           <SheetHeader>
-            <SheetНазвание classИмя="text-sm">Properties</SheetНазвание>
+            <SheetTitle className="text-sm">Properties</SheetTitle>
           </SheetHeader>
-          <ScrollArea classИмя="flex-1 overflow-y-auto">
-            <div classИмя="px-4 pb-4">
-              <ЗадачаProperties
+          <ScrollArea className="flex-1 overflow-y-auto">
+            <div className="px-4 pb-4">
+              <IssueProperties
                 issue={issue}
-                childЗадачи={childЗадачи}
-                onДобавитьSubЗадача={openNewSubЗадача}
-                onОбновить={(data) => updateЗадача.mutate(data)}
+                childIssues={childIssues}
+                onAddSubIssue={openNewSubIssue}
+                onUpdate={(data) => updateIssue.mutate(data)}
                 inline
               />
             </div>
           </ScrollArea>
         </SheetContent>
       </Sheet>
-      <ScrollToБотtom />
+      <ScrollToBottom />
     </div>
   );
 }

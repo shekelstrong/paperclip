@@ -4,22 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Бот, Фильтр, HardDrive, Поиск, User, X } from "lucide-react";
-import { ПриоритетIcon } from "./ПриоритетIcon";
-import { СтатусIcon } from "./СтатусIcon";
+import { Bot, Filter, HardDrive, Search, User, X } from "lucide-react";
+import { PriorityIcon } from "./PriorityIcon";
+import { StatusIcon } from "./StatusIcon";
 import {
-  defaultЗадачаФильтрState,
-  issueФильтрArraysEqual,
-  issueФильтрLabel,
-  issueПриоритетOrder,
-  issueQuickФильтрPresets,
-  issueСтатусOrder,
-  toggleЗадачаФильтрЗначение,
-  type ЗадачаФильтрState,
+  defaultIssueFilterState,
+  issueFilterArraysEqual,
+  issueFilterLabel,
+  issuePriorityOrder,
+  issueQuickFilterPresets,
+  issueStatusOrder,
+  toggleIssueFilterValue,
+  type IssueFilterState,
 } from "../lib/issue-filters";
-import { formatИсполнительUserLabel } from "../lib/assignees";
+import { formatAssigneeUserLabel } from "../lib/assignees";
 
-type АгентOption = {
+type AgentOption = {
   id: string;
   name: string;
 };
@@ -35,7 +35,7 @@ type LabelOption = {
   color: string;
 };
 
-type Рабочая областьOption = {
+type WorkspaceOption = {
   id: string;
   name: string;
 };
@@ -47,46 +47,46 @@ type CreatorOption = {
   searchText?: string;
 };
 
-export function ЗадачаФильтрsPopover({
+export function IssueFiltersPopover({
   state,
   onChange,
-  activeФильтрCount,
+  activeFilterCount,
   agents,
   projects,
   labels,
   currentUserId,
-  enableПроцедураVisibilityФильтр = false,
+  enableRoutineVisibilityFilter = false,
   buttonVariant = "ghost",
   iconOnly = false,
   workspaces,
   creators,
 }: {
-  state: ЗадачаФильтрState;
-  onChange: (patch: Partial<ЗадачаФильтрState>) => void;
-  activeФильтрCount: number;
-  agents?: АгентOption[];
+  state: IssueFilterState;
+  onChange: (patch: Partial<IssueFilterState>) => void;
+  activeFilterCount: number;
+  agents?: AgentOption[];
   projects?: ProjectOption[];
   labels?: LabelOption[];
   currentUserId?: string | null;
-  enableПроцедураVisibilityФильтр?: boolean;
+  enableRoutineVisibilityFilter?: boolean;
   buttonVariant?: "ghost" | "outline";
   iconOnly?: boolean;
-  workspaces?: Рабочая областьOption[];
+  workspaces?: WorkspaceOption[];
   creators?: CreatorOption[];
 }) {
-  const [creatorПоиск, setCreatorПоиск] = useState("");
+  const [creatorSearch, setCreatorSearch] = useState("");
   const creatorOptions = creators ?? [];
   const creatorOptionById = useMemo(
     () => new Map(creatorOptions.map((option) => [option.id, option])),
     [creatorOptions],
   );
-  const normalizedCreatorПоиск = creatorПоиск.trim().toНизкийerCase();
+  const normalizedCreatorSearch = creatorSearch.trim().toLowerCase();
   const visibleCreatorOptions = useMemo(() => {
-    if (!normalizedCreatorПоиск) return creatorOptions;
+    if (!normalizedCreatorSearch) return creatorOptions;
     return creatorOptions.filter((option) =>
-      `${option.label} ${option.searchText ?? ""}`.toНизкийerCase().includes(normalizedCreatorПоиск),
+      `${option.label} ${option.searchText ?? ""}`.toLowerCase().includes(normalizedCreatorSearch),
     );
-  }, [creatorOptions, normalizedCreatorПоиск]);
+  }, [creatorOptions, normalizedCreatorSearch]);
   const selectedCreatorOptions = useMemo(
     () => state.creators.map((creatorId) => {
       const knownOption = creatorOptionById.get(creatorId);
@@ -98,7 +98,7 @@ export function ЗадачаФильтрsPopover({
       const userId = creatorId.startsWith("user:") ? creatorId.slice("user:".length) : creatorId;
       return {
         id: creatorId,
-        label: formatИсполнительUserLabel(userId, currentUserId) ?? userId.slice(0, 5),
+        label: formatAssigneeUserLabel(userId, currentUserId) ?? userId.slice(0, 5),
         kind: "user" as const,
       };
     }),
@@ -108,17 +108,17 @@ export function ЗадачаФильтрsPopover({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant={buttonVariant} size={iconOnly ? "icon" : "sm"} classИмя={`text-xs ${iconOnly ? "relative h-8 w-8 shrink-0" : ""} ${activeФильтрCount > 0 ? "text-blue-600 dark:text-blue-400" : ""}`} title={iconOnly ? (activeФильтрCount > 0 ? `Фильтрs: ${activeФильтрCount}` : "Фильтр") : undefined}>
-          <Фильтр classИмя={iconOnly ? "h-3.5 w-3.5" : "h-3.5 w-3.5 sm:h-3 sm:w-3 sm:mr-1"} />
-          {!iconOnly && <span classИмя="hidden sm:inline">{activeФильтрCount > 0 ? `Фильтрs: ${activeФильтрCount}` : "Фильтр"}</span>}
-          {!iconOnly && activeФильтрCount > 0 ? <span classИмя="ml-0.5 text-[10px] font-medium sm:hidden">{activeФильтрCount}</span> : null}
-          {iconOnly && activeФильтрCount > 0 ? <span classИмя="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">{activeФильтрCount}</span> : null}
-          {!iconOnly && activeФильтрCount > 0 ? (
+        <Button variant={buttonVariant} size={iconOnly ? "icon" : "sm"} className={`text-xs ${iconOnly ? "relative h-8 w-8 shrink-0" : ""} ${activeFilterCount > 0 ? "text-blue-600 dark:text-blue-400" : ""}`} title={iconOnly ? (activeFilterCount > 0 ? `Filters: ${activeFilterCount}` : "Фильтр") : undefined}>
+          <Filter className={iconOnly ? "h-3.5 w-3.5" : "h-3.5 w-3.5 sm:h-3 sm:w-3 sm:mr-1"} />
+          {!iconOnly && <span className="hidden sm:inline">{activeFilterCount > 0 ? `Filters: ${activeFilterCount}` : "Фильтр"}</span>}
+          {!iconOnly && activeFilterCount > 0 ? <span className="ml-0.5 text-[10px] font-medium sm:hidden">{activeFilterCount}</span> : null}
+          {iconOnly && activeFilterCount > 0 ? <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">{activeFilterCount}</span> : null}
+          {!iconOnly && activeFilterCount > 0 ? (
             <X
-              classИмя="ml-1 hidden h-3 w-3 sm:block"
+              className="ml-1 hidden h-3 w-3 sm:block"
               onClick={(event) => {
                 event.stopPropagation();
-                onChange(defaultЗадачаФильтрState);
+                onChange(defaultIssueFilterState);
               }}
             />
           ) : null}
@@ -126,37 +126,37 @@ export function ЗадачаФильтрsPopover({
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        classИмя="w-[min(780px,calc(100vw-2rem))] max-h-[min(80vh,42rem)] overflow-y-auto overscroll-contain p-0"
+        className="w-[min(780px,calc(100vw-2rem))] max-h-[min(80vh,42rem)] overflow-y-auto overscroll-contain p-0"
       >
-        <div classИмя="space-y-3 p-3">
-          <div classИмя="flex items-center justify-between">
-            <span classИмя="text-sm font-medium">Фильтрs</span>
-            {activeФильтрCount > 0 ? (
+        <div className="space-y-3 p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Filters</span>
+            {activeFilterCount > 0 ? (
               <button
                 type="button"
-                classИмя="text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => onChange(defaultЗадачаФильтрState)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => onChange(defaultIssueFilterState)}
               >
-                Очистить
+                Clear
               </button>
             ) : null}
           </div>
 
-          <div classИмя="space-y-1.5">
-            <span classИмя="text-xs text-muted-foreground">Quick filters</span>
-            <div classИмя="flex flex-wrap gap-1.5">
-              {issueQuickФильтрPresets.map((preset) => {
-                const isАктивен = issueФильтрArraysEqual(state.statuses, preset.statuses);
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">Quick filters</span>
+            <div className="flex flex-wrap gap-1.5">
+              {issueQuickFilterPresets.map((preset) => {
+                const isActive = issueFilterArraysEqual(state.statuses, preset.statuses);
                 return (
                   <button
                     key={preset.label}
                     type="button"
-                    classИмя={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                      isАктивен
+                    className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                      isActive
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
                     }`}
-                    onClick={() => onChange({ statuses: isАктивен ? [] : [...preset.statuses] })}
+                    onClick={() => onChange({ statuses: isActive ? [] : [...preset.statuses] })}
                   >
                     {preset.label}
                   </button>
@@ -165,141 +165,141 @@ export function ЗадачаФильтрsPopover({
             </div>
           </div>
 
-          <div classИмя="border-t border-border" />
+          <div className="border-t border-border" />
 
-          <div classИмя="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div classИмя="min-w-0 space-y-3">
-              <div classИмя="space-y-1">
-                <span classИмя="text-xs text-muted-foreground">Статус</span>
-                <div classИмя="space-y-0.5">
-                  {issueСтатусOrder.map((status) => (
-                    <label key={status} classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="min-w-0 space-y-3">
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">Status</span>
+                <div className="space-y-0.5">
+                  {issueStatusOrder.map((status) => (
+                    <label key={status} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                       <Checkbox
                         checked={state.statuses.includes(status)}
-                        onCheckedChange={() => onChange({ statuses: toggleЗадачаФильтрЗначение(state.statuses, status) })}
+                        onCheckedChange={() => onChange({ statuses: toggleIssueFilterValue(state.statuses, status) })}
                       />
-                      <СтатусIcon status={status} />
-                      <span classИмя="text-sm">{issueФильтрLabel(status)}</span>
+                      <StatusIcon status={status} />
+                      <span className="text-sm">{issueFilterLabel(status)}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <div classИмя="space-y-1">
-                <span classИмя="text-xs text-muted-foreground">Приоритет</span>
-                <div classИмя="space-y-0.5">
-                  {issueПриоритетOrder.map((priority) => (
-                    <label key={priority} classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">Priority</span>
+                <div className="space-y-0.5">
+                  {issuePriorityOrder.map((priority) => (
+                    <label key={priority} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                       <Checkbox
                         checked={state.priorities.includes(priority)}
-                        onCheckedChange={() => onChange({ priorities: toggleЗадачаФильтрЗначение(state.priorities, priority) })}
+                        onCheckedChange={() => onChange({ priorities: toggleIssueFilterValue(state.priorities, priority) })}
                       />
-                      <ПриоритетIcon priority={priority} />
-                      <span classИмя="text-sm">{issueФильтрLabel(priority)}</span>
+                      <PriorityIcon priority={priority} />
+                      <span className="text-sm">{issueFilterLabel(priority)}</span>
                     </label>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div classИмя="min-w-0 space-y-3">
-              <div classИмя="space-y-1">
-                <span classИмя="text-xs text-muted-foreground">Исполнитель</span>
-                <div classИмя="max-h-32 space-y-0.5 overflow-y-auto">
-                  <label classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+            <div className="min-w-0 space-y-3">
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">Assignee</span>
+                <div className="max-h-32 space-y-0.5 overflow-y-auto">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                     <Checkbox
                       checked={state.assignees.includes("__unassigned")}
-                      onCheckedChange={() => onChange({ assignees: toggleЗадачаФильтрЗначение(state.assignees, "__unassigned") })}
+                      onCheckedChange={() => onChange({ assignees: toggleIssueFilterValue(state.assignees, "__unassigned") })}
                     />
-                    <span classИмя="text-sm">Нет assignee</span>
+                    <span className="text-sm">No assignee</span>
                   </label>
                   {currentUserId ? (
-                    <label classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+                    <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                       <Checkbox
                         checked={state.assignees.includes("__me")}
-                        onCheckedChange={() => onChange({ assignees: toggleЗадачаФильтрЗначение(state.assignees, "__me") })}
+                        onCheckedChange={() => onChange({ assignees: toggleIssueFilterValue(state.assignees, "__me") })}
                       />
-                      <User classИмя="h-3.5 w-3.5 text-muted-foreground" />
-                      <span classИмя="text-sm">Me</span>
+                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm">Me</span>
                     </label>
                   ) : null}
                   {(agents ?? []).map((agent) => (
-                    <label key={agent.id} classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+                    <label key={agent.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                       <Checkbox
                         checked={state.assignees.includes(agent.id)}
-                        onCheckedChange={() => onChange({ assignees: toggleЗадачаФильтрЗначение(state.assignees, agent.id) })}
+                        onCheckedChange={() => onChange({ assignees: toggleIssueFilterValue(state.assignees, agent.id) })}
                       />
-                      <span classИмя="text-sm">{agent.name}</span>
+                      <span className="text-sm">{agent.name}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               {creatorOptions.length > 0 ? (
-                <div classИмя="space-y-1">
-                  <span classИмя="text-xs text-muted-foreground">Creator</span>
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Creator</span>
                   {selectedCreatorOptions.length > 0 ? (
-                    <div classИмя="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1">
                       {selectedCreatorOptions.map((creator) => (
-                        <Badge key={creator.id} variant="secondary" classИмя="gap-1 pr-1">
-                          {creator.kind === "agent" ? <Бот classИмя="h-3 w-3" /> : <User classИмя="h-3 w-3" />}
+                        <Badge key={creator.id} variant="secondary" className="gap-1 pr-1">
+                          {creator.kind === "agent" ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
                           <span>{creator.label}</span>
                           <button
                             type="button"
-                            classИмя="rounded-full p-0.5 hover:bg-accent"
+                            className="rounded-full p-0.5 hover:bg-accent"
                             onClick={() => onChange({ creators: state.creators.filter((value) => value !== creator.id) })}
-                            aria-label={`Удалить creator ${creator.label}`}
+                            aria-label={`Remove creator ${creator.label}`}
                           >
-                            <X classИмя="h-3 w-3" />
+                            <X className="h-3 w-3" />
                           </button>
                         </Badge>
                       ))}
                     </div>
                   ) : null}
-                  <div classИмя="relative">
-                    <Поиск classИмя="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      value={creatorПоиск}
-                      onChange={(event) => setCreatorПоиск(event.target.value)}
-                      placeholder="Поиск creators..."
-                      classИмя="h-8 pl-7 text-xs"
+                      value={creatorSearch}
+                      onChange={(event) => setCreatorSearch(event.target.value)}
+                      placeholder="Search creators..."
+                      className="h-8 pl-7 text-xs"
                     />
                   </div>
-                  <div classИмя="max-h-32 space-y-0.5 overflow-y-auto">
+                  <div className="max-h-32 space-y-0.5 overflow-y-auto">
                     {visibleCreatorOptions.length > 0 ? visibleCreatorOptions.map((creator) => {
                       const selected = state.creators.includes(creator.id);
                       return (
                         <button
                           key={creator.id}
                           type="button"
-                          classИмя={`flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-sm ${
+                          className={`flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-sm ${
                             selected ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                           }`}
-                          onClick={() => onChange({ creators: toggleЗадачаФильтрЗначение(state.creators, creator.id) })}
+                          onClick={() => onChange({ creators: toggleIssueFilterValue(state.creators, creator.id) })}
                         >
-                          {creator.kind === "agent" ? <Бот classИмя="h-3.5 w-3.5" /> : <User classИмя="h-3.5 w-3.5" />}
-                          <span classИмя="min-w-0 flex-1 truncate">{creator.label}</span>
-                          {selected ? <X classИмя="h-3 w-3" /> : null}
+                          {creator.kind === "agent" ? <Bot className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
+                          <span className="min-w-0 flex-1 truncate">{creator.label}</span>
+                          {selected ? <X className="h-3 w-3" /> : null}
                         </button>
                       );
                     }) : (
-                      <div classИмя="px-2 py-1 text-xs text-muted-foreground">Нет creators match.</div>
+                      <div className="px-2 py-1 text-xs text-muted-foreground">No creators match.</div>
                     )}
                   </div>
                 </div>
               ) : null}
 
               {projects && projects.length > 0 ? (
-                <div classИмя="space-y-1">
-                  <span classИмя="text-xs text-muted-foreground">Project</span>
-                  <div classИмя="max-h-32 space-y-0.5 overflow-y-auto">
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Project</span>
+                  <div className="max-h-32 space-y-0.5 overflow-y-auto">
                     {projects.map((project) => (
-                      <label key={project.id} classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+                      <label key={project.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                         <Checkbox
                           checked={state.projects.includes(project.id)}
-                          onCheckedChange={() => onChange({ projects: toggleЗадачаФильтрЗначение(state.projects, project.id) })}
+                          onCheckedChange={() => onChange({ projects: toggleIssueFilterValue(state.projects, project.id) })}
                         />
-                        <span classИмя="text-sm">{project.name}</span>
+                        <span className="text-sm">{project.name}</span>
                       </label>
                     ))}
                   </div>
@@ -307,19 +307,19 @@ export function ЗадачаФильтрsPopover({
               ) : null}
             </div>
 
-            <div classИмя="min-w-0 space-y-3">
+            <div className="min-w-0 space-y-3">
               {labels && labels.length > 0 ? (
-                <div classИмя="space-y-1">
-                  <span classИмя="text-xs text-muted-foreground">Ярлыки</span>
-                  <div classИмя="max-h-32 space-y-0.5 overflow-y-auto">
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Labels</span>
+                  <div className="max-h-32 space-y-0.5 overflow-y-auto">
                     {labels.map((label) => (
-                      <label key={label.id} classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+                      <label key={label.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                         <Checkbox
                           checked={state.labels.includes(label.id)}
-                          onCheckedChange={() => onChange({ labels: toggleЗадачаФильтрЗначение(state.labels, label.id) })}
+                          onCheckedChange={() => onChange({ labels: toggleIssueFilterValue(state.labels, label.id) })}
                         />
-                        <span classИмя="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: label.color }} />
-                        <span classИмя="text-sm">{label.name}</span>
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: label.color }} />
+                        <span className="text-sm">{label.name}</span>
                       </label>
                     ))}
                   </div>
@@ -327,39 +327,39 @@ export function ЗадачаФильтрsPopover({
               ) : null}
 
               {workspaces && workspaces.length > 0 ? (
-                <div classИмя="space-y-1">
-                  <span classИмя="text-xs text-muted-foreground">Рабочая область</span>
-                  <div classИмя="max-h-32 space-y-0.5 overflow-y-auto">
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Workspace</span>
+                  <div className="max-h-32 space-y-0.5 overflow-y-auto">
                     {workspaces.map((workspace) => (
-                      <label key={workspace.id} classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+                      <label key={workspace.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                         <Checkbox
                           checked={state.workspaces.includes(workspace.id)}
-                          onCheckedChange={() => onChange({ workspaces: toggleЗадачаФильтрЗначение(state.workspaces, workspace.id) })}
+                          onCheckedChange={() => onChange({ workspaces: toggleIssueFilterValue(state.workspaces, workspace.id) })}
                         />
-                        <HardDrive classИмя="h-3.5 w-3.5 text-muted-foreground" />
-                        <span classИмя="text-sm">{workspace.name}</span>
+                        <HardDrive className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-sm">{workspace.name}</span>
                       </label>
                     ))}
                   </div>
                 </div>
               ) : null}
 
-              <div classИмя="space-y-1">
-                <span classИмя="text-xs text-muted-foreground">Visibility</span>
-                <label classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">Visibility</span>
+                <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                   <Checkbox
                     checked={state.liveOnly}
                     onCheckedChange={(checked) => onChange({ liveOnly: checked === true })}
                   />
-                  <span classИмя="text-sm">Live runs only</span>
+                  <span className="text-sm">Live runs only</span>
                 </label>
-                {enableПроцедураVisibilityФильтр ? (
-                  <label classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+                {enableRoutineVisibilityFilter ? (
+                  <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                     <Checkbox
-                      checked={state.hideПроцедураExecutions}
-                      onCheckedChange={(checked) => onChange({ hideПроцедураExecutions: checked === true })}
+                      checked={state.hideRoutineExecutions}
+                      onCheckedChange={(checked) => onChange({ hideRoutineExecutions: checked === true })}
                     />
-                    <span classИмя="text-sm">Hide routine runs</span>
+                    <span className="text-sm">Hide routine runs</span>
                   </label>
                 ) : null}
               </div>

@@ -1,21 +1,21 @@
-import type { Агент } from "@paperclipai/shared";
+import type { Agent } from "@paperclipai/shared";
 
 export const AGENT_ORDER_UPDATED_EVENT = "paperclip:agent-order-updated";
 export const AGENT_SORT_MODE_UPDATED_EVENT = "paperclip:agent-sort-mode-updated";
 const AGENT_ORDER_STORAGE_PREFIX = "paperclip.agentOrder";
-const AGENT_SORT_MODE_STORAGE_PREFIX = "paperclip.agentСортировкаMode";
+const AGENT_SORT_MODE_STORAGE_PREFIX = "paperclip.agentSortMode";
 const ANONYMOUS_USER_ID = "anonymous";
 
-export type АгентSidebarСортировкаMode = "top" | "alphabetical" | "recent";
+export type AgentSidebarSortMode = "top" | "alphabetical" | "recent";
 
-type АгентOrderОбновленоDetail = {
-  storageКлюч: string;
+type AgentOrderUpdatedDetail = {
+  storageKey: string;
   orderedIds: string[];
 };
 
-export type АгентСортировкаModeОбновленоDetail = {
-  storageКлюч: string;
-  sortMode: АгентSidebarСортировкаMode;
+export type AgentSortModeUpdatedDetail = {
+  storageKey: string;
+  sortMode: AgentSidebarSortMode;
 };
 
 function normalizeIdList(value: unknown): string[] {
@@ -23,7 +23,7 @@ function normalizeIdList(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string" && item.length > 0);
 }
 
-function normalizeСортировкаMode(value: unknown): АгентSidebarСортировкаMode {
+function normalizeSortMode(value: unknown): AgentSidebarSortMode {
   return value === "alphabetical" || value === "recent" || value === "top" ? value : "top";
 }
 
@@ -33,17 +33,17 @@ function resolveUserId(userId: string | null | undefined): string {
   return trimmed.length > 0 ? trimmed : ANONYMOUS_USER_ID;
 }
 
-export function getАгентOrderStorageКлюч(companyId: string, userId: string | null | undefined): string {
+export function getAgentOrderStorageKey(companyId: string, userId: string | null | undefined): string {
   return `${AGENT_ORDER_STORAGE_PREFIX}:${companyId}:${resolveUserId(userId)}`;
 }
 
-export function getАгентСортировкаModeStorageКлюч(companyId: string, userId: string | null | undefined): string {
+export function getAgentSortModeStorageKey(companyId: string, userId: string | null | undefined): string {
   return `${AGENT_SORT_MODE_STORAGE_PREFIX}:${companyId}:${resolveUserId(userId)}`;
 }
 
-export function readАгентOrder(storageКлюч: string): string[] {
+export function readAgentOrder(storageKey: string): string[] {
   try {
-    const raw = localStorage.getItem(storageКлюч);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return [];
     return normalizeIdList(JSON.parse(raw));
   } catch {
@@ -51,51 +51,51 @@ export function readАгентOrder(storageКлюч: string): string[] {
   }
 }
 
-export function readАгентСортировкаMode(storageКлюч: string): АгентSidebarСортировкаMode {
+export function readAgentSortMode(storageKey: string): AgentSidebarSortMode {
   try {
-    return normalizeСортировкаMode(localStorage.getItem(storageКлюч));
+    return normalizeSortMode(localStorage.getItem(storageKey));
   } catch {
     return "top";
   }
 }
 
-export function writeАгентOrder(storageКлюч: string, orderedIds: string[]) {
+export function writeAgentOrder(storageKey: string, orderedIds: string[]) {
   const normalized = normalizeIdList(orderedIds);
   try {
-    localStorage.setItem(storageКлюч, JSON.stringify(normalized));
+    localStorage.setItem(storageKey, JSON.stringify(normalized));
   } catch {
     // Ignore storage write failures in restricted browser contexts.
   }
   if (typeof window !== "undefined") {
     window.dispatchEvent(
-      new СвойEvent<АгентOrderОбновленоDetail>(AGENT_ORDER_UPDATED_EVENT, {
-        detail: { storageКлюч, orderedIds: normalized },
+      new CustomEvent<AgentOrderUpdatedDetail>(AGENT_ORDER_UPDATED_EVENT, {
+        detail: { storageKey, orderedIds: normalized },
       }),
     );
   }
 }
 
-export function writeАгентСортировкаMode(storageКлюч: string, sortMode: АгентSidebarСортировкаMode) {
-  const normalized = normalizeСортировкаMode(sortMode);
+export function writeAgentSortMode(storageKey: string, sortMode: AgentSidebarSortMode) {
+  const normalized = normalizeSortMode(sortMode);
   try {
-    localStorage.setItem(storageКлюч, normalized);
+    localStorage.setItem(storageKey, normalized);
   } catch {
     // Ignore storage write failures in restricted browser contexts.
   }
   if (typeof window !== "undefined") {
     window.dispatchEvent(
-      new СвойEvent<АгентСортировкаModeОбновленоDetail>(AGENT_SORT_MODE_UPDATED_EVENT, {
-        detail: { storageКлюч, sortMode: normalized },
+      new CustomEvent<AgentSortModeUpdatedDetail>(AGENT_SORT_MODE_UPDATED_EVENT, {
+        detail: { storageKey, sortMode: normalized },
       }),
     );
   }
 }
 
-export function sortАгентыByПо умолчаниюSidebarOrder(agents: Агент[]): Агент[] {
+export function sortAgentsByDefaultSidebarOrder(agents: Agent[]): Agent[] {
   if (agents.length === 0) return [];
 
   const byId = new Map(agents.map((agent) => [agent.id, agent]));
-  const childrenOf = new Map<string | null, Агент[]>();
+  const childrenOf = new Map<string | null, Agent[]>();
   for (const agent of agents) {
     const parentId = agent.reportsTo && byId.has(agent.reportsTo) ? agent.reportsTo : null;
     const siblings = childrenOf.get(parentId) ?? [];
@@ -107,7 +107,7 @@ export function sortАгентыByПо умолчаниюSidebarOrder(agents: А
     siblings.sort((left, right) => left.name.localeCompare(right.name));
   }
 
-  const sorted: Агент[] = [];
+  const sorted: Agent[] = [];
   const queue = [...(childrenOf.get(null) ?? [])];
   while (queue.length > 0) {
     const agent = queue.shift();
@@ -120,14 +120,14 @@ export function sortАгентыByПо умолчаниюSidebarOrder(agents: А
   return sorted;
 }
 
-export function sortАгентыByStoredOrder(agents: Агент[], orderedIds: string[]): Агент[] {
+export function sortAgentsByStoredOrder(agents: Agent[], orderedIds: string[]): Agent[] {
   if (agents.length === 0) return [];
 
-  const defaultСортировкаed = sortАгентыByПо умолчаниюSidebarOrder(agents);
-  if (orderedIds.length === 0) return defaultСортировкаed;
+  const defaultSorted = sortAgentsByDefaultSidebarOrder(agents);
+  if (orderedIds.length === 0) return defaultSorted;
 
-  const byId = new Map(defaultСортировкаed.map((agent) => [agent.id, agent]));
-  const sorted: Агент[] = [];
+  const byId = new Map(defaultSorted.map((agent) => [agent.id, agent]));
+  const sorted: Agent[] = [];
 
   for (const id of orderedIds) {
     const agent = byId.get(id);
@@ -136,7 +136,7 @@ export function sortАгентыByStoredOrder(agents: Агент[], orderedIds: 
     byId.delete(id);
   }
 
-  for (const agent of defaultСортировкаed) {
+  for (const agent of defaultSorted) {
     if (byId.has(agent.id)) {
       sorted.push(agent);
       byId.delete(agent.id);

@@ -1,4 +1,4 @@
-import { useId, useState, type ReactНетde } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   ChevronDown,
   CircleAlert,
@@ -10,38 +10,38 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SystemНетticeTone = "neutral" | "info" | "success" | "warning" | "danger";
+export type SystemNoticeTone = "neutral" | "info" | "success" | "warning" | "danger";
 
-export type SystemНетticeMetadataRow =
+export type SystemNoticeMetadataRow =
   | { kind: "text"; label: string; value: string }
   | { kind: "code"; label: string; value: string }
   | { kind: "issue"; label: string; identifier: string; href?: string; title?: string }
   | { kind: "agent"; label: string; name: string; href?: string }
   | { kind: "run"; label: string; runId: string; href?: string; status?: string };
 
-export type SystemНетticeMetadataSection = {
+export type SystemNoticeMetadataSection = {
   title?: string;
-  rows: SystemНетticeMetadataRow[];
+  rows: SystemNoticeMetadataRow[];
 };
 
-export type SystemНетticeProps = {
-  tone?: SystemНетticeTone;
-  /** Short label that names the system actor + tone, e.g. "System warning". Обязательно so tone is not color-only. */
+export type SystemNoticeProps = {
+  tone?: SystemNoticeTone;
+  /** Short label that names the system actor + tone, e.g. "System warning". Required so tone is not color-only. */
   label?: string;
   /** Short visible body — one or two sentences from the system perspective. */
-  body: ReactНетde;
-  /** Опционально small chip for the originating run link. */
+  body: ReactNode;
+  /** Optional small chip for the originating run link. */
   source?: { label: string; href?: string };
-  /** Hidden-by-default metadata. Renders the Детали affordance only when present. */
-  metadata?: SystemНетticeMetadataSection[];
-  /** Force the details panel open initially. По умолчаниюs to false (collapsed). */
-  detailsПо умолчаниюOpen?: boolean;
-  /** Опционально ISO timestamp shown next to the label. */
+  /** Hidden-by-default metadata. Renders the Details affordance only when present. */
+  metadata?: SystemNoticeMetadataSection[];
+  /** Force the details panel open initially. Defaults to false (collapsed). */
+  detailsDefaultOpen?: boolean;
+  /** Optional ISO timestamp shown next to the label. */
   timestamp?: string;
-  classИмя?: string;
+  className?: string;
 };
 
-type ToneТокенs = {
+type ToneTokens = {
   container: string;
   iconWrap: string;
   icon: LucideIcon;
@@ -50,7 +50,7 @@ type ToneТокенs = {
   divider: string;
 };
 
-const TONE_TOKENS: Record<SystemНетticeTone, ToneТокенs> = {
+const TONE_TOKENS: Record<SystemNoticeTone, ToneTokens> = {
   neutral: {
     container:
       "border-border bg-muted/35 dark:bg-muted/20",
@@ -111,20 +111,20 @@ function formatTimestamp(ts: string) {
   }
 }
 
-function MetadataRow({ row, tone }: { row: SystemНетticeMetadataRow; tone: ToneТокенs }) {
+function MetadataRow({ row, tone }: { row: SystemNoticeMetadataRow; tone: ToneTokens }) {
   return (
-    <div classИмя="grid grid-cols-[7.5rem_1fr] gap-x-3 gap-y-0.5 px-3 py-1.5 text-xs">
-      <div classИмя="truncate text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+    <div className="grid grid-cols-[7.5rem_1fr] gap-x-3 gap-y-0.5 px-3 py-1.5 text-xs">
+      <div className="truncate text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
         {row.label}
       </div>
-      <div classИмя="min-w-0 break-words text-foreground/90">
+      <div className="min-w-0 break-words text-foreground/90">
         {(() => {
           switch (row.kind) {
             case "text":
               return <span>{row.value}</span>;
             case "code":
               return (
-                <code classИмя="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
+                <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
                   {row.value}
                 </code>
               );
@@ -133,7 +133,7 @@ function MetadataRow({ row, tone }: { row: SystemНетticeMetadataRow; tone: To
                 <>
                   <span>{row.identifier}</span>
                   {row.title ? (
-                    <span classИмя="text-muted-foreground">— {row.title}</span>
+                    <span className="text-muted-foreground">— {row.title}</span>
                   ) : null}
                 </>
               );
@@ -141,7 +141,7 @@ function MetadataRow({ row, tone }: { row: SystemНетticeMetadataRow; tone: To
                 return (
                   <a
                     href={row.href}
-                    classИмя={cn(
+                    className={cn(
                       "inline-flex items-center gap-1 rounded-sm font-medium underline-offset-2 hover:underline",
                       tone.label,
                     )}
@@ -151,7 +151,7 @@ function MetadataRow({ row, tone }: { row: SystemНетticeMetadataRow; tone: To
                 );
               }
               return (
-                <span classИмя={cn("inline-flex items-center gap-1 font-medium", tone.label)}>
+                <span className={cn("inline-flex items-center gap-1 font-medium", tone.label)}>
                   {issueLabel}
                 </span>
               );
@@ -161,7 +161,7 @@ function MetadataRow({ row, tone }: { row: SystemНетticeMetadataRow; tone: To
                 return (
                   <a
                     href={row.href}
-                    classИмя={cn(
+                    className={cn(
                       "inline-flex items-center gap-1 rounded-sm font-medium underline-offset-2 hover:underline",
                       tone.label,
                     )}
@@ -171,15 +171,15 @@ function MetadataRow({ row, tone }: { row: SystemНетticeMetadataRow; tone: To
                 );
               }
               return (
-                <span classИмя={cn("font-medium", tone.label)}>{row.name}</span>
+                <span className={cn("font-medium", tone.label)}>{row.name}</span>
               );
             case "run": {
               const runShort = row.runId.length > 12 ? `${row.runId.slice(0, 8)}…` : row.runId;
               const inner = (
                 <>
-                  <code classИмя="rounded bg-muted px-1.5 py-0.5 text-foreground/80">{runShort}</code>
+                  <code className="rounded bg-muted px-1.5 py-0.5 text-foreground/80">{runShort}</code>
                   {row.status ? (
-                    <span classИмя={cn("font-sans", tone.label)}>{row.status}</span>
+                    <span className={cn("font-sans", tone.label)}>{row.status}</span>
                   ) : null}
                 </>
               );
@@ -187,14 +187,14 @@ function MetadataRow({ row, tone }: { row: SystemНетticeMetadataRow; tone: To
                 return (
                   <a
                     href={row.href}
-                    classИмя="inline-flex items-center gap-2 rounded-sm font-mono text-[11px] underline-offset-2 hover:underline"
+                    className="inline-flex items-center gap-2 rounded-sm font-mono text-[11px] underline-offset-2 hover:underline"
                   >
                     {inner}
                   </a>
                 );
               }
               return (
-                <span classИмя="inline-flex items-center gap-2 font-mono text-[11px]">
+                <span className="inline-flex items-center gap-2 font-mono text-[11px]">
                   {inner}
                 </span>
               );
@@ -206,21 +206,21 @@ function MetadataRow({ row, tone }: { row: SystemНетticeMetadataRow; tone: To
   );
 }
 
-export function SystemНетtice({
+export function SystemNotice({
   tone = "neutral",
   label,
   body,
   source,
   metadata,
-  detailsПо умолчаниюOpen = false,
+  detailsDefaultOpen = false,
   timestamp,
-  classИмя,
-}: SystemНетticeProps) {
+  className,
+}: SystemNoticeProps) {
   const tokens = TONE_TOKENS[tone];
   const ToneIcon = tokens.icon;
-  const [open, setOpen] = useState(detailsПо умолчаниюOpen);
+  const [open, setOpen] = useState(detailsDefaultOpen);
   const detailsId = useId();
-  const hasДетали = Boolean(metadata && metadata.length > 0);
+  const hasDetails = Boolean(metadata && metadata.length > 0);
   const resolvedLabel =
     label ??
     {
@@ -235,37 +235,37 @@ export function SystemНетtice({
     <section
       role="status"
       aria-label={resolvedLabel}
-      classИмя={cn(
+      className={cn(
         "relative w-full overflow-hidden rounded-lg border text-sm shadow-[0_1px_0_rgba(15,23,42,0.02)]",
         tokens.container,
-        classИмя,
+        className,
       )}
     >
-      <header classИмя="flex items-start gap-3 px-3 py-2.5 sm:px-4">
+      <header className="flex items-start gap-3 px-3 py-2.5 sm:px-4">
         <span
-          classИмя={cn(
+          className={cn(
             "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
             tokens.iconWrap,
           )}
           aria-hidden
         >
-          <ToneIcon classИмя={cn("h-4 w-4", tokens.iconClass)} />
+          <ToneIcon className={cn("h-4 w-4", tokens.iconClass)} />
         </span>
-        <div classИмя="min-w-0 flex-1">
-          <div classИмя="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold uppercase tracking-[0.14em]">
-            <span classИмя={tokens.label}>{resolvedLabel}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold uppercase tracking-[0.14em]">
+            <span className={tokens.label}>{resolvedLabel}</span>
             {source ? (
               <>
-                <span classИмя="text-muted-foreground/60" aria-hidden>·</span>
+                <span className="text-muted-foreground/60" aria-hidden>·</span>
                 {source.href ? (
                   <a
                     href={source.href}
-                    classИмя="rounded-sm font-medium normal-case tracking-normal text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                    className="rounded-sm font-medium normal-case tracking-normal text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                   >
                     {source.label}
                   </a>
                 ) : (
-                  <span classИмя="font-medium normal-case tracking-normal text-muted-foreground">
+                  <span className="font-medium normal-case tracking-normal text-muted-foreground">
                     {source.label}
                   </span>
                 )}
@@ -273,30 +273,30 @@ export function SystemНетtice({
             ) : null}
             {timestamp ? (
               <>
-                <span classИмя="text-muted-foreground/60" aria-hidden>·</span>
-                <span classИмя="font-medium normal-case tracking-normal text-muted-foreground">
+                <span className="text-muted-foreground/60" aria-hidden>·</span>
+                <span className="font-medium normal-case tracking-normal text-muted-foreground">
                   {formatTimestamp(timestamp)}
                 </span>
               </>
             ) : null}
           </div>
-          <div classИмя="mt-1 break-words text-[14px] leading-6 text-foreground">{body}</div>
+          <div className="mt-1 break-words text-[14px] leading-6 text-foreground">{body}</div>
         </div>
-        {hasДетали ? (
+        {hasDetails ? (
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-controls={detailsId}
-            classИмя={cn(
+            className={cn(
               "ml-1 inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-transparent px-2 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground transition-[background-color,border-color,color]",
               "hover:border-border/70 hover:bg-background/70 hover:text-foreground",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
             )}
           >
-            <span>{open ? "Hide details" : "Детали"}</span>
+            <span>{open ? "Hide details" : "Details"}</span>
             <ChevronDown
-              classИмя={cn(
+              className={cn(
                 "h-3.5 w-3.5 transition-transform duration-150",
                 open && "rotate-180",
               )}
@@ -304,19 +304,19 @@ export function SystemНетtice({
           </button>
         ) : null}
       </header>
-      {hasДетали && open ? (
+      {hasDetails && open ? (
         <div
           id={detailsId}
-          classИмя={cn(
+          className={cn(
             "border-t bg-background/50 dark:bg-background/30",
             tokens.divider,
           )}
         >
-          <div classИмя="divide-y divide-border/50 px-1 py-1">
+          <div className="divide-y divide-border/50 px-1 py-1">
             {metadata!.map((section, sectionIdx) => (
-              <div key={sectionIdx} classИмя="py-1.5 first:pt-2 last:pb-2">
+              <div key={sectionIdx} className="py-1.5 first:pt-2 last:pb-2">
                 {section.title ? (
-                  <div classИмя="px-3 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  <div className="px-3 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     {section.title}
                   </div>
                 ) : null}
@@ -334,4 +334,4 @@ export function SystemНетtice({
   );
 }
 
-export default SystemНетtice;
+export default SystemNotice;

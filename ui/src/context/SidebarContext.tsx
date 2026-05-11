@@ -1,17 +1,17 @@
-import { createContext, useCallback, useContext, useState, useEffect, type ReactНетde } from "react";
+import { createContext, useCallback, useContext, useState, useEffect, type ReactNode } from "react";
 
-interface SidebarContextЗначение {
+interface SidebarContextValue {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   isMobile: boolean;
 }
 
-const SidebarContext = createContext<SidebarContextЗначение | null>(null);
+const SidebarContext = createContext<SidebarContextValue | null>(null);
 
 const MOBILE_BREAKPOINT = 768;
 
-export function SidebarПровайдер({ children }: { children: ReactНетde }) {
+export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < MOBILE_BREAKPOINT);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= MOBILE_BREAKPOINT);
 
@@ -28,16 +28,16 @@ export function SidebarПровайдер({ children }: { children: ReactНетd
   const toggleSidebar = useCallback(() => setSidebarOpen((v) => !v), []);
 
   return (
-    <SidebarContext.Провайдер value={{ sidebarOpen, setSidebarOpen, toggleSidebar, isMobile }}>
+    <SidebarContext.Provider value={{ sidebarOpen, setSidebarOpen, toggleSidebar, isMobile }}>
       {children}
-    </SidebarContext.Провайдер>
+    </SidebarContext.Provider>
   );
 }
 
 export function useSidebar() {
   const ctx = useContext(SidebarContext);
   if (!ctx) {
-    throw new Ошибка("useSidebar must be used within SidebarПровайдер");
+    throw new Error("useSidebar must be used within SidebarProvider");
   }
   return ctx;
 }

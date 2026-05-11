@@ -2,80 +2,80 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Card({ classИмя, ...props }: React.ComponentProps<"div">) {
+function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
-      classИмя={cn(
+      className={cn(
         "bg-card text-card-foreground flex flex-col gap-6 border py-6 shadow-sm",
-        classИмя
+        className
       )}
       {...props}
     />
   )
 }
 
-function CardHeader({ classИмя, ...props }: React.ComponentProps<"div">) {
+function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-header"
-      classИмя={cn(
+      className={cn(
         "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
-        classИмя
+        className
       )}
       {...props}
     />
   )
 }
 
-function CardНазвание({ classИмя, ...props }: React.ComponentProps<"div">) {
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      classИмя={cn("leading-none font-semibold", classИмя)}
+      className={cn("leading-none font-semibold", className)}
       {...props}
     />
   )
 }
 
-function CardОписание({ classИмя, ...props }: React.ComponentProps<"div">) {
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      classИмя={cn("text-muted-foreground text-sm", classИмя)}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   )
 }
 
-function CardAction({ classИмя, ...props }: React.ComponentProps<"div">) {
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-action"
-      classИмя={cn(
+      className={cn(
         "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
-        classИмя
+        className
       )}
       {...props}
     />
   )
 }
 
-function CardContent({ classИмя, ...props }: React.ComponentProps<"div">) {
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      classИмя={cn("px-6", classИмя)}
+      className={cn("px-6", className)}
       {...props}
     />
   )
 }
 
-function CardFooter({ classИмя, ...props }: React.ComponentProps<"div">) {
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-footer"
-      classИмя={cn("flex items-center px-6 [.border-t]:pt-6", classИмя)}
+      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
       {...props}
     />
   )
@@ -85,8 +85,8 @@ export {
   Card,
   CardHeader,
   CardFooter,
-  CardНазвание,
+  CardTitle,
   CardAction,
-  CardОписание,
+  CardDescription,
   CardContent,
 }

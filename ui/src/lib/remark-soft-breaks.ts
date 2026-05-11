@@ -1,31 +1,31 @@
-type MarkdownНетde = {
+type MarkdownNode = {
   type?: unknown;
   value?: unknown;
   children?: unknown;
 };
 
-type MarkdownTextНетde = {
+type MarkdownTextNode = {
   type: "text";
   value: string;
 };
 
-type MarkdownBreakНетde = {
+type MarkdownBreakNode = {
   type: "break";
 };
 
-type MarkdownРодительНетde = {
-  children: MarkdownTreeНетde[];
+type MarkdownParentNode = {
+  children: MarkdownTreeNode[];
 };
 
-type MarkdownTreeНетde = MarkdownTextНетde | MarkdownBreakНетde | (MarkdownНетde & { children?: MarkdownTreeНетde[] });
+type MarkdownTreeNode = MarkdownTextNode | MarkdownBreakNode | (MarkdownNode & { children?: MarkdownTreeNode[] });
 
-function isРодительНетde(value: unknown): value is MarkdownРодительНетde {
-  return typeof value === "object" && value !== null && Array.isArray((value as MarkdownНетde).children);
+function isParentNode(value: unknown): value is MarkdownParentNode {
+  return typeof value === "object" && value !== null && Array.isArray((value as MarkdownNode).children);
 }
 
-function buildSoftBreakReplacement(value: string): Array<MarkdownTextНетde | MarkdownBreakНетde> {
+function buildSoftBreakReplacement(value: string): Array<MarkdownTextNode | MarkdownBreakNode> {
   const parts = value.split("\n");
-  const replacement: Array<MarkdownTextНетde | MarkdownBreakНетde> = [];
+  const replacement: Array<MarkdownTextNode | MarkdownBreakNode> = [];
 
   for (let index = 0; index < parts.length; index += 1) {
     const part = parts[index];
@@ -40,8 +40,8 @@ function buildSoftBreakReplacement(value: string): Array<MarkdownTextНетde | 
   return replacement.length > 0 ? replacement : [{ type: "text", value: "" }];
 }
 
-function transformНетde(node: MarkdownTreeНетde) {
-  if (!isРодительНетde(node)) return;
+function transformNode(node: MarkdownTreeNode) {
+  if (!isParentNode(node)) return;
 
   for (let index = 0; index < node.children.length; index += 1) {
     const child = node.children[index];
@@ -52,12 +52,12 @@ function transformНетde(node: MarkdownTreeНетde) {
       continue;
     }
 
-    transformНетde(child);
+    transformNode(child);
   }
 }
 
 export function remarkSoftBreaks() {
-  return (tree: MarkdownTreeНетde) => {
-    transformНетde(tree);
+  return (tree: MarkdownTreeNode) => {
+    transformNode(tree);
   };
 }

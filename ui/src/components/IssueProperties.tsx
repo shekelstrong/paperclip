@@ -1,63 +1,63 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { pickTextColorForPillBg } from "@/lib/color-contrast";
 import { Link } from "@/lib/router";
-import type { Задача, ЗадачаLabel, Project, Рабочая областьЗапуститьtimeService } from "@paperclipai/shared";
+import type { Issue, IssueLabel, Project, WorkspaceRuntimeService } from "@paperclipai/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { АдаптерМодель } from "../api/agents";
+import type { AdapterModel } from "../api/agents";
 import { accessApi } from "../api/access";
 import { agentsApi } from "../api/agents";
 import { authApi } from "../api/auth";
 import { issuesApi } from "../api/issues";
 import { projectsApi } from "../api/projects";
-import { useКомпания } from "../context/КомпанияContext";
-import { queryКлючs } from "../lib/queryКлючs";
-import { buildКомпанияUserInlineOptions, buildКомпанияUserLabelMap } from "../lib/company-members";
-import { ISSUE_OVERRIDE_ADAPTER_TYPES, type ЗадачаМодельLane } from "../lib/issue-assignee-overrides";
+import { useCompany } from "../context/CompanyContext";
+import { queryKeys } from "../lib/queryKeys";
+import { buildCompanyUserInlineOptions, buildCompanyUserLabelMap } from "../lib/company-members";
+import { ISSUE_OVERRIDE_ADAPTER_TYPES, type IssueModelLane } from "../lib/issue-assignee-overrides";
 import { useProjectOrder } from "../hooks/useProjectOrder";
 import {
-  getRecentИсполнительIds,
-  getRecentИсполнительSelectionIds,
-  sortАгентыByRecency,
-  trackRecentИсполнитель,
-  trackRecentИсполнительUser,
+  getRecentAssigneeIds,
+  getRecentAssigneeSelectionIds,
+  sortAgentsByRecency,
+  trackRecentAssignee,
+  trackRecentAssigneeUser,
 } from "../lib/recent-assignees";
 import { getRecentProjectIds, trackRecentProject } from "../lib/recent-projects";
 import { orderItemsBySelectedAndRecent } from "../lib/recent-selections";
-import { formatИсполнительUserLabel } from "../lib/assignees";
-import { buildExecutionPolicy, stageParticipantЗначениеs } from "../lib/issue-execution-policy";
+import { formatAssigneeUserLabel } from "../lib/assignees";
+import { buildExecutionPolicy, stageParticipantValues } from "../lib/issue-execution-policy";
 import { formatMonitorOffset } from "../lib/issue-monitor";
-import { formatПовторитьReason } from "../lib/runПовторитьState";
-import { useПовторитьСейчасMutation } from "../hooks/useПовторитьСейчасMutation";
-import { ПовторитьОшибкаBand } from "./ЗадачаРасписаниеdПовторитьCard";
-import { extractПровайдерIdWithFallback } from "../lib/model-utils";
-import { СтатусIcon } from "./СтатусIcon";
-import { ПриоритетIcon } from "./ПриоритетIcon";
+import { formatRetryReason } from "../lib/runRetryState";
+import { useRetryNowMutation } from "../hooks/useRetryNowMutation";
+import { RetryErrorBand } from "./IssueScheduledRetryCard";
+import { extractProviderIdWithFallback } from "../lib/model-utils";
+import { StatusIcon } from "./StatusIcon";
+import { PriorityIcon } from "./PriorityIcon";
 import { Identity } from "./Identity";
-import { ЗадачаReferencePill } from "./ЗадачаReferencePill";
+import { IssueReferencePill } from "./IssueReferencePill";
 import { formatDate, formatDateTime, cn, projectUrl } from "../lib/utils";
 import { timeAgo } from "../lib/timeAgo";
 import { Button } from "@/components/ui/button";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import {
   Dialog,
-  DialogЗакрыть,
+  DialogClose,
   DialogContent,
-  DialogОписание,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogНазвание,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { User, Hexagon, ArrowUpRight, Tag, Plus, GitВетка, ПапкаOpen, Check, ExternalLink, X, Clock, RotateCcw, Loader2, CheckCircle2 } from "lucide-react";
-import { АгентIcon } from "./АгентIconPicker";
+import { User, Hexagon, ArrowUpRight, Tag, Plus, GitBranch, FolderOpen, Check, ExternalLink, X, Clock, RotateCcw, Loader2, CheckCircle2 } from "lucide-react";
+import { AgentIcon } from "./AgentIconPicker";
 import { InlineEntitySelector, type InlineEntityOption } from "./InlineEntitySelector";
 
-function TruncatedКопироватьable({ value, icon: Icon }: { value: string; icon: React.ComponentТип<{ classИмя?: string }> }) {
+function TruncatedCopyable({ value, icon: Icon }: { value: string; icon: React.ComponentType<{ className?: string }> }) {
   const [copied, setCopied] = useState(false);
-  const timerRef = useRef<ReturnТип<typeof setTimeout>>(undefined);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timerRef.current), []);
-  const handleКопировать = useCallback(async () => {
+  const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
@@ -67,69 +67,69 @@ function TruncatedКопироватьable({ value, icon: Icon }: { value: strin
   }, [value]);
 
   return (
-    <div classИмя="flex items-start gap-1.5 min-w-0 flex-1">
-      <Icon classИмя="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+    <div className="flex items-start gap-1.5 min-w-0 flex-1">
+      <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
       <button
         type="button"
-        classИмя="text-sm font-mono min-w-0 break-all text-left cursor-pointer hover:text-foreground transition-colors"
-        onClick={handleКопировать}
+        className="text-sm font-mono min-w-0 break-all text-left cursor-pointer hover:text-foreground transition-colors"
+        onClick={handleCopy}
         title={copied ? "Copied!" : "Click to copy"}
       >
         {value}
       </button>
-      {copied && <Check classИмя="h-3 w-3 text-green-500 shrink-0 mt-0.5" />}
+      {copied && <Check className="h-3 w-3 text-green-500 shrink-0 mt-0.5" />}
     </div>
   );
 }
 
-function defaultProjectРабочая областьIdForProject(project: {
+function defaultProjectWorkspaceIdForProject(project: {
   workspaces?: Array<{ id: string; isPrimary: boolean }>;
-  executionРабочая областьPolicy?: { defaultProjectРабочая областьId?: string | null } | null;
+  executionWorkspacePolicy?: { defaultProjectWorkspaceId?: string | null } | null;
 } | null | undefined) {
   if (!project) return null;
-  return project.executionРабочая областьPolicy?.defaultProjectРабочая областьId
+  return project.executionWorkspacePolicy?.defaultProjectWorkspaceId
     ?? project.workspaces?.find((workspace) => workspace.isPrimary)?.id
     ?? project.workspaces?.[0]?.id
     ?? null;
 }
 
-function defaultExecutionРабочая областьModeForProject(project: { executionРабочая областьPolicy?: { enabled?: boolean; defaultMode?: string | null } | null } | null | undefined) {
-  const defaultMode = project?.executionРабочая областьPolicy?.enabled ? project.executionРабочая областьPolicy.defaultMode : null;
+function defaultExecutionWorkspaceModeForProject(project: { executionWorkspacePolicy?: { enabled?: boolean; defaultMode?: string | null } | null } | null | undefined) {
+  const defaultMode = project?.executionWorkspacePolicy?.enabled ? project.executionWorkspacePolicy.defaultMode : null;
   if (defaultMode === "isolated_workspace" || defaultMode === "operator_branch") return defaultMode;
   if (defaultMode === "adapter_default") return "agent_default";
   return "shared_workspace";
 }
 
-function primaryРабочая областьIdForProject(project: Pick<Project, "primaryРабочая область" | "workspaces"> | null | undefined) {
-  return project?.primaryРабочая область?.id
+function primaryWorkspaceIdForProject(project: Pick<Project, "primaryWorkspace" | "workspaces"> | null | undefined) {
+  return project?.primaryWorkspace?.id
     ?? project?.workspaces.find((workspace) => workspace.isPrimary)?.id
     ?? project?.workspaces[0]?.id
     ?? null;
 }
 
-function isMainЗадачаРабочая область(input: {
-  issue: Pick<Задача, "projectРабочая областьId" | "currentExecutionРабочая область">;
-  project: Pick<Project, "primaryРабочая область" | "workspaces"> | null | undefined;
+function isMainIssueWorkspace(input: {
+  issue: Pick<Issue, "projectWorkspaceId" | "currentExecutionWorkspace">;
+  project: Pick<Project, "primaryWorkspace" | "workspaces"> | null | undefined;
 }) {
-  const workspace = input.issue.currentExecutionРабочая область ?? null;
-  const primaryРабочая областьId = primaryРабочая областьIdForProject(input.project);
-  const linkedProjectРабочая областьId = workspace?.projectРабочая областьId ?? input.issue.projectРабочая областьId ?? null;
+  const workspace = input.issue.currentExecutionWorkspace ?? null;
+  const primaryWorkspaceId = primaryWorkspaceIdForProject(input.project);
+  const linkedProjectWorkspaceId = workspace?.projectWorkspaceId ?? input.issue.projectWorkspaceId ?? null;
   if (workspace) {
     if (workspace.mode !== "shared_workspace") return false;
-    if (!linkedProjectРабочая областьId || !primaryРабочая областьId) return true;
-    return workspace.mode === "shared_workspace" && linkedProjectРабочая областьId === primaryРабочая областьId;
+    if (!linkedProjectWorkspaceId || !primaryWorkspaceId) return true;
+    return workspace.mode === "shared_workspace" && linkedProjectWorkspaceId === primaryWorkspaceId;
   }
-  if (!linkedProjectРабочая областьId || !primaryРабочая областьId) return true;
-  return linkedProjectРабочая областьId === primaryРабочая областьId;
+  if (!linkedProjectWorkspaceId || !primaryWorkspaceId) return true;
+  return linkedProjectWorkspaceId === primaryWorkspaceId;
 }
 
-function runningЗапуститьtimeServiceWithUrl(
-  runtimeServices: Рабочая областьЗапуститьtimeService[] | null | undefined,
+function runningRuntimeServiceWithUrl(
+  runtimeServices: WorkspaceRuntimeService[] | null | undefined,
 ) {
   return runtimeServices?.find((service) => service.status === "running" && service.url?.trim()) ?? null;
 }
 
-function toDateTimeLocalЗначение(value: string | null | undefined) {
+function toDateTimeLocalValue(value: string | null | undefined) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -137,19 +137,19 @@ function toDateTimeLocalЗначение(value: string | null | undefined) {
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
-interface ЗадачаPropertiesProps {
-  issue: Задача;
-  childЗадачи?: Задача[];
-  onДобавитьSubЗадача?: () => void;
-  onОбновить: (data: Record<string, unknown>) => void;
+interface IssuePropertiesProps {
+  issue: Issue;
+  childIssues?: Issue[];
+  onAddSubIssue?: () => void;
+  onUpdate: (data: Record<string, unknown>) => void;
   inline?: boolean;
 }
 
-function PropertyRow({ label, children }: { label: string; children: React.ReactНетde }) {
+function PropertyRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div classИмя="flex items-start gap-3 py-1.5">
-      <span classИмя="text-xs text-muted-foreground shrink-0 w-20 mt-0.5">{label}</span>
-      <div classИмя="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">{children}</div>
+    <div className="flex items-start gap-3 py-1.5">
+      <span className="text-xs text-muted-foreground shrink-0 w-20 mt-0.5">{label}</span>
+      <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">{children}</div>
     </div>
   );
 }
@@ -157,25 +157,25 @@ function PropertyRow({ label, children }: { label: string; children: React.React
 const ISSUE_THINKING_EFFORT_OPTIONS = {
   claude_local: [
     { value: "", label: "По умолчанию" },
-    { value: "low", label: "Низкий" },
-    { value: "medium", label: "Средний" },
-    { value: "high", label: "Высокий" },
+    { value: "low", label: "Low" },
+    { value: "medium", label: "Medium" },
+    { value: "high", label: "High" },
   ],
   codex_local: [
     { value: "", label: "По умолчанию" },
     { value: "minimal", label: "Minimal" },
-    { value: "low", label: "Низкий" },
-    { value: "medium", label: "Средний" },
-    { value: "high", label: "Высокий" },
-    { value: "xhigh", label: "X-Высокий" },
+    { value: "low", label: "Low" },
+    { value: "medium", label: "Medium" },
+    { value: "high", label: "High" },
+    { value: "xhigh", label: "X-High" },
   ],
   opencode_local: [
     { value: "", label: "По умолчанию" },
     { value: "minimal", label: "Minimal" },
-    { value: "low", label: "Низкий" },
-    { value: "medium", label: "Средний" },
-    { value: "high", label: "Высокий" },
-    { value: "xhigh", label: "X-Высокий" },
+    { value: "low", label: "Low" },
+    { value: "medium", label: "Medium" },
+    { value: "high", label: "High" },
+    { value: "xhigh", label: "X-High" },
     { value: "max", label: "Max" },
   ],
 } as const;
@@ -192,117 +192,117 @@ function compactRecord(record: Record<string, unknown>) {
   );
 }
 
-function thinkingEffortOptionsFor(adapterТип: string | null | undefined) {
-  if (adapterТип === "codex_local") return ISSUE_THINKING_EFFORT_OPTIONS.codex_local;
-  if (adapterТип === "opencode_local") return ISSUE_THINKING_EFFORT_OPTIONS.opencode_local;
+function thinkingEffortOptionsFor(adapterType: string | null | undefined) {
+  if (adapterType === "codex_local") return ISSUE_THINKING_EFFORT_OPTIONS.codex_local;
+  if (adapterType === "opencode_local") return ISSUE_THINKING_EFFORT_OPTIONS.opencode_local;
   return ISSUE_THINKING_EFFORT_OPTIONS.claude_local;
 }
 
-function thinkingEffortКлючFor(adapterТип: string | null | undefined) {
-  if (adapterТип === "codex_local") return "modelReasoningEffort";
-  if (adapterТип === "opencode_local") return "variant";
+function thinkingEffortKeyFor(adapterType: string | null | undefined) {
+  if (adapterType === "codex_local") return "modelReasoningEffort";
+  if (adapterType === "opencode_local") return "variant";
   return "effort";
 }
 
-function thinkingEffortЗначениеFor(adapterТип: string | null | undefined, adapterConfig: Record<string, unknown>) {
-  if (adapterТип === "codex_local") {
+function thinkingEffortValueFor(adapterType: string | null | undefined, adapterConfig: Record<string, unknown>) {
+  if (adapterType === "codex_local") {
     return String(adapterConfig.modelReasoningEffort ?? adapterConfig.reasoningEffort ?? adapterConfig.effort ?? "");
   }
-  if (adapterТип === "opencode_local") {
+  if (adapterType === "opencode_local") {
     return String(adapterConfig.variant ?? "");
   }
   return String(adapterConfig.effort ?? "");
 }
 
-function overrideLane(overrides: Задача["assigneeАдаптерOverrides"]): ЗадачаМодельLane {
-  if (overrides?.modelПрофиль === "cheap") return "cheap";
+function overrideLane(overrides: Issue["assigneeAdapterOverrides"]): IssueModelLane {
+  if (overrides?.modelProfile === "cheap") return "cheap";
   if (overrides?.adapterConfig) return "custom";
   return "primary";
 }
 
-function sortАдаптерМодельs(models: АдаптерМодель[]) {
+function sortAdapterModels(models: AdapterModel[]) {
   return [...models].sort((a, b) => {
-    const providerA = extractПровайдерIdWithFallback(a.id);
-    const providerB = extractПровайдерIdWithFallback(b.id);
-    const byПровайдер = providerA.localeCompare(providerB);
-    if (byПровайдер !== 0) return byПровайдер;
+    const providerA = extractProviderIdWithFallback(a.id);
+    const providerB = extractProviderIdWithFallback(b.id);
+    const byProvider = providerA.localeCompare(providerB);
+    if (byProvider !== 0) return byProvider;
     return a.id.localeCompare(b.id);
   });
 }
 
-function RemovableЗадачаReferencePill({
+function RemovableIssueReferencePill({
   issue,
-  onУдалить,
+  onRemove,
 }: {
-  issue: НетnNullable<Задача["blockedBy"]>[number];
-  onУдалить: (issueId: string) => void;
+  issue: NonNullable<Issue["blockedBy"]>[number];
+  onRemove: (issueId: string) => void;
 }) {
-  const [isПодтвердитьOpen, setIsПодтвердитьOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const issueLabel = issue.identifier ?? issue.title;
   const confirmLabel = issue.identifier ? `${issue.identifier}: ${issue.title}` : issue.title;
   const content = (
     <>
-      <СтатусIcon status={issue.status} classИмя="h-3 w-3 shrink-0" />
-      <span classИмя="truncate">{issueLabel}</span>
+      <StatusIcon status={issue.status} className="h-3 w-3 shrink-0" />
+      <span className="truncate">{issueLabel}</span>
     </>
   );
-  const removeLabel = `Удалить ${issueLabel} as blocker`;
-  const handleУдалить = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventПо умолчанию();
+  const removeLabel = `Remove ${issueLabel} as blocker`;
+  const handleRemove = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
     event.stopPropagation();
-    setIsПодтвердитьOpen(true);
+    setIsConfirmOpen(true);
   };
-  const confirmУдалить = () => {
-    onУдалить(issue.id);
-    setIsПодтвердитьOpen(false);
+  const confirmRemove = () => {
+    onRemove(issue.id);
+    setIsConfirmOpen(false);
   };
 
   return (
     <>
       <span
         data-mention-kind="issue"
-        classИмя={cn(
+        className={cn(
           "paperclip-mention-chip paperclip-mention-chip--issue group",
           "inline-flex items-center gap-1 rounded-full border border-border py-0.5 pl-1 pr-2 text-xs",
         )}
         title={issue.title}
-        aria-label={`Задача ${issueLabel}: ${issue.title}`}
+        aria-label={`Issue ${issueLabel}: ${issue.title}`}
       >
         <button
           type="button"
-          classИмя="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-colors transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-ring group-hover:opacity-100"
+          className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-colors transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-ring group-hover:opacity-100"
           aria-label={removeLabel}
           title={removeLabel}
-          onClick={handleУдалить}
+          onClick={handleRemove}
         >
-          <X classИмя="h-3 w-3" />
+          <X className="h-3 w-3" />
         </button>
         {issue.identifier ? (
           <Link
             to={`/issues/${issueLabel}`}
-            classИмя="inline-flex min-w-0 items-center gap-1 no-underline hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
-            aria-label={`Задача ${issueLabel}: ${issue.title}`}
+            className="inline-flex min-w-0 items-center gap-1 no-underline hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+            aria-label={`Issue ${issueLabel}: ${issue.title}`}
           >
             {content}
           </Link>
         ) : (
-          <span classИмя="inline-flex min-w-0 items-center gap-1">{content}</span>
+          <span className="inline-flex min-w-0 items-center gap-1">{content}</span>
         )}
       </span>
-      <Dialog open={isПодтвердитьOpen} onOpenChange={setIsПодтвердитьOpen}>
-        <DialogContent classИмя="sm:max-w-md">
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogНазвание>Удалить blocker?</DialogНазвание>
-            <DialogОписание>
-              Удалить {confirmLabel} as a blocker for this issue.
-            </DialogОписание>
+            <DialogTitle>Remove blocker?</DialogTitle>
+            <DialogDescription>
+              Remove {confirmLabel} as a blocker for this issue.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogЗакрыть asChild>
-              <Button type="button" variant="outline">Отмена</Button>
-            </DialogЗакрыть>
-            <Button type="button" variant="destructive" onClick={confirmУдалить}>
-              Удалить blocker
+            <DialogClose asChild>
+              <Button type="button" variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="button" variant="destructive" onClick={confirmRemove}>
+              Remove blocker
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -318,8 +318,8 @@ function PropertyPicker({
   open,
   onOpenChange,
   triggerContent,
-  triggerClassИмя,
-  popoverClassИмя,
+  triggerClassName,
+  popoverClassName,
   popoverAlign = "end",
   extra,
   children,
@@ -328,29 +328,29 @@ function PropertyPicker({
   label: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  triggerContent: React.ReactНетde;
-  triggerClassИмя?: string;
-  popoverClassИмя?: string;
+  triggerContent: React.ReactNode;
+  triggerClassName?: string;
+  popoverClassName?: string;
   popoverAlign?: "start" | "center" | "end";
-  extra?: React.ReactНетde;
-  children: React.ReactНетde;
+  extra?: React.ReactNode;
+  children: React.ReactNode;
 }) {
   const btnCn = cn(
     "inline-flex items-start gap-1.5 cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors min-w-0 max-w-full text-left",
-    triggerClassИмя,
+    triggerClassName,
   );
 
   if (inline) {
     return (
       <div>
         <PropertyRow label={label}>
-          <button classИмя={btnCn} onClick={() => onOpenChange(!open)}>
+          <button className={btnCn} onClick={() => onOpenChange(!open)}>
             {triggerContent}
           </button>
           {extra}
         </PropertyRow>
         {open && (
-          <div classИмя={cn("rounded-md border border-border bg-popover p-1 mb-2", popoverClassИмя)}>
+          <div className={cn("rounded-md border border-border bg-popover p-1 mb-2", popoverClassName)}>
             {children}
           </div>
         )}
@@ -362,9 +362,9 @@ function PropertyPicker({
     <PropertyRow label={label}>
       <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
-          <button classИмя={btnCn}>{triggerContent}</button>
+          <button className={btnCn}>{triggerContent}</button>
         </PopoverTrigger>
-        <PopoverContent classИмя={cn("p-1", popoverClassИмя)} align={popoverAlign} collisionPadding={16}>
+        <PopoverContent className={cn("p-1", popoverClassName)} align={popoverAlign} collisionPadding={16}>
           {children}
         </PopoverContent>
       </Popover>
@@ -373,96 +373,96 @@ function PropertyPicker({
   );
 }
 
-export function ЗадачаProperties({
+export function IssueProperties({
   issue,
-  childЗадачи = [],
-  onДобавитьSubЗадача,
-  onОбновить,
+  childIssues = [],
+  onAddSubIssue,
+  onUpdate,
   inline,
-}: ЗадачаPropertiesProps) {
-  const { selectedКомпанияId } = useКомпания();
+}: IssuePropertiesProps) {
+  const { selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
-  const companyId = issue.companyId ?? selectedКомпанияId;
-  const [assigneeOpen, setИсполнительOpen] = useState(false);
-  const [assigneeПоиск, setИсполнительПоиск] = useState("");
+  const companyId = issue.companyId ?? selectedCompanyId;
+  const [assigneeOpen, setAssigneeOpen] = useState(false);
+  const [assigneeSearch, setAssigneeSearch] = useState("");
   const [projectOpen, setProjectOpen] = useState(false);
-  const [projectПоиск, setProjectПоиск] = useState("");
-  const [blockedByOpen, setЗаблокированByOpen] = useState(false);
-  const [blockedByПоиск, setЗаблокированByПоиск] = useState("");
-  const [parentOpen, setРодительOpen] = useState(false);
-  const [parentПоиск, setРодительПоиск] = useState("");
-  const [reviewersOpen, setРецензентыOpen] = useState(false);
-  const [reviewerПоиск, setРецензентПоиск] = useState("");
-  const [approversOpen, setУтверждающиеOpen] = useState(false);
-  const [approverПоиск, setУтверждающийПоиск] = useState("");
+  const [projectSearch, setProjectSearch] = useState("");
+  const [blockedByOpen, setBlockedByOpen] = useState(false);
+  const [blockedBySearch, setBlockedBySearch] = useState("");
+  const [parentOpen, setParentOpen] = useState(false);
+  const [parentSearch, setParentSearch] = useState("");
+  const [reviewersOpen, setReviewersOpen] = useState(false);
+  const [reviewerSearch, setReviewerSearch] = useState("");
+  const [approversOpen, setApproversOpen] = useState(false);
+  const [approverSearch, setApproverSearch] = useState("");
   const [monitorOpen, setMonitorOpen] = useState(false);
-  const [scheduledПовторитьOpen, setРасписаниеdПовторитьOpen] = useState(false);
-  const [labelsOpen, setЯрлыкиOpen] = useState(false);
-  const [assigneeOptionsOpen, setИсполнительOptionsOpen] = useState(false);
-  const [labelПоиск, setLabelПоиск] = useState("");
-  const [newLabelИмя, setNewLabelИмя] = useState("");
+  const [scheduledRetryOpen, setScheduledRetryOpen] = useState(false);
+  const [labelsOpen, setLabelsOpen] = useState(false);
+  const [assigneeOptionsOpen, setAssigneeOptionsOpen] = useState(false);
+  const [labelSearch, setLabelSearch] = useState("");
+  const [newLabelName, setNewLabelName] = useState("");
   const [newLabelColor, setNewLabelColor] = useState("#6366f1");
-  const [monitorAtInput, setMonitorAtInput] = useState(() => toDateTimeLocalЗначение(issue.executionPolicy?.monitor?.nextCheckAt));
-  const [monitorНетtesInput, setMonitorНетtesInput] = useState(issue.executionPolicy?.monitor?.notes ?? "");
-  const [monitorServiceInput, setMonitorServiceInput] = useState(issue.executionPolicy?.monitor?.serviceИмя ?? "");
+  const [monitorAtInput, setMonitorAtInput] = useState(() => toDateTimeLocalValue(issue.executionPolicy?.monitor?.nextCheckAt));
+  const [monitorNotesInput, setMonitorNotesInput] = useState(issue.executionPolicy?.monitor?.notes ?? "");
+  const [monitorServiceInput, setMonitorServiceInput] = useState(issue.executionPolicy?.monitor?.serviceName ?? "");
 
   const { data: session } = useQuery({
-    queryКлюч: queryКлючs.auth.session,
+    queryKey: queryKeys.auth.session,
     queryFn: () => authApi.getSession(),
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId;
 
   const { data: agents } = useQuery({
-    queryКлюч: queryКлючs.agents.list(companyId!),
+    queryKey: queryKeys.agents.list(companyId!),
     queryFn: () => agentsApi.list(companyId!),
     enabled: !!companyId,
   });
   const { data: companyMembers } = useQuery({
-    queryКлюч: queryКлючs.access.companyUserDirectory(companyId!),
+    queryKey: queryKeys.access.companyUserDirectory(companyId!),
     queryFn: () => accessApi.listUserDirectory(companyId!),
     enabled: !!companyId,
   });
   const { data: projects } = useQuery({
-    queryКлюч: queryКлючs.projects.list(companyId!),
+    queryKey: queryKeys.projects.list(companyId!),
     queryFn: () => projectsApi.list(companyId!),
     enabled: !!companyId,
   });
-  const activeПроекты = useMemo(
+  const activeProjects = useMemo(
     () => (projects ?? []).filter((p) => !p.archivedAt || p.id === issue.projectId),
     [projects, issue.projectId],
   );
-  const { orderedПроекты } = useProjectOrder({
-    projects: activeПроекты,
+  const { orderedProjects } = useProjectOrder({
+    projects: activeProjects,
     companyId,
     userId: currentUserId,
   });
 
   const { data: labels } = useQuery({
-    queryКлюч: queryКлючs.issues.labels(companyId!),
-    queryFn: () => issuesApi.listЯрлыки(companyId!),
+    queryKey: queryKeys.issues.labels(companyId!),
+    queryFn: () => issuesApi.listLabels(companyId!),
     enabled: !!companyId,
   });
 
-  const { data: allЗадачи } = useQuery({
-    queryКлюч: queryКлючs.issues.list(companyId!),
+  const { data: allIssues } = useQuery({
+    queryKey: queryKeys.issues.list(companyId!),
     queryFn: () => issuesApi.list(companyId!),
     enabled: !!companyId && (blockedByOpen || parentOpen),
   });
 
   const createLabel = useMutation({
     mutationFn: (data: { name: string; color: string }) => issuesApi.createLabel(companyId!, data),
-    onУспешно: async (created) => {
-      queryClient.setQueryData<ЗадачаLabel[] | undefined>(
-        queryКлючs.issues.labels(companyId!),
+    onSuccess: async (created) => {
+      queryClient.setQueryData<IssueLabel[] | undefined>(
+        queryKeys.issues.labels(companyId!),
         (current) => {
           if (!current) return [created];
           if (current.some((label) => label.id === created.id)) return current;
           return [...current, created];
         },
       );
-      onОбновить({ labelIds: [...(issue.labelIds ?? []), created.id] });
-      void queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.labels(companyId!) });
-      setNewLabelИмя("");
+      onUpdate({ labelIds: [...(issue.labelIds ?? []), created.id] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.labels(companyId!) });
+      setNewLabelName("");
     },
   });
 
@@ -471,35 +471,35 @@ export function ЗадачаProperties({
     const next = ids.includes(labelId)
       ? ids.filter((id) => id !== labelId)
       : [...ids, labelId];
-    onОбновить({ labelIds: next });
+    onUpdate({ labelIds: next });
   };
 
-  const agentИмя = (id: string | null) => {
+  const agentName = (id: string | null) => {
     if (!id || !agents) return null;
     const agent = agents.find((a) => a.id === id);
     return agent?.name ?? id.slice(0, 8);
   };
 
-  const projectИмя = (id: string | null) => {
+  const projectName = (id: string | null) => {
     if (!id) return id?.slice(0, 8) ?? "Нет";
-    const project = orderedПроекты.find((p) => p.id === id);
+    const project = orderedProjects.find((p) => p.id === id);
     return project?.name ?? id.slice(0, 8);
   };
   const currentProject = issue.projectId
-    ? orderedПроекты.find((project) => project.id === issue.projectId) ?? null
+    ? orderedProjects.find((project) => project.id === issue.projectId) ?? null
     : null;
   const issueProject = issue.project ?? currentProject;
-  const issueUsesMainРабочая область = useMemo(
-    () => isMainЗадачаРабочая область({ issue, project: issueProject }),
+  const issueUsesMainWorkspace = useMemo(
+    () => isMainIssueWorkspace({ issue, project: issueProject }),
     [issue, issueProject],
   );
-  const showРабочая областьDetailLink = Boolean(issue.executionРабочая областьId) && !issueUsesMainРабочая область;
-  const liveРабочая областьService = useMemo(() => {
-    if (issueUsesMainРабочая область) return null;
-    return runningЗапуститьtimeServiceWithUrl(issue.currentExecutionРабочая область?.runtimeServices);
-  }, [issue.currentExecutionРабочая область?.runtimeServices, issueUsesMainРабочая область]);
-  const referencedЗадачаIdentifiers = issue.referencedЗадачаIdentifiers ?? [];
-  const relatedЗадачи = useMemo(() => {
+  const showWorkspaceDetailLink = Boolean(issue.executionWorkspaceId) && !issueUsesMainWorkspace;
+  const liveWorkspaceService = useMemo(() => {
+    if (issueUsesMainWorkspace) return null;
+    return runningRuntimeServiceWithUrl(issue.currentExecutionWorkspace?.runtimeServices);
+  }, [issue.currentExecutionWorkspace?.runtimeServices, issueUsesMainWorkspace]);
+  const referencedIssueIdentifiers = issue.referencedIssueIdentifiers ?? [];
+  const relatedTasks = useMemo(() => {
     const excluded = new Set<string>();
     const addExcluded = (candidate: { id: string; identifier?: string | null }) => {
       excluded.add(candidate.id);
@@ -508,197 +508,197 @@ export function ЗадачаProperties({
 
     for (const blocker of issue.blockedBy ?? []) addExcluded(blocker);
     for (const blocked of issue.blocks ?? []) addExcluded(blocked);
-    for (const child of childЗадачи) addExcluded(child);
+    for (const child of childIssues) addExcluded(child);
 
-    const referencedЗадачи = issue.relatedРабота?.outbound.map((item) => item.issue) ?? [];
-    if (referencedЗадачи.length > 0) {
-      return referencedЗадачи.filter((referenced) => {
+    const referencedIssues = issue.relatedWork?.outbound.map((item) => item.issue) ?? [];
+    if (referencedIssues.length > 0) {
+      return referencedIssues.filter((referenced) => {
         const label = referenced.identifier ?? referenced.id;
         return !excluded.has(referenced.id) && !excluded.has(label);
       });
     }
 
-    return referencedЗадачаIdentifiers
+    return referencedIssueIdentifiers
       .filter((identifier) => !excluded.has(identifier))
       .map((identifier) => ({ id: identifier, identifier, title: identifier }));
-  }, [childЗадачи, issue.blockedBy, issue.blocks, issue.relatedРабота?.outbound, referencedЗадачаIdentifiers]);
+  }, [childIssues, issue.blockedBy, issue.blocks, issue.relatedWork?.outbound, referencedIssueIdentifiers]);
   const projectLink = (id: string | null) => {
     if (!id) return null;
     const project = projects?.find((p) => p.id === id) ?? null;
     return project ? projectUrl(project) : `/projects/${id}`;
   };
 
-  const recentИсполнительIds = useMemo(() => getRecentИсполнительIds(), [assigneeOpen]);
-  const recentИсполнительSelectionIds = useMemo(() => getRecentИсполнительSelectionIds(), [assigneeOpen]);
-  const sortedАгенты = useMemo(
-    () => sortАгентыByRecency((agents ?? []).filter((a) => a.status !== "terminated"), recentИсполнительIds),
-    [agents, recentИсполнительIds],
+  const recentAssigneeIds = useMemo(() => getRecentAssigneeIds(), [assigneeOpen]);
+  const recentAssigneeSelectionIds = useMemo(() => getRecentAssigneeSelectionIds(), [assigneeOpen]);
+  const sortedAgents = useMemo(
+    () => sortAgentsByRecency((agents ?? []).filter((a) => a.status !== "terminated"), recentAssigneeIds),
+    [agents, recentAssigneeIds],
   );
-  const recentИсполнительЗначениеs = useMemo(
-    () => recentИсполнительSelectionIds,
-    [recentИсполнительSelectionIds],
+  const recentAssigneeValues = useMemo(
+    () => recentAssigneeSelectionIds,
+    [recentAssigneeSelectionIds],
   );
   const recentProjectIds = useMemo(() => getRecentProjectIds(), [projectOpen]);
   const userLabelMap = useMemo(
-    () => buildКомпанияUserLabelMap(companyMembers?.users),
+    () => buildCompanyUserLabelMap(companyMembers?.users),
     [companyMembers?.users],
   );
   const otherUserOptions = useMemo(
-    () => buildКомпанияUserInlineOptions(companyMembers?.users, { excludeUserIds: [currentUserId, issue.createdByUserId] }),
+    () => buildCompanyUserInlineOptions(companyMembers?.users, { excludeUserIds: [currentUserId, issue.createdByUserId] }),
     [companyMembers?.users, currentUserId, issue.createdByUserId],
   );
 
-  const assignee = issue.assigneeАгентId
-    ? agents?.find((a) => a.id === issue.assigneeАгентId)
+  const assignee = issue.assigneeAgentId
+    ? agents?.find((a) => a.id === issue.assigneeAgentId)
     : null;
-  const assigneeАдаптерТип = assignee?.adapterТип ?? null;
-  const assigneeАдаптерOverrides = issue.assigneeАдаптерOverrides ?? null;
-  const showИсполнительАдаптерOptions = assigneeАдаптерOverrides !== null;
-  const supportsИсполнительOverrides = Boolean(
-    assigneeАдаптерТип && ISSUE_OVERRIDE_ADAPTER_TYPES.has(assigneeАдаптерТип),
+  const assigneeAdapterType = assignee?.adapterType ?? null;
+  const assigneeAdapterOverrides = issue.assigneeAdapterOverrides ?? null;
+  const showAssigneeAdapterOptions = assigneeAdapterOverrides !== null;
+  const supportsAssigneeOverrides = Boolean(
+    assigneeAdapterType && ISSUE_OVERRIDE_ADAPTER_TYPES.has(assigneeAdapterType),
   );
   const assigneeSupportsCheapLane = Boolean(
-    supportsИсполнительOverrides
-      && (assigneeАдаптерТип === "claude_local"
-        || assigneeАдаптерТип === "codex_local"
-        || assigneeАдаптерТип === "opencode_local"),
+    supportsAssigneeOverrides
+      && (assigneeAdapterType === "claude_local"
+        || assigneeAdapterType === "codex_local"
+        || assigneeAdapterType === "opencode_local"),
   );
-  const assigneeOverrideLane = overrideLane(assigneeАдаптерOverrides);
-  const assigneeOverrideАдаптерConfig = asRecord(assigneeАдаптерOverrides?.adapterConfig);
-  const assigneeOverrideМодель =
-    typeof assigneeOverrideАдаптерConfig.model === "string" ? assigneeOverrideАдаптерConfig.model : "";
-  const assigneeOverrideThinkingEffort = thinkingEffortЗначениеFor(
-    assigneeАдаптерТип,
-    assigneeOverrideАдаптерConfig,
+  const assigneeOverrideLane = overrideLane(assigneeAdapterOverrides);
+  const assigneeOverrideAdapterConfig = asRecord(assigneeAdapterOverrides?.adapterConfig);
+  const assigneeOverrideModel =
+    typeof assigneeOverrideAdapterConfig.model === "string" ? assigneeOverrideAdapterConfig.model : "";
+  const assigneeOverrideThinkingEffort = thinkingEffortValueFor(
+    assigneeAdapterType,
+    assigneeOverrideAdapterConfig,
   );
-  const assigneeOverrideChrome = assigneeАдаптерТип === "claude_local"
-    && assigneeOverrideАдаптерConfig.chrome === true;
-  const { data: assigneeАдаптерМодельs } = useQuery({
-    queryКлюч:
-      companyId && assigneeАдаптерТип
-        ? queryКлючs.agents.adapterМодельs(companyId, assigneeАдаптерТип)
-        : ["agents", "none", "adapter-models", assigneeАдаптерТип ?? "none"],
-    queryFn: () => agentsApi.adapterМодельs(companyId!, assigneeАдаптерТип!),
-    enabled: Boolean(companyId) && showИсполнительАдаптерOptions && supportsИсполнительOverrides,
+  const assigneeOverrideChrome = assigneeAdapterType === "claude_local"
+    && assigneeOverrideAdapterConfig.chrome === true;
+  const { data: assigneeAdapterModels } = useQuery({
+    queryKey:
+      companyId && assigneeAdapterType
+        ? queryKeys.agents.adapterModels(companyId, assigneeAdapterType)
+        : ["agents", "none", "adapter-models", assigneeAdapterType ?? "none"],
+    queryFn: () => agentsApi.adapterModels(companyId!, assigneeAdapterType!),
+    enabled: Boolean(companyId) && showAssigneeAdapterOptions && supportsAssigneeOverrides,
   });
-  const { data: assigneeCheapПрофильs } = useQuery({
-    queryКлюч: companyId && assigneeАдаптерТип
-      ? queryКлючs.agents.adapterМодельПрофильs(companyId, assigneeАдаптерТип)
-      : ["agents", "none", "adapter-model-profiles", assigneeАдаптерТип ?? "none"],
-    queryFn: () => agentsApi.adapterМодельПрофильs(companyId!, assigneeАдаптерТип!),
-    enabled: Boolean(companyId) && showИсполнительАдаптерOptions && assigneeSupportsCheapLane,
+  const { data: assigneeCheapProfiles } = useQuery({
+    queryKey: companyId && assigneeAdapterType
+      ? queryKeys.agents.adapterModelProfiles(companyId, assigneeAdapterType)
+      : ["agents", "none", "adapter-model-profiles", assigneeAdapterType ?? "none"],
+    queryFn: () => agentsApi.adapterModelProfiles(companyId!, assigneeAdapterType!),
+    enabled: Boolean(companyId) && showAssigneeAdapterOptions && assigneeSupportsCheapLane,
   });
-  const assigneeCheapПрофиль = useMemo(
-    () => (assigneeCheapПрофильs ?? []).find((profile) => profile.key === "cheap") ?? null,
-    [assigneeCheapПрофильs],
+  const assigneeCheapProfile = useMemo(
+    () => (assigneeCheapProfiles ?? []).find((profile) => profile.key === "cheap") ?? null,
+    [assigneeCheapProfiles],
   );
   const modelOverrideOptions = useMemo<InlineEntityOption[]>(() => {
-    const models = sortАдаптерМодельs(assigneeАдаптерМодельs ?? []);
+    const models = sortAdapterModels(assigneeAdapterModels ?? []);
     const options = models.map((model) => ({
       id: model.id,
       label: model.label,
-      searchText: `${model.id} ${extractПровайдерIdWithFallback(model.id)}`,
+      searchText: `${model.id} ${extractProviderIdWithFallback(model.id)}`,
     }));
-    if (assigneeOverrideМодель && !options.some((option) => option.id === assigneeOverrideМодель)) {
+    if (assigneeOverrideModel && !options.some((option) => option.id === assigneeOverrideModel)) {
       options.unshift({
-        id: assigneeOverrideМодель,
-        label: assigneeOverrideМодель,
-        searchText: assigneeOverrideМодель,
+        id: assigneeOverrideModel,
+        label: assigneeOverrideModel,
+        searchText: assigneeOverrideModel,
       });
     }
     return options;
-  }, [assigneeАдаптерМодельs, assigneeOverrideМодель]);
-  const updateИсполнительАдаптерOverrides = (next: Задача["assigneeАдаптерOverrides"]) => {
-    onОбновить({ assigneeАдаптерOverrides: next });
+  }, [assigneeAdapterModels, assigneeOverrideModel]);
+  const updateAssigneeAdapterOverrides = (next: Issue["assigneeAdapterOverrides"]) => {
+    onUpdate({ assigneeAdapterOverrides: next });
   };
-  const buildИсполнительOverrideWithConfig = (adapterConfig: Record<string, unknown>) => {
+  const buildAssigneeOverrideWithConfig = (adapterConfig: Record<string, unknown>) => {
     const nextConfig = compactRecord(adapterConfig);
     const next = compactRecord({
-      useProjectРабочая область: assigneeАдаптерOverrides?.useProjectРабочая область,
+      useProjectWorkspace: assigneeAdapterOverrides?.useProjectWorkspace,
       ...(Object.keys(nextConfig).length > 0 ? { adapterConfig: nextConfig } : {}),
     });
     return Object.keys(next).length > 0 ? next : null;
   };
-  const updateИсполнительOverrideConfig = (patch: Record<string, unknown>) => {
-    updateИсполнительАдаптерOverrides(
-      buildИсполнительOverrideWithConfig({
-        ...assigneeOverrideАдаптерConfig,
+  const updateAssigneeOverrideConfig = (patch: Record<string, unknown>) => {
+    updateAssigneeAdapterOverrides(
+      buildAssigneeOverrideWithConfig({
+        ...assigneeOverrideAdapterConfig,
         ...patch,
       }),
     );
   };
-  const updateИсполнительOverrideThinkingEffort = (nextЗначение: string) => {
-    const nextConfig = { ...assigneeOverrideАдаптерConfig };
+  const updateAssigneeOverrideThinkingEffort = (nextValue: string) => {
+    const nextConfig = { ...assigneeOverrideAdapterConfig };
     delete nextConfig.modelReasoningEffort;
     delete nextConfig.reasoningEffort;
     delete nextConfig.effort;
     delete nextConfig.variant;
-    if (nextЗначение) {
-      nextConfig[thinkingEffortКлючFor(assigneeАдаптерТип)] = nextЗначение;
+    if (nextValue) {
+      nextConfig[thinkingEffortKeyFor(assigneeAdapterType)] = nextValue;
     }
-    updateИсполнительАдаптерOverrides(buildИсполнительOverrideWithConfig(nextConfig));
+    updateAssigneeAdapterOverrides(buildAssigneeOverrideWithConfig(nextConfig));
   };
-  const setИсполнительOverrideLane = (lane: ЗадачаМодельLane) => {
+  const setAssigneeOverrideLane = (lane: IssueModelLane) => {
     if (lane === "primary") {
-      updateИсполнительАдаптерOverrides(null);
+      updateAssigneeAdapterOverrides(null);
       return;
     }
     if (lane === "cheap") {
-      updateИсполнительАдаптерOverrides(
+      updateAssigneeAdapterOverrides(
         compactRecord({
-          useProjectРабочая область: assigneeАдаптерOverrides?.useProjectРабочая область,
-          modelПрофиль: "cheap",
+          useProjectWorkspace: assigneeAdapterOverrides?.useProjectWorkspace,
+          modelProfile: "cheap",
         }),
       );
       return;
     }
-    updateИсполнительАдаптерOverrides(buildИсполнительOverrideWithConfig(assigneeOverrideАдаптерConfig) ?? { adapterConfig: {} });
+    updateAssigneeAdapterOverrides(buildAssigneeOverrideWithConfig(assigneeOverrideAdapterConfig) ?? { adapterConfig: {} });
   };
   const assigneeOptionsTrigger = (() => {
     if (assigneeOverrideLane === "cheap") {
-      return <span classИмя="text-sm">Cheap model</span>;
+      return <span className="text-sm">Cheap model</span>;
     }
     if (assigneeOverrideLane === "custom") {
       const details = [
-        assigneeOverrideМодель,
+        assigneeOverrideModel,
         assigneeOverrideThinkingEffort,
         assigneeOverrideChrome ? "Chrome" : "",
       ].filter(Boolean);
       return (
-        <span classИмя="min-w-0 text-sm break-words">
-          Свой{details.length > 0 ? ` · ${details.join(" · ")}` : " adapter options"}
+        <span className="min-w-0 text-sm break-words">
+          Custom{details.length > 0 ? ` · ${details.join(" · ")}` : " adapter options"}
         </span>
       );
     }
-    return <span classИмя="text-sm text-muted-foreground">Primary model</span>;
+    return <span className="text-sm text-muted-foreground">Primary model</span>;
   })();
-  const assigneeOptionsContent = supportsИсполнительOverrides ? (
-    <div classИмя="w-full space-y-3 p-2">
-      <div classИмя="space-y-1.5">
-        <div classИмя="text-xs text-muted-foreground">Модель lane</div>
-        <div classИмя="flex w-full overflow-hidden rounded-md border border-border" role="radiogroup" aria-label="Модель lane">
+  const assigneeOptionsContent = supportsAssigneeOverrides ? (
+    <div className="w-full space-y-3 p-2">
+      <div className="space-y-1.5">
+        <div className="text-xs text-muted-foreground">Model lane</div>
+        <div className="flex w-full overflow-hidden rounded-md border border-border" role="radiogroup" aria-label="Model lane">
           {(["primary", ...(assigneeSupportsCheapLane ? (["cheap"] as const) : ([] as const)), "custom"] as const).map((lane) => (
             <button
               key={lane}
               type="button"
               role="radio"
               aria-checked={assigneeOverrideLane === lane}
-              classИмя={cn(
+              className={cn(
                 "flex-1 px-2 py-1 text-xs capitalize transition-colors hover:bg-accent/40",
                 assigneeOverrideLane === lane && "bg-accent text-foreground",
               )}
-              onClick={() => setИсполнительOverrideLane(lane)}
+              onClick={() => setAssigneeOverrideLane(lane)}
             >
               {lane === "primary" ? "Primary" : lane === "cheap" ? "Cheap" : "Свой"}
             </button>
           ))}
         </div>
         {assigneeOverrideLane === "cheap" ? (
-          <p classИмя="text-[11px] text-muted-foreground">
-            Отправитьs <code>modelПрофиль: "cheap"</code>{" "}
-            {assigneeCheapПрофиль?.adapterConfig && typeof (assigneeCheapПрофиль.adapterConfig as Record<string, unknown>).model === "string"
-              ? <>· adapter default <code>{String((assigneeCheapПрофиль.adapterConfig as Record<string, unknown>).model)}</code></>
-              : assigneeCheapПрофиль
+          <p className="text-[11px] text-muted-foreground">
+            Sends <code>modelProfile: "cheap"</code>{" "}
+            {assigneeCheapProfile?.adapterConfig && typeof (assigneeCheapProfile.adapterConfig as Record<string, unknown>).model === "string"
+              ? <>· adapter default <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
+              : assigneeCheapProfile
                 ? <>· uses the agent&apos;s configured cheap profile</>
                 : <>· falls back to the primary model if no cheap profile is configured</>}
           </p>
@@ -706,42 +706,42 @@ export function ЗадачаProperties({
       </div>
       {assigneeOverrideLane === "custom" ? (
         <>
-          <div classИмя="space-y-1.5">
-            <div classИмя="text-xs text-muted-foreground">Модель</div>
+          <div className="space-y-1.5">
+            <div className="text-xs text-muted-foreground">Model</div>
             <InlineEntitySelector
-              value={assigneeOverrideМодель}
+              value={assigneeOverrideModel}
               options={modelOverrideOptions}
-              placeholder="По умолчанию model"
-              disableПортal
-              noneLabel="По умолчанию model"
-              searchPlaceholder="Поиск models..."
-              emptyMessage="Нет models found."
-              onChange={(model) => updateИсполнительOverrideConfig({ model: model || undefined })}
+              placeholder="Default model"
+              disablePortal
+              noneLabel="Default model"
+              searchPlaceholder="Search models..."
+              emptyMessage="No models found."
+              onChange={(model) => updateAssigneeOverrideConfig({ model: model || undefined })}
             />
           </div>
-          <div classИмя="space-y-1.5">
-            <div classИмя="text-xs text-muted-foreground">Thinking effort</div>
-            <div classИмя="flex items-center gap-1.5 flex-wrap">
-              {thinkingEffortOptionsFor(assigneeАдаптерТип).map((option) => (
+          <div className="space-y-1.5">
+            <div className="text-xs text-muted-foreground">Thinking effort</div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {thinkingEffortOptionsFor(assigneeAdapterType).map((option) => (
                 <button
                   key={option.value || "default"}
-                  classИмя={cn(
+                  className={cn(
                     "px-2 py-1 rounded-md text-xs border border-border hover:bg-accent/50 transition-colors",
                     assigneeOverrideThinkingEffort === option.value && "bg-accent",
                   )}
-                  onClick={() => updateИсполнительOverrideThinkingEffort(option.value)}
+                  onClick={() => updateAssigneeOverrideThinkingEffort(option.value)}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
           </div>
-          {assigneeАдаптерТип === "claude_local" ? (
-            <div classИмя="flex items-center justify-between rounded-md border border-border px-2 py-1.5">
-              <div classИмя="text-xs text-muted-foreground">Включить Chrome (--chrome)</div>
+          {assigneeAdapterType === "claude_local" ? (
+            <div className="flex items-center justify-between rounded-md border border-border px-2 py-1.5">
+              <div className="text-xs text-muted-foreground">Enable Chrome (--chrome)</div>
               <ToggleSwitch
                 checked={assigneeOverrideChrome}
-                onCheckedChange={(next) => updateИсполнительOverrideConfig({ chrome: next ? true : undefined })}
+                onCheckedChange={(next) => updateAssigneeOverrideConfig({ chrome: next ? true : undefined })}
               />
             </div>
           ) : null}
@@ -749,92 +749,92 @@ export function ЗадачаProperties({
       ) : null}
     </div>
   ) : (
-    <div classИмя="w-full space-y-2 p-2">
-      <p classИмя="text-xs text-muted-foreground">
+    <div className="w-full space-y-2 p-2">
+      <p className="text-xs text-muted-foreground">
         {assignee
           ? "This assignee's adapter does not expose editable issue overrides."
           : "Select a compatible agent assignee to edit these overrides."}
       </p>
       <button
         type="button"
-        classИмя="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-        onClick={() => updateИсполнительАдаптерOverrides(null)}
+        className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+        onClick={() => updateAssigneeAdapterOverrides(null)}
       >
-        Очистить adapter options
+        Clear adapter options
       </button>
     </div>
   );
-  const reviewerЗначениеs = stageParticipantЗначениеs(issue.executionPolicy, "review");
-  const approverЗначениеs = stageParticipantЗначениеs(issue.executionPolicy, "approval");
-  const userLabel = (userId: string | null | undefined) => formatИсполнительUserLabel(userId, currentUserId, userLabelMap);
+  const reviewerValues = stageParticipantValues(issue.executionPolicy, "review");
+  const approverValues = stageParticipantValues(issue.executionPolicy, "approval");
+  const userLabel = (userId: string | null | undefined) => formatAssigneeUserLabel(userId, currentUserId, userLabelMap);
   const assigneeUserLabel = userLabel(issue.assigneeUserId);
   const creatorUserLabel = userLabel(issue.createdByUserId);
-  const selectedИсполнительЗначение = issue.assigneeАгентId
-    ? `agent:${issue.assigneeАгентId}`
+  const selectedAssigneeValue = issue.assigneeAgentId
+    ? `agent:${issue.assigneeAgentId}`
     : issue.assigneeUserId
       ? `user:${issue.assigneeUserId}`
       : "";
-  const updateExecutionPolicy = (nextРецензенты: string[], nextУтверждающие: string[]) => {
-    onОбновить({
+  const updateExecutionPolicy = (nextReviewers: string[], nextApprovers: string[]) => {
+    onUpdate({
       executionPolicy: buildExecutionPolicy({
         existingPolicy: issue.executionPolicy ?? null,
-        reviewerЗначениеs: nextРецензенты,
-        approverЗначениеs: nextУтверждающие,
+        reviewerValues: nextReviewers,
+        approverValues: nextApprovers,
       }),
     });
   };
-  const toggleExecutionParticipant = (stageТип: "review" | "approval", value: string) => {
-    const currentЗначениеs = stageТип === "review" ? reviewerЗначениеs : approverЗначениеs;
-    const nextЗначениеs = currentЗначениеs.includes(value)
-      ? currentЗначениеs.filter((candidate) => candidate !== value)
-      : [...currentЗначениеs, value];
+  const toggleExecutionParticipant = (stageType: "review" | "approval", value: string) => {
+    const currentValues = stageType === "review" ? reviewerValues : approverValues;
+    const nextValues = currentValues.includes(value)
+      ? currentValues.filter((candidate) => candidate !== value)
+      : [...currentValues, value];
     updateExecutionPolicy(
-      stageТип === "review" ? nextЗначениеs : reviewerЗначениеs,
-      stageТип === "approval" ? nextЗначениеs : approverЗначениеs,
+      stageType === "review" ? nextValues : reviewerValues,
+      stageType === "approval" ? nextValues : approverValues,
     );
   };
   const executionParticipantLabel = (value: string) => {
     if (value.startsWith("agent:")) {
-      return agentИмя(value.slice("agent:".length)) ?? value.slice("agent:".length, "agent:".length + 8);
+      return agentName(value.slice("agent:".length)) ?? value.slice("agent:".length, "agent:".length + 8);
     }
     if (value.startsWith("user:")) {
       return userLabel(value.slice("user:".length)) ?? "User";
     }
     return value;
   };
-  const reviewerTrigger = reviewerЗначениеs.length > 0
-    ? <span classИмя="text-sm break-words min-w-0">{reviewerЗначениеs.map((value) => executionParticipantLabel(value)).join(", ")}</span>
-    : <span classИмя="text-sm text-muted-foreground">Нет</span>;
-  const approverTrigger = approverЗначениеs.length > 0
-    ? <span classИмя="text-sm break-words min-w-0">{approverЗначениеs.map((value) => executionParticipantLabel(value)).join(", ")}</span>
-    : <span classИмя="text-sm text-muted-foreground">Нет</span>;
-  const nextЗапуститьnableExecutionStage = (() => {
-    if (issue.executionState?.status === "changes_requested" && issue.executionState.currentStageТип) {
-      return issue.executionState.currentStageТип;
+  const reviewerTrigger = reviewerValues.length > 0
+    ? <span className="text-sm break-words min-w-0">{reviewerValues.map((value) => executionParticipantLabel(value)).join(", ")}</span>
+    : <span className="text-sm text-muted-foreground">None</span>;
+  const approverTrigger = approverValues.length > 0
+    ? <span className="text-sm break-words min-w-0">{approverValues.map((value) => executionParticipantLabel(value)).join(", ")}</span>
+    : <span className="text-sm text-muted-foreground">None</span>;
+  const nextRunnableExecutionStage = (() => {
+    if (issue.executionState?.status === "changes_requested" && issue.executionState.currentStageType) {
+      return issue.executionState.currentStageType;
     }
     if (issue.executionState) return null;
-    if (reviewerЗначениеs.length > 0) return "review";
-    if (approverЗначениеs.length > 0) return "approval";
+    if (reviewerValues.length > 0) return "review";
+    if (approverValues.length > 0) return "approval";
     return null;
   })();
-  const runExecutionButton = (stageТип: "review" | "approval") => (
+  const runExecutionButton = (stageType: "review" | "approval") => (
     <PropertyRow label="">
       <button
         type="button"
-        classИмя="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-        onClick={() => onОбновить({ status: "in_review" })}
+        className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+        onClick={() => onUpdate({ status: "in_review" })}
       >
-        {stageТип === "review" ? "Запустить review now" : "Запустить approval now"}
+        {stageType === "review" ? "Run review now" : "Run approval now"}
       </button>
     </PropertyRow>
   );
   const currentExecutionLabel = (() => {
-    if (!issue.executionState?.currentStageТип) return null;
-    const stageLabel = issue.executionState.currentStageТип === "review" ? "Review" : "Согласование";
+    if (!issue.executionState?.currentStageType) return null;
+    const stageLabel = issue.executionState.currentStageType === "review" ? "Review" : "Approval";
     const participant = issue.executionState.currentParticipant;
     const participantLabel = participant
       ? (participant.type === "agent"
-        ? agentИмя(participant.agentId ?? null)
+        ? agentName(participant.agentId ?? null)
         : userLabel(participant.userId ?? null))
       : null;
     if (issue.executionState.status === "changes_requested") {
@@ -843,33 +843,33 @@ export function ЗадачаProperties({
     return `${stageLabel} pending${participantLabel ? ` with ${participantLabel}` : ""}`;
   })();
   useEffect(() => {
-    setMonitorAtInput(toDateTimeLocalЗначение(issue.executionPolicy?.monitor?.nextCheckAt));
-    setMonitorНетtesInput(issue.executionPolicy?.monitor?.notes ?? "");
-    setMonitorServiceInput(issue.executionPolicy?.monitor?.serviceИмя ?? "");
+    setMonitorAtInput(toDateTimeLocalValue(issue.executionPolicy?.monitor?.nextCheckAt));
+    setMonitorNotesInput(issue.executionPolicy?.monitor?.notes ?? "");
+    setMonitorServiceInput(issue.executionPolicy?.monitor?.serviceName ?? "");
   }, [
     issue.executionPolicy?.monitor?.nextCheckAt,
     issue.executionPolicy?.monitor?.notes,
-    issue.executionPolicy?.monitor?.serviceИмя,
+    issue.executionPolicy?.monitor?.serviceName,
   ]);
 
-  const updateMonitor = (nextMonitor: Задача["executionPolicy"] extends infer T
+  const updateMonitor = (nextMonitor: Issue["executionPolicy"] extends infer T
     ? T extends { monitor?: infer M | null } | null | undefined
       ? M | null
       : never
     : never) => {
     const basePolicy = buildExecutionPolicy({
       existingPolicy: issue.executionPolicy ?? null,
-      reviewerЗначениеs,
-      approverЗначениеs,
+      reviewerValues,
+      approverValues,
     });
     if (!basePolicy && !nextMonitor) {
-      onОбновить({ executionPolicy: null });
+      onUpdate({ executionPolicy: null });
       return;
     }
-    onОбновить({
+    onUpdate({
       executionPolicy: {
         mode: basePolicy?.mode ?? issue.executionPolicy?.mode ?? "normal",
-        commentОбязательно: true,
+        commentRequired: true,
         stages: basePolicy?.stages ?? [],
         ...(nextMonitor ? { monitor: nextMonitor } : {}),
       },
@@ -879,13 +879,13 @@ export function ЗадачаProperties({
     if (!monitorAtInput) return;
     const nextCheckAt = new Date(monitorAtInput);
     if (Number.isNaN(nextCheckAt.getTime())) return;
-    const serviceИмя = monitorServiceInput.trim() || null;
+    const serviceName = monitorServiceInput.trim() || null;
     updateMonitor({
       nextCheckAt: nextCheckAt.toISOString(),
-      notes: monitorНетtesInput.trim() || null,
+      notes: monitorNotesInput.trim() || null,
       scheduledBy: "board",
-      kind: serviceИмя ? "external_service" : null,
-      serviceИмя,
+      kind: serviceName ? "external_service" : null,
+      serviceName,
       externalRef: null,
     });
     setMonitorOpen(false);
@@ -896,200 +896,200 @@ export function ЗадачаProperties({
   };
   const currentMonitorLabel = (() => {
     if (issue.executionPolicy?.monitor?.nextCheckAt) {
-      return `Далее check ${formatDate(new Date(issue.executionPolicy.monitor.nextCheckAt))}`;
+      return `Next check ${formatDate(new Date(issue.executionPolicy.monitor.nextCheckAt))}`;
     }
     if (issue.executionState?.monitor?.status === "cleared") {
-      return "Очиститьed";
+      return "Cleared";
     }
     if (issue.monitorLastTriggeredAt) {
       return `Last triggered ${timeAgo(issue.monitorLastTriggeredAt)}`;
     }
-    return "Нетt scheduled";
+    return "Not scheduled";
   })();
-  const monitorДалееCheckAt = issue.executionPolicy?.monitor?.nextCheckAt ?? null;
+  const monitorNextCheckAt = issue.executionPolicy?.monitor?.nextCheckAt ?? null;
   const monitorTrigger = (
-    <span classИмя="inline-flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
-      {monitorДалееCheckAt ? (
-        <Clock classИмя="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+    <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+      {monitorNextCheckAt ? (
+        <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
       ) : null}
       <span
-        classИмя={cn(
+        className={cn(
           "min-w-0 text-sm break-words",
-          monitorДалееCheckAt ? "text-foreground" : "text-muted-foreground",
+          monitorNextCheckAt ? "text-foreground" : "text-muted-foreground",
         )}
-        title={monitorДалееCheckAt ? currentMonitorLabel : undefined}
+        title={monitorNextCheckAt ? currentMonitorLabel : undefined}
       >
-        {monitorДалееCheckAt ? `Далее check ${formatMonitorOffset(monitorДалееCheckAt)}` : currentMonitorLabel}
+        {monitorNextCheckAt ? `Next check ${formatMonitorOffset(monitorNextCheckAt)}` : currentMonitorLabel}
       </span>
-      {monitorДалееCheckAt ? (
-        <span classИмя="text-xs text-muted-foreground" title={currentMonitorLabel}>
-          {formatDate(new Date(monitorДалееCheckAt))}
+      {monitorNextCheckAt ? (
+        <span className="text-xs text-muted-foreground" title={currentMonitorLabel}>
+          {formatDate(new Date(monitorNextCheckAt))}
         </span>
       ) : null}
     </span>
   );
   const monitorAttemptBadge = issue.monitorAttemptCount && issue.monitorAttemptCount > 0 ? (
-    <span classИмя="text-xs text-muted-foreground">
+    <span className="text-xs text-muted-foreground">
       Attempt {issue.monitorAttemptCount}
     </span>
   ) : null;
 
-  const scheduledПовторить = issue.scheduledПовторить ?? null;
-  const retryСейчас = useПовторитьСейчасMutation(issue.id);
-  const showРасписаниеdПовторитьRow = scheduledПовторить && scheduledПовторить.status === "scheduled_retry";
-  const scheduledПовторитьDueAtIso = scheduledПовторить?.scheduledПовторитьAt
-    ? new Date(scheduledПовторить.scheduledПовторитьAt).toISOString()
+  const scheduledRetry = issue.scheduledRetry ?? null;
+  const retryNow = useRetryNowMutation(issue.id);
+  const showScheduledRetryRow = scheduledRetry && scheduledRetry.status === "scheduled_retry";
+  const scheduledRetryDueAtIso = scheduledRetry?.scheduledRetryAt
+    ? new Date(scheduledRetry.scheduledRetryAt).toISOString()
     : null;
-  const scheduledПовторитьRelative = scheduledПовторитьDueAtIso
-    ? formatMonitorOffset(scheduledПовторитьDueAtIso)
+  const scheduledRetryRelative = scheduledRetryDueAtIso
+    ? formatMonitorOffset(scheduledRetryDueAtIso)
     : null;
-  const scheduledПовторитьAbsolute = scheduledПовторить?.scheduledПовторитьAt
-    ? formatDateTime(scheduledПовторить.scheduledПовторитьAt)
+  const scheduledRetryAbsolute = scheduledRetry?.scheduledRetryAt
+    ? formatDateTime(scheduledRetry.scheduledRetryAt)
     : null;
-  const scheduledПовторитьShortDate = scheduledПовторить?.scheduledПовторитьAt
-    ? formatDate(new Date(scheduledПовторить.scheduledПовторитьAt))
+  const scheduledRetryShortDate = scheduledRetry?.scheduledRetryAt
+    ? formatDate(new Date(scheduledRetry.scheduledRetryAt))
     : null;
-  const scheduledПовторитьReasonLabel = formatПовторитьReason(scheduledПовторить?.scheduledПовторитьReason);
-  const scheduledПовторитьAttempt =
-    typeof scheduledПовторить?.scheduledПовторитьAttempt === "number"
-    && Number.isFinite(scheduledПовторить.scheduledПовторитьAttempt)
-    && scheduledПовторить.scheduledПовторитьAttempt > 0
-      ? scheduledПовторить.scheduledПовторитьAttempt
+  const scheduledRetryReasonLabel = formatRetryReason(scheduledRetry?.scheduledRetryReason);
+  const scheduledRetryAttempt =
+    typeof scheduledRetry?.scheduledRetryAttempt === "number"
+    && Number.isFinite(scheduledRetry.scheduledRetryAttempt)
+    && scheduledRetry.scheduledRetryAttempt > 0
+      ? scheduledRetry.scheduledRetryAttempt
       : null;
-  const scheduledПовторитьIsContinuation =
-    scheduledПовторить?.scheduledПовторитьReason === "max_turns_continuation";
-  const scheduledПовторитьRelativeLabel = (() => {
-    if (!scheduledПовторитьRelative) return "Ожидание schedule";
-    const action = scheduledПовторитьIsContinuation ? "Continuation" : "Повторить";
-    if (scheduledПовторитьRelative === "now") return `${action} due now`;
-    return `${action} ${scheduledПовторитьRelative}`;
+  const scheduledRetryIsContinuation =
+    scheduledRetry?.scheduledRetryReason === "max_turns_continuation";
+  const scheduledRetryRelativeLabel = (() => {
+    if (!scheduledRetryRelative) return "Pending schedule";
+    const action = scheduledRetryIsContinuation ? "Continuation" : "Повторить";
+    if (scheduledRetryRelative === "now") return `${action} due now`;
+    return `${action} ${scheduledRetryRelative}`;
   })();
-  const scheduledПовторитьПовторитьСейчасУспешно = retryСейчас.isУспешно
-    && (retryСейчас.data?.outcome === "promoted" || retryСейчас.data?.outcome === "already_promoted");
-  const scheduledПовторитьAttemptBadge = scheduledПовторитьAttempt !== null ? (
-    <span classИмя="text-xs text-muted-foreground">Attempt {scheduledПовторитьAttempt}</span>
+  const scheduledRetryRetryNowSuccess = retryNow.isSuccess
+    && (retryNow.data?.outcome === "promoted" || retryNow.data?.outcome === "already_promoted");
+  const scheduledRetryAttemptBadge = scheduledRetryAttempt !== null ? (
+    <span className="text-xs text-muted-foreground">Attempt {scheduledRetryAttempt}</span>
   ) : null;
-  const scheduledПовторитьTrigger = (
-    <span classИмя="inline-flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
-      <Clock classИмя="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" aria-hidden="true" />
+  const scheduledRetryTrigger = (
+    <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+      <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" aria-hidden="true" />
       <span
-        classИмя="min-w-0 text-sm break-words text-foreground"
-        title={scheduledПовторитьAbsolute ?? undefined}
+        className="min-w-0 text-sm break-words text-foreground"
+        title={scheduledRetryAbsolute ?? undefined}
       >
-        {scheduledПовторитьRelativeLabel}
+        {scheduledRetryRelativeLabel}
       </span>
-      {scheduledПовторитьShortDate ? (
-        <span classИмя="text-xs text-muted-foreground" title={scheduledПовторитьAbsolute ?? undefined}>
-          {scheduledПовторитьShortDate}
+      {scheduledRetryShortDate ? (
+        <span className="text-xs text-muted-foreground" title={scheduledRetryAbsolute ?? undefined}>
+          {scheduledRetryShortDate}
         </span>
       ) : null}
     </span>
   );
-  const scheduledПовторитьContent = scheduledПовторить ? (
-    <div classИмя="flex w-full flex-col gap-2 p-2 text-xs">
-      <div classИмя="flex items-center justify-between">
-        <span classИмя="text-sm font-medium text-foreground">
-          {scheduledПовторитьIsContinuation ? "Расписаниеd continuation" : "Расписаниеd retry"}
+  const scheduledRetryContent = scheduledRetry ? (
+    <div className="flex w-full flex-col gap-2 p-2 text-xs">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-foreground">
+          {scheduledRetryIsContinuation ? "Scheduled continuation" : "Scheduled retry"}
         </span>
-        {scheduledПовторитьAttempt !== null ? (
-          <span classИмя="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
-            Attempt {scheduledПовторитьAttempt}
+        {scheduledRetryAttempt !== null ? (
+          <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
+            Attempt {scheduledRetryAttempt}
           </span>
         ) : null}
       </div>
-      <dl classИмя="grid grid-cols-[6rem_1fr] gap-y-1">
-        {scheduledПовторитьReasonLabel ? (
+      <dl className="grid grid-cols-[6rem_1fr] gap-y-1">
+        {scheduledRetryReasonLabel ? (
           <>
-            <dt classИмя="text-muted-foreground">Reason</dt>
-            <dd classИмя="text-foreground">{scheduledПовторитьReasonLabel}</dd>
+            <dt className="text-muted-foreground">Reason</dt>
+            <dd className="text-foreground">{scheduledRetryReasonLabel}</dd>
           </>
         ) : null}
-        {scheduledПовторитьAbsolute ? (
+        {scheduledRetryAbsolute ? (
           <>
-            <dt classИмя="text-muted-foreground">Далее attempt</dt>
-            <dd classИмя="text-foreground">
-              {scheduledПовторитьAbsolute}
-              {scheduledПовторитьRelative ? (
-                <span classИмя="ml-1 text-muted-foreground">· {scheduledПовторитьRelative}</span>
+            <dt className="text-muted-foreground">Next attempt</dt>
+            <dd className="text-foreground">
+              {scheduledRetryAbsolute}
+              {scheduledRetryRelative ? (
+                <span className="ml-1 text-muted-foreground">· {scheduledRetryRelative}</span>
               ) : null}
             </dd>
           </>
         ) : null}
-        {scheduledПовторить.retryOfЗапуститьId ? (
+        {scheduledRetry.retryOfRunId ? (
           <>
-            <dt classИмя="text-muted-foreground">Replaces run</dt>
-            <dd classИмя="text-foreground">
+            <dt className="text-muted-foreground">Replaces run</dt>
+            <dd className="text-foreground">
               <Link
-                to={`/agents/${scheduledПовторить.agentId}/runs/${scheduledПовторить.retryOfЗапуститьId}`}
-                classИмя="font-mono text-foreground hover:underline"
+                to={`/agents/${scheduledRetry.agentId}/runs/${scheduledRetry.retryOfRunId}`}
+                className="font-mono text-foreground hover:underline"
               >
-                {scheduledПовторить.retryOfЗапуститьId.slice(0, 8)}
+                {scheduledRetry.retryOfRunId.slice(0, 8)}
               </Link>
             </dd>
           </>
         ) : null}
-        {scheduledПовторить.agentИмя ? (
+        {scheduledRetry.agentName ? (
           <>
-            <dt classИмя="text-muted-foreground">Агент</dt>
-            <dd classИмя="text-foreground">
+            <dt className="text-muted-foreground">Agent</dt>
+            <dd className="text-foreground">
               <Link
-                to={`/agents/${scheduledПовторить.agentId}`}
-                classИмя="text-foreground hover:underline"
+                to={`/agents/${scheduledRetry.agentId}`}
+                className="text-foreground hover:underline"
               >
-                {scheduledПовторить.agentИмя}
+                {scheduledRetry.agentName}
               </Link>
             </dd>
           </>
         ) : null}
-        {scheduledПовторить.error ? (
+        {scheduledRetry.error ? (
           <>
-            <dt classИмя="text-muted-foreground">Last error</dt>
-            <dd classИмя="text-foreground break-words">{scheduledПовторить.error}</dd>
+            <dt className="text-muted-foreground">Last error</dt>
+            <dd className="text-foreground break-words">{scheduledRetry.error}</dd>
           </>
         ) : null}
       </dl>
-      <ПовторитьОшибкаBand
-        error={retryСейчас.lastОшибка}
-        onПовторить={() => {
-          retryСейчас.reset();
-          retryСейчас.mutate();
+      <RetryErrorBand
+        error={retryNow.lastError}
+        onRetry={() => {
+          retryNow.reset();
+          retryNow.mutate();
         }}
       />
-      <Separator classИмя="my-1" />
-      <div classИмя="flex items-center justify-between gap-2">
+      <Separator className="my-1" />
+      <div className="flex items-center justify-between gap-2">
         <Button
           type="button"
           size="sm"
           variant="default"
-          onClick={() => retryСейчас.mutate()}
-          disabled={retryСейчас.isОжидание || scheduledПовторитьПовторитьСейчасУспешно}
+          onClick={() => retryNow.mutate()}
+          disabled={retryNow.isPending || scheduledRetryRetryNowSuccess}
           data-testid="issue-scheduled-retry-properties-retry-now"
         >
-          {retryСейчас.isОжидание ? (
-            <span classИмя="inline-flex items-center gap-1.5">
-              <Loader2 classИмя="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-              Повторитьing…
+          {retryNow.isPending ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              Retrying…
             </span>
-          ) : scheduledПовторитьПовторитьСейчасУспешно ? (
-            <span classИмя="inline-flex items-center gap-1.5">
-              <CheckCircle2 classИмя="h-3.5 w-3.5" aria-hidden="true" />
-              {retryСейчас.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
+          ) : scheduledRetryRetryNowSuccess ? (
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+              {retryNow.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
             </span>
           ) : (
-            <span classИмя="inline-flex items-center gap-1.5">
-              <RotateCcw classИмя="h-3.5 w-3.5" aria-hidden="true" />
-              Повторить now
+            <span className="inline-flex items-center gap-1.5">
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+              Retry now
             </span>
           )}
         </Button>
-        <span classИмя="text-right text-xs text-muted-foreground">
-          {retryСейчас.isОжидание
+        <span className="text-right text-xs text-muted-foreground">
+          {retryNow.isPending
             ? "Promoting scheduled retry"
-            : scheduledПовторитьПовторитьСейчасУспешно
-              ? retryСейчас.data?.outcome === "already_promoted"
+            : scheduledRetryRetryNowSuccess
+              ? retryNow.data?.outcome === "already_promoted"
                 ? "Already promoted — run starting"
                 : "Promoted — run starting"
-              : scheduledПовторитьIsContinuation
+              : scheduledRetryIsContinuation
                 ? "Pulls continuation forward immediately"
                 : "Pulls retry forward immediately"}
         </span>
@@ -1097,46 +1097,46 @@ export function ЗадачаProperties({
     </div>
   ) : null;
   const monitorContent = (
-    <div classИмя="flex w-full flex-col gap-2">
-      <div classИмя="flex flex-col gap-2 md:flex-row">
+    <div className="flex w-full flex-col gap-2">
+      <div className="flex flex-col gap-2 md:flex-row">
         <input
           type="datetime-local"
-          classИмя="rounded-md border border-border bg-transparent px-2 py-1 text-xs"
+          className="rounded-md border border-border bg-transparent px-2 py-1 text-xs"
           value={monitorAtInput}
           onChange={(e) => setMonitorAtInput(e.target.value)}
         />
         <input
           type="text"
-          classИмя="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs"
+          className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs"
           placeholder="What should the agent re-check?"
-          value={monitorНетtesInput}
-          onChange={(e) => setMonitorНетtesInput(e.target.value)}
+          value={monitorNotesInput}
+          onChange={(e) => setMonitorNotesInput(e.target.value)}
         />
       </div>
-      <div classИмя="flex flex-col gap-2 md:flex-row">
+      <div className="flex flex-col gap-2 md:flex-row">
         <input
           type="text"
-          classИмя="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs"
+          className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 py-1 text-xs"
           placeholder="External service"
           value={monitorServiceInput}
           onChange={(e) => setMonitorServiceInput(e.target.value)}
         />
-        <div classИмя="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            classИмя="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:opacity-50"
+            className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:opacity-50"
             disabled={!monitorAtInput}
             onClick={saveMonitor}
           >
-            Расписание
+            Schedule
           </button>
           {issue.executionPolicy?.monitor ? (
             <button
               type="button"
-              classИмя="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+              className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
               onClick={clearMonitor}
             >
-              Очистить
+              Clear
             </button>
           ) : null}
         </div>
@@ -1144,25 +1144,25 @@ export function ЗадачаProperties({
     </div>
   );
 
-  const selectedЗадачаЯрлыки = useMemo(() => {
+  const selectedIssueLabels = useMemo(() => {
     const selectedIds = issue.labelIds ?? [];
     if (selectedIds.length === 0) return issue.labels ?? [];
 
-    const labelById = new Map<string, ЗадачаLabel>();
+    const labelById = new Map<string, IssueLabel>();
     for (const label of labels ?? []) labelById.set(label.id, label);
     for (const label of issue.labels ?? []) labelById.set(label.id, label);
 
     return selectedIds
       .map((id) => labelById.get(id))
-      .filter((label): label is ЗадачаLabel => Boolean(label));
+      .filter((label): label is IssueLabel => Boolean(label));
   }, [issue.labelIds, issue.labels, labels]);
 
-  const labelsTrigger = selectedЗадачаЯрлыки.length > 0 ? (
-    <div classИмя="flex items-center gap-1 flex-wrap">
-      {selectedЗадачаЯрлыки.slice(0, 3).map((label) => (
+  const labelsTrigger = selectedIssueLabels.length > 0 ? (
+    <div className="flex items-center gap-1 flex-wrap">
+      {selectedIssueLabels.slice(0, 3).map((label) => (
         <span
           key={label.id}
-          classИмя="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border"
+          className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border"
           style={{
             borderColor: label.color,
             backgroundColor: `${label.color}22`,
@@ -1172,88 +1172,88 @@ export function ЗадачаProperties({
           {label.name}
         </span>
       ))}
-      {selectedЗадачаЯрлыки.length > 3 && (
-        <span classИмя="text-xs text-muted-foreground">+{selectedЗадачаЯрлыки.length - 3}</span>
+      {selectedIssueLabels.length > 3 && (
+        <span className="text-xs text-muted-foreground">+{selectedIssueLabels.length - 3}</span>
       )}
     </div>
   ) : (
     <>
-      <Tag classИмя="h-3.5 w-3.5 text-muted-foreground" />
-      <span classИмя="text-sm text-muted-foreground">Нет labels</span>
+      <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-sm text-muted-foreground">No labels</span>
     </>
   );
   const labelsExtra = (issue.labelIds ?? []).length > 0 ? (
     <button
       type="button"
-      classИмя="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
-      onClick={() => setЯрлыкиOpen(true)}
-      aria-label="Добавить метку"
-      title="Добавить метку"
+      className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
+      onClick={() => setLabelsOpen(true)}
+      aria-label="Add label"
+      title="Add label"
     >
-      <Plus classИмя="h-3 w-3" />
+      <Plus className="h-3 w-3" />
     </button>
   ) : undefined;
 
   const labelsContent = (
     <>
       <input
-        classИмя="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Поиск labels..."
-        value={labelПоиск}
-        onChange={(e) => setLabelПоиск(e.target.value)}
+        className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
+        placeholder="Search labels..."
+        value={labelSearch}
+        onChange={(e) => setLabelSearch(e.target.value)}
         autoFocus={!inline}
       />
-      <div classИмя="max-h-44 overflow-y-auto overscroll-contain space-y-0.5">
+      <div className="max-h-44 overflow-y-auto overscroll-contain space-y-0.5">
         {(labels ?? [])
           .filter((label) => {
-            if (!labelПоиск.trim()) return true;
-            return label.name.toНизкийerCase().includes(labelПоиск.toНизкийerCase());
+            if (!labelSearch.trim()) return true;
+            return label.name.toLowerCase().includes(labelSearch.toLowerCase());
           })
           .map((label) => {
             const selected = (issue.labelIds ?? []).includes(label.id);
             return (
               <button
                 key={label.id}
-                classИмя={cn(
+                className={cn(
                   "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-left",
                   selected && "bg-accent"
                 )}
                 onClick={() => toggleLabel(label.id)}
               >
-                <span classИмя="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: label.color }} />
-                <span classИмя="truncate flex-1">{label.name}</span>
-                {selected && <Check classИмя="h-3.5 w-3.5 shrink-0 text-foreground" aria-hidden="true" />}
+                <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: label.color }} />
+                <span className="truncate flex-1">{label.name}</span>
+                {selected && <Check className="h-3.5 w-3.5 shrink-0 text-foreground" aria-hidden="true" />}
               </button>
             );
           })}
       </div>
-      <div classИмя="mt-2 border-t border-border pt-2 space-y-1">
-        <div classИмя="flex items-center gap-1">
+      <div className="mt-2 border-t border-border pt-2 space-y-1">
+        <div className="flex items-center gap-1">
           <input
-            classИмя="h-7 w-7 p-0 rounded bg-transparent"
+            className="h-7 w-7 p-0 rounded bg-transparent"
             type="color"
             value={newLabelColor}
             onChange={(e) => setNewLabelColor(e.target.value)}
           />
           <input
-            classИмя="flex-1 px-2 py-1.5 text-xs bg-transparent outline-none rounded placeholder:text-muted-foreground/50"
+            className="flex-1 px-2 py-1.5 text-xs bg-transparent outline-none rounded placeholder:text-muted-foreground/50"
             placeholder="New label"
-            value={newLabelИмя}
-            onChange={(e) => setNewLabelИмя(e.target.value)}
+            value={newLabelName}
+            onChange={(e) => setNewLabelName(e.target.value)}
           />
         </div>
         <button
-          classИмя="flex items-center justify-center gap-1.5 w-full px-2 py-1.5 text-xs rounded border border-border hover:bg-accent/50 disabled:opacity-50"
-          disabled={!newLabelИмя.trim() || createLabel.isОжидание}
+          className="flex items-center justify-center gap-1.5 w-full px-2 py-1.5 text-xs rounded border border-border hover:bg-accent/50 disabled:opacity-50"
+          disabled={!newLabelName.trim() || createLabel.isPending}
           onClick={() =>
             createLabel.mutate({
-              name: newLabelИмя.trim(),
+              name: newLabelName.trim(),
               color: newLabelColor,
             })
           }
         >
-          <Plus classИмя="h-3 w-3" />
-          {createLabel.isОжидание ? "Creating…" : "Создать label"}
+          <Plus className="h-3 w-3" />
+          {createLabel.isPending ? "Creating…" : "Create label"}
         </button>
       </div>
     </>
@@ -1263,25 +1263,25 @@ export function ЗадачаProperties({
     <Identity name={assignee.name} size="sm" />
   ) : assigneeUserLabel ? (
     <>
-      <User classИмя="h-3.5 w-3.5 text-muted-foreground" />
-      <span classИмя="text-sm">{assigneeUserLabel}</span>
+      <User className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-sm">{assigneeUserLabel}</span>
     </>
   ) : (
     <>
-      <User classИмя="h-3.5 w-3.5 text-muted-foreground" />
-      <span classИмя="text-sm text-muted-foreground">Не назначен</span>
+      <User className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-sm text-muted-foreground">Unassigned</span>
     </>
   );
 
   const assigneePickerOptions = orderItemsBySelectedAndRecent(
     [
-      { id: "", kind: "none" as const, label: "Нет assignee", searchText: "" },
+      { id: "", kind: "none" as const, label: "No assignee", searchText: "" },
       ...(currentUserId
         ? [{
             id: `user:${currentUserId}`,
             kind: "user" as const,
             userId: currentUserId,
-            label: "Назначить мне",
+            label: "Assign to me",
             searchText: userLabel(currentUserId) ?? "",
           }]
         : []),
@@ -1290,7 +1290,7 @@ export function ЗадачаProperties({
             id: `user:${issue.createdByUserId}`,
             kind: "user" as const,
             userId: issue.createdByUserId,
-            label: creatorUserLabel ? `Assign to ${creatorUserLabel}` : "Назначить заявителю",
+            label: creatorUserLabel ? `Assign to ${creatorUserLabel}` : "Assign to requester",
             searchText: creatorUserLabel ?? "requester",
           }]
         : []),
@@ -1301,7 +1301,7 @@ export function ЗадачаProperties({
         label: option.label,
         searchText: option.searchText ?? "",
       })),
-      ...sortedАгенты.map((agent) => ({
+      ...sortedAgents.map((agent) => ({
         id: `agent:${agent.id}`,
         kind: "agent" as const,
         agent,
@@ -1309,50 +1309,50 @@ export function ЗадачаProperties({
         searchText: `${agent.name} ${agent.role} ${agent.title ?? ""}`,
       })),
     ],
-    selectedИсполнительЗначение,
-    recentИсполнительЗначениеs,
+    selectedAssigneeValue,
+    recentAssigneeValues,
   );
 
   const assigneeContent = (
     <>
       <input
-        classИмя="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Поиск assignees..."
-        value={assigneeПоиск}
-        onChange={(e) => setИсполнительПоиск(e.target.value)}
+        className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
+        placeholder="Search assignees..."
+        value={assigneeSearch}
+        onChange={(e) => setAssigneeSearch(e.target.value)}
         autoFocus={!inline}
       />
-      <div classИмя="max-h-48 overflow-y-auto overscroll-contain">
+      <div className="max-h-48 overflow-y-auto overscroll-contain">
         {assigneePickerOptions
           .filter((option) => {
-            if (!assigneeПоиск.trim()) return true;
-            const q = assigneeПоиск.toНизкийerCase();
-            return `${option.label} ${option.searchText}`.toНизкийerCase().includes(q);
+            if (!assigneeSearch.trim()) return true;
+            const q = assigneeSearch.toLowerCase();
+            return `${option.label} ${option.searchText}`.toLowerCase().includes(q);
           })
           .map((option) => (
             <button
               key={option.id || "__none__"}
-              classИмя={cn(
+              className={cn(
                 "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
-                option.id === selectedИсполнительЗначение && "bg-accent",
+                option.id === selectedAssigneeValue && "bg-accent",
               )}
               onClick={() => {
                 if (option.kind === "agent") {
-                  trackRecentИсполнитель(option.agent.id);
-                  onОбновить({ assigneeАгентId: option.agent.id, assigneeUserId: null });
+                  trackRecentAssignee(option.agent.id);
+                  onUpdate({ assigneeAgentId: option.agent.id, assigneeUserId: null });
                 } else if (option.kind === "user") {
-                  trackRecentИсполнительUser(option.userId);
-                  onОбновить({ assigneeАгентId: null, assigneeUserId: option.userId });
+                  trackRecentAssigneeUser(option.userId);
+                  onUpdate({ assigneeAgentId: null, assigneeUserId: option.userId });
                 } else {
-                  onОбновить({ assigneeАгентId: null, assigneeUserId: null });
+                  onUpdate({ assigneeAgentId: null, assigneeUserId: null });
                 }
-                setИсполнительOpen(false);
+                setAssigneeOpen(false);
               }}
             >
               {option.kind === "agent" ? (
-                <АгентIcon icon={option.agent.icon} classИмя="shrink-0 h-3 w-3 text-muted-foreground" />
+                <AgentIcon icon={option.agent.icon} className="shrink-0 h-3 w-3 text-muted-foreground" />
               ) : option.kind === "user" ? (
-                <User classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
+                <User className="h-3 w-3 shrink-0 text-muted-foreground" />
               ) : null}
               {option.label}
             </button>
@@ -1362,89 +1362,89 @@ export function ЗадачаProperties({
   );
 
   const executionParticipantsContent = (
-    stageТип: "review" | "approval",
+    stageType: "review" | "approval",
     values: string[],
     search: string,
-    setПоиск: (value: string) => void,
-    onОчистить: () => void,
+    setSearch: (value: string) => void,
+    onClear: () => void,
   ) => (
     <>
       <input
-        classИмя="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder={`Поиск ${stageТип === "review" ? "reviewers" : "approvers"}...`}
+        className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
+        placeholder={`Search ${stageType === "review" ? "reviewers" : "approvers"}...`}
         value={search}
-        onChange={(e) => setПоиск(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
         autoFocus={!inline}
       />
-      <div classИмя="max-h-48 overflow-y-auto overscroll-contain">
+      <div className="max-h-48 overflow-y-auto overscroll-contain">
         <button
-          classИмя={cn(
+          className={cn(
             "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
             values.length === 0 && "bg-accent",
           )}
-          onClick={onОчистить}
+          onClick={onClear}
         >
-          Нет {stageТип === "review" ? "reviewers" : "approvers"}
+          No {stageType === "review" ? "reviewers" : "approvers"}
         </button>
         {currentUserId && (
           <button
-            classИмя={cn(
+            className={cn(
               "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
               values.includes(`user:${currentUserId}`) && "bg-accent",
             )}
-            onClick={() => toggleExecutionParticipant(stageТип, `user:${currentUserId}`)}
+            onClick={() => toggleExecutionParticipant(stageType, `user:${currentUserId}`)}
           >
-            <User classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
-            Назначить мне
+            <User className="h-3 w-3 shrink-0 text-muted-foreground" />
+            Assign to me
           </button>
         )}
         {issue.createdByUserId && issue.createdByUserId !== currentUserId && (
           <button
-            classИмя={cn(
+            className={cn(
               "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
               values.includes(`user:${issue.createdByUserId}`) && "bg-accent",
             )}
-            onClick={() => toggleExecutionParticipant(stageТип, `user:${issue.createdByUserId}`)}
+            onClick={() => toggleExecutionParticipant(stageType, `user:${issue.createdByUserId}`)}
           >
-            <User classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
-            {creatorUserLabel ? creatorUserLabel : "Заявитель"}
+            <User className="h-3 w-3 shrink-0 text-muted-foreground" />
+            {creatorUserLabel ? creatorUserLabel : "Requester"}
           </button>
         )}
         {otherUserOptions
           .filter((option) => {
             if (!search.trim()) return true;
-            return `${option.label} ${option.searchText ?? ""}`.toНизкийerCase().includes(search.toНизкийerCase());
+            return `${option.label} ${option.searchText ?? ""}`.toLowerCase().includes(search.toLowerCase());
           })
           .map((option) => (
             <button
-              key={`${stageТип}:${option.id}`}
-              classИмя={cn(
+              key={`${stageType}:${option.id}`}
+              className={cn(
                 "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
                 values.includes(option.id) && "bg-accent",
               )}
-              onClick={() => toggleExecutionParticipant(stageТип, option.id)}
+              onClick={() => toggleExecutionParticipant(stageType, option.id)}
             >
-              <User classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
+              <User className="h-3 w-3 shrink-0 text-muted-foreground" />
               {option.label}
             </button>
           ))}
-        {sortedАгенты
+        {sortedAgents
           .filter((agent) => {
             if (!search.trim()) return true;
-            return agent.name.toНизкийerCase().includes(search.toНизкийerCase());
+            return agent.name.toLowerCase().includes(search.toLowerCase());
           })
           .map((agent) => {
             const encoded = `agent:${agent.id}`;
             return (
               <button
-                key={`${stageТип}:${agent.id}`}
-                classИмя={cn(
+                key={`${stageType}:${agent.id}`}
+                className={cn(
                   "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
                   values.includes(encoded) && "bg-accent",
                 )}
-                onClick={() => toggleExecutionParticipant(stageТип, encoded)}
+                onClick={() => toggleExecutionParticipant(stageType, encoded)}
               >
-                <АгентIcon icon={agent.icon} classИмя="shrink-0 h-3 w-3 text-muted-foreground" />
+                <AgentIcon icon={agent.icon} className="shrink-0 h-3 w-3 text-muted-foreground" />
                 {agent.name}
               </button>
             );
@@ -1456,21 +1456,21 @@ export function ЗадачаProperties({
   const projectTrigger = issue.projectId ? (
     <>
       <span
-        classИмя="shrink-0 h-3 w-3 rounded-sm"
-        style={{ backgroundColor: orderedПроекты.find((p) => p.id === issue.projectId)?.color ?? "#6366f1" }}
+        className="shrink-0 h-3 w-3 rounded-sm"
+        style={{ backgroundColor: orderedProjects.find((p) => p.id === issue.projectId)?.color ?? "#6366f1" }}
       />
-      <span classИмя="text-sm break-words min-w-0">{projectИмя(issue.projectId)}</span>
+      <span className="text-sm break-words min-w-0">{projectName(issue.projectId)}</span>
     </>
   ) : (
     <>
-      <Hexagon classИмя="h-3.5 w-3.5 text-muted-foreground" />
-      <span classИмя="text-sm text-muted-foreground">Нет project</span>
+      <Hexagon className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-sm text-muted-foreground">No project</span>
     </>
   );
   const projectPickerOptions = orderItemsBySelectedAndRecent(
     [
-      { id: "", kind: "none" as const, name: "Нет project", color: null as string | null },
-      ...orderedПроекты.map((project) => ({
+      { id: "", kind: "none" as const, name: "No project", color: null as string | null },
+      ...orderedProjects.map((project) => ({
         id: project.id,
         kind: "project" as const,
         project,
@@ -1485,46 +1485,46 @@ export function ЗадачаProperties({
   const projectContent = (
     <>
       <input
-        classИмя="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Поиск projects..."
-        value={projectПоиск}
-        onChange={(e) => setProjectПоиск(e.target.value)}
+        className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
+        placeholder="Search projects..."
+        value={projectSearch}
+        onChange={(e) => setProjectSearch(e.target.value)}
         autoFocus={!inline}
       />
-      <div classИмя="max-h-48 overflow-y-auto overscroll-contain">
+      <div className="max-h-48 overflow-y-auto overscroll-contain">
         {projectPickerOptions
           .filter((option) => {
-            if (!projectПоиск.trim()) return true;
-            const q = projectПоиск.toНизкийerCase();
-            return option.name.toНизкийerCase().includes(q);
+            if (!projectSearch.trim()) return true;
+            const q = projectSearch.toLowerCase();
+            return option.name.toLowerCase().includes(q);
           })
           .map((option) => (
             <button
               key={option.id || "__none__"}
-              classИмя={cn(
+              className={cn(
                 "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 whitespace-nowrap",
                 option.id === (issue.projectId ?? "") && "bg-accent",
               )}
               onClick={() => {
                 if (option.kind === "project") {
-                  const defaultMode = defaultExecutionРабочая областьModeForProject(option.project);
+                  const defaultMode = defaultExecutionWorkspaceModeForProject(option.project);
                   trackRecentProject(option.project.id);
-                  onОбновить({
+                  onUpdate({
                     projectId: option.project.id,
-                    projectРабочая областьId: defaultProjectРабочая областьIdForProject(option.project),
-                    executionРабочая областьId: null,
-                    executionРабочая областьPreference: defaultMode,
-                    executionРабочая областьНастройки: option.project.executionРабочая областьPolicy?.enabled
+                    projectWorkspaceId: defaultProjectWorkspaceIdForProject(option.project),
+                    executionWorkspaceId: null,
+                    executionWorkspacePreference: defaultMode,
+                    executionWorkspaceSettings: option.project.executionWorkspacePolicy?.enabled
                       ? { mode: defaultMode }
                       : null,
                   });
                 } else {
-                  onОбновить({
+                  onUpdate({
                     projectId: null,
-                    projectРабочая областьId: null,
-                    executionРабочая областьId: null,
-                    executionРабочая областьPreference: null,
-                    executionРабочая областьНастройки: null,
+                    projectWorkspaceId: null,
+                    executionWorkspaceId: null,
+                    executionWorkspacePreference: null,
+                    executionWorkspaceSettings: null,
                   });
                 }
                 setProjectOpen(false);
@@ -1532,7 +1532,7 @@ export function ЗадачаProperties({
             >
               {option.kind === "project" ? (
                 <span
-                  classИмя="shrink-0 h-3 w-3 rounded-sm"
+                  className="shrink-0 h-3 w-3 rounded-sm"
                   style={{ backgroundColor: option.color ?? "#6366f1" }}
                 />
               ) : null}
@@ -1544,58 +1544,58 @@ export function ЗадачаProperties({
   );
 
   const blockedByIds = issue.blockedBy?.map((relation) => relation.id) ?? [];
-  const descendantЗадачаIds = useMemo(() => {
-    if (!allЗадачи?.length) return new Set<string>();
-    const childrenByРодительId = new Map<string, string[]>();
-    for (const candidate of allЗадачи) {
+  const descendantIssueIds = useMemo(() => {
+    if (!allIssues?.length) return new Set<string>();
+    const childrenByParentId = new Map<string, string[]>();
+    for (const candidate of allIssues) {
       if (!candidate.parentId) continue;
-      const children = childrenByРодительId.get(candidate.parentId) ?? [];
+      const children = childrenByParentId.get(candidate.parentId) ?? [];
       children.push(candidate.id);
-      childrenByРодительId.set(candidate.parentId, children);
+      childrenByParentId.set(candidate.parentId, children);
     }
 
     const descendants = new Set<string>();
-    const stack = [...(childrenByРодительId.get(issue.id) ?? [])];
+    const stack = [...(childrenByParentId.get(issue.id) ?? [])];
     while (stack.length > 0) {
       const candidateId = stack.pop();
       if (!candidateId || descendants.has(candidateId)) continue;
       descendants.add(candidateId);
-      stack.push(...(childrenByРодительId.get(candidateId) ?? []));
+      stack.push(...(childrenByParentId.get(candidateId) ?? []));
     }
     return descendants;
-  }, [allЗадачи, issue.id]);
-  const currentРодительЗадача = useMemo(() => {
+  }, [allIssues, issue.id]);
+  const currentParentIssue = useMemo(() => {
     if (!issue.parentId) return null;
-    return allЗадачи?.find((candidate) => candidate.id === issue.parentId) ?? null;
-  }, [allЗадачи, issue.parentId]);
-  const parentIdentifier = issue.ancestors?.[0]?.identifier ?? currentРодительЗадача?.identifier;
-  const parentНазвание = issue.ancestors?.[0]?.title ?? currentРодительЗадача?.title ?? issue.parentId?.slice(0, 8);
+    return allIssues?.find((candidate) => candidate.id === issue.parentId) ?? null;
+  }, [allIssues, issue.parentId]);
+  const parentIdentifier = issue.ancestors?.[0]?.identifier ?? currentParentIssue?.identifier;
+  const parentTitle = issue.ancestors?.[0]?.title ?? currentParentIssue?.title ?? issue.parentId?.slice(0, 8);
   const parentTrigger = issue.parentId ? (
-    <span classИмя="text-sm break-words min-w-0 inline">
+    <span className="text-sm break-words min-w-0 inline">
       {parentIdentifier ? `${parentIdentifier} ` : ""}
-      {parentНазвание}
+      {parentTitle}
     </span>
   ) : (
-    <span classИмя="text-sm text-muted-foreground">Нет parent</span>
+    <span className="text-sm text-muted-foreground">No parent</span>
   );
   const parentLink = issue.parentId ? (
     <Link
       to={`/issues/${parentIdentifier ?? issue.parentId}`}
-      classИмя="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
+      className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
       onClick={(e) => e.stopPropagation()}
     >
-      <ArrowUpRight classИмя="h-3 w-3" />
+      <ArrowUpRight className="h-3 w-3" />
     </Link>
   ) : undefined;
-  const parentOptions = (allЗадачи ?? [])
+  const parentOptions = (allIssues ?? [])
     .filter((candidate) => candidate.id !== issue.id)
-    .filter((candidate) => !descendantЗадачаIds.has(candidate.id))
+    .filter((candidate) => !descendantIssueIds.has(candidate.id))
     .filter((candidate) => {
-      if (!parentПоиск.trim()) return true;
-      const query = parentПоиск.toНизкийerCase();
+      if (!parentSearch.trim()) return true;
+      const query = parentSearch.toLowerCase();
       return (
-        (candidate.identifier ?? "").toНизкийerCase().includes(query) ||
-        candidate.title.toНизкийerCase().includes(query)
+        (candidate.identifier ?? "").toLowerCase().includes(query) ||
+        candidate.title.toLowerCase().includes(query)
       );
     })
     .sort((a, b) => {
@@ -1606,39 +1606,39 @@ export function ЗадачаProperties({
   const parentContent = (
     <>
       <input
-        classИмя="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Поиск issues..."
-        value={parentПоиск}
-        onChange={(e) => setРодительПоиск(e.target.value)}
+        className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
+        placeholder="Search issues..."
+        value={parentSearch}
+        onChange={(e) => setParentSearch(e.target.value)}
         autoFocus={!inline}
       />
-      <div classИмя="max-h-48 overflow-y-auto overscroll-contain">
+      <div className="max-h-48 overflow-y-auto overscroll-contain">
         <button
-          classИмя={cn(
+          className={cn(
             "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
             !issue.parentId && "bg-accent",
           )}
           onClick={() => {
-            onОбновить({ parentId: null });
-            setРодительOpen(false);
+            onUpdate({ parentId: null });
+            setParentOpen(false);
           }}
         >
-          Нет parent
+          No parent
         </button>
         {parentOptions.map((candidate) => (
           <button
             key={candidate.id}
-            classИмя={cn(
+            className={cn(
               "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs rounded hover:bg-accent/50",
               candidate.id === issue.parentId && "bg-accent",
             )}
             onClick={() => {
-              onОбновить({ parentId: candidate.id });
-              setРодительOpen(false);
+              onUpdate({ parentId: candidate.id });
+              setParentOpen(false);
             }}
           >
-            <СтатусIcon status={candidate.status} />
-            <span classИмя="truncate">
+            <StatusIcon status={candidate.status} />
+            <span className="truncate">
               {candidate.identifier ? `${candidate.identifier} ` : ""}
               {candidate.title}
             </span>
@@ -1647,15 +1647,15 @@ export function ЗадачаProperties({
       </div>
     </>
   );
-  const blockingЗадачи = issue.blocks ?? [];
-  const blockerOptions = (allЗадачи ?? [])
+  const blockingIssues = issue.blocks ?? [];
+  const blockerOptions = (allIssues ?? [])
     .filter((candidate) => candidate.id !== issue.id)
     .filter((candidate) => {
-      if (!blockedByПоиск.trim()) return true;
-      const query = blockedByПоиск.toНизкийerCase();
+      if (!blockedBySearch.trim()) return true;
+      const query = blockedBySearch.toLowerCase();
       return (
-        (candidate.identifier ?? "").toНизкийerCase().includes(query) ||
-        candidate.title.toНизкийerCase().includes(query)
+        (candidate.identifier ?? "").toLowerCase().includes(query) ||
+        candidate.title.toLowerCase().includes(query)
       );
     })
     .sort((a, b) => {
@@ -1664,48 +1664,48 @@ export function ЗадачаProperties({
       return aLabel.localeCompare(bLabel);
     });
 
-  const toggleЗаблокированBy = (blockedByЗадачаId: string) => {
-    const nextЗаблокированByIds = blockedByIds.includes(blockedByЗадачаId)
-      ? blockedByIds.filter((candidate) => candidate !== blockedByЗадачаId)
-      : [...blockedByIds, blockedByЗадачаId];
-    onОбновить({ blockedByЗадачаIds: nextЗаблокированByIds });
+  const toggleBlockedBy = (blockedByIssueId: string) => {
+    const nextBlockedByIds = blockedByIds.includes(blockedByIssueId)
+      ? blockedByIds.filter((candidate) => candidate !== blockedByIssueId)
+      : [...blockedByIds, blockedByIssueId];
+    onUpdate({ blockedByIssueIds: nextBlockedByIds });
   };
-  const removeЗаблокированBy = (blockedByЗадачаId: string) => {
-    onОбновить({ blockedByЗадачаIds: blockedByIds.filter((candidate) => candidate !== blockedByЗадачаId) });
+  const removeBlockedBy = (blockedByIssueId: string) => {
+    onUpdate({ blockedByIssueIds: blockedByIds.filter((candidate) => candidate !== blockedByIssueId) });
   };
 
   const blockedByContent = (
     <>
       <input
-        classИмя="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-        placeholder="Поиск issues..."
-        value={blockedByПоиск}
-        onChange={(e) => setЗаблокированByПоиск(e.target.value)}
+        className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
+        placeholder="Search issues..."
+        value={blockedBySearch}
+        onChange={(e) => setBlockedBySearch(e.target.value)}
         autoFocus={!inline}
       />
-      <div classИмя="max-h-48 overflow-y-auto overscroll-contain">
+      <div className="max-h-48 overflow-y-auto overscroll-contain">
         <button
-          classИмя={cn(
+          className={cn(
             "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
             blockedByIds.length === 0 && "bg-accent",
           )}
-          onClick={() => onОбновить({ blockedByЗадачаIds: [] })}
+          onClick={() => onUpdate({ blockedByIssueIds: [] })}
         >
-          Нет blockers
+          No blockers
         </button>
         {blockerOptions.map((candidate) => {
           const selected = blockedByIds.includes(candidate.id);
           return (
             <button
               key={candidate.id}
-              classИмя={cn(
+              className={cn(
                 "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs rounded hover:bg-accent/50",
                 selected && "bg-accent",
               )}
-              onClick={() => toggleЗаблокированBy(candidate.id)}
+              onClick={() => toggleBlockedBy(candidate.id)}
             >
-              <СтатусIcon status={candidate.status} />
-              <span classИмя="truncate">
+              <StatusIcon status={candidate.status} />
+              <span className="truncate">
                 {candidate.identifier ? `${candidate.identifier} ` : ""}
                 {candidate.title}
               </span>
@@ -1715,45 +1715,45 @@ export function ЗадачаProperties({
       </div>
     </>
   );
-  const renderДобавитьЗаблокированByButton = (onClick?: () => void) => (
+  const renderAddBlockedByButton = (onClick?: () => void) => (
     <button
       type="button"
-      classИмя="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+      className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
       onClick={onClick}
     >
-      <Plus classИмя="h-3 w-3" />
-      Добавить blocker
+      <Plus className="h-3 w-3" />
+      Add blocker
     </button>
   );
 
   return (
-    <div classИмя="space-y-4">
-      <div classИмя="space-y-1">
+    <div className="space-y-4">
+      <div className="space-y-1">
         <PropertyRow label="Статус">
-          <СтатусIcon
+          <StatusIcon
             status={issue.status}
             blockerAttention={issue.blockerAttention}
-            onChange={(status) => onОбновить({ status })}
+            onChange={(status) => onUpdate({ status })}
             showLabel
           />
         </PropertyRow>
 
         <PropertyRow label="Приоритет">
-          <ПриоритетIcon
+          <PriorityIcon
             priority={issue.priority}
-            onChange={(priority) => onОбновить({ priority })}
+            onChange={(priority) => onUpdate({ priority })}
             showLabel
           />
         </PropertyRow>
 
         <PropertyPicker
           inline={inline}
-          label="Ярлыки"
+          label="Labels"
           open={labelsOpen}
-          onOpenChange={(open) => { setЯрлыкиOpen(open); if (!open) setLabelПоиск(""); }}
+          onOpenChange={(open) => { setLabelsOpen(open); if (!open) setLabelSearch(""); }}
           triggerContent={labelsTrigger}
-          triggerClassИмя="min-w-0 max-w-full"
-          popoverClassИмя="w-64"
+          triggerClassName="min-w-0 max-w-full"
+          popoverClassName="w-64"
           extra={labelsExtra}
         >
           {labelsContent}
@@ -1763,40 +1763,40 @@ export function ЗадачаProperties({
           inline={inline}
           label="Исполнитель"
           open={assigneeOpen}
-          onOpenChange={(open) => { setИсполнительOpen(open); if (!open) setИсполнительПоиск(""); }}
+          onOpenChange={(open) => { setAssigneeOpen(open); if (!open) setAssigneeSearch(""); }}
           triggerContent={assigneeTrigger}
-          popoverClassИмя="w-52"
-          extra={issue.assigneeАгентId ? (
+          popoverClassName="w-52"
+          extra={issue.assigneeAgentId ? (
             <Link
-              to={`/agents/${issue.assigneeАгентId}`}
-              classИмя="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
+              to={`/agents/${issue.assigneeAgentId}`}
+              className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
               onClick={(e) => e.stopPropagation()}
             >
-              <ArrowUpRight classИмя="h-3 w-3" />
+              <ArrowUpRight className="h-3 w-3" />
             </Link>
           ) : undefined}
         >
           {assigneeContent}
         </PropertyPicker>
 
-        {showИсполнительАдаптерOptions ? (
+        {showAssigneeAdapterOptions ? (
           <PropertyPicker
             inline={inline}
-            label="Модель"
+            label="Model"
             open={assigneeOptionsOpen}
-            onOpenChange={setИсполнительOptionsOpen}
+            onOpenChange={setAssigneeOptionsOpen}
             triggerContent={assigneeOptionsTrigger}
-            triggerClassИмя="min-w-0 max-w-full"
-            popoverClassИмя={cn("max-w-full", inline ? "w-full" : "w-72")}
+            triggerClassName="min-w-0 max-w-full"
+            popoverClassName={cn("max-w-full", inline ? "w-full" : "w-72")}
             extra={
               <button
                 type="button"
-                classИмя="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
-                onClick={() => updateИсполнительАдаптерOverrides(null)}
-                aria-label="Очистить adapter options"
-                title="Очистить adapter options"
+                className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
+                onClick={() => updateAssigneeAdapterOverrides(null)}
+                aria-label="Clear adapter options"
+                title="Clear adapter options"
               >
-                <X classИмя="h-3 w-3" />
+                <X className="h-3 w-3" />
               </button>
             }
           >
@@ -1808,17 +1808,17 @@ export function ЗадачаProperties({
           inline={inline}
           label="Project"
           open={projectOpen}
-          onOpenChange={(open) => { setProjectOpen(open); if (!open) setProjectПоиск(""); }}
+          onOpenChange={(open) => { setProjectOpen(open); if (!open) setProjectSearch(""); }}
           triggerContent={projectTrigger}
-          triggerClassИмя="min-w-0 max-w-full"
-          popoverClassИмя="w-fit min-w-[11rem]"
+          triggerClassName="min-w-0 max-w-full"
+          popoverClassName="w-fit min-w-[11rem]"
           extra={issue.projectId ? (
             <Link
               to={projectLink(issue.projectId)!}
-              classИмя="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
               onClick={(e) => e.stopPropagation()}
             >
-              <ArrowUpRight classИмя="h-3 w-3" />
+              <ArrowUpRight className="h-3 w-3" />
             </Link>
           ) : undefined}
         >
@@ -1830,12 +1830,12 @@ export function ЗадачаProperties({
           label="Родитель"
           open={parentOpen}
           onOpenChange={(open) => {
-            setРодительOpen(open);
-            if (!open) setРодительПоиск("");
+            setParentOpen(open);
+            if (!open) setParentSearch("");
           }}
           triggerContent={parentTrigger}
-          triggerClassИмя="min-w-0 max-w-full"
-          popoverClassИмя="w-72"
+          triggerClassName="min-w-0 max-w-full"
+          popoverClassName="w-72"
           extra={parentLink}
         >
           {parentContent}
@@ -1843,34 +1843,34 @@ export function ЗадачаProperties({
 
         {inline ? (
           <div>
-            <PropertyRow label="Заблокирован by">
+            <PropertyRow label="Blocked by">
               {(issue.blockedBy ?? []).map((relation) => (
-                <RemovableЗадачаReferencePill key={relation.id} issue={relation} onУдалить={removeЗаблокированBy} />
+                <RemovableIssueReferencePill key={relation.id} issue={relation} onRemove={removeBlockedBy} />
               ))}
-              {renderДобавитьЗаблокированByButton(() => setЗаблокированByOpen((open) => !open))}
+              {renderAddBlockedByButton(() => setBlockedByOpen((open) => !open))}
             </PropertyRow>
             {blockedByOpen && (
-              <div classИмя="rounded-md border border-border bg-popover p-1 mb-2">
+              <div className="rounded-md border border-border bg-popover p-1 mb-2">
                 {blockedByContent}
               </div>
             )}
           </div>
         ) : (
-          <PropertyRow label="Заблокирован by">
+          <PropertyRow label="Blocked by">
             {(issue.blockedBy ?? []).map((relation) => (
-              <RemovableЗадачаReferencePill key={relation.id} issue={relation} onУдалить={removeЗаблокированBy} />
+              <RemovableIssueReferencePill key={relation.id} issue={relation} onRemove={removeBlockedBy} />
             ))}
             <Popover
               open={blockedByOpen}
               onOpenChange={(open) => {
-                setЗаблокированByOpen(open);
-                if (!open) setЗаблокированByПоиск("");
+                setBlockedByOpen(open);
+                if (!open) setBlockedBySearch("");
               }}
             >
               <PopoverTrigger asChild>
-                {renderДобавитьЗаблокированByButton()}
+                {renderAddBlockedByButton()}
               </PopoverTrigger>
-              <PopoverContent classИмя="w-72 p-1" align="end" collisionPadding={16}>
+              <PopoverContent className="w-72 p-1" align="end" collisionPadding={16}>
                 {blockedByContent}
               </PopoverContent>
             </Popover>
@@ -1878,40 +1878,40 @@ export function ЗадачаProperties({
         )}
 
         <PropertyRow label="Blocking">
-          {blockingЗадачи.length > 0 ? (
-            <div classИмя="flex flex-wrap gap-1">
-              {blockingЗадачи.map((relation) => (
-                <ЗадачаReferencePill key={relation.id} issue={relation} />
+          {blockingIssues.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {blockingIssues.map((relation) => (
+                <IssueReferencePill key={relation.id} issue={relation} />
               ))}
             </div>
           ) : null}
         </PropertyRow>
 
-        <PropertyRow label="Подзадачи">
-          <div classИмя="flex flex-wrap items-center gap-1.5">
-            {childЗадачи.length > 0
-              ? childЗадачи.map((child) => (
-                <ЗадачаReferencePill key={child.id} issue={child} />
+        <PropertyRow label="Sub-issues">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {childIssues.length > 0
+              ? childIssues.map((child) => (
+                <IssueReferencePill key={child.id} issue={child} />
               ))
               : null}
-            {onДобавитьSubЗадача ? (
+            {onAddSubIssue ? (
               <button
                 type="button"
-                classИмя="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-                onClick={onДобавитьSubЗадача}
+                className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+                onClick={onAddSubIssue}
               >
-                <Plus classИмя="h-3 w-3" />
-              Добавить sub-issue
+                <Plus className="h-3 w-3" />
+              Add sub-issue
               </button>
             ) : null}
           </div>
         </PropertyRow>
 
-        {relatedЗадачи.length > 0 ? (
-          <PropertyRow label="Related Задачи">
-            <div classИмя="flex flex-wrap gap-1">
-              {relatedЗадачи.map((related) => (
-                <ЗадачаReferencePill key={related.id} issue={related} />
+        {relatedTasks.length > 0 ? (
+          <PropertyRow label="Related Tasks">
+            <div className="flex flex-wrap gap-1">
+              {relatedTasks.map((related) => (
+                <IssueReferencePill key={related.id} issue={related} />
               ))}
             </div>
           </PropertyRow>
@@ -1919,60 +1919,60 @@ export function ЗадачаProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Рецензенты"
+          label="Reviewers"
           open={reviewersOpen}
-          onOpenChange={(open) => { setРецензентыOpen(open); if (!open) setРецензентПоиск(""); }}
+          onOpenChange={(open) => { setReviewersOpen(open); if (!open) setReviewerSearch(""); }}
           triggerContent={reviewerTrigger}
-          triggerClassИмя="min-w-0 max-w-full"
-          popoverClassИмя="w-56"
+          triggerClassName="min-w-0 max-w-full"
+          popoverClassName="w-56"
         >
           {executionParticipantsContent(
             "review",
-            reviewerЗначениеs,
-            reviewerПоиск,
-            setРецензентПоиск,
-            () => updateExecutionPolicy([], approverЗначениеs),
+            reviewerValues,
+            reviewerSearch,
+            setReviewerSearch,
+            () => updateExecutionPolicy([], approverValues),
           )}
         </PropertyPicker>
-        {nextЗапуститьnableExecutionStage === "review" && reviewerЗначениеs.length > 0 ? runExecutionButton("review") : null}
+        {nextRunnableExecutionStage === "review" && reviewerValues.length > 0 ? runExecutionButton("review") : null}
 
         <PropertyPicker
           inline={inline}
-          label="Утверждающие"
+          label="Approvers"
           open={approversOpen}
-          onOpenChange={(open) => { setУтверждающиеOpen(open); if (!open) setУтверждающийПоиск(""); }}
+          onOpenChange={(open) => { setApproversOpen(open); if (!open) setApproverSearch(""); }}
           triggerContent={approverTrigger}
-          triggerClassИмя="min-w-0 max-w-full"
-          popoverClassИмя="w-56"
+          triggerClassName="min-w-0 max-w-full"
+          popoverClassName="w-56"
         >
           {executionParticipantsContent(
             "approval",
-            approverЗначениеs,
-            approverПоиск,
-            setУтверждающийПоиск,
-            () => updateExecutionPolicy(reviewerЗначениеs, []),
+            approverValues,
+            approverSearch,
+            setApproverSearch,
+            () => updateExecutionPolicy(reviewerValues, []),
           )}
         </PropertyPicker>
-        {nextЗапуститьnableExecutionStage === "approval" && approverЗначениеs.length > 0 ? runExecutionButton("approval") : null}
+        {nextRunnableExecutionStage === "approval" && approverValues.length > 0 ? runExecutionButton("approval") : null}
 
         {currentExecutionLabel && (
           <PropertyRow label="Execution">
-            <span classИмя="text-sm">{currentExecutionLabel}</span>
+            <span className="text-sm">{currentExecutionLabel}</span>
           </PropertyRow>
         )}
 
-        {showРасписаниеdПовторитьRow && scheduledПовторитьContent ? (
+        {showScheduledRetryRow && scheduledRetryContent ? (
           <PropertyPicker
             inline={inline}
-            label="Расписаниеd retry"
-            open={scheduledПовторитьOpen}
-            onOpenChange={setРасписаниеdПовторитьOpen}
-            triggerContent={scheduledПовторитьTrigger}
-            triggerClassИмя="min-w-0 max-w-full"
-            popoverClassИмя={cn("max-w-full", inline ? "w-full" : "w-80 sm:w-[32rem]")}
-            extra={scheduledПовторитьAttemptBadge}
+            label="Scheduled retry"
+            open={scheduledRetryOpen}
+            onOpenChange={setScheduledRetryOpen}
+            triggerContent={scheduledRetryTrigger}
+            triggerClassName="min-w-0 max-w-full"
+            popoverClassName={cn("max-w-full", inline ? "w-full" : "w-80 sm:w-[32rem]")}
+            extra={scheduledRetryAttemptBadge}
           >
-            {scheduledПовторитьContent}
+            {scheduledRetryContent}
           </PropertyPicker>
         ) : null}
 
@@ -1982,8 +1982,8 @@ export function ЗадачаProperties({
           open={monitorOpen}
           onOpenChange={setMonitorOpen}
           triggerContent={monitorTrigger}
-          triggerClassИмя="min-w-0 max-w-full"
-          popoverClassИмя={cn("max-w-full", inline ? "w-full" : "w-80 sm:w-[32rem]")}
+          triggerClassName="min-w-0 max-w-full"
+          popoverClassName={cn("max-w-full", inline ? "w-full" : "w-80 sm:w-[32rem]")}
           extra={monitorAttemptBadge}
         >
           {monitorContent}
@@ -1991,52 +1991,52 @@ export function ЗадачаProperties({
 
         {issue.requestDepth > 0 && (
           <PropertyRow label="Depth">
-            <span classИмя="text-sm font-mono">{issue.requestDepth}</span>
+            <span className="text-sm font-mono">{issue.requestDepth}</span>
           </PropertyRow>
         )}
       </div>
 
-      {liveРабочая областьService || issue.currentExecutionРабочая область?.branchИмя || issue.currentExecutionРабочая область?.cwd || issue.executionРабочая областьId ? (
+      {liveWorkspaceService || issue.currentExecutionWorkspace?.branchName || issue.currentExecutionWorkspace?.cwd || issue.executionWorkspaceId ? (
         <>
           <Separator />
-          <div classИмя="space-y-1">
-            {liveРабочая областьService?.url && (
+          <div className="space-y-1">
+            {liveWorkspaceService?.url && (
               <PropertyRow label="Service">
                 <a
-                  href={liveРабочая областьService.url}
+                  href={liveWorkspaceService.url}
                   target="_blank"
                   rel="noreferrer"
-                  classИмя="inline-flex min-w-0 items-start gap-1 text-sm font-mono text-emerald-700 hover:text-emerald-800 hover:underline dark:text-emerald-300 dark:hover:text-emerald-200"
+                  className="inline-flex min-w-0 items-start gap-1 text-sm font-mono text-emerald-700 hover:text-emerald-800 hover:underline dark:text-emerald-300 dark:hover:text-emerald-200"
                 >
-                  <span classИмя="min-w-0 break-all">{liveРабочая областьService.url}</span>
-                  <ExternalLink classИмя="mt-1 h-3 w-3 shrink-0" />
+                  <span className="min-w-0 break-all">{liveWorkspaceService.url}</span>
+                  <ExternalLink className="mt-1 h-3 w-3 shrink-0" />
                 </a>
               </PropertyRow>
             )}
-            {showРабочая областьDetailLink && issue.executionРабочая областьId && (
-              <PropertyRow label="Рабочая область">
+            {showWorkspaceDetailLink && issue.executionWorkspaceId && (
+              <PropertyRow label="Workspace">
                 <Link
-                  to={`/execution-workspaces/${issue.executionРабочая областьId}`}
-                  classИмя="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                  to={`/execution-workspaces/${issue.executionWorkspaceId}`}
+                  className="text-sm text-primary hover:underline inline-flex items-center gap-1"
                 >
                   View workspace
-                  <ExternalLink classИмя="h-3 w-3" />
+                  <ExternalLink className="h-3 w-3" />
                 </Link>
               </PropertyRow>
             )}
-            {issue.currentExecutionРабочая область?.branchИмя && (
-              <PropertyRow label="Ветка">
-                <TruncatedКопироватьable
-                  value={issue.currentExecutionРабочая область.branchИмя}
-                  icon={GitВетка}
+            {issue.currentExecutionWorkspace?.branchName && (
+              <PropertyRow label="Branch">
+                <TruncatedCopyable
+                  value={issue.currentExecutionWorkspace.branchName}
+                  icon={GitBranch}
                 />
               </PropertyRow>
             )}
-            {issue.currentExecutionРабочая область?.cwd && (
-              <PropertyRow label="Папка">
-                <TruncatedКопироватьable
-                  value={issue.currentExecutionРабочая область.cwd}
-                  icon={ПапкаOpen}
+            {issue.currentExecutionWorkspace?.cwd && (
+              <PropertyRow label="Folder">
+                <TruncatedCopyable
+                  value={issue.currentExecutionWorkspace.cwd}
+                  icon={FolderOpen}
                 />
               </PropertyRow>
             )}
@@ -2046,39 +2046,39 @@ export function ЗадачаProperties({
 
       <Separator />
 
-      <div classИмя="space-y-1">
-        {(issue.createdByАгентId || issue.createdByUserId) && (
-          <PropertyRow label="Создано by">
-            {issue.createdByАгентId ? (
+      <div className="space-y-1">
+        {(issue.createdByAgentId || issue.createdByUserId) && (
+          <PropertyRow label="Created by">
+            {issue.createdByAgentId ? (
               <Link
-                to={`/agents/${issue.createdByАгентId}`}
-                classИмя="hover:underline"
+                to={`/agents/${issue.createdByAgentId}`}
+                className="hover:underline"
               >
-                <Identity name={agentИмя(issue.createdByАгентId) ?? issue.createdByАгентId.slice(0, 8)} size="sm" />
+                <Identity name={agentName(issue.createdByAgentId) ?? issue.createdByAgentId.slice(0, 8)} size="sm" />
               </Link>
             ) : (
               <>
-                <User classИмя="h-3.5 w-3.5 text-muted-foreground" />
-                <span classИмя="text-sm">{creatorUserLabel ?? "User"}</span>
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm">{creatorUserLabel ?? "User"}</span>
               </>
             )}
           </PropertyRow>
         )}
         {issue.startedAt && (
-          <PropertyRow label="Запущен">
-            <span classИмя="text-sm">{formatDateTime(issue.startedAt)}</span>
+          <PropertyRow label="Started">
+            <span className="text-sm">{formatDateTime(issue.startedAt)}</span>
           </PropertyRow>
         )}
         {issue.completedAt && (
-          <PropertyRow label="Завершён">
-            <span classИмя="text-sm">{formatDateTime(issue.completedAt)}</span>
+          <PropertyRow label="Завершено">
+            <span className="text-sm">{formatDateTime(issue.completedAt)}</span>
           </PropertyRow>
         )}
-        <PropertyRow label="Создано">
-          <span classИмя="text-sm">{formatDateTime(issue.createdAt)}</span>
+        <PropertyRow label="Created">
+          <span className="text-sm">{formatDateTime(issue.createdAt)}</span>
         </PropertyRow>
-        <PropertyRow label="Обновлено">
-          <span classИмя="text-sm">{timeAgo(issue.updatedAt)}</span>
+        <PropertyRow label="Updated">
+          <span className="text-sm">{timeAgo(issue.updatedAt)}</span>
         </PropertyRow>
       </div>
     </div>

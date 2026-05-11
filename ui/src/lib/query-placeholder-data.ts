@@ -1,10 +1,10 @@
-import type { PlaceholderDataFunction, QueryКлюч } from "@tanstack/react-query";
+import type { PlaceholderDataFunction, QueryKey } from "@tanstack/react-query";
 
-export function keepPreviousDataForSameQueryTail<TQueryData, TQueryКлюч extends QueryКлюч = QueryКлюч>(
+export function keepPreviousDataForSameQueryTail<TQueryData, TQueryKey extends QueryKey = QueryKey>(
   tail: unknown,
-): PlaceholderDataFunction<TQueryData, Ошибка, TQueryData, TQueryКлюч> {
+): PlaceholderDataFunction<TQueryData, Error, TQueryData, TQueryKey> {
   return (previousData, previousQuery) => {
-    const previousКлюч = Array.isArray(previousQuery?.queryКлюч) ? previousQuery.queryКлюч : [];
-    return previousКлюч.at(-1) === tail ? previousData : undefined;
+    const previousKey = Array.isArray(previousQuery?.queryKey) ? previousQuery.queryKey : [];
+    return previousKey.at(-1) === tail ? previousData : undefined;
   };
 }

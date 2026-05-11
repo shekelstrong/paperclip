@@ -1,25 +1,25 @@
-import type { Цель } from "@paperclipai/shared";
+import type { Goal } from "@paperclipai/shared";
 
 export const ONBOARDING_PROJECT_NAME = "Onboarding";
 
-function goalСозданоAt(goal: Цель) {
+function goalCreatedAt(goal: Goal) {
   const createdAt = goal.createdAt instanceof Date ? goal.createdAt : new Date(goal.createdAt);
   return Number.isNaN(createdAt.getTime()) ? 0 : createdAt.getTime();
 }
 
-function pickEarliestЦель(goals: Цель[]) {
-  return [...goals].sort((a, b) => goalСозданоAt(a) - goalСозданоAt(b))[0] ?? null;
+function pickEarliestGoal(goals: Goal[]) {
+  return [...goals].sort((a, b) => goalCreatedAt(a) - goalCreatedAt(b))[0] ?? null;
 }
 
-export function selectПо умолчаниюКомпанияЦельId(goals: Цель[]): string | null {
-  const companyЦели = goals.filter((goal) => goal.level === "company");
-  const rootЦели = companyЦели.filter((goal) => !goal.parentId);
-  const activeRootЦели = rootЦели.filter((goal) => goal.status === "active");
+export function selectDefaultCompanyGoalId(goals: Goal[]): string | null {
+  const companyGoals = goals.filter((goal) => goal.level === "company");
+  const rootGoals = companyGoals.filter((goal) => !goal.parentId);
+  const activeRootGoals = rootGoals.filter((goal) => goal.status === "active");
 
   return (
-    pickEarliestЦель(activeRootЦели)?.id ??
-    pickEarliestЦель(rootЦели)?.id ??
-    pickEarliestЦель(companyЦели)?.id ??
+    pickEarliestGoal(activeRootGoals)?.id ??
+    pickEarliestGoal(rootGoals)?.id ??
+    pickEarliestGoal(companyGoals)?.id ??
     null
   );
 }
@@ -32,10 +32,10 @@ export function buildOnboardingProjectPayload(goalId: string | null) {
   };
 }
 
-export function buildOnboardingЗадачаPayload(input: {
+export function buildOnboardingIssuePayload(input: {
   title: string;
   description: string;
-  assigneeАгентId: string;
+  assigneeAgentId: string;
   projectId: string;
   goalId: string | null;
 }) {
@@ -45,7 +45,7 @@ export function buildOnboardingЗадачаPayload(input: {
   return {
     title,
     ...(description ? { description } : {}),
-    assigneeАгентId: input.assigneeАгентId,
+    assigneeAgentId: input.assigneeAgentId,
     projectId: input.projectId,
     ...(input.goalId ? { goalId: input.goalId } : {}),
     status: "todo" as const,

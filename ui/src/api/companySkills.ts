@@ -1,58 +1,58 @@
 import type {
-  КомпанияНавык,
-  КомпанияНавыкСоздатьRequest,
-  КомпанияНавыкDetail,
-  КомпанияНавыкFileDetail,
-  КомпанияНавыкИмпортResult,
-  КомпанияНавыкListItem,
-  КомпанияНавыкProjectScanRequest,
-  КомпанияНавыкProjectScanResult,
-  КомпанияНавыкОбновитьСтатус,
+  CompanySkill,
+  CompanySkillCreateRequest,
+  CompanySkillDetail,
+  CompanySkillFileDetail,
+  CompanySkillImportResult,
+  CompanySkillListItem,
+  CompanySkillProjectScanRequest,
+  CompanySkillProjectScanResult,
+  CompanySkillUpdateStatus,
 } from "@paperclipai/shared";
 import { api } from "./client";
 
-export const companyНавыкиApi = {
+export const companySkillsApi = {
   list: (companyId: string) =>
-    api.get<КомпанияНавыкListItem[]>(`/companies/${encodeURIComponent(companyId)}/skills`),
+    api.get<CompanySkillListItem[]>(`/companies/${encodeURIComponent(companyId)}/skills`),
   detail: (companyId: string, skillId: string) =>
-    api.get<КомпанияНавыкDetail>(
+    api.get<CompanySkillDetail>(
       `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}`,
     ),
-  updateСтатус: (companyId: string, skillId: string) =>
-    api.get<КомпанияНавыкОбновитьСтатус>(
+  updateStatus: (companyId: string, skillId: string) =>
+    api.get<CompanySkillUpdateStatus>(
       `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}/update-status`,
     ),
-  file: (companyId: string, skillId: string, relativeПуть: string) =>
-    api.get<КомпанияНавыкFileDetail>(
-      `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}/files?path=${encodeURIComponent(relativeПуть)}`,
+  file: (companyId: string, skillId: string, relativePath: string) =>
+    api.get<CompanySkillFileDetail>(
+      `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}/files?path=${encodeURIComponent(relativePath)}`,
     ),
   updateFile: (companyId: string, skillId: string, path: string, content: string) =>
-    api.patch<КомпанияНавыкFileDetail>(
+    api.patch<CompanySkillFileDetail>(
       `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}/files`,
       { path, content },
     ),
-  create: (companyId: string, payload: КомпанияНавыкСоздатьRequest) =>
-    api.post<КомпанияНавык>(
+  create: (companyId: string, payload: CompanySkillCreateRequest) =>
+    api.post<CompanySkill>(
       `/companies/${encodeURIComponent(companyId)}/skills`,
       payload,
     ),
   importFromSource: (companyId: string, source: string) =>
-    api.post<КомпанияНавыкИмпортResult>(
+    api.post<CompanySkillImportResult>(
       `/companies/${encodeURIComponent(companyId)}/skills/import`,
       { source },
     ),
-  scanПроекты: (companyId: string, payload: КомпанияНавыкProjectScanRequest = {}) =>
-    api.post<КомпанияНавыкProjectScanResult>(
+  scanProjects: (companyId: string, payload: CompanySkillProjectScanRequest = {}) =>
+    api.post<CompanySkillProjectScanResult>(
       `/companies/${encodeURIComponent(companyId)}/skills/scan-projects`,
       payload,
     ),
-  installОбновить: (companyId: string, skillId: string) =>
-    api.post<КомпанияНавык>(
+  installUpdate: (companyId: string, skillId: string) =>
+    api.post<CompanySkill>(
       `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}/install-update`,
       {},
     ),
   delete: (companyId: string, skillId: string) =>
-    api.delete<КомпанияНавык>(
+    api.delete<CompanySkill>(
       `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}`,
     ),
 };

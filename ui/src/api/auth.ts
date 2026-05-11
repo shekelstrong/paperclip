@@ -1,12 +1,12 @@
 import {
   authSessionSchema,
-  currentUserПрофильSchema,
+  currentUserProfileSchema,
   type AuthSession,
-  type CurrentUserПрофиль,
-  type ОбновитьCurrentUserПрофиль,
+  type CurrentUserProfile,
+  type UpdateCurrentUserProfile,
 } from "@paperclipai/shared";
 
-type AuthОшибкаBody =
+type AuthErrorBody =
   | {
     code?: string;
     message?: string;
@@ -14,14 +14,14 @@ type AuthОшибкаBody =
   }
   | null;
 
-export class AuthApiОшибка extends Ошибка {
+export class AuthApiError extends Error {
   status: number;
   code: string | null;
   body: unknown;
 
   constructor(message: string, status: number, body: unknown, code: string | null = null) {
     super(message);
-    this.name = "AuthApiОшибка";
+    this.name = "AuthApiError";
     this.status = status;
     this.code = code;
     this.body = body;
@@ -37,7 +37,7 @@ function toSession(value: unknown): AuthSession | null {
   return nested.success ? nested.data : null;
 }
 
-function extractAuthОшибка(payload: AuthОшибкаBody, status: number) {
+function extractAuthError(payload: AuthErrorBody, status: number) {
   const nested =
     payload?.error && typeof payload.error === "object"
       ? payload.error
@@ -55,21 +55,21 @@ function extractAuthОшибка(payload: AuthОшибкаBody, status: number) 
         ? payload.message
         : typeof payload?.error === "string" && payload.error.trim().length > 0
           ? payload.error
-          : `Запрос не удался: ${status}`;
+          : `Request failed: ${status}`;
 
-  return new AuthApiОшибка(message, status, payload, code);
+  return new AuthApiError(message, status, payload, code);
 }
 
 async function authPost(path: string, body: Record<string, unknown>) {
   const res = await fetch(`/api/auth${path}`, {
     method: "POST",
     credentials: "include",
-    headers: { "Content-Тип": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const payload = await res.json().catch(() => null);
   if (!res.ok) {
-    throw extractAuthОшибка(payload as AuthОшибкаBody, res.status);
+    throw extractAuthError(payload as AuthErrorBody, res.status);
   }
   return payload;
 }
@@ -78,12 +78,12 @@ async function authPatch<T>(path: string, body: Record<string, unknown>, parse: 
   const res = await fetch(`/api/auth${path}`, {
     method: "PATCH",
     credentials: "include",
-    headers: { "Content-Тип": "application/json", Принять: "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(body),
   });
   const payload = await res.json().catch(() => null);
   if (!res.ok) {
-    throw extractAuthОшибка(payload as AuthОшибкаBody, res.status);
+    throw extractAuthError(payload as AuthErrorBody, res.status);
   }
   return parse(payload);
 }
@@ -92,12 +92,12 @@ export const authApi = {
   getSession: async (): Promise<AuthSession | null> => {
     const res = await fetch("/api/auth/get-session", {
       credentials: "include",
-      headers: { Принять: "application/json" },
+      headers: { Accept: "application/json" },
     });
     if (res.status === 401) return null;
     const payload = await res.json().catch(() => null);
     if (!res.ok) {
-      throw new Ошибка(`Ошибка to load session (${res.status})`);
+      throw new Error(`Failed to load session (${res.status})`);
     }
     const direct = toSession(payload);
     if (direct) return direct;
@@ -105,28 +105,28 @@ export const authApi = {
     return nested;
   },
 
-  signInПочта: async (input: { email: string; password: string }) => {
+  signInEmail: async (input: { email: string; password: string }) => {
     await authPost("/sign-in/email", input);
   },
 
-  signUpПочта: async (input: { name: string; email: string; password: string }) => {
+  signUpEmail: async (input: { name: string; email: string; password: string }) => {
     await authPost("/sign-up/email", input);
   },
 
-  getПрофиль: async (): Promise<CurrentUserПрофиль> => {
+  getProfile: async (): Promise<CurrentUserProfile> => {
     const res = await fetch("/api/auth/profile", {
       credentials: "include",
-      headers: { Принять: "application/json" },
+      headers: { Accept: "application/json" },
     });
     const payload = await res.json().catch(() => null);
     if (!res.ok) {
-      throw new Ошибка((payload as { error?: string } | null)?.error ?? `Ошибка to load profile (${res.status})`);
+      throw new Error((payload as { error?: string } | null)?.error ?? `Failed to load profile (${res.status})`);
     }
-    return currentUserПрофильSchema.parse(payload);
+    return currentUserProfileSchema.parse(payload);
   },
 
-  updateПрофиль: async (input: ОбновитьCurrentUserПрофиль): Promise<CurrentUserПрофиль> =>
-    authPatch("/profile", input, (payload) => currentUserПрофильSchema.parse(payload)),
+  updateProfile: async (input: UpdateCurrentUserProfile): Promise<CurrentUserProfile> =>
+    authPatch("/profile", input, (payload) => currentUserProfileSchema.parse(payload)),
 
   signOut: async () => {
     await authPost("/sign-out", {});

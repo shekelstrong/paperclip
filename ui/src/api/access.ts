@@ -1,43 +1,43 @@
-import type { АгентАдаптерТип, JoinRequest, PermissionКлюч } from "@paperclipai/shared";
+import type { AgentAdapterType, JoinRequest, PermissionKey } from "@paperclipai/shared";
 import { api } from "./client";
 
-export type ЧеловекКомпанияRole = "owner" | "admin" | "operator" | "viewer";
+export type HumanCompanyRole = "owner" | "admin" | "operator" | "viewer";
 
 type InviteSummary = {
   id: string;
   companyId: string | null;
-  companyИмя?: string | null;
+  companyName?: string | null;
   companyLogoUrl?: string | null;
   companyBrandColor?: string | null;
-  inviteТип: "company_join" | "bootstrap_ceo";
-  allowedJoinТипs: "human" | "agent" | "both";
-  humanRole?: ЧеловекКомпанияRole | null;
+  inviteType: "company_join" | "bootstrap_ceo";
+  allowedJoinTypes: "human" | "agent" | "both";
+  humanRole?: HumanCompanyRole | null;
   expiresAt: string;
-  onboardingПуть?: string;
+  onboardingPath?: string;
   onboardingUrl?: string;
-  onboardingTextПуть?: string;
+  onboardingTextPath?: string;
   onboardingTextUrl?: string;
-  skillIndexПуть?: string;
+  skillIndexPath?: string;
   skillIndexUrl?: string;
   inviteMessage?: string | null;
-  invitedByUserИмя?: string | null;
-  joinRequestСтатус?: JoinRequest["status"] | null;
-  joinRequestТип?: JoinRequest["requestТип"] | null;
+  invitedByUserName?: string | null;
+  joinRequestStatus?: JoinRequest["status"] | null;
+  joinRequestType?: JoinRequest["requestType"] | null;
 };
 
-type ПринятьInviteInput =
-  | { requestТип: "human" }
+type AcceptInviteInput =
+  | { requestType: "human" }
   | {
-    requestТип: "agent";
-    agentИмя: string;
-    adapterТип?: АгентАдаптерТип;
+    requestType: "agent";
+    agentName: string;
+    adapterType?: AgentAdapterType;
     capabilities?: string | null;
-    agentПо умолчаниюsPayload?: Record<string, unknown> | null;
+    agentDefaultsPayload?: Record<string, unknown> | null;
   };
 
-type АгентJoinRequestПринятьed = JoinRequest & {
-  claimСекрет: string;
-  claimApiКлючПуть: string;
+type AgentJoinRequestAccepted = JoinRequest & {
+  claimSecret: string;
+  claimApiKeyPath: string;
   onboarding?: Record<string, unknown>;
   diagnostics?: Array<{
     code: string;
@@ -66,104 +66,104 @@ type InviteOnboardingManifest = {
   };
 };
 
-type СоветClaimСтатус = {
+type BoardClaimStatus = {
   status: "available" | "claimed" | "expired";
   requiresSignIn: boolean;
   expiresAt: string | null;
   claimedByUserId: string | null;
 };
 
-type CliAuthChallengeСтатус = {
+type CliAuthChallengeStatus = {
   id: string;
   status: "pending" | "approved" | "cancelled" | "expired";
   command: string;
-  clientИмя: string | null;
-  requestedДоступ: "board" | "instance_admin_required";
-  requestedКомпанияId: string | null;
-  requestedКомпанияИмя: string | null;
+  clientName: string | null;
+  requestedAccess: "board" | "instance_admin_required";
+  requestedCompanyId: string | null;
+  requestedCompanyName: string | null;
   approvedAt: string | null;
   cancelledAt: string | null;
   expiresAt: string;
   approvedByUser: { id: string; name: string; email: string } | null;
   requiresSignIn: boolean;
-  canОдобрить: boolean;
+  canApprove: boolean;
   currentUserId: string | null;
 };
 
-type КомпанияInviteСоздано = {
+type CompanyInviteCreated = {
   id: string;
   token: string;
   inviteUrl: string;
   expiresAt: string;
-  allowedJoinТипs: "human" | "agent" | "both";
-  humanRole?: ЧеловекКомпанияRole | null;
-  companyИмя?: string | null;
-  onboardingTextПуть?: string;
+  allowedJoinTypes: "human" | "agent" | "both";
+  humanRole?: HumanCompanyRole | null;
+  companyName?: string | null;
+  onboardingTextPath?: string;
   onboardingTextUrl?: string;
   inviteMessage?: string | null;
 };
 
-export type КомпанияMemberGrant = {
+export type CompanyMemberGrant = {
   id: string;
   companyId: string;
-  principalТип: "user";
+  principalType: "user";
   principalId: string;
-  permissionКлюч: PermissionКлюч;
+  permissionKey: PermissionKey;
   scope: Record<string, unknown> | null;
   grantedByUserId: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
-export type КомпанияMember = {
+export type CompanyMember = {
   id: string;
   companyId: string;
-  principalТип: "user";
+  principalType: "user";
   principalId: string;
   status: "pending" | "active" | "suspended" | "archived";
-  membershipRole: ЧеловекКомпанияRole | null;
+  membershipRole: HumanCompanyRole | null;
   createdAt: string;
   updatedAt: string;
   user: { id: string; email: string | null; name: string | null; image: string | null } | null;
-  grants: КомпанияMemberGrant[];
+  grants: CompanyMemberGrant[];
   removal?: {
-    canАрхивировать: boolean;
+    canArchive: boolean;
     reason: string | null;
   };
 };
 
-export type АрхивироватьКомпанияMemberResponse = {
-  member: КомпанияMember;
-  reassignedЗадачаCount: number;
+export type ArchiveCompanyMemberResponse = {
+  member: CompanyMember;
+  reassignedIssueCount: number;
 };
 
-export type КомпанияMembersResponse = {
-  members: КомпанияMember[];
+export type CompanyMembersResponse = {
+  members: CompanyMember[];
   access: {
-    currentUserRole: ЧеловекКомпанияRole | null;
+    currentUserRole: HumanCompanyRole | null;
     canManageMembers: boolean;
     canInviteUsers: boolean;
-    canОдобритьJoinRequests: boolean;
+    canApproveJoinRequests: boolean;
   };
 };
 
-export type КомпанияUserDirectoryEntry = {
+export type CompanyUserDirectoryEntry = {
   principalId: string;
   status: "active";
   user: { id: string; email: string | null; name: string | null; image: string | null } | null;
 };
 
-export type КомпанияUserDirectoryResponse = {
-  users: КомпанияUserDirectoryEntry[];
+export type CompanyUserDirectoryResponse = {
+  users: CompanyUserDirectoryEntry[];
 };
 
-export type КомпанияInviteRecord = {
+export type CompanyInviteRecord = {
   id: string;
   companyId: string | null;
-  companyИмя: string | null;
-  inviteТип: "company_join" | "bootstrap_ceo";
-  allowedJoinТипs: "human" | "agent" | "both";
-  humanRole: ЧеловекКомпанияRole | null;
+  companyName: string | null;
+  inviteType: "company_join" | "bootstrap_ceo";
+  allowedJoinTypes: "human" | "agent" | "both";
+  humanRole: HumanCompanyRole | null;
   defaultsPayload: Record<string, unknown> | null;
   expiresAt: string;
   invitedByUserId: string | null;
@@ -177,20 +177,20 @@ export type КомпанияInviteRecord = {
   relatedJoinRequestId: string | null;
 };
 
-export type КомпанияInviteListResponse = {
-  invites: КомпанияInviteRecord[];
+export type CompanyInviteListResponse = {
+  invites: CompanyInviteRecord[];
   nextOffset: number | null;
 };
 
-export type КомпанияJoinRequest = JoinRequest & {
+export type CompanyJoinRequest = JoinRequest & {
   requesterUser: { id: string; email: string | null; name: string | null; image: string | null } | null;
   approvedByUser: { id: string; email: string | null; name: string | null; image: string | null } | null;
   rejectedByUser: { id: string; email: string | null; name: string | null; image: string | null } | null;
   invite: {
     id: string;
-    inviteТип: "company_join" | "bootstrap_ceo";
-    allowedJoinТипs: "human" | "agent" | "both";
-    humanRole: ЧеловекКомпанияRole | null;
+    inviteType: "company_join" | "bootstrap_ceo";
+    allowedJoinTypes: "human" | "agent" | "both";
+    humanRole: HumanCompanyRole | null;
     inviteMessage: string | null;
     createdAt: string;
     expiresAt: string;
@@ -206,23 +206,23 @@ export type AdminUserDirectoryEntry = {
   name: string | null;
   image: string | null;
   isInstanceAdmin: boolean;
-  activeКомпанияMembershipCount: number;
+  activeCompanyMembershipCount: number;
 };
 
-export type UserКомпанияДоступEntry = {
+export type UserCompanyAccessEntry = {
   id: string;
   companyId: string;
-  principalТип: "user";
+  principalType: "user";
   principalId: string;
   status: "pending" | "active" | "suspended" | "archived";
-  membershipRole: ЧеловекКомпанияRole | "member" | null;
+  membershipRole: HumanCompanyRole | "member" | null;
   createdAt: string;
   updatedAt: string;
-  companyИмя: string | null;
-  companyСтатус: "active" | "paused" | "archived" | null;
+  companyName: string | null;
+  companyStatus: "active" | "paused" | "archived" | null;
 };
 
-export type UserКомпанияДоступResponse = {
+export type UserCompanyAccessResponse = {
   user: {
     id: string;
     email: string | null;
@@ -230,17 +230,17 @@ export type UserКомпанияДоступResponse = {
     image: string | null;
     isInstanceAdmin: boolean;
   } | null;
-  companyДоступ: UserКомпанияДоступEntry[];
+  companyAccess: UserCompanyAccessEntry[];
 };
 
-export type CurrentСоветДоступ = {
+export type CurrentBoardAccess = {
   user: { id: string; email: string | null; name: string | null; image: string | null } | null;
   userId: string;
   isInstanceAdmin: boolean;
   companyIds: string[];
   memberships?: Array<{
     companyId: string;
-    membershipRole: ЧеловекКомпанияRole | "member" | null;
+    membershipRole: HumanCompanyRole | "member" | null;
     status: "pending" | "active" | "suspended" | "archived";
   }>;
   source: string;
@@ -252,7 +252,7 @@ function buildInviteListQuery(options: {
   limit?: number;
   offset?: number;
 }) {
-  const params = new URLПоискParams();
+  const params = new URLSearchParams();
   if (options.state) params.set("state", options.state);
   if (options.limit) params.set("limit", String(options.limit));
   if (options.offset) params.set("offset", String(options.offset));
@@ -261,16 +261,16 @@ function buildInviteListQuery(options: {
 }
 
 export const accessApi = {
-  createКомпанияInvite: (
+  createCompanyInvite: (
     companyId: string,
     input: {
-      allowedJoinТипs?: "human" | "agent" | "both";
-      humanRole?: ЧеловекКомпанияRole | null;
+      allowedJoinTypes?: "human" | "agent" | "both";
+      humanRole?: HumanCompanyRole | null;
       defaultsPayload?: Record<string, unknown> | null;
       agentMessage?: string | null;
     } = {},
   ) =>
-    api.post<КомпанияInviteСоздано>(`/companies/${companyId}/invites`, input),
+    api.post<CompanyInviteCreated>(`/companies/${companyId}/invites`, input),
 
   createOpenClawInvitePrompt: (
     companyId: string,
@@ -278,7 +278,7 @@ export const accessApi = {
       agentMessage?: string | null;
     } = {},
   ) =>
-    api.post<КомпанияInviteСоздано>(
+    api.post<CompanyInviteCreated>(
       `/companies/${companyId}/openclaw/invite-prompt`,
       input,
     ),
@@ -287,8 +287,8 @@ export const accessApi = {
   getInviteOnboarding: (token: string) =>
     api.get<InviteOnboardingManifest>(`/invites/${token}/onboarding`),
 
-  acceptInvite: (token: string, input: ПринятьInviteInput) =>
-    api.post<АгентJoinRequestПринятьed | JoinRequest | { bootstrapПринятьed: true; userId: string }>(
+  acceptInvite: (token: string, input: AcceptInviteInput) =>
+    api.post<AgentJoinRequestAccepted | JoinRequest | { bootstrapAccepted: true; userId: string }>(
       `/invites/${token}/accept`,
       input,
     ),
@@ -301,7 +301,7 @@ export const accessApi = {
       offset?: number;
     } = {},
   ) =>
-    api.get<КомпанияInviteListResponse>(
+    api.get<CompanyInviteListResponse>(
       `/companies/${companyId}/invites${buildInviteListQuery(options)}`,
     ),
 
@@ -310,61 +310,61 @@ export const accessApi = {
   listJoinRequests: (
     companyId: string,
     status: "pending_approval" | "approved" | "rejected" = "pending_approval",
-    requestТип?: "human" | "agent",
+    requestType?: "human" | "agent",
   ) =>
-    api.get<КомпанияJoinRequest[]>(
-      `/companies/${companyId}/join-requests?status=${status}${requestТип ? `&requestТип=${requestТип}` : ""}`,
+    api.get<CompanyJoinRequest[]>(
+      `/companies/${companyId}/join-requests?status=${status}${requestType ? `&requestType=${requestType}` : ""}`,
     ),
 
   listMembers: (companyId: string) =>
-    api.get<КомпанияMembersResponse>(`/companies/${companyId}/members`),
+    api.get<CompanyMembersResponse>(`/companies/${companyId}/members`),
 
   listUserDirectory: (companyId: string) =>
-    api.get<КомпанияUserDirectoryResponse>(`/companies/${companyId}/user-directory`),
+    api.get<CompanyUserDirectoryResponse>(`/companies/${companyId}/user-directory`),
 
   updateMember: (
     companyId: string,
     memberId: string,
     input: {
-      membershipRole?: ЧеловекКомпанияRole | null;
+      membershipRole?: HumanCompanyRole | null;
       status?: "pending" | "active" | "suspended";
     },
-  ) => api.patch<КомпанияMember>(`/companies/${companyId}/members/${memberId}`, input),
+  ) => api.patch<CompanyMember>(`/companies/${companyId}/members/${memberId}`, input),
 
   updateMemberPermissions: (
     companyId: string,
     memberId: string,
     input: {
       grants: Array<{
-        permissionКлюч: PermissionКлюч;
+        permissionKey: PermissionKey;
         scope?: Record<string, unknown> | null;
       }>;
     },
-  ) => api.patch<КомпанияMember>(`/companies/${companyId}/members/${memberId}/permissions`, input),
+  ) => api.patch<CompanyMember>(`/companies/${companyId}/members/${memberId}/permissions`, input),
 
-  updateMemberДоступ: (
+  updateMemberAccess: (
     companyId: string,
     memberId: string,
     input: {
-      membershipRole?: ЧеловекКомпанияRole | null;
+      membershipRole?: HumanCompanyRole | null;
       status?: "pending" | "active" | "suspended";
       grants: Array<{
-        permissionКлюч: PermissionКлюч;
+        permissionKey: PermissionKey;
         scope?: Record<string, unknown> | null;
       }>;
     },
-  ) => api.patch<КомпанияMember>(`/companies/${companyId}/members/${memberId}/role-and-grants`, input),
+  ) => api.patch<CompanyMember>(`/companies/${companyId}/members/${memberId}/role-and-grants`, input),
 
   archiveMember: (
     companyId: string,
     memberId: string,
     input: {
       reassignment?: {
-        assigneeАгентId?: string | null;
+        assigneeAgentId?: string | null;
         assigneeUserId?: string | null;
       } | null;
     } = {},
-  ) => api.post<АрхивироватьКомпанияMemberResponse>(`/companies/${companyId}/members/${memberId}/archive`, input),
+  ) => api.post<ArchiveCompanyMemberResponse>(`/companies/${companyId}/members/${memberId}/archive`, input),
 
   approveJoinRequest: (companyId: string, requestId: string) =>
     api.post<JoinRequest>(`/companies/${companyId}/join-requests/${requestId}/approve`, {}),
@@ -372,20 +372,20 @@ export const accessApi = {
   rejectJoinRequest: (companyId: string, requestId: string) =>
     api.post<JoinRequest>(`/companies/${companyId}/join-requests/${requestId}/reject`, {}),
 
-  claimJoinRequestApiКлюч: (requestId: string, claimСекрет: string) =>
+  claimJoinRequestApiKey: (requestId: string, claimSecret: string) =>
     api.post<{ keyId: string; token: string; agentId: string; createdAt: string }>(
       `/join-requests/${requestId}/claim-api-key`,
-      { claimСекрет },
+      { claimSecret },
     ),
 
-  getСоветClaimСтатус: (token: string, code: string) =>
-    api.get<СоветClaimСтатус>(`/board-claim/${token}?code=${encodeURIComponent(code)}`),
+  getBoardClaimStatus: (token: string, code: string) =>
+    api.get<BoardClaimStatus>(`/board-claim/${token}?code=${encodeURIComponent(code)}`),
 
-  claimСовет: (token: string, code: string) =>
+  claimBoard: (token: string, code: string) =>
     api.post<{ claimed: true; userId: string }>(`/board-claim/${token}/claim`, { code }),
 
   getCliAuthChallenge: (id: string, token: string) =>
-    api.get<CliAuthChallengeСтатус>(`/cli-auth/challenges/${id}?token=${encodeURIComponent(token)}`),
+    api.get<CliAuthChallengeStatus>(`/cli-auth/challenges/${id}?token=${encodeURIComponent(token)}`),
 
   approveCliAuthChallenge: (id: string, token: string) =>
     api.post<{ approved: boolean; status: string; userId: string; keyId: string | null; expiresAt: string }>(
@@ -405,12 +405,12 @@ export const accessApi = {
   demoteInstanceAdmin: (userId: string) =>
     api.post(`/admin/users/${userId}/demote-instance-admin`, {}),
 
-  getUserКомпанияДоступ: (userId: string) =>
-    api.get<UserКомпанияДоступResponse>(`/admin/users/${userId}/company-access`),
+  getUserCompanyAccess: (userId: string) =>
+    api.get<UserCompanyAccessResponse>(`/admin/users/${userId}/company-access`),
 
-  setUserКомпанияДоступ: (userId: string, companyIds: string[]) =>
-    api.put<UserКомпанияДоступResponse>(`/admin/users/${userId}/company-access`, { companyIds }),
+  setUserCompanyAccess: (userId: string, companyIds: string[]) =>
+    api.put<UserCompanyAccessResponse>(`/admin/users/${userId}/company-access`, { companyIds }),
 
-  getCurrentСоветДоступ: () =>
-    api.get<CurrentСоветДоступ>("/cli-auth/me"),
+  getCurrentBoardAccess: () =>
+    api.get<CurrentBoardAccess>("/cli-auth/me"),
 };

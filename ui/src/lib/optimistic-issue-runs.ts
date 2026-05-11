@@ -1,11 +1,11 @@
-import type { Задача } from "@paperclipai/shared";
-import type { ЗапуститьForЗадача } from "../api/activity";
-import type { АктивенЗапуститьForЗадача, LiveЗапуститьForЗадача } from "../api/heartbeats";
+import type { Issue } from "@paperclipai/shared";
+import type { RunForIssue } from "../api/activity";
+import type { ActiveRunForIssue, LiveRunForIssue } from "../api/heartbeats";
 
-export interface InterruptЗапуститьSource {
+export interface InterruptRunSource {
   id: string;
   agentId: string;
-  adapterТип: string;
+  adapterType: string;
   startedAt: Date | string | null;
   createdAt: Date | string;
   invocationSource: string;
@@ -23,16 +23,16 @@ function toIsoString(value: Date | string | null | undefined) {
   return value instanceof Date ? value.toISOString() : value;
 }
 
-export function upsertInterruptedЗапустить(
-  runs: ЗапуститьForЗадача[] | undefined,
-  run: InterruptЗапуститьSource,
+export function upsertInterruptedRun(
+  runs: RunForIssue[] | undefined,
+  run: InterruptRunSource,
   finishedAt: string,
-): ЗапуститьForЗадача[] {
-  const nextЗапустить: ЗапуститьForЗадача = {
+): RunForIssue[] {
+  const nextRun: RunForIssue = {
     runId: run.id,
     status: "cancelled",
     agentId: run.agentId,
-    adapterТип: run.adapterТип,
+    adapterType: run.adapterType,
     startedAt: toIsoString(run.startedAt),
     finishedAt,
     createdAt: toIsoString(run.createdAt) ?? finishedAt,
@@ -44,7 +44,7 @@ export function upsertInterruptedЗапустить(
   const current = runs ?? [];
   const existingIndex = current.findIndex((entry) => entry.runId === run.id);
   if (existingIndex === -1) {
-    return [...current, nextЗапустить].sort((a, b) => {
+    return [...current, nextRun].sort((a, b) => {
       const diff = toTimestamp(a.startedAt ?? a.createdAt) - toTimestamp(b.startedAt ?? b.createdAt);
       if (diff !== 0) return diff;
       return a.runId.localeCompare(b.runId);
@@ -54,31 +54,31 @@ export function upsertInterruptedЗапустить(
   const updated = [...current];
   updated[existingIndex] = {
     ...updated[existingIndex],
-    ...nextЗапустить,
-    usageJson: updated[existingIndex]?.usageJson ?? nextЗапустить.usageJson,
-    resultJson: updated[existingIndex]?.resultJson ?? nextЗапустить.resultJson,
+    ...nextRun,
+    usageJson: updated[existingIndex]?.usageJson ?? nextRun.usageJson,
+    resultJson: updated[existingIndex]?.resultJson ?? nextRun.resultJson,
   };
   return updated;
 }
 
-export function removeLiveЗапуститьById(
-  runs: LiveЗапуститьForЗадача[] | undefined,
+export function removeLiveRunById(
+  runs: LiveRunForIssue[] | undefined,
   runId: string,
 ) {
   if (!runs) return runs;
-  const nextЗапуститьs = runs.filter((run) => run.id !== runId);
-  return nextЗапуститьs.length === runs.length ? runs : nextЗапуститьs;
+  const nextRuns = runs.filter((run) => run.id !== runId);
+  return nextRuns.length === runs.length ? runs : nextRuns;
 }
 
-export function clearЗадачаExecutionЗапустить(
-  issue: Задача | undefined,
+export function clearIssueExecutionRun(
+  issue: Issue | undefined,
   runId: string,
 ) {
-  if (!issue || issue.executionЗапуститьId !== runId) return issue;
+  if (!issue || issue.executionRunId !== runId) return issue;
   return {
     ...issue,
-    executionЗапуститьId: null,
-    executionАгентИмяКлюч: null,
+    executionRunId: null,
+    executionAgentNameKey: null,
     executionLockedAt: null,
     updatedAt: new Date(),
   };

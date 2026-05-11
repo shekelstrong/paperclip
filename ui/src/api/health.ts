@@ -1,40 +1,40 @@
-export type DevServerHealthСтатус = {
+export type DevServerHealthStatus = {
   enabled: true;
-  restartОбязательно: boolean;
+  restartRequired: boolean;
   reason: "backend_changes" | "pending_migrations" | "backend_changes_and_pending_migrations" | null;
   lastChangedAt: string | null;
-  changedПутьCount: number;
-  changedПутьsSample: string[];
+  changedPathCount: number;
+  changedPathsSample: string[];
   pendingMigrations: string[];
-  autoПерезапуститьВключитьd: boolean;
-  activeЗапуститьCount: number;
+  autoRestartEnabled: boolean;
+  activeRunCount: number;
   waitingForIdle: boolean;
-  lastПерезапуститьAt: string | null;
+  lastRestartAt: string | null;
 };
 
-export type HealthСтатус = {
+export type HealthStatus = {
   status: "ok";
   version?: string;
   deploymentMode?: "local_trusted" | "authenticated";
   deploymentExposure?: "private" | "public";
-  authГотово?: boolean;
-  bootstrapСтатус?: "ready" | "bootstrap_pending";
-  bootstrapInviteАктивен?: boolean;
+  authReady?: boolean;
+  bootstrapStatus?: "ready" | "bootstrap_pending";
+  bootstrapInviteActive?: boolean;
   features?: {
-    companyDeletionВключитьd?: boolean;
+    companyDeletionEnabled?: boolean;
   };
-  devServer?: DevServerHealthСтатус;
+  devServer?: DevServerHealthStatus;
 };
 
 export const healthApi = {
-  get: async (): Promise<HealthСтатус> => {
+  get: async (): Promise<HealthStatus> => {
     const res = await fetch("/api/health", {
       credentials: "include",
-      headers: { Принять: "application/json" },
+      headers: { Accept: "application/json" },
     });
     if (!res.ok) {
       const payload = await res.json().catch(() => null) as { error?: string } | null;
-      throw new Ошибка(payload?.error ?? `Ошибка to load health (${res.status})`);
+      throw new Error(payload?.error ?? `Failed to load health (${res.status})`);
     }
     return res.json();
   },

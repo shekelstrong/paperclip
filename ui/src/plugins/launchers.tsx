@@ -10,10 +10,10 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type ОшибкаInfo,
-  type КлючboardEvent as ReactКлючboardEvent,
+  type ErrorInfo,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
-  type ReactНетde,
+  type ReactNode,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PLUGIN_LAUNCHER_BOUNDS } from "@paperclipai/shared";
@@ -21,21 +21,21 @@ import type {
   PluginLauncherBounds,
   PluginLauncherDeclaration,
   PluginLauncherPlacementZone,
-  PluginUiSlotEntityТип,
+  PluginUiSlotEntityType,
 } from "@paperclipai/shared";
 import { pluginsApi, type PluginUiContribution } from "@/api/plugins";
 import { authApi } from "@/api/auth";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "@/lib/router";
-import { queryКлючs } from "@/lib/queryКлючs";
+import { queryKeys } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import {
   PluginBridgeContext,
-  type PluginХостContext,
+  type PluginHostContext,
   type PluginModalBoundsRequest,
-  type PluginRenderЗакрытьEvent,
-  type PluginRenderЗакрытьHandler,
-  type PluginRenderОкружениеContext,
+  type PluginRenderCloseEvent,
+  type PluginRenderCloseHandler,
+  type PluginRenderEnvironmentContext,
 } from "./bridge";
 import {
   ensurePluginContributionLoaded,
@@ -49,20 +49,20 @@ export type PluginLauncherContext = {
   projectId?: string | null;
   projectRef?: string | null;
   entityId?: string | null;
-  entityТип?: PluginUiSlotEntityТип | null;
+  entityType?: PluginUiSlotEntityType | null;
 };
 
 export type ResolvedPluginLauncher = PluginLauncherDeclaration & {
   pluginId: string;
-  pluginКлюч: string;
-  pluginDisplayИмя: string;
-  pluginВерсия: string;
+  pluginKey: string;
+  pluginDisplayName: string;
+  pluginVersion: string;
   uiEntryFile: string;
 };
 
-type UsePluginLaunchersФильтрs = {
+type UsePluginLaunchersFilters = {
   placementZones: PluginLauncherPlacementZone[];
-  entityТип?: PluginUiSlotEntityТип | null;
+  entityType?: PluginUiSlotEntityType | null;
   companyId?: string | null;
   enabled?: boolean;
 };
@@ -70,11 +70,11 @@ type UsePluginLaunchersФильтрs = {
 type UsePluginLaunchersResult = {
   launchers: ResolvedPluginLauncher[];
   contributionsByPluginId: Map<string, PluginUiContribution>;
-  isЗагрузка: boolean;
+  isLoading: boolean;
   errorMessage: string | null;
 };
 
-type PluginLauncherЗапуститьtimeContextЗначение = {
+type PluginLauncherRuntimeContextValue = {
   /**
    * Open a launcher using already-discovered contribution metadata.
    *
@@ -99,11 +99,11 @@ type LauncherInstance = {
   sourceElement: HTMLElement | null;
   sourceRect: DOMRect | null;
   bounds: PluginLauncherBounds | null;
-  beforeЗакрытьHandlers: Set<PluginRenderЗакрытьHandler>;
-  closeHandlers: Set<PluginRenderЗакрытьHandler>;
+  beforeCloseHandlers: Set<PluginRenderCloseHandler>;
+  closeHandlers: Set<PluginRenderCloseHandler>;
 };
 
-const entityОбластьdZones = new Set<PluginLauncherPlacementZone>([
+const entityScopedZones = new Set<PluginLauncherPlacementZone>([
   "detailTab",
   "taskDetailView",
   "contextMenuItem",
@@ -125,26 +125,26 @@ const supportedLauncherBounds = new Set<PluginLauncherBounds>(
   PLUGIN_LAUNCHER_BOUNDS,
 );
 
-const PluginLauncherЗапуститьtimeContext = createContext<PluginLauncherЗапуститьtimeContextЗначение | null>(null);
+const PluginLauncherRuntimeContext = createContext<PluginLauncherRuntimeContextValue | null>(null);
 
-function getОшибкаMessage(error: unknown): string {
-  if (error instanceof Ошибка && error.message) return error.message;
-  return "Неизвестно error";
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  return "Unknown error";
 }
 
-function buildLauncherХостContext(
+function buildLauncherHostContext(
   context: PluginLauncherContext,
-  renderОкружение: PluginRenderОкружениеContext | null,
+  renderEnvironment: PluginRenderEnvironmentContext | null,
   userId: string | null,
-): PluginХостContext {
+): PluginHostContext {
   return {
     companyId: context.companyId ?? null,
     companyPrefix: context.companyPrefix ?? null,
-    projectId: context.projectId ?? (context.entityТип === "project" ? context.entityId ?? null : null),
+    projectId: context.projectId ?? (context.entityType === "project" ? context.entityId ?? null : null),
     entityId: context.entityId ?? null,
-    entityТип: context.entityТип ?? null,
+    entityType: context.entityType ?? null,
     userId,
-    renderОкружение,
+    renderEnvironment,
   };
 }
 
@@ -158,14 +158,14 @@ function focusFirstElement(container: HTMLElement | null): void {
   container.focus();
 }
 
-function trapFocus(container: HTMLElement, event: КлючboardEvent): void {
+function trapFocus(container: HTMLElement, event: KeyboardEvent): void {
   if (event.key !== "Tab") return;
   const focusable = Array.from(
-    container.querySelectorВсе<HTMLElement>(focusableElementSelector),
+    container.querySelectorAll<HTMLElement>(focusableElementSelector),
   ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
 
   if (focusable.length === 0) {
-    event.preventПо умолчанию();
+    event.preventDefault();
     container.focus();
     return;
   }
@@ -174,19 +174,19 @@ function trapFocus(container: HTMLElement, event: КлючboardEvent): void {
   const last = focusable[focusable.length - 1];
   const active = document.activeElement as HTMLElement | null;
 
-  if (event.shiftКлюч && active === first) {
-    event.preventПо умолчанию();
+  if (event.shiftKey && active === first) {
+    event.preventDefault();
     last.focus();
     return;
   }
 
-  if (!event.shiftКлюч && active === last) {
-    event.preventПо умолчанию();
+  if (!event.shiftKey && active === last) {
+    event.preventDefault();
     first.focus();
   }
 }
 
-function launcherTriggerClassИмя(placementZone: PluginLauncherPlacementZone): string {
+function launcherTriggerClassName(placementZone: PluginLauncherPlacementZone): string {
   switch (placementZone) {
     case "projectSidebarItem":
       return "justify-start h-auto px-3 py-1 text-[12px] font-normal text-muted-foreground hover:text-foreground";
@@ -261,16 +261,16 @@ function isPluginLauncherBounds(value: unknown): value is PluginLauncherBounds {
  * can stay on cached metadata.
  */
 export function usePluginLaunchers(
-  filters: UsePluginLaunchersФильтрs,
+  filters: UsePluginLaunchersFilters,
 ): UsePluginLaunchersResult {
-  const queryВключитьd = filters.enabled ?? true;
-  const { data, isЗагрузка, error } = useQuery({
-    queryКлюч: queryКлючs.plugins.uiContributions,
+  const queryEnabled = filters.enabled ?? true;
+  const { data, isLoading, error } = useQuery({
+    queryKey: queryKeys.plugins.uiContributions,
     queryFn: () => pluginsApi.listUiContributions(),
-    enabled: queryВключитьd,
+    enabled: queryEnabled,
   });
 
-  const placementZonesКлюч = useMemo(
+  const placementZonesKey = useMemo(
     () => [...filters.placementZones].sort().join("|"),
     [filters.placementZones],
   );
@@ -285,22 +285,22 @@ export function usePluginLaunchers(
 
   const launchers = useMemo(() => {
     const placementZones = new Set(
-      placementZonesКлюч.split("|").filter(Boolean) as PluginLauncherPlacementZone[],
+      placementZonesKey.split("|").filter(Boolean) as PluginLauncherPlacementZone[],
     );
     const rows: ResolvedPluginLauncher[] = [];
     for (const contribution of data ?? []) {
       for (const launcher of contribution.launchers) {
         if (!placementZones.has(launcher.placementZone)) continue;
-        if (entityОбластьdZones.has(launcher.placementZone)) {
-          if (!filters.entityТип) continue;
-          if (!launcher.entityТипs?.includes(filters.entityТип)) continue;
+        if (entityScopedZones.has(launcher.placementZone)) {
+          if (!filters.entityType) continue;
+          if (!launcher.entityTypes?.includes(filters.entityType)) continue;
         }
         rows.push({
           ...launcher,
           pluginId: contribution.pluginId,
-          pluginКлюч: contribution.pluginКлюч,
-          pluginDisplayИмя: contribution.displayИмя,
-          pluginВерсия: contribution.version,
+          pluginKey: contribution.pluginKey,
+          pluginDisplayName: contribution.displayName,
+          pluginVersion: contribution.version,
           uiEntryFile: contribution.uiEntryFile,
         });
       }
@@ -310,19 +310,19 @@ export function usePluginLaunchers(
       const ao = a.order ?? Number.MAX_SAFE_INTEGER;
       const bo = b.order ?? Number.MAX_SAFE_INTEGER;
       if (ao !== bo) return ao - bo;
-      const pluginCmp = a.pluginDisplayИмя.localeCompare(b.pluginDisplayИмя);
+      const pluginCmp = a.pluginDisplayName.localeCompare(b.pluginDisplayName);
       if (pluginCmp !== 0) return pluginCmp;
-      return a.displayИмя.localeCompare(b.displayИмя);
+      return a.displayName.localeCompare(b.displayName);
     });
 
     return rows;
-  }, [data, filters.entityТип, placementZonesКлюч]);
+  }, [data, filters.entityType, placementZonesKey]);
 
   return {
     launchers,
     contributionsByPluginId,
-    isЗагрузка: queryВключитьd && isЗагрузка,
-    errorMessage: error ? getОшибкаMessage(error) : null,
+    isLoading: queryEnabled && isLoading,
+    errorMessage: error ? getErrorMessage(error) : null,
   };
 }
 
@@ -330,57 +330,57 @@ async function resolveLauncherComponent(
   contribution: PluginUiContribution,
   launcher: ResolvedPluginLauncher,
 ): Promise<RegisteredPluginComponent | null> {
-  const exportИмя = launcher.action.target;
-  const existing = resolveRegisteredPluginComponent(launcher.pluginКлюч, exportИмя);
+  const exportName = launcher.action.target;
+  const existing = resolveRegisteredPluginComponent(launcher.pluginKey, exportName);
   if (existing) return existing;
   await ensurePluginContributionLoaded(contribution);
-  return resolveRegisteredPluginComponent(launcher.pluginКлюч, exportИмя);
+  return resolveRegisteredPluginComponent(launcher.pluginKey, exportName);
 }
 
 /**
- * Область bridge calls to the currently rendered launcher host context.
+ * Scope bridge calls to the currently rendered launcher host context.
  *
- * Hooks such as `useХостContext()`, `usePluginData()`, and `usePluginAction()`
+ * Hooks such as `useHostContext()`, `usePluginData()`, and `usePluginAction()`
  * consume this ambient context so the bridge can forward company/entity scope
  * and render-environment metadata to the plugin worker.
  */
-function PluginLauncherBridgeОбласть({
+function PluginLauncherBridgeScope({
   pluginId,
   hostContext,
   children,
 }: {
   pluginId: string;
-  hostContext: PluginХостContext;
-  children: ReactНетde;
+  hostContext: PluginHostContext;
+  children: ReactNode;
 }) {
   const value = useMemo(() => ({ pluginId, hostContext }), [pluginId, hostContext]);
 
   return (
-    <PluginBridgeContext.Провайдер value={value}>
+    <PluginBridgeContext.Provider value={value}>
       {children}
-    </PluginBridgeContext.Провайдер>
+    </PluginBridgeContext.Provider>
   );
 }
 
-type LauncherОшибкаBoundaryProps = {
+type LauncherErrorBoundaryProps = {
   launcher: ResolvedPluginLauncher;
-  children: ReactНетde;
+  children: ReactNode;
 };
 
-type LauncherОшибкаBoundaryState = {
-  hasОшибка: boolean;
+type LauncherErrorBoundaryState = {
+  hasError: boolean;
 };
 
-class LauncherОшибкаBoundary extends Component<LauncherОшибкаBoundaryProps, LauncherОшибкаBoundaryState> {
-  override state: LauncherОшибкаBoundaryState = { hasОшибка: false };
+class LauncherErrorBoundary extends Component<LauncherErrorBoundaryProps, LauncherErrorBoundaryState> {
+  override state: LauncherErrorBoundaryState = { hasError: false };
 
-  static getDerivedStateFromОшибка(): LauncherОшибкаBoundaryState {
-    return { hasОшибка: true };
+  static getDerivedStateFromError(): LauncherErrorBoundaryState {
+    return { hasError: true };
   }
 
-  override componentDidCatch(error: unknown, info: ОшибкаInfo): void {
+  override componentDidCatch(error: unknown, info: ErrorInfo): void {
     console.error("Plugin launcher render failed", {
-      pluginКлюч: this.props.launcher.pluginКлюч,
+      pluginKey: this.props.launcher.pluginKey,
       launcherId: this.props.launcher.id,
       error,
       info: info.componentStack,
@@ -388,10 +388,10 @@ class LauncherОшибкаBoundary extends Component<LauncherОшибкаBoundar
   }
 
   override render() {
-    if (this.state.hasОшибка) {
+    if (this.state.hasError) {
       return (
-        <div classИмя="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-          {this.props.launcher.pluginDisplayИмя}: failed to render
+        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+          {this.props.launcher.pluginDisplayName}: failed to render
         </div>
       );
     }
@@ -401,43 +401,43 @@ class LauncherОшибкаBoundary extends Component<LauncherОшибкаBoundar
 
 function LauncherRenderContent({
   instance,
-  renderОкружение,
+  renderEnvironment,
 }: {
   instance: LauncherInstance;
-  renderОкружение: PluginRenderОкружениеContext;
+  renderEnvironment: PluginRenderEnvironmentContext;
 }) {
   const component = instance.component;
   const { data: session } = useQuery({
-    queryКлюч: queryКлючs.auth.session,
+    queryKey: queryKeys.auth.session,
     queryFn: () => authApi.getSession(),
   });
   const userId = session?.user?.id ?? session?.session?.userId ?? null;
   const hostContext = useMemo(
-    () => buildLauncherХостContext(instance.hostContext, renderОкружение, userId),
-    [instance.hostContext, renderОкружение, userId],
+    () => buildLauncherHostContext(instance.hostContext, renderEnvironment, userId),
+    [instance.hostContext, renderEnvironment, userId],
   );
 
   if (!component) {
-    if (renderОкружение.environment === "iframe") {
+    if (renderEnvironment.environment === "iframe") {
       return (
         <iframe
           src={`/_plugins/${encodeURIComponent(instance.launcher.pluginId)}/ui/${instance.launcher.action.target}`}
-          title={`${instance.launcher.pluginDisplayИмя} ${instance.launcher.displayИмя}`}
-          classИмя="h-full min-h-[24rem] w-full rounded-md border border-border bg-background"
+          title={`${instance.launcher.pluginDisplayName} ${instance.launcher.displayName}`}
+          className="h-full min-h-[24rem] w-full rounded-md border border-border bg-background"
         />
       );
     }
 
     return (
-      <div classИмя="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-        {instance.launcher.pluginDisplayИмя}: could not resolve launcher target "{instance.launcher.action.target}".
+      <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+        {instance.launcher.pluginDisplayName}: could not resolve launcher target "{instance.launcher.action.target}".
       </div>
     );
   }
 
   if (component.kind === "web-component") {
-    return createElement(component.tagИмя, {
-      classИмя: "block w-full",
+    return createElement(component.tagName, {
+      className: "block w-full",
       pluginLauncher: instance.launcher,
       pluginContext: hostContext,
     });
@@ -449,11 +449,11 @@ function LauncherRenderContent({
   } as never);
 
   return (
-    <LauncherОшибкаBoundary launcher={instance.launcher}>
-      <PluginLauncherBridgeОбласть pluginId={instance.launcher.pluginId} hostContext={hostContext}>
+    <LauncherErrorBoundary launcher={instance.launcher}>
+      <PluginLauncherBridgeScope pluginId={instance.launcher.pluginId} hostContext={hostContext}>
         {node}
-      </PluginLauncherBridgeОбласть>
-    </LauncherОшибкаBoundary>
+      </PluginLauncherBridgeScope>
+    </LauncherErrorBoundary>
   );
 }
 
@@ -468,7 +468,7 @@ function LauncherModalShell({
   stackIndex: number;
   isTopmost: boolean;
   requestBounds: (key: string, request: PluginModalBoundsRequest) => Promise<void>;
-  closeLauncher: (key: string, event: PluginRenderЗакрытьEvent) => Promise<void>;
+  closeLauncher: (key: string, event: PluginRenderCloseEvent) => Promise<void>;
 }) {
   const contentRef = useRef<HTMLDivElement | null>(null);
   const titleId = useId();
@@ -483,30 +483,30 @@ function LauncherModalShell({
 
   useEffect(() => {
     if (!isTopmost) return;
-    const handleКлючDown = (event: КлючboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (!contentRef.current) return;
       if (event.key === "Escape") {
-        event.preventПо умолчанию();
-        void closeLauncher(instance.key, { reason: "escapeКлюч", nativeEvent: event });
+        event.preventDefault();
+        void closeLauncher(instance.key, { reason: "escapeKey", nativeEvent: event });
         return;
       }
       trapFocus(contentRef.current, event);
     };
-    document.addEventListener("keydown", handleКлючDown);
-    return () => document.removeEventListener("keydown", handleКлючDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [closeLauncher, instance.key, isTopmost]);
 
-  const renderОкружение = useMemo<PluginRenderОкружениеContext>(() => ({
+  const renderEnvironment = useMemo<PluginRenderEnvironmentContext>(() => ({
     environment: instance.launcher.render?.environment ?? "hostOverlay",
     launcherId: instance.launcher.id,
     bounds: instance.bounds,
     requestModalBounds: (request) => requestBounds(instance.key, request),
     closeLifecycle: {
-      onBeforeЗакрыть: (handler) => {
-        instance.beforeЗакрытьHandlers.add(handler);
-        return () => instance.beforeЗакрытьHandlers.delete(handler);
+      onBeforeClose: (handler) => {
+        instance.beforeCloseHandlers.add(handler);
+        return () => instance.beforeCloseHandlers.delete(handler);
       },
-      onЗакрыть: (handler) => {
+      onClose: (handler) => {
         instance.closeHandlers.add(handler);
         return () => instance.closeHandlers.delete(handler);
       },
@@ -516,26 +516,26 @@ function LauncherModalShell({
   const baseZ = launcherOverlayBaseZIndex + stackIndex * 20;
   // Keep each launcher in a deterministic z-index band so every stacked modal,
   // drawer, or popover retains its own backdrop/panel pairing.
-  const shellТип = instance.launcher.action.type;
-  const containerStyle = shellТип === "openPopover"
+  const shellType = instance.launcher.action.type;
+  const containerStyle = shellType === "openPopover"
     ? launcherPopoverStyle(instance)
     : launcherShellBoundsStyle(instance.bounds);
 
-  const panelClassИмя = shellТип === "openDrawer"
+  const panelClassName = shellType === "openDrawer"
     ? "fixed right-0 top-0 h-full max-w-[min(44rem,100vw)] overflow-hidden border-l border-border bg-background shadow-2xl"
-    : shellТип === "openPopover"
+    : shellType === "openPopover"
       ? "fixed overflow-hidden rounded-xl border border-border bg-background shadow-2xl"
       : "fixed left-1/2 top-1/2 max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-border bg-background shadow-2xl";
 
   return (
     <>
       <div
-        classИмя="fixed inset-0 bg-black/45"
+        className="fixed inset-0 bg-black/45"
         style={{ zIndex: baseZ }}
         aria-hidden="true"
         onMouseDown={(event) => {
           if (!isTopmost) return;
-          if (event.target !== event.currentЦель) return;
+          if (event.target !== event.currentTarget) return;
           void closeLauncher(instance.key, { reason: "backdrop", nativeEvent: event });
         }}
       />
@@ -545,48 +545,48 @@ function LauncherModalShell({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        classИмя={panelClassИмя}
+        className={panelClassName}
         style={{
           zIndex: baseZ + 1,
-          ...(shellТип === "openDrawer"
+          ...(shellType === "openDrawer"
             ? { width: containerStyle.width ?? "min(44rem, 100vw)" }
             : containerStyle),
         }}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div classИмя="flex items-center gap-3 border-b border-border px-4 py-3">
-          <div classИмя="min-w-0">
-            <h2 id={titleId} classИмя="truncate text-sm font-semibold">
-              {instance.launcher.displayИмя}
+        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+          <div className="min-w-0">
+            <h2 id={titleId} className="truncate text-sm font-semibold">
+              {instance.launcher.displayName}
             </h2>
-            <p classИмя="truncate text-xs text-muted-foreground">
-              {instance.launcher.pluginDisplayИмя}
+            <p className="truncate text-xs text-muted-foreground">
+              {instance.launcher.pluginDisplayName}
             </p>
           </div>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            classИмя="ml-auto"
+            className="ml-auto"
             onClick={() => void closeLauncher(instance.key, { reason: "programmatic" })}
           >
-            Закрыть
+            Close
           </Button>
         </div>
         <div
-          classИмя={cn(
+          className={cn(
             "overflow-auto p-4",
-            shellТип === "openDrawer" ? "h-[calc(100%-3.5rem)]" : "max-h-[calc(100vh-7rem)]",
+            shellType === "openDrawer" ? "h-[calc(100%-3.5rem)]" : "max-h-[calc(100vh-7rem)]",
           )}
         >
-          <LauncherRenderContent instance={instance} renderОкружение={renderОкружение} />
+          <LauncherRenderContent instance={instance} renderEnvironment={renderEnvironment} />
         </div>
       </div>
     </>
   );
 }
 
-export function PluginLauncherПровайдер({ children }: { children: ReactНетde }) {
+export function PluginLauncherProvider({ children }: { children: ReactNode }) {
   const [stack, setStack] = useState<LauncherInstance[]>([]);
   const stackRef = useRef(stack);
   stackRef.current = stack;
@@ -594,11 +594,11 @@ export function PluginLauncherПровайдер({ children }: { children: React
   const navigate = useNavigate();
 
   const closeLauncher = useCallback(
-    async (key: string, event: PluginRenderЗакрытьEvent) => {
+    async (key: string, event: PluginRenderCloseEvent) => {
       const instance = stackRef.current.find((entry) => entry.key === key);
       if (!instance) return;
 
-      for (const handler of [...instance.beforeЗакрытьHandlers]) {
+      for (const handler of [...instance.beforeCloseHandlers]) {
         await handler(event);
       }
 
@@ -683,7 +683,7 @@ export function PluginLauncherПровайдер({ children }: { children: React
             sourceElement: sourceEl ?? null,
             sourceRect,
             bounds: launcher.render?.bounds ?? "default",
-            beforeЗакрытьHandlers: new Set(),
+            beforeCloseHandlers: new Set(),
             closeHandlers: new Set(),
           };
           setStack((current) => [...current, nextEntry]);
@@ -694,13 +694,13 @@ export function PluginLauncherПровайдер({ children }: { children: React
     [navigate],
   );
 
-  const value = useMemo<PluginLauncherЗапуститьtimeContextЗначение>(
+  const value = useMemo<PluginLauncherRuntimeContextValue>(
     () => ({ activateLauncher }),
     [activateLauncher],
   );
 
   return (
-    <PluginLauncherЗапуститьtimeContext.Провайдер value={value}>
+    <PluginLauncherRuntimeContext.Provider value={value}>
       {children}
       {stack.map((instance, index) => (
         <LauncherModalShell
@@ -712,19 +712,19 @@ export function PluginLauncherПровайдер({ children }: { children: React
           closeLauncher={closeLauncher}
         />
       ))}
-    </PluginLauncherЗапуститьtimeContext.Провайдер>
+    </PluginLauncherRuntimeContext.Provider>
   );
 }
 
-export function usePluginLauncherЗапуститьtime(): PluginLauncherЗапуститьtimeContextЗначение {
-  const value = useContext(PluginLauncherЗапуститьtimeContext);
+export function usePluginLauncherRuntime(): PluginLauncherRuntimeContextValue {
+  const value = useContext(PluginLauncherRuntimeContext);
   if (!value) {
-    throw new Ошибка("usePluginLauncherЗапуститьtime must be used within PluginLauncherПровайдер");
+    throw new Error("usePluginLauncherRuntime must be used within PluginLauncherProvider");
   }
   return value;
 }
 
-function По умолчаниюLauncherTrigger({
+function DefaultLauncherTrigger({
   launcher,
   placementZone,
   onClick,
@@ -738,10 +738,10 @@ function По умолчаниюLauncherTrigger({
       type="button"
       variant={placementZone === "toolbarButton" || placementZone === "globalToolbarButton" ? "outline" : "ghost"}
       size="sm"
-      classИмя={launcherTriggerClassИмя(placementZone)}
+      className={launcherTriggerClassName(placementZone)}
       onClick={onClick}
     >
-      {launcher.displayИмя}
+      {launcher.displayName}
     </Button>
   );
 }
@@ -749,31 +749,31 @@ function По умолчаниюLauncherTrigger({
 type PluginLauncherOutletProps = {
   placementZones: PluginLauncherPlacementZone[];
   context: PluginLauncherContext;
-  entityТип?: PluginUiSlotEntityТип | null;
-  classИмя?: string;
-  itemClassИмя?: string;
-  errorClassИмя?: string;
+  entityType?: PluginUiSlotEntityType | null;
+  className?: string;
+  itemClassName?: string;
+  errorClassName?: string;
 };
 
 export function PluginLauncherOutlet({
   placementZones,
   context,
-  entityТип,
-  classИмя,
-  itemClassИмя,
-  errorClassИмя,
+  entityType,
+  className,
+  itemClassName,
+  errorClassName,
 }: PluginLauncherOutletProps) {
-  const { activateLauncher } = usePluginLauncherЗапуститьtime();
+  const { activateLauncher } = usePluginLauncherRuntime();
   const { launchers, contributionsByPluginId, errorMessage } = usePluginLaunchers({
     placementZones,
-    entityТип,
+    entityType,
     companyId: context.companyId,
     enabled: !!context.companyId,
   });
 
   if (errorMessage) {
     return (
-      <div classИмя={cn("rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1 text-xs text-destructive", errorClassИмя)}>
+      <div className={cn("rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1 text-xs text-destructive", errorClassName)}>
         Plugin launchers unavailable: {errorMessage}
       </div>
     );
@@ -782,16 +782,16 @@ export function PluginLauncherOutlet({
   if (launchers.length === 0) return null;
 
   return (
-    <div classИмя={classИмя}>
+    <div className={className}>
       {launchers.map((launcher) => (
-        <div key={`${launcher.pluginКлюч}:${launcher.id}`} classИмя={itemClassИмя}>
-          <По умолчаниюLauncherTrigger
+        <div key={`${launcher.pluginKey}:${launcher.id}`} className={itemClassName}>
+          <DefaultLauncherTrigger
             launcher={launcher}
             placementZone={launcher.placementZone}
             onClick={(event) => {
               const contribution = contributionsByPluginId.get(launcher.pluginId);
               if (!contribution) return;
-              void activateLauncher(launcher, context, contribution, event.currentЦель);
+              void activateLauncher(launcher, context, contribution, event.currentTarget);
             }}
           />
         </div>
@@ -804,7 +804,7 @@ type PluginLauncherButtonProps = {
   launcher: ResolvedPluginLauncher;
   context: PluginLauncherContext;
   contribution: PluginUiContribution;
-  classИмя?: string;
+  className?: string;
   onActivated?: () => void;
 };
 
@@ -812,20 +812,20 @@ export function PluginLauncherButton({
   launcher,
   context,
   contribution,
-  classИмя,
+  className,
   onActivated,
 }: PluginLauncherButtonProps) {
-  const { activateLauncher } = usePluginLauncherЗапуститьtime();
+  const { activateLauncher } = usePluginLauncherRuntime();
 
   return (
-    <div classИмя={classИмя}>
-      <По умолчаниюLauncherTrigger
+    <div className={className}>
+      <DefaultLauncherTrigger
         launcher={launcher}
         placementZone={launcher.placementZone}
         onClick={(event) => {
-          event.preventПо умолчанию();
+          event.preventDefault();
           onActivated?.();
-          void activateLauncher(launcher, context, contribution, event.currentЦель);
+          void activateLauncher(launcher, context, contribution, event.currentTarget);
         }}
       />
     </div>

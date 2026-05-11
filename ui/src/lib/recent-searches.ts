@@ -1,7 +1,7 @@
 const STORAGE_PREFIX = "paperclip:recent-searches:";
 const MAX_RECENT_SEARCHES = 5;
 
-function storageКлюч(companyId: string) {
+function storageKey(companyId: string) {
   return `${STORAGE_PREFIX}${companyId}`;
 }
 
@@ -9,10 +9,10 @@ function isStorageAvailable() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
-export function loadRecentПоискes(companyId: string): string[] {
+export function loadRecentSearches(companyId: string): string[] {
   if (!isStorageAvailable() || !companyId) return [];
   try {
-    const raw = window.localStorage.getItem(storageКлюч(companyId));
+    const raw = window.localStorage.getItem(storageKey(companyId));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -30,25 +30,25 @@ export function loadRecentПоискes(companyId: string): string[] {
   }
 }
 
-export function pushRecentПоиск(companyId: string, query: string): string[] {
+export function pushRecentSearch(companyId: string, query: string): string[] {
   if (!isStorageAvailable() || !companyId) return [];
   const trimmed = query.trim();
-  if (!trimmed) return loadRecentПоискes(companyId);
-  const existing = loadRecentПоискes(companyId);
-  const filtered = existing.filter((entry) => entry.toНизкийerCase() !== trimmed.toНизкийerCase());
+  if (!trimmed) return loadRecentSearches(companyId);
+  const existing = loadRecentSearches(companyId);
+  const filtered = existing.filter((entry) => entry.toLowerCase() !== trimmed.toLowerCase());
   const next = [trimmed, ...filtered].slice(0, MAX_RECENT_SEARCHES);
   try {
-    window.localStorage.setItem(storageКлюч(companyId), JSON.stringify(next));
+    window.localStorage.setItem(storageKey(companyId), JSON.stringify(next));
   } catch {
     // ignore
   }
   return next;
 }
 
-export function clearRecentПоискes(companyId: string): void {
+export function clearRecentSearches(companyId: string): void {
   if (!isStorageAvailable() || !companyId) return;
   try {
-    window.localStorage.removeItem(storageКлюч(companyId));
+    window.localStorage.removeItem(storageKey(companyId));
   } catch {
     // ignore
   }

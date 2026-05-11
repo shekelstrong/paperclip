@@ -5,12 +5,12 @@ import {
   useEffect,
   useMemo,
   useState,
-  type ReactНетde,
+  type ReactNode,
 } from "react";
 
 type Theme = "light" | "dark";
 
-interface ThemeContextЗначение {
+interface ThemeContextValue {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
@@ -19,7 +19,7 @@ interface ThemeContextЗначение {
 const THEME_STORAGE_KEY = "paperclip.theme";
 const DARK_THEME_COLOR = "#18181b";
 const LIGHT_THEME_COLOR = "#ffffff";
-const ThemeContext = createContext<ThemeContextЗначение | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function resolveThemeFromDocument(): Theme {
   if (typeof document === "undefined") return "dark";
@@ -38,7 +38,7 @@ function applyTheme(theme: Theme) {
   }
 }
 
-export function ThemeПровайдер({ children }: { children: ReactНетde }) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => resolveThemeFromDocument());
 
   const setTheme = useCallback((nextTheme: Theme) => {
@@ -68,16 +68,16 @@ export function ThemeПровайдер({ children }: { children: ReactНетde 
   );
 
   return (
-    <ThemeContext.Провайдер value={value}>
+    <ThemeContext.Provider value={value}>
       {children}
-    </ThemeContext.Провайдер>
+    </ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Ошибка("useTheme must be used within ThemeПровайдер");
+    throw new Error("useTheme must be used within ThemeProvider");
   }
   return context;
 }

@@ -7,8 +7,8 @@ interface QuotaBarProps {
   leftLabel: string;
   rightLabel?: string;
   // shows a 2px destructive notch at the fill tip when true
-  showDeficitНетtch?: boolean;
-  classИмя?: string;
+  showDeficitNotch?: boolean;
+  className?: string;
 }
 
 function fillColor(pct: number): string {
@@ -22,40 +22,40 @@ export function QuotaBar({
   percentUsed,
   leftLabel,
   rightLabel,
-  showDeficitНетtch = false,
-  classИмя,
+  showDeficitNotch = false,
+  className,
 }: QuotaBarProps) {
   const clampedPct = Math.min(100, Math.max(0, percentUsed));
   // keep the notch visible even near the edges
   const notchLeft = Math.min(clampedPct, 97);
 
   return (
-    <div classИмя={cn("space-y-1.5", classИмя)}>
+    <div className={cn("space-y-1.5", className)}>
       {/* row header */}
-      <div classИмя="flex items-center justify-between gap-2">
-        <span classИмя="text-xs text-muted-foreground">{label}</span>
-        <div classИмя="flex items-center gap-2 shrink-0">
-          <span classИмя="text-xs font-medium tabular-nums">{leftLabel}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs font-medium tabular-nums">{leftLabel}</span>
           {rightLabel && (
-            <span classИмя="text-xs text-muted-foreground tabular-nums">{rightLabel}</span>
+            <span className="text-xs text-muted-foreground tabular-nums">{rightLabel}</span>
           )}
         </div>
       </div>
 
       {/* track — boxed border, square corners to match the theme */}
-      <div classИмя="relative h-2 w-full border border-border overflow-hidden">
+      <div className="relative h-2 w-full border border-border overflow-hidden">
         {/* fill */}
         <div
-          classИмя={cn(
+          className={cn(
             "absolute inset-y-0 left-0 transition-[width,background-color] duration-150",
             fillColor(clampedPct),
           )}
           style={{ width: `${clampedPct}%` }}
         />
         {/* deficit notch — 2px wide, sits at the fill tip */}
-        {showDeficitНетtch && clampedPct > 0 && (
+        {showDeficitNotch && clampedPct > 0 && (
           <div
-            classИмя="absolute inset-y-0 w-[2px] bg-destructive z-10"
+            className="absolute inset-y-0 w-[2px] bg-destructive z-10"
             style={{ left: `${notchLeft}%` }}
           />
         )}

@@ -4,15 +4,15 @@
  * When the Paperclip UI encounters an adapter type that doesn't have a
  * built-in parser (e.g., an external adapter loaded via the plugin system),
  * it fetches the parser JS from `/api/adapters/:type/ui-parser.js` and
- * executes it **inside a dedicated Web Работаer** so it cannot access the
+ * executes it **inside a dedicated Web Worker** so it cannot access the
  * board UI's same-origin state (cookies, localStorage, DOM, authenticated
  * fetch, etc.).
  *
  * The worker communicates via a narrow postMessage protocol:
- *   Main → Работаer:  { type: "init", source }
- *   Работаer → Main:  { type: "ready" } | { type: "error", message }
- *   Main → Работаer:  { type: "parse", id, line, ts }
- *   Работаer → Main:  { type: "result", id, entries }
+ *   Main → Worker:  { type: "init", source }
+ *   Worker → Main:  { type: "ready" } | { type: "error", message }
+ *   Main → Worker:  { type: "parse", id, line, ts }
+ *   Worker → Main:  { type: "result", id, entries }
  *
  * Because the parse call is async (cross-thread postMessage), but the
  * existing `parseStdoutLine` contract is synchronous, we cache completed
@@ -29,10 +29,10 @@
 
 import type { TranscriptEntry } from "@paperclipai/adapter-utils";
 import type { StdoutLineParser, StdoutParserFactory } from "./types";
-import { createSandboxedРаботаer } from "./sandboxed-parser-worker";
+import { createSandboxedWorker } from "./sandboxed-parser-worker";
 import type { SandboxRequest, SandboxResponse } from "./sandboxed-parser-worker";
 
-// ── Типs ───────────────────────────────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────────────────────────
 
 interface DynamicParserModule {
   parseStdoutLine: StdoutLineParser;
@@ -40,7 +40,7 @@ interface DynamicParserModule {
 }
 
 interface SandboxedParser {
-  worker: Работаer;
+  worker: Worker;
   ready: boolean;
   nextId: number;
   pendingResolves: Map<number, (entries: TranscriptEntry[]) => void>;
@@ -60,15 +60,15 @@ const failedLoads = new Set<string>();
 /** In-flight init promises so concurrent callers share the same load. */
 const loadPromises = new Map<string, Promise<DynamicParserModule | null>>();
 
-let resultНетtifier: (() => void) | null = null;
+let resultNotifier: (() => void) | null = null;
 
-export function setDynamicParserResultНетtifier(fn: (() => void) | null): void {
-  resultНетtifier = fn;
+export function setDynamicParserResultNotifier(fn: (() => void) | null): void {
+  resultNotifier = fn;
 }
 
 // ── Internal helpers ────────────────────────────────────────────────────────
 
-function sendToРаботаer(sandbox: SandboxedParser, msg: SandboxRequest): void {
+function sendToWorker(sandbox: SandboxedParser, msg: SandboxRequest): void {
   sandbox.worker.postMessage(msg);
 }
 
@@ -76,12 +76,12 @@ function nextRequestId(sandbox: SandboxedParser): number {
   return sandbox.nextId++;
 }
 
-function lineCacheКлюч(line: string, ts: string): string {
+function lineCacheKey(line: string, ts: string): string {
   return `${ts}\u0000${line}`;
 }
 
-function notifyResultГотово(): void {
-  resultНетtifier?.();
+function notifyResultReady(): void {
+  resultNotifier?.();
 }
 
 /**
@@ -92,11 +92,11 @@ function parseLineAsync(sandbox: SandboxedParser, line: string, ts: string): Pro
   return new Promise((resolve) => {
     const id = nextRequestId(sandbox);
     sandbox.pendingResolves.set(id, resolve);
-    sendToРаботаer(sandbox, { type: "parse", id, line, ts });
+    sendToWorker(sandbox, { type: "parse", id, line, ts });
   });
 }
 
-function drainОжиданиеRequests(sandbox: SandboxedParser): void {
+function drainPendingRequests(sandbox: SandboxedParser): void {
   for (const resolver of sandbox.pendingResolves.values()) {
     resolver([]);
   }
@@ -104,11 +104,11 @@ function drainОжиданиеRequests(sandbox: SandboxedParser): void {
 }
 
 /**
- * Создать a sandboxed worker, send the parser source, and wait for init.
+ * Create a sandboxed worker, send the parser source, and wait for init.
  */
-function initSandboxedРаботаer(source: string): Promise<SandboxedParser> {
+function initSandboxedWorker(source: string): Promise<SandboxedParser> {
   return new Promise((resolve, reject) => {
-    const worker = createSandboxedРаботаer();
+    const worker = createSandboxedWorker();
     const sandbox: SandboxedParser = {
       worker,
       ready: false,
@@ -118,9 +118,9 @@ function initSandboxedРаботаer(source: string): Promise<SandboxedParser> {
 
     // Timeout if the worker doesn't respond within 5s
     const timeout = setTimeout(() => {
-      drainОжиданиеRequests(sandbox);
+      drainPendingRequests(sandbox);
       worker.terminate();
-      reject(new Ошибка("Parser worker init timed out"));
+      reject(new Error("Parser worker init timed out"));
     }, 5000);
 
     worker.onmessage = (e: MessageEvent<SandboxResponse>) => {
@@ -140,8 +140,8 @@ function initSandboxedРаботаer(source: string): Promise<SandboxedParser> {
               resolver(resp.entries as TranscriptEntry[]);
             }
           } else if (resp.type === "error") {
-            console.error("[adapter-ui-loader] Работаer reported error:", resp.message);
-            drainОжиданиеRequests(sandbox);
+            console.error("[adapter-ui-loader] Worker reported error:", resp.message);
+            drainPendingRequests(sandbox);
           }
         };
 
@@ -151,22 +151,22 @@ function initSandboxedРаботаer(source: string): Promise<SandboxedParser> {
 
       if (msg.type === "error") {
         clearTimeout(timeout);
-        drainОжиданиеRequests(sandbox);
+        drainPendingRequests(sandbox);
         worker.terminate();
-        reject(new Ошибка(msg.message));
+        reject(new Error(msg.message));
         return;
       }
     };
 
     worker.onerror = (ev) => {
       clearTimeout(timeout);
-      drainОжиданиеRequests(sandbox);
+      drainPendingRequests(sandbox);
       worker.terminate();
-      reject(new Ошибка(`Работаer error: ${ev.message}`));
+      reject(new Error(`Worker error: ${ev.message}`));
     };
 
-    // Отправить the parser source to the worker for evaluation.
-    sendToРаботаer(sandbox, { type: "init", source });
+    // Send the parser source to the worker for evaluation.
+    sendToWorker(sandbox, { type: "init", source });
   });
 }
 
@@ -185,19 +185,19 @@ function initSandboxedРаботаer(source: string): Promise<SandboxedParser> {
  */
 function buildParserModule(sandbox: SandboxedParser): DynamicParserModule {
   const parseCache = new Map<string, TranscriptEntry[]>();
-  const pendingParseКлючs = new Set<string>();
+  const pendingParseKeys = new Set<string>();
 
   const parseStdoutLine: StdoutLineParser = (line: string, ts: string) => {
-    const key = lineCacheКлюч(line, ts);
+    const key = lineCacheKey(line, ts);
     const cached = parseCache.get(key);
     if (cached) return cached.slice();
 
-    if (!pendingParseКлючs.has(key)) {
-      pendingParseКлючs.add(key);
+    if (!pendingParseKeys.has(key)) {
+      pendingParseKeys.add(key);
       parseLineAsync(sandbox, line, ts).then((entries) => {
-        pendingParseКлючs.delete(key);
+        pendingParseKeys.delete(key);
         parseCache.set(key, entries);
-        notifyResultГотово();
+        notifyResultReady();
       });
     }
 
@@ -211,51 +211,51 @@ function buildParserModule(sandbox: SandboxedParser): DynamicParserModule {
 
 /**
  * Dynamically load a UI parser for an adapter type from the server API,
- * executing it inside a sandboxed Web Работаer.
+ * executing it inside a sandboxed Web Worker.
  *
  * @returns A DynamicParserModule, or null if unavailable.
  */
-export async function loadDynamicParser(adapterТип: string): Promise<DynamicParserModule | null> {
+export async function loadDynamicParser(adapterType: string): Promise<DynamicParserModule | null> {
   // Return cached parser if already loaded.
-  const cached = dynamicParserCache.get(adapterТип);
+  const cached = dynamicParserCache.get(adapterType);
   if (cached) return cached;
 
   // Don't retry types that previously failed.
-  if (failedLoads.has(adapterТип)) return null;
+  if (failedLoads.has(adapterType)) return null;
 
   // Coalesce concurrent loads.
-  const inflight = loadPromises.get(adapterТип);
+  const inflight = loadPromises.get(adapterType);
   if (inflight) return inflight;
 
   const loadPromise = (async (): Promise<DynamicParserModule | null> => {
     try {
-      const response = await fetch(`/api/adapters/${encodeURIComponent(adapterТип)}/ui-parser.js`);
+      const response = await fetch(`/api/adapters/${encodeURIComponent(adapterType)}/ui-parser.js`);
       if (!response.ok) {
-        failedLoads.add(adapterТип);
+        failedLoads.add(adapterType);
         return null;
       }
 
       const source = await response.text();
 
       // Initialise the sandboxed worker with the parser source.
-      const sandbox = await initSandboxedРаботаer(source);
-      sandboxedParsers.set(adapterТип, sandbox);
+      const sandbox = await initSandboxedWorker(source);
+      sandboxedParsers.set(adapterType, sandbox);
 
       const parserModule = buildParserModule(sandbox);
-      dynamicParserCache.set(adapterТип, parserModule);
+      dynamicParserCache.set(adapterType, parserModule);
 
-      console.info(`[adapter-ui-loader] Loaded sandboxed UI parser for "${adapterТип}"`);
+      console.info(`[adapter-ui-loader] Loaded sandboxed UI parser for "${adapterType}"`);
       return parserModule;
     } catch (err) {
-      console.warn(`[adapter-ui-loader] Ошибка to load UI parser for "${adapterТип}":`, err);
-      failedLoads.add(adapterТип);
+      console.warn(`[adapter-ui-loader] Failed to load UI parser for "${adapterType}":`, err);
+      failedLoads.add(adapterType);
       return null;
     } finally {
-      loadPromises.delete(adapterТип);
+      loadPromises.delete(adapterType);
     }
   })();
 
-  loadPromises.set(adapterТип, loadPromise);
+  loadPromises.set(adapterType, loadPromise);
   return loadPromise;
 }
 
@@ -264,22 +264,22 @@ export async function loadDynamicParser(adapterТип: string): Promise<DynamicP
  * and the failed-loads set so that the next load attempt will try again.
  * Also terminates the sandboxed worker if one exists.
  */
-export function invalidateDynamicParser(adapterТип: string): boolean {
-  const wasCached = dynamicParserCache.has(adapterТип);
-  dynamicParserCache.delete(adapterТип);
-  failedLoads.delete(adapterТип);
-  loadPromises.delete(adapterТип);
+export function invalidateDynamicParser(adapterType: string): boolean {
+  const wasCached = dynamicParserCache.has(adapterType);
+  dynamicParserCache.delete(adapterType);
+  failedLoads.delete(adapterType);
+  loadPromises.delete(adapterType);
 
   // Terminate the worker to free resources.
-  const sandbox = sandboxedParsers.get(adapterТип);
+  const sandbox = sandboxedParsers.get(adapterType);
   if (sandbox) {
-    drainОжиданиеRequests(sandbox);
+    drainPendingRequests(sandbox);
     sandbox.worker.terminate();
-    sandboxedParsers.delete(adapterТип);
+    sandboxedParsers.delete(adapterType);
   }
 
   if (wasCached) {
-    console.info(`[adapter-ui-loader] Invalidated sandboxed UI parser for "${adapterТип}"`);
+    console.info(`[adapter-ui-loader] Invalidated sandboxed UI parser for "${adapterType}"`);
   }
   return wasCached;
 }

@@ -3,56 +3,56 @@ import { Link, useLocation } from "@/lib/router";
 import { AlertTriangle, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 
-type НетtFoundОбласть = "board" | "invalid_company_prefix" | "global";
+type NotFoundScope = "board" | "invalid_company_prefix" | "global";
 
-interface НетtFoundPageProps {
-  scope?: НетtFoundОбласть;
+interface NotFoundPageProps {
+  scope?: NotFoundScope;
   requestedPrefix?: string;
 }
 
-export function НетtFoundPage({ scope = "global", requestedPrefix }: НетtFoundPageProps) {
+export function NotFoundPage({ scope = "global", requestedPrefix }: NotFoundPageProps) {
   const location = useLocation();
   const { setBreadcrumbs } = useBreadcrumbs();
-  const { companies, selectedКомпания } = useКомпания();
+  const { companies, selectedCompany } = useCompany();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Не найдено" }]);
+    setBreadcrumbs([{ label: "Not Found" }]);
   }, [setBreadcrumbs]);
 
-  const fallbackКомпания = selectedКомпания ?? companies[0] ?? null;
-  const dashboardHref = fallbackКомпания ? `/${fallbackКомпания.issuePrefix}/dashboard` : "/";
-  const currentПуть = `${location.pathname}${location.search}${location.hash}`;
+  const fallbackCompany = selectedCompany ?? companies[0] ?? null;
+  const dashboardHref = fallbackCompany ? `/${fallbackCompany.issuePrefix}/dashboard` : "/";
+  const currentPath = `${location.pathname}${location.search}${location.hash}`;
   const normalizedPrefix = requestedPrefix?.toUpperCase();
 
-  const title = scope === "invalid_company_prefix" ? "Компания not found" : "Страница не найдена";
+  const title = scope === "invalid_company_prefix" ? "Company not found" : "Страница не найдена";
   const description =
     scope === "invalid_company_prefix"
-      ? `Нет company matches prefix "${normalizedPrefix ?? "unknown"}".`
-      : "Этого маршрута не существует.";
+      ? `No company matches prefix "${normalizedPrefix ?? "unknown"}".`
+      : "This route does not exist.";
 
   return (
-    <div classИмя="mx-auto max-w-2xl py-10">
-      <div classИмя="rounded-lg border border-border bg-card p-6">
-        <div classИмя="flex items-center gap-3">
-          <div classИмя="rounded-md border border-destructive/20 bg-destructive/10 p-2">
-            <AlertTriangle classИмя="h-5 w-5 text-destructive" />
+    <div className="mx-auto max-w-2xl py-10">
+      <div className="rounded-lg border border-border bg-card p-6">
+        <div className="flex items-center gap-3">
+          <div className="rounded-md border border-destructive/20 bg-destructive/10 p-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
           </div>
           <div>
-            <h1 classИмя="text-xl font-semibold">{title}</h1>
-            <p classИмя="text-sm text-muted-foreground">{description}</p>
+            <h1 className="text-xl font-semibold">{title}</h1>
+            <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         </div>
 
-        <div classИмя="mt-4 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-          Requested path: <code classИмя="font-mono">{currentПуть}</code>
+        <div className="mt-4 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+          Requested path: <code className="font-mono">{currentPath}</code>
         </div>
 
-        <div classИмя="mt-5 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           <Button asChild>
             <Link to={dashboardHref}>
-              <Compass classИмя="mr-1.5 h-4 w-4" />
+              <Compass className="mr-1.5 h-4 w-4" />
               Open dashboard
             </Link>
           </Button>

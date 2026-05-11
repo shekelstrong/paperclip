@@ -1,7 +1,7 @@
 /**
- * Sandboxed Работаer bootstrap for external adapter UI parsers.
+ * Sandboxed Worker bootstrap for external adapter UI parsers.
  *
- * Security boundary: parser code runs inside a dedicated Web Работаer with
+ * Security boundary: parser code runs inside a dedicated Web Worker with
  * network and DOM APIs explicitly disabled.  Communication uses a narrow
  * postMessage protocol (see {@link SandboxRequest} / {@link SandboxResponse}).
  *
@@ -24,10 +24,10 @@ export type SandboxResponse =
   | { type: "error"; message: string }
   | { type: "result"; id: number; entries: unknown[] };
 
-// ── Работаer bootstrap source ─────────────────────────────────────────────────
+// ── Worker bootstrap source ─────────────────────────────────────────────────
 
 /**
- * Inline JS that runs inside the Работаer.  It:
+ * Inline JS that runs inside the Worker.  It:
  *  1. Shadows dangerous globals (`fetch`, `XMLHttpRequest`, `WebSocket`,
  *     `importScripts`, `EventSource`, `navigator.sendBeacon`, etc.) with
  *     no-ops or `undefined`.
@@ -39,7 +39,7 @@ const WORKER_BOOTSTRAP = `
 "use strict";
 
 // ── 1. Lock down dangerous globals ──────────────────────────────────────────
-// Работаers have no DOM, but they still have network and import APIs.
+// Workers have no DOM, but they still have network and import APIs.
 
 const _undefined = void 0;
 
@@ -57,10 +57,10 @@ self.Cache = _undefined;
 self.CacheStorage = _undefined;
 self.caches = _undefined;
 
-// Импорт / eval escape hatches
+// Import / eval escape hatches
 self.importScripts = _undefined;
-self.Работаer = _undefined;
-self.SharedРаботаer = _undefined;
+self.Worker = _undefined;
+self.SharedWorker = _undefined;
 self.Blob = _undefined;
 if (self.URL) {
   try { Object.defineProperty(self.URL, "createObjectURL", { value: _undefined, writable: false, configurable: false }); } catch {}
@@ -158,25 +158,25 @@ self.onmessage = function (e) {
 // ── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Return the inline Работаer bootstrap source.
- * Экспортed for testing (so test code can verify the lockdown behaviour).
+ * Return the inline Worker bootstrap source.
+ * Exported for testing (so test code can verify the lockdown behaviour).
  */
-export function getРаботаerBootstrapSource(): string {
+export function getWorkerBootstrapSource(): string {
   return WORKER_BOOTSTRAP;
 }
 
 /**
- * Создать a sandboxed Web Работаer from the inline bootstrap.
+ * Create a sandboxed Web Worker from the inline bootstrap.
  * The caller must send an `init` message with the parser source before
  * sending parse requests.
  */
-export function createSandboxedРаботаer(): Работаer {
+export function createSandboxedWorker(): Worker {
   const blob = new Blob([WORKER_BOOTSTRAP], { type: "application/javascript" });
   const url = URL.createObjectURL(blob);
   try {
-    return new Работаer(url);
+    return new Worker(url);
   } finally {
-    // Revoke after construction; the Работаer has already captured the Blob URL source.
+    // Revoke after construction; the Worker has already captured the Blob URL source.
     URL.revokeObjectURL(url);
   }
 }

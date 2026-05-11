@@ -1,4 +1,4 @@
-import { useState, type ComponentТип, type ReactНетde } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import { Link } from "@/lib/router";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-type SidebarSectionIcon = ComponentТип<{ classИмя?: string }>;
+type SidebarSectionIcon = ComponentType<{ className?: string }>;
 
 export type SidebarSectionMenuAction =
   | {
@@ -41,8 +41,8 @@ type SidebarSectionMenu = {
   ariaLabel?: string;
   radioChoices?: SidebarSectionRadioChoice[];
   radioLabel?: string;
-  radioЗначение?: string;
-  onRadioЗначениеChange?: (value: string) => void;
+  radioValue?: string;
+  onRadioValueChange?: (value: string) => void;
 };
 
 type SidebarSectionHeaderAction = {
@@ -53,7 +53,7 @@ type SidebarSectionHeaderAction = {
 
 interface SidebarSectionProps {
   label: string;
-  children: ReactНетde;
+  children: ReactNode;
   collapsible?: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -73,21 +73,21 @@ function SidebarSectionHeader({
   const hasMenu = Boolean(
     menu && ((menu.actions?.length ?? 0) > 0 || (menu.radioChoices?.length ?? 0) > 0),
   );
-  const labelClassИмя = "text-[10px] font-medium uppercase tracking-widest font-mono text-muted-foreground/60";
-  const headerControlVisibilityClassИмя = isMobile
+  const labelClassName = "text-[10px] font-medium uppercase tracking-widest font-mono text-muted-foreground/60";
+  const headerControlVisibilityClassName = isMobile
     ? "opacity-100"
     : "opacity-0 group-hover/sidebar-section:opacity-100 group-focus-within/sidebar-section:opacity-100";
-  const caretClassИмя = cn(
+  const caretClassName = cn(
     "h-3 w-3 shrink-0 text-muted-foreground/60 transition-all",
-    headerControlVisibilityClassИмя,
+    headerControlVisibilityClassName,
     collapsible?.open && "rotate-90",
     menuOpen && "opacity-100",
   );
-  const actionClassИмя = cn(
+  const actionClassName = cn(
     "h-5 w-5 shrink-0 text-muted-foreground/60 transition-opacity hover:text-foreground data-[state=open]:opacity-100",
-    headerControlVisibilityClassИмя,
+    headerControlVisibilityClassName,
   );
-  const headerContent = <span classИмя={labelClassИмя}>{label}</span>;
+  const headerContent = <span className={labelClassName}>{label}</span>;
   const HeaderActionIcon = headerAction?.icon;
 
   const headingControl = hasMenu ? (
@@ -95,7 +95,7 @@ function SidebarSectionHeader({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          classИмя={cn(
+          className={cn(
             "inline-flex min-w-0 max-w-full items-center rounded-md px-1 py-0.5 text-left outline-none transition-colors",
             "hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
             menuOpen && "bg-accent/50",
@@ -105,7 +105,7 @@ function SidebarSectionHeader({
           {headerContent}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" classИмя="w-48">
+      <DropdownMenuContent align="start" className="w-48">
         {menu?.actions?.map((action, index) => {
           if (action.type === "separator") {
             return <DropdownMenuSeparator key={`separator-${index}`} />;
@@ -113,7 +113,7 @@ function SidebarSectionHeader({
           const Icon = action.icon;
           const content = (
             <>
-              {Icon ? <Icon classИмя="size-4" /> : null}
+              {Icon ? <Icon className="size-4" /> : null}
               <span>{action.label}</span>
             </>
           );
@@ -132,8 +132,8 @@ function SidebarSectionHeader({
         })}
         {menu?.radioChoices && menu.radioChoices.length > 0 ? (
           <DropdownMenuRadioGroup
-            value={menu.radioЗначение}
-            onЗначениеChange={menu.onRadioЗначениеChange}
+            value={menu.radioValue}
+            onValueChange={menu.onRadioValueChange}
             aria-label={menu.radioLabel}
           >
             {menu.radioChoices.map((choice) => (
@@ -146,20 +146,20 @@ function SidebarSectionHeader({
       </DropdownMenuContent>
     </DropdownMenu>
   ) : (
-    <div classИмя="inline-flex min-w-0 max-w-full items-center px-1 py-0.5">{headerContent}</div>
+    <div className="inline-flex min-w-0 max-w-full items-center px-1 py-0.5">{headerContent}</div>
   );
 
   return (
-    <div classИмя="group/sidebar-section px-3 py-1.5">
-      <div classИмя="relative flex min-h-6 min-w-0 items-center gap-1">
+    <div className="group/sidebar-section px-3 py-1.5">
+      <div className="relative flex min-h-6 min-w-0 items-center gap-1">
         {collapsible ? (
           <CollapsibleTrigger asChild>
             <button
               type="button"
-              classИмя="absolute -left-4 flex h-5 w-5 items-center justify-center rounded-sm outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+              className="absolute -left-4 flex h-5 w-5 items-center justify-center rounded-sm outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
               aria-label={collapsible.open ? `Collapse ${label}` : `Expand ${label}`}
             >
-              <ChevronRight classИмя={caretClassИмя} aria-hidden="true" />
+              <ChevronRight className={caretClassName} aria-hidden="true" />
             </button>
           </CollapsibleTrigger>
         ) : null}
@@ -168,11 +168,11 @@ function SidebarSectionHeader({
           <Button
             variant="ghost"
             size="icon-xs"
-            classИмя={actionClassИмя}
+            className={actionClassName}
             aria-label={headerAction.ariaLabel}
             onClick={headerAction.onClick}
           >
-            <HeaderActionIcon classИмя="h-3.5 w-3.5" />
+            <HeaderActionIcon className="h-3.5 w-3.5" />
           </Button>
         ) : null}
       </div>
@@ -187,7 +187,7 @@ export function SidebarSection({
   menu,
   headerAction,
 }: SidebarSectionProps) {
-  const content = <div classИмя="flex flex-col gap-0.5 mt-0.5">{children}</div>;
+  const content = <div className="flex flex-col gap-0.5 mt-0.5">{children}</div>;
 
   if (collapsible) {
     return (

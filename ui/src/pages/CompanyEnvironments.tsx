@@ -2,49 +2,49 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AGENT_ADAPTER_TYPES,
-  getАдаптерОкружениеSupport,
-  type Окружение,
-  type ОкружениеProbeResult,
+  getAdapterEnvironmentSupport,
+  type Environment,
+  type EnvironmentProbeResult,
   type JsonSchema,
 } from "@paperclipai/shared";
-import { Check, Настройки } from "lucide-react";
+import { Check, Settings } from "lucide-react";
 import { environmentsApi } from "@/api/environments";
-import { instanceНастройкиApi } from "@/api/instanceНастройки";
+import { instanceSettingsApi } from "@/api/instanceSettings";
 import { secretsApi } from "@/api/secrets";
 import { Button } from "@/components/ui/button";
-import { JsonSchemaForm, getПо умолчаниюЗначениеs, validateJsonSchemaForm } from "@/components/JsonSchemaForm";
+import { JsonSchemaForm, getDefaultValues, validateJsonSchemaForm } from "@/components/JsonSchemaForm";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
-import { useКомпания } from "@/context/КомпанияContext";
+import { useCompany } from "@/context/CompanyContext";
 import { useToast } from "@/context/ToastContext";
-import { queryКлючs } from "@/lib/queryКлючs";
+import { queryKeys } from "@/lib/queryKeys";
 import {
   Field,
   ToggleField,
-  adapterЯрлыки,
+  adapterLabels,
 } from "../components/agent-config-primitives";
 
-type ОкружениеFormState = {
+type EnvironmentFormState = {
   name: string;
   description: string;
   driver: "local" | "ssh" | "sandbox";
-  sshХост: string;
-  sshПорт: string;
+  sshHost: string;
+  sshPort: string;
   sshUsername: string;
-  sshRemoteРабочая областьПуть: string;
-  sshPrivateКлюч: string;
-  sshPrivateКлючСекретId: string;
-  sshKnownХостs: string;
-  sshStrictХостКлючChecking: boolean;
-  sandboxПровайдер: string;
+  sshRemoteWorkspacePath: string;
+  sshPrivateKey: string;
+  sshPrivateKeySecretId: string;
+  sshKnownHosts: string;
+  sshStrictHostKeyChecking: boolean;
+  sandboxProvider: string;
   sandboxConfig: Record<string, unknown>;
 };
 
-const ENVIRONMENT_SUPPORT_ROWS = AGENT_ADAPTER_TYPES.map((adapterТип) => ({
-  adapterТип,
-  support: getАдаптерОкружениеSupport(adapterТип),
+const ENVIRONMENT_SUPPORT_ROWS = AGENT_ADAPTER_TYPES.map((adapterType) => ({
+  adapterType,
+  support: getAdapterEnvironmentSupport(adapterType),
 }));
 
-function buildОкружениеPayload(form: ОкружениеFormState) {
+function buildEnvironmentPayload(form: EnvironmentFormState) {
   return {
     name: form.name.trim(),
     description: form.description.trim() || null,
@@ -52,46 +52,46 @@ function buildОкружениеPayload(form: ОкружениеFormState) {
     config:
       form.driver === "ssh"
         ? {
-            host: form.sshХост.trim(),
-            port: Number.parseInt(form.sshПорт || "22", 10) || 22,
+            host: form.sshHost.trim(),
+            port: Number.parseInt(form.sshPort || "22", 10) || 22,
             username: form.sshUsername.trim(),
-            remoteРабочая областьПуть: form.sshRemoteРабочая областьПуть.trim(),
-            privateКлюч: form.sshPrivateКлюч.trim() || null,
-            privateКлючСекретRef:
-              form.sshPrivateКлюч.trim().length > 0 || !form.sshPrivateКлючСекретId
+            remoteWorkspacePath: form.sshRemoteWorkspacePath.trim(),
+            privateKey: form.sshPrivateKey.trim() || null,
+            privateKeySecretRef:
+              form.sshPrivateKey.trim().length > 0 || !form.sshPrivateKeySecretId
                 ? null
-                : { type: "secret_ref" as const, secretId: form.sshPrivateКлючСекретId, version: "latest" as const },
-            knownХостs: form.sshKnownХостs.trim() || null,
-            strictХостКлючChecking: form.sshStrictХостКлючChecking,
+                : { type: "secret_ref" as const, secretId: form.sshPrivateKeySecretId, version: "latest" as const },
+            knownHosts: form.sshKnownHosts.trim() || null,
+            strictHostKeyChecking: form.sshStrictHostKeyChecking,
           }
         : form.driver === "sandbox"
           ? {
-              provider: form.sandboxПровайдер.trim(),
+              provider: form.sandboxProvider.trim(),
               ...form.sandboxConfig,
             }
           : {},
   } as const;
 }
 
-function createEmptyОкружениеForm(): ОкружениеFormState {
+function createEmptyEnvironmentForm(): EnvironmentFormState {
   return {
     name: "",
     description: "",
     driver: "ssh",
-    sshХост: "",
-    sshПорт: "22",
+    sshHost: "",
+    sshPort: "22",
     sshUsername: "",
-    sshRemoteРабочая областьПуть: "",
-    sshPrivateКлюч: "",
-    sshPrivateКлючСекретId: "",
-    sshKnownХостs: "",
-    sshStrictХостКлючChecking: true,
-    sandboxПровайдер: "",
+    sshRemoteWorkspacePath: "",
+    sshPrivateKey: "",
+    sshPrivateKeySecretId: "",
+    sshKnownHosts: "",
+    sshStrictHostKeyChecking: true,
+    sandboxProvider: "",
     sandboxConfig: {},
   };
 }
 
-function readSshConfig(environment: Окружение) {
+function readSshConfig(environment: Environment) {
   const config = environment.config ?? {};
   return {
     host: typeof config.host === "string" ? config.host : "",
@@ -102,30 +102,30 @@ function readSshConfig(environment: Окружение) {
           ? config.port
           : "22",
     username: typeof config.username === "string" ? config.username : "",
-    remoteРабочая областьПуть:
-      typeof config.remoteРабочая областьПуть === "string" ? config.remoteРабочая областьПуть : "",
-    privateКлюч: "",
-    privateКлючСекретId:
-      config.privateКлючСекретRef &&
-      typeof config.privateКлючСекретRef === "object" &&
-      !Array.isArray(config.privateКлючСекретRef) &&
-      typeof (config.privateКлючСекретRef as { secretId?: unknown }).secretId === "string"
-        ? String((config.privateКлючСекретRef as { secretId: string }).secretId)
+    remoteWorkspacePath:
+      typeof config.remoteWorkspacePath === "string" ? config.remoteWorkspacePath : "",
+    privateKey: "",
+    privateKeySecretId:
+      config.privateKeySecretRef &&
+      typeof config.privateKeySecretRef === "object" &&
+      !Array.isArray(config.privateKeySecretRef) &&
+      typeof (config.privateKeySecretRef as { secretId?: unknown }).secretId === "string"
+        ? String((config.privateKeySecretRef as { secretId: string }).secretId)
         : "",
-    knownХостs: typeof config.knownХостs === "string" ? config.knownХостs : "",
-    strictХостКлючChecking:
-      typeof config.strictХостКлючChecking === "boolean"
-        ? config.strictХостКлючChecking
+    knownHosts: typeof config.knownHosts === "string" ? config.knownHosts : "",
+    strictHostKeyChecking:
+      typeof config.strictHostKeyChecking === "boolean"
+        ? config.strictHostKeyChecking
         : true,
   };
 }
 
-function readSandboxConfig(environment: Окружение) {
+function readSandboxConfig(environment: Environment) {
   const config = environment.config ?? {};
-  const { provider: rawПровайдер, ...providerConfig } = config;
+  const { provider: rawProvider, ...providerConfig } = config;
   return {
-    provider: typeof rawПровайдер === "string" && rawПровайдер.trim().length > 0
-      ? rawПровайдер
+    provider: typeof rawProvider === "string" && rawProvider.trim().length > 0
+      ? rawProvider
       : "fake",
     config: providerConfig,
   };
@@ -138,7 +138,7 @@ function normalizeJsonSchema(schema: unknown): JsonSchema | null {
 }
 
 function summarizeSandboxConfig(config: Record<string, unknown>): string | null {
-  for (const key of ["template", "image", "region", "workspaceПуть"]) {
+  for (const key of ["template", "image", "region", "workspacePath"]) {
     const value = config[key];
     if (typeof value === "string" && value.trim().length > 0) {
       return value;
@@ -149,82 +149,82 @@ function summarizeSandboxConfig(config: Record<string, unknown>): string | null 
 
 function SupportMark({ supported }: { supported: boolean }) {
   return supported ? (
-    <span classИмя="inline-flex items-center gap-1 text-green-700 dark:text-green-400">
-      <Check classИмя="h-3 w-3" />
-      Да
+    <span className="inline-flex items-center gap-1 text-green-700 dark:text-green-400">
+      <Check className="h-3 w-3" />
+      Yes
     </span>
   ) : (
-    <span classИмя="text-muted-foreground">Нет</span>
+    <span className="text-muted-foreground">No</span>
   );
 }
 
-export function КомпанияОкружения() {
-  const { selectedКомпания, selectedКомпанияId } = useКомпания();
+export function CompanyEnvironments() {
+  const { selectedCompany, selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [editingОкружениеId, setИзменитьingОкружениеId] = useState<string | null>(null);
-  const [environmentForm, setОкружениеForm] = useState<ОкружениеFormState>(createEmptyОкружениеForm);
-  const [probeResults, setProbeResults] = useState<Record<string, ОкружениеProbeResult | null>>({});
+  const [editingEnvironmentId, setEditingEnvironmentId] = useState<string | null>(null);
+  const [environmentForm, setEnvironmentForm] = useState<EnvironmentFormState>(createEmptyEnvironmentForm);
+  const [probeResults, setProbeResults] = useState<Record<string, EnvironmentProbeResult | null>>({});
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedКомпания?.name ?? "Компания", href: "/dashboard" },
+      { label: selectedCompany?.name ?? "Компания", href: "/dashboard" },
       { label: "Настройки", href: "/company/settings" },
-      { label: "Окружения" },
+      { label: "Environments" },
     ]);
-  }, [selectedКомпания?.name, setBreadcrumbs]);
+  }, [selectedCompany?.name, setBreadcrumbs]);
 
-  const { data: experimentalНастройки } = useQuery({
-    queryКлюч: queryКлючs.instance.experimentalНастройки,
-    queryFn: () => instanceНастройкиApi.getExperimental(),
+  const { data: experimentalSettings } = useQuery({
+    queryKey: queryKeys.instance.experimentalSettings,
+    queryFn: () => instanceSettingsApi.getExperimental(),
     retry: false,
   });
-  const environmentsВключитьd = experimentalНастройки?.enableОкружения === true;
+  const environmentsEnabled = experimentalSettings?.enableEnvironments === true;
 
   const { data: environments } = useQuery({
-    queryКлюч: selectedКомпанияId ? queryКлючs.environments.list(selectedКомпанияId) : ["environments", "none"],
-    queryFn: () => environmentsApi.list(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId) && environmentsВключитьd,
+    queryKey: selectedCompanyId ? queryKeys.environments.list(selectedCompanyId) : ["environments", "none"],
+    queryFn: () => environmentsApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId) && environmentsEnabled,
   });
   const { data: environmentCapabilities } = useQuery({
-    queryКлюч: selectedКомпанияId ? ["environment-capabilities", selectedКомпанияId] : ["environment-capabilities", "none"],
-    queryFn: () => environmentsApi.capabilities(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId) && environmentsВключитьd,
+    queryKey: selectedCompanyId ? ["environment-capabilities", selectedCompanyId] : ["environment-capabilities", "none"],
+    queryFn: () => environmentsApi.capabilities(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId) && environmentsEnabled,
   });
 
   const { data: secrets } = useQuery({
-    queryКлюч: selectedКомпанияId ? ["company-secrets", selectedКомпанияId] : ["company-secrets", "none"],
-    queryFn: () => secretsApi.list(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+    queryKey: selectedCompanyId ? ["company-secrets", selectedCompanyId] : ["company-secrets", "none"],
+    queryFn: () => secretsApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
   });
 
   const environmentMutation = useMutation({
-    mutationFn: async (form: ОкружениеFormState) => {
-      const body = buildОкружениеPayload(form);
+    mutationFn: async (form: EnvironmentFormState) => {
+      const body = buildEnvironmentPayload(form);
 
-      if (editingОкружениеId) {
-        return await environmentsApi.update(editingОкружениеId, body);
+      if (editingEnvironmentId) {
+        return await environmentsApi.update(editingEnvironmentId, body);
       }
 
-      return await environmentsApi.create(selectedКомпанияId!, body);
+      return await environmentsApi.create(selectedCompanyId!, body);
     },
-    onУспешно: async (environment) => {
+    onSuccess: async (environment) => {
       await queryClient.invalidateQueries({
-        queryКлюч: queryКлючs.environments.list(selectedКомпанияId!),
+        queryKey: queryKeys.environments.list(selectedCompanyId!),
       });
-      setИзменитьingОкружениеId(null);
-      setОкружениеForm(createEmptyОкружениеForm());
+      setEditingEnvironmentId(null);
+      setEnvironmentForm(createEmptyEnvironmentForm());
       pushToast({
-        title: editingОкружениеId ? "Окружение updated" : "Окружение created",
+        title: editingEnvironmentId ? "Environment updated" : "Environment created",
         body: `${environment.name} is ready.`,
         tone: "success",
       });
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Ошибка to save environment",
-        body: error instanceof Ошибка ? error.message : "Окружение save failed.",
+        title: "Failed to save environment",
+        body: error instanceof Error ? error.message : "Environment save failed.",
         tone: "error",
       });
     },
@@ -232,249 +232,249 @@ export function КомпанияОкружения() {
 
   const environmentProbeMutation = useMutation({
     mutationFn: async (environmentId: string) => await environmentsApi.probe(environmentId),
-    onУспешно: (probe, environmentId) => {
+    onSuccess: (probe, environmentId) => {
       setProbeResults((current) => ({
         ...current,
         [environmentId]: probe,
       }));
       pushToast({
-        title: probe.ok ? "Окружение probe passed" : "Окружение probe failed",
+        title: probe.ok ? "Environment probe passed" : "Environment probe failed",
         body: probe.summary,
         tone: probe.ok ? "success" : "error",
       });
     },
-    onОшибка: (error, environmentId) => {
-      const failedОкружение = (environments ?? []).find((environment) => environment.id === environmentId);
+    onError: (error, environmentId) => {
+      const failedEnvironment = (environments ?? []).find((environment) => environment.id === environmentId);
       setProbeResults((current) => ({
         ...current,
         [environmentId]: {
           ok: false,
-          driver: failedОкружение?.driver ?? "local",
-          summary: error instanceof Ошибка ? error.message : "Окружение probe failed.",
+          driver: failedEnvironment?.driver ?? "local",
+          summary: error instanceof Error ? error.message : "Environment probe failed.",
           details: null,
         },
       }));
       pushToast({
-        title: "Окружение probe failed",
-        body: error instanceof Ошибка ? error.message : "Окружение probe failed.",
+        title: "Environment probe failed",
+        body: error instanceof Error ? error.message : "Environment probe failed.",
         tone: "error",
       });
     },
   });
 
-  const draftОкружениеProbeMutation = useMutation({
-    mutationFn: async (form: ОкружениеFormState) => {
-      const body = buildОкружениеPayload(form);
-      return await environmentsApi.probeConfig(selectedКомпанияId!, body);
+  const draftEnvironmentProbeMutation = useMutation({
+    mutationFn: async (form: EnvironmentFormState) => {
+      const body = buildEnvironmentPayload(form);
+      return await environmentsApi.probeConfig(selectedCompanyId!, body);
     },
-    onУспешно: (probe) => {
+    onSuccess: (probe) => {
       pushToast({
-        title: probe.ok ? "Черновик probe passed" : "Черновик probe failed",
+        title: probe.ok ? "Draft probe passed" : "Draft probe failed",
         body: probe.summary,
         tone: probe.ok ? "success" : "error",
       });
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Черновик probe failed",
-        body: error instanceof Ошибка ? error.message : "Окружение probe failed.",
+        title: "Draft probe failed",
+        body: error instanceof Error ? error.message : "Environment probe failed.",
         tone: "error",
       });
     },
   });
 
   useEffect(() => {
-    setИзменитьingОкружениеId(null);
-    setОкружениеForm(createEmptyОкружениеForm());
+    setEditingEnvironmentId(null);
+    setEnvironmentForm(createEmptyEnvironmentForm());
     setProbeResults({});
-  }, [selectedКомпанияId]);
+  }, [selectedCompanyId]);
 
-  function handleИзменитьОкружение(environment: Окружение) {
-    setИзменитьingОкружениеId(environment.id);
+  function handleEditEnvironment(environment: Environment) {
+    setEditingEnvironmentId(environment.id);
     if (environment.driver === "ssh") {
       const ssh = readSshConfig(environment);
-      setОкружениеForm({
-        ...createEmptyОкружениеForm(),
+      setEnvironmentForm({
+        ...createEmptyEnvironmentForm(),
         name: environment.name,
         description: environment.description ?? "",
         driver: "ssh",
-        sshХост: ssh.host,
-        sshПорт: ssh.port,
+        sshHost: ssh.host,
+        sshPort: ssh.port,
         sshUsername: ssh.username,
-        sshRemoteРабочая областьПуть: ssh.remoteРабочая областьПуть,
-        sshPrivateКлюч: ssh.privateКлюч,
-        sshPrivateКлючСекретId: ssh.privateКлючСекретId,
-        sshKnownХостs: ssh.knownХостs,
-        sshStrictХостКлючChecking: ssh.strictХостКлючChecking,
+        sshRemoteWorkspacePath: ssh.remoteWorkspacePath,
+        sshPrivateKey: ssh.privateKey,
+        sshPrivateKeySecretId: ssh.privateKeySecretId,
+        sshKnownHosts: ssh.knownHosts,
+        sshStrictHostKeyChecking: ssh.strictHostKeyChecking,
       });
       return;
     }
 
     if (environment.driver === "sandbox") {
       const sandbox = readSandboxConfig(environment);
-      setОкружениеForm({
-        ...createEmptyОкружениеForm(),
+      setEnvironmentForm({
+        ...createEmptyEnvironmentForm(),
         name: environment.name,
         description: environment.description ?? "",
         driver: "sandbox",
-        sandboxПровайдер: sandbox.provider,
+        sandboxProvider: sandbox.provider,
         sandboxConfig: sandbox.config,
       });
       return;
     }
 
-    setОкружениеForm({
-      ...createEmptyОкружениеForm(),
+    setEnvironmentForm({
+      ...createEmptyEnvironmentForm(),
       name: environment.name,
       description: environment.description ?? "",
       driver: "local",
     });
   }
 
-  function handleОтменаОкружениеИзменить() {
-    setИзменитьingОкружениеId(null);
-    setОкружениеForm(createEmptyОкружениеForm());
+  function handleCancelEnvironmentEdit() {
+    setEditingEnvironmentId(null);
+    setEnvironmentForm(createEmptyEnvironmentForm());
   }
 
-  const discoveredPluginSandboxПровайдерs = Object.entries(environmentCapabilities?.sandboxПровайдерs ?? {})
-    .filter(([provider, capability]) => provider !== "fake" && capability.supportsЗапуститьExecution)
+  const discoveredPluginSandboxProviders = Object.entries(environmentCapabilities?.sandboxProviders ?? {})
+    .filter(([provider, capability]) => provider !== "fake" && capability.supportsRunExecution)
     .map(([provider, capability]) => ({
       provider,
-      displayИмя: capability.displayИмя || provider,
+      displayName: capability.displayName || provider,
       description: capability.description,
       configSchema: normalizeJsonSchema(capability.configSchema),
     }))
-    .sort((left, right) => left.displayИмя.localeCompare(right.displayИмя));
-  const sandboxCreationВключитьd = discoveredPluginSandboxПровайдерs.length > 0;
-  const sandboxSupportVisible = sandboxCreationВключитьd;
-  const pluginSandboxПровайдерs =
-    environmentForm.sandboxПровайдер.trim().length > 0 &&
-    environmentForm.sandboxПровайдер !== "fake" &&
-    !discoveredPluginSandboxПровайдерs.some((provider) => provider.provider === environmentForm.sandboxПровайдер)
+    .sort((left, right) => left.displayName.localeCompare(right.displayName));
+  const sandboxCreationEnabled = discoveredPluginSandboxProviders.length > 0;
+  const sandboxSupportVisible = sandboxCreationEnabled;
+  const pluginSandboxProviders =
+    environmentForm.sandboxProvider.trim().length > 0 &&
+    environmentForm.sandboxProvider !== "fake" &&
+    !discoveredPluginSandboxProviders.some((provider) => provider.provider === environmentForm.sandboxProvider)
       ? [
-          ...discoveredPluginSandboxПровайдерs,
-          { provider: environmentForm.sandboxПровайдер, displayИмя: environmentForm.sandboxПровайдер, description: undefined, configSchema: null },
+          ...discoveredPluginSandboxProviders,
+          { provider: environmentForm.sandboxProvider, displayName: environmentForm.sandboxProvider, description: undefined, configSchema: null },
         ]
-      : discoveredPluginSandboxПровайдерs;
+      : discoveredPluginSandboxProviders;
 
-  const selectedSandboxПровайдер = pluginSandboxПровайдерs.find(
-    (provider) => provider.provider === environmentForm.sandboxПровайдер,
+  const selectedSandboxProvider = pluginSandboxProviders.find(
+    (provider) => provider.provider === environmentForm.sandboxProvider,
   ) ?? null;
-  const selectedSandboxSchema = selectedSandboxПровайдер?.configSchema ?? null;
-  const sandboxConfigОшибкаs =
+  const selectedSandboxSchema = selectedSandboxProvider?.configSchema ?? null;
+  const sandboxConfigErrors =
     environmentForm.driver === "sandbox" && selectedSandboxSchema
       ? validateJsonSchemaForm(selectedSandboxSchema as any, environmentForm.sandboxConfig)
       : {};
 
   useEffect(() => {
     if (environmentForm.driver !== "sandbox") return;
-    if (environmentForm.sandboxПровайдер.trim().length > 0 && environmentForm.sandboxПровайдер !== "fake") return;
-    const firstПровайдер = discoveredPluginSandboxПровайдерs[0]?.provider;
-    if (!firstПровайдер) return;
-    const firstSchema = discoveredPluginSandboxПровайдерs[0]?.configSchema;
-    setОкружениеForm((current) => (
-      current.driver !== "sandbox" || (current.sandboxПровайдер.trim().length > 0 && current.sandboxПровайдер !== "fake")
+    if (environmentForm.sandboxProvider.trim().length > 0 && environmentForm.sandboxProvider !== "fake") return;
+    const firstProvider = discoveredPluginSandboxProviders[0]?.provider;
+    if (!firstProvider) return;
+    const firstSchema = discoveredPluginSandboxProviders[0]?.configSchema;
+    setEnvironmentForm((current) => (
+      current.driver !== "sandbox" || (current.sandboxProvider.trim().length > 0 && current.sandboxProvider !== "fake")
         ? current
         : {
             ...current,
-            sandboxПровайдер: firstПровайдер,
-            sandboxConfig: firstSchema ? getПо умолчаниюЗначениеs(firstSchema as any) : {},
+            sandboxProvider: firstProvider,
+            sandboxConfig: firstSchema ? getDefaultValues(firstSchema as any) : {},
           }
     ));
-  }, [discoveredPluginSandboxПровайдерs, environmentForm.driver, environmentForm.sandboxПровайдер]);
+  }, [discoveredPluginSandboxProviders, environmentForm.driver, environmentForm.sandboxProvider]);
 
   const environmentFormValid =
     environmentForm.name.trim().length > 0 &&
     (environmentForm.driver !== "ssh" ||
       (
-        environmentForm.sshХост.trim().length > 0 &&
+        environmentForm.sshHost.trim().length > 0 &&
         environmentForm.sshUsername.trim().length > 0 &&
-        environmentForm.sshRemoteРабочая областьПуть.trim().length > 0
+        environmentForm.sshRemoteWorkspacePath.trim().length > 0
       )) &&
     (environmentForm.driver !== "sandbox" ||
-      environmentForm.sandboxПровайдер.trim().length > 0 &&
-      environmentForm.sandboxПровайдер !== "fake" &&
-      Object.keys(sandboxConfigОшибкаs).length === 0);
+      environmentForm.sandboxProvider.trim().length > 0 &&
+      environmentForm.sandboxProvider !== "fake" &&
+      Object.keys(sandboxConfigErrors).length === 0);
 
-  if (!selectedКомпанияId) {
-    return <div classИмя="text-sm text-muted-foreground">Select a company to manage environments.</div>;
+  if (!selectedCompanyId) {
+    return <div className="text-sm text-muted-foreground">Select a company to manage environments.</div>;
   }
 
-  if (!environmentsВключитьd) {
+  if (!environmentsEnabled) {
     return (
-      <div classИмя="max-w-3xl space-y-4">
-        <div classИмя="flex items-center gap-2">
-          <Настройки classИмя="h-5 w-5 text-muted-foreground" />
-          <h1 classИмя="text-lg font-semibold">Компания Окружения</h1>
+      <div className="max-w-3xl space-y-4">
+        <div className="flex items-center gap-2">
+          <Settings className="h-5 w-5 text-muted-foreground" />
+          <h1 className="text-lg font-semibold">Company Environments</h1>
         </div>
-        <div classИмя="rounded-md border border-border px-4 py-4 text-sm text-muted-foreground">
-          Включить Окружения in instance experimental settings to manage company execution targets.
+        <div className="rounded-md border border-border px-4 py-4 text-sm text-muted-foreground">
+          Enable Environments in instance experimental settings to manage company execution targets.
         </div>
       </div>
     );
   }
 
   return (
-    <div classИмя="max-w-5xl space-y-6" data-testid="company-settings-environments-section">
-      <div classИмя="space-y-2">
-        <div classИмя="flex items-center gap-2">
-          <Настройки classИмя="h-5 w-5 text-muted-foreground" />
-          <h1 classИмя="text-lg font-semibold">Компания Окружения</h1>
+    <div className="max-w-5xl space-y-6" data-testid="company-settings-environments-section">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Settings className="h-5 w-5 text-muted-foreground" />
+          <h1 className="text-lg font-semibold">Company Environments</h1>
         </div>
-        <p classИмя="max-w-3xl text-sm text-muted-foreground">
+        <p className="max-w-3xl text-sm text-muted-foreground">
           Define reusable execution targets for projects, issue workspaces, and remote-capable adapters.
         </p>
       </div>
 
-      <div classИмя="space-y-4 rounded-md border border-border px-4 py-4">
-        <div classИмя="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-          Окружение choices use the same adapter support matrix as agent defaults. SSH is always available for
+      <div className="space-y-4 rounded-md border border-border px-4 py-4">
+        <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+          Environment choices use the same adapter support matrix as agent defaults. SSH is always available for
           remote-managed adapters, and sandbox environments appear only when a run-capable sandbox provider plugin is
           installed.
         </div>
-        {sandboxCreationВключитьd ? (
-          <div classИмя="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+        {sandboxCreationEnabled ? (
+          <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
             Installed sandbox providers:{" "}
-            <span classИмя="font-medium text-foreground">
-              {discoveredPluginSandboxПровайдерs.map((provider) => provider.displayИмя).join(", ")}
+            <span className="font-medium text-foreground">
+              {discoveredPluginSandboxProviders.map((provider) => provider.displayName).join(", ")}
             </span>
             . These are not adapter types. They back the Sandbox driver for adapters that support sandbox execution.
           </div>
         ) : null}
 
-        <div classИмя="overflow-x-auto">
-          <table classИмя="w-full min-w-[34rem] text-left text-xs">
-            <caption classИмя="sr-only">Окружение support by adapter</caption>
-            <thead classИмя="border-b border-border text-muted-foreground">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[34rem] text-left text-xs">
+            <caption className="sr-only">Environment support by adapter</caption>
+            <thead className="border-b border-border text-muted-foreground">
               <tr>
-                <th classИмя="py-2 pr-3 font-medium">Адаптер</th>
-                <th classИмя="px-3 py-2 font-medium">Local</th>
-                <th classИмя="px-3 py-2 font-medium">SSH</th>
+                <th className="py-2 pr-3 font-medium">Adapter</th>
+                <th className="px-3 py-2 font-medium">Local</th>
+                <th className="px-3 py-2 font-medium">SSH</th>
                 {sandboxSupportVisible ? (
-                  <th classИмя="px-3 py-2 font-medium">Sandbox via plugin</th>
+                  <th className="px-3 py-2 font-medium">Sandbox via plugin</th>
                 ) : null}
               </tr>
             </thead>
-            <tbody classИмя="divide-y divide-border/60">
+            <tbody className="divide-y divide-border/60">
               {(environmentCapabilities?.adapters.map((support) => ({
-                adapterТип: support.adapterТип,
+                adapterType: support.adapterType,
                 support,
-              })) ?? ENVIRONMENT_SUPPORT_ROWS).map(({ adapterТип, support }) => (
-                <tr key={adapterТип}>
-                  <td classИмя="py-2 pr-3 font-medium">
-                    {adapterЯрлыки[adapterТип] ?? adapterТип}
+              })) ?? ENVIRONMENT_SUPPORT_ROWS).map(({ adapterType, support }) => (
+                <tr key={adapterType}>
+                  <td className="py-2 pr-3 font-medium">
+                    {adapterLabels[adapterType] ?? adapterType}
                   </td>
-                  <td classИмя="px-3 py-2">
+                  <td className="px-3 py-2">
                     <SupportMark supported={support.drivers.local === "supported"} />
                   </td>
-                  <td classИмя="px-3 py-2">
+                  <td className="px-3 py-2">
                     <SupportMark supported={support.drivers.ssh === "supported"} />
                   </td>
                   {sandboxSupportVisible ? (
-                    <td classИмя="px-3 py-2">
+                    <td className="px-3 py-2">
                       <SupportMark
-                        supported={discoveredPluginSandboxПровайдерs.some((provider) =>
-                          support.sandboxПровайдерs[provider.provider] === "supported")}
+                        supported={discoveredPluginSandboxProviders.some((provider) =>
+                          support.sandboxProviders[provider.provider] === "supported")}
                       />
                     </td>
                   ) : null}
@@ -484,81 +484,81 @@ export function КомпанияОкружения() {
           </table>
         </div>
 
-        <div classИмя="space-y-3">
+        <div className="space-y-3">
           {(environments ?? []).length === 0 ? (
-            <div classИмя="text-sm text-muted-foreground">Нет environments saved for this company yet.</div>
+            <div className="text-sm text-muted-foreground">No environments saved for this company yet.</div>
           ) : (
             (environments ?? []).map((environment) => {
               const probe = probeResults[environment.id] ?? null;
-              const isИзменитьing = editingОкружениеId === environment.id;
+              const isEditing = editingEnvironmentId === environment.id;
               return (
                 <div
                   key={environment.id}
-                  classИмя="rounded-md border border-border/70 px-3 py-3"
+                  className="rounded-md border border-border/70 px-3 py-3"
                 >
-                  <div classИмя="flex flex-wrap items-start justify-between gap-3">
-                    <div classИмя="space-y-1">
-                      <div classИмя="text-sm font-medium">
-                        {environment.name} <span classИмя="text-muted-foreground">· {environment.driver}</span>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium">
+                        {environment.name} <span className="text-muted-foreground">· {environment.driver}</span>
                       </div>
                       {environment.description ? (
-                        <div classИмя="text-xs text-muted-foreground">{environment.description}</div>
+                        <div className="text-xs text-muted-foreground">{environment.description}</div>
                       ) : null}
                       {environment.driver === "ssh" ? (
-                        <div classИмя="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground">
                           {typeof environment.config.host === "string" ? environment.config.host : "SSH host"} ·{" "}
                           {typeof environment.config.username === "string" ? environment.config.username : "user"}
                         </div>
                       ) : environment.driver === "sandbox" ? (
-                        <div classИмя="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground">
                           {(() => {
                             const provider =
                               typeof environment.config.provider === "string" ? environment.config.provider : "sandbox";
-                            const displayИмя =
-                              environmentCapabilities?.sandboxПровайдерs?.[provider]?.displayИмя ?? provider;
+                            const displayName =
+                              environmentCapabilities?.sandboxProviders?.[provider]?.displayName ?? provider;
                             const summary = summarizeSandboxConfig(environment.config as Record<string, unknown>);
-                            return `${displayИмя} sandbox provider${summary ? ` · ${summary}` : ""}`;
+                            return `${displayName} sandbox provider${summary ? ` · ${summary}` : ""}`;
                           })()}
                         </div>
                       ) : (
-                        <div classИмя="text-xs text-muted-foreground">Запуститьs on this Paperclip host.</div>
+                        <div className="text-xs text-muted-foreground">Runs on this Paperclip host.</div>
                       )}
                     </div>
-                    <div classИмя="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {environment.driver !== "local" ? (
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => environmentProbeMutation.mutate(environment.id)}
-                          disabled={environmentProbeMutation.isОжидание}
+                          disabled={environmentProbeMutation.isPending}
                         >
-                          {environmentProbeMutation.isОжидание
-                            ? "Проверитьing..."
+                          {environmentProbeMutation.isPending
+                            ? "Testing..."
                             : environment.driver === "ssh"
-                              ? "Проверить connection"
-                              : "Проверить provider"}
+                              ? "Test connection"
+                              : "Test provider"}
                         </Button>
                       ) : null}
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleИзменитьОкружение(environment)}
+                        onClick={() => handleEditEnvironment(environment)}
                       >
-                        {isИзменитьing ? "Изменитьing" : "Изменить"}
+                        {isEditing ? "Editing" : "Изменить"}
                       </Button>
                     </div>
                   </div>
                   {probe ? (
                     <div
-                      classИмя={
+                      className={
                         probe.ok
                           ? "mt-3 rounded border border-green-500/30 bg-green-500/5 px-2.5 py-2 text-xs text-green-700"
                           : "mt-3 rounded border border-destructive/30 bg-destructive/5 px-2.5 py-2 text-xs text-destructive"
                       }
                     >
-                      <div classИмя="font-medium">{probe.summary}</div>
+                      <div className="font-medium">{probe.summary}</div>
                       {probe.details?.error && typeof probe.details.error === "string" ? (
-                        <div classИмя="mt-1 font-mono text-[11px]">{probe.details.error}</div>
+                        <div className="mt-1 font-mono text-[11px]">{probe.details.error}</div>
                       ) : null}
                     </div>
                   ) : null}
@@ -568,45 +568,45 @@ export function КомпанияОкружения() {
           )}
         </div>
 
-        <div classИмя="border-t border-border/60 pt-4">
-          <div classИмя="mb-3 text-sm font-medium">
-            {editingОкружениеId ? "Изменить environment" : "Добавить окружение"}
+        <div className="border-t border-border/60 pt-4">
+          <div className="mb-3 text-sm font-medium">
+            {editingEnvironmentId ? "Edit environment" : "Add environment"}
           </div>
-          <div classИмя="space-y-3">
+          <div className="space-y-3">
             <Field label="Имя" hint="Operator-facing name for this execution target.">
               <input
-                classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                 type="text"
                 value={environmentForm.name}
-                onChange={(e) => setОкружениеForm((current) => ({ ...current, name: e.target.value }))}
+                onChange={(e) => setEnvironmentForm((current) => ({ ...current, name: e.target.value }))}
               />
             </Field>
-            <Field label="Описание" hint="Опционально note about what this machine is for.">
+            <Field label="Описание" hint="Optional note about what this machine is for.">
               <input
-                classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                 type="text"
                 value={environmentForm.description}
-                onChange={(e) => setОкружениеForm((current) => ({ ...current, description: e.target.value }))}
+                onChange={(e) => setEnvironmentForm((current) => ({ ...current, description: e.target.value }))}
               />
             </Field>
             <Field label="Driver" hint="Local runs on this host. SSH stores a remote machine target. Sandbox stores plugin-backed provider config on the shared environment seam.">
               <select
-                classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                 value={environmentForm.driver}
                 onChange={(e) =>
-                  setОкружениеForm((current) => ({
+                  setEnvironmentForm((current) => ({
                     ...current,
-                    sandboxПровайдер:
+                    sandboxProvider:
                       e.target.value === "sandbox"
-                        ? current.sandboxПровайдер.trim() || discoveredPluginSandboxПровайдерs[0]?.provider || ""
-                        : current.sandboxПровайдер,
+                        ? current.sandboxProvider.trim() || discoveredPluginSandboxProviders[0]?.provider || ""
+                        : current.sandboxProvider,
                     sandboxConfig:
                       e.target.value === "sandbox"
                         ? (
-                            current.sandboxПровайдер.trim().length > 0 && current.driver === "sandbox"
+                            current.sandboxProvider.trim().length > 0 && current.driver === "sandbox"
                               ? current.sandboxConfig
-                              : discoveredPluginSandboxПровайдерs[0]?.configSchema
-                                ? getПо умолчаниюЗначениеs(discoveredPluginSandboxПровайдерs[0].configSchema as any)
+                              : discoveredPluginSandboxProviders[0]?.configSchema
+                                ? getDefaultValues(discoveredPluginSandboxProviders[0].configSchema as any)
                                 : {}
                           )
                         : current.sandboxConfig,
@@ -619,7 +619,7 @@ export function КомпанияОкружения() {
                   }))}
               >
                 <option value="ssh">SSH</option>
-                {sandboxCreationВключитьd || environmentForm.driver === "sandbox" ? (
+                {sandboxCreationEnabled || environmentForm.driver === "sandbox" ? (
                   <option value="sandbox">Sandbox</option>
                 ) : null}
                 <option value="local">Local</option>
@@ -627,119 +627,119 @@ export function КомпанияОкружения() {
             </Field>
 
             {environmentForm.driver === "ssh" ? (
-              <div classИмя="grid gap-3 md:grid-cols-2">
-                <Field label="Хост" hint="DNS name or IP address for the remote machine.">
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Host" hint="DNS name or IP address for the remote machine.">
                   <input
-                    classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                    className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                     type="text"
-                    value={environmentForm.sshХост}
-                    onChange={(e) => setОкружениеForm((current) => ({ ...current, sshХост: e.target.value }))}
+                    value={environmentForm.sshHost}
+                    onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshHost: e.target.value }))}
                   />
                 </Field>
-                <Field label="Порт" hint="По умолчаниюs to 22.">
+                <Field label="Port" hint="Defaults to 22.">
                   <input
-                    classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                    className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                     type="number"
                     min={1}
                     max={65535}
-                    value={environmentForm.sshПорт}
-                    onChange={(e) => setОкружениеForm((current) => ({ ...current, sshПорт: e.target.value }))}
+                    value={environmentForm.sshPort}
+                    onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshPort: e.target.value }))}
                   />
                 </Field>
                 <Field label="Username" hint="SSH login user.">
                   <input
-                    classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                    className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                     type="text"
                     value={environmentForm.sshUsername}
-                    onChange={(e) => setОкружениеForm((current) => ({ ...current, sshUsername: e.target.value }))}
+                    onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshUsername: e.target.value }))}
                   />
                 </Field>
                 <Field label="Remote workspace path" hint="Absolute path that Paperclip will verify during SSH connection tests.">
                   <input
-                    classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                    className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                     type="text"
                     placeholder="/Users/paperclip/workspace"
-                    value={environmentForm.sshRemoteРабочая областьПуть}
+                    value={environmentForm.sshRemoteWorkspacePath}
                     onChange={(e) =>
-                      setОкружениеForm((current) => ({ ...current, sshRemoteРабочая областьПуть: e.target.value }))}
+                      setEnvironmentForm((current) => ({ ...current, sshRemoteWorkspacePath: e.target.value }))}
                   />
                 </Field>
-                <Field label="Private key" hint="Опционально PEM private key. Leave blank to rely on the server's SSH agent or default keychain.">
-                  <div classИмя="space-y-2">
+                <Field label="Private key" hint="Optional PEM private key. Leave blank to rely on the server's SSH agent or default keychain.">
+                  <div className="space-y-2">
                     <select
-                      classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
-                      value={environmentForm.sshPrivateКлючСекретId}
+                      className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                      value={environmentForm.sshPrivateKeySecretId}
                       onChange={(e) =>
-                        setОкружениеForm((current) => ({
+                        setEnvironmentForm((current) => ({
                           ...current,
-                          sshPrivateКлючСекретId: e.target.value,
-                          sshPrivateКлюч: e.target.value ? "" : current.sshPrivateКлюч,
+                          sshPrivateKeySecretId: e.target.value,
+                          sshPrivateKey: e.target.value ? "" : current.sshPrivateKey,
                         }))}
                     >
-                      <option value="">Нет saved secret</option>
+                      <option value="">No saved secret</option>
                       {(secrets ?? []).map((secret) => (
                         <option key={secret.id} value={secret.id}>{secret.name}</option>
                       ))}
                     </select>
                     <textarea
-                      classИмя="h-32 w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-mono outline-none"
-                      value={environmentForm.sshPrivateКлюч}
-                      disabled={!!environmentForm.sshPrivateКлючСекретId}
-                      onChange={(e) => setОкружениеForm((current) => ({ ...current, sshPrivateКлюч: e.target.value }))}
+                      className="h-32 w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-mono outline-none"
+                      value={environmentForm.sshPrivateKey}
+                      disabled={!!environmentForm.sshPrivateKeySecretId}
+                      onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshPrivateKey: e.target.value }))}
                     />
                   </div>
                 </Field>
-                <Field label="Known hosts" hint="Опционально known_hosts block used when strict host key checking is enabled.">
+                <Field label="Known hosts" hint="Optional known_hosts block used when strict host key checking is enabled.">
                   <textarea
-                    classИмя="h-32 w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-mono outline-none"
-                    value={environmentForm.sshKnownХостs}
-                    onChange={(e) => setОкружениеForm((current) => ({ ...current, sshKnownХостs: e.target.value }))}
+                    className="h-32 w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-mono outline-none"
+                    value={environmentForm.sshKnownHosts}
+                    onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshKnownHosts: e.target.value }))}
                   />
                 </Field>
-                <div classИмя="md:col-span-2">
+                <div className="md:col-span-2">
                   <ToggleField
                     label="Strict host key checking"
                     hint="Keep this on unless you deliberately want probe-time host key acceptance disabled."
-                    checked={environmentForm.sshStrictХостКлючChecking}
+                    checked={environmentForm.sshStrictHostKeyChecking}
                     onChange={(checked) =>
-                      setОкружениеForm((current) => ({ ...current, sshStrictХостКлючChecking: checked }))}
+                      setEnvironmentForm((current) => ({ ...current, sshStrictHostKeyChecking: checked }))}
                   />
                 </div>
               </div>
             ) : null}
 
             {environmentForm.driver === "sandbox" ? (
-              <div classИмя="grid gap-3 md:grid-cols-2">
-                <Field label="Провайдер" hint="Installed run-capable sandbox provider plugins appear here.">
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Provider" hint="Installed run-capable sandbox provider plugins appear here.">
                   <select
-                    classИмя="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
-                    value={environmentForm.sandboxПровайдер}
+                    className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+                    value={environmentForm.sandboxProvider}
                     onChange={(e) => {
-                      const nextПровайдерКлюч = e.target.value;
-                      const nextПровайдер = pluginSandboxПровайдерs.find((provider) => provider.provider === nextПровайдерКлюч) ?? null;
-                      setОкружениеForm((current) => ({
+                      const nextProviderKey = e.target.value;
+                      const nextProvider = pluginSandboxProviders.find((provider) => provider.provider === nextProviderKey) ?? null;
+                      setEnvironmentForm((current) => ({
                         ...current,
-                        sandboxПровайдер: nextПровайдерКлюч,
+                        sandboxProvider: nextProviderKey,
                         sandboxConfig:
-                          current.sandboxПровайдер === nextПровайдерКлюч
+                          current.sandboxProvider === nextProviderKey
                             ? current.sandboxConfig
-                            : nextПровайдер?.configSchema
-                              ? getПо умолчаниюЗначениеs(nextПровайдер.configSchema as any)
+                            : nextProvider?.configSchema
+                              ? getDefaultValues(nextProvider.configSchema as any)
                               : {},
                       }));
                     }}
                   >
-                    {pluginSandboxПровайдерs.map((provider) => (
+                    {pluginSandboxProviders.map((provider) => (
                       <option key={provider.provider} value={provider.provider}>
-                        {provider.displayИмя}
+                        {provider.displayName}
                       </option>
                     ))}
                   </select>
                 </Field>
-                <div classИмя="md:col-span-2 space-y-3">
-                  {selectedSandboxПровайдер?.description ? (
-                    <div classИмя="text-xs text-muted-foreground">
-                      {selectedSandboxПровайдер.description}
+                <div className="md:col-span-2 space-y-3">
+                  {selectedSandboxProvider?.description ? (
+                    <div className="text-xs text-muted-foreground">
+                      {selectedSandboxProvider.description}
                     </div>
                   ) : null}
                   {selectedSandboxSchema ? (
@@ -747,11 +747,11 @@ export function КомпанияОкружения() {
                       schema={selectedSandboxSchema as any}
                       values={environmentForm.sandboxConfig}
                       onChange={(values) =>
-                        setОкружениеForm((current) => ({ ...current, sandboxConfig: values }))}
-                      errors={sandboxConfigОшибкаs}
+                        setEnvironmentForm((current) => ({ ...current, sandboxConfig: values }))}
+                      errors={sandboxConfigErrors}
                     />
                   ) : (
-                    <div classИмя="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                    <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
                       This provider does not declare additional configuration fields.
                     </div>
                   )}
@@ -759,50 +759,50 @@ export function КомпанияОкружения() {
               </div>
             ) : null}
 
-            <div classИмя="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
                 onClick={() => environmentMutation.mutate(environmentForm)}
-                disabled={environmentMutation.isОжидание || !environmentFormValid}
+                disabled={environmentMutation.isPending || !environmentFormValid}
               >
-                {environmentMutation.isОжидание
-                  ? editingОкружениеId
+                {environmentMutation.isPending
+                  ? editingEnvironmentId
                     ? "Saving..."
                     : "Creating..."
-                  : editingОкружениеId
-                    ? "Сохранить environment"
-                    : "Создать environment"}
+                  : editingEnvironmentId
+                    ? "Save environment"
+                    : "Create environment"}
               </Button>
-              {editingОкружениеId ? (
+              {editingEnvironmentId ? (
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={handleОтменаОкружениеИзменить}
-                  disabled={environmentMutation.isОжидание}
+                  onClick={handleCancelEnvironmentEdit}
+                  disabled={environmentMutation.isPending}
                 >
-                  Отмена
+                  Cancel
                 </Button>
               ) : null}
               {environmentForm.driver !== "local" ? (
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => draftОкружениеProbeMutation.mutate(environmentForm)}
-                  disabled={draftОкружениеProbeMutation.isОжидание || !environmentFormValid}
+                  onClick={() => draftEnvironmentProbeMutation.mutate(environmentForm)}
+                  disabled={draftEnvironmentProbeMutation.isPending || !environmentFormValid}
                 >
-                  {draftОкружениеProbeMutation.isОжидание ? "Проверитьing..." : "Проверить draft"}
+                  {draftEnvironmentProbeMutation.isPending ? "Testing..." : "Test draft"}
                 </Button>
               ) : null}
-              {environmentMutation.isОшибка ? (
-                <span classИмя="text-xs text-destructive">
-                  {environmentMutation.error instanceof Ошибка
+              {environmentMutation.isError ? (
+                <span className="text-xs text-destructive">
+                  {environmentMutation.error instanceof Error
                     ? environmentMutation.error.message
-                    : "Ошибка to save environment"}
+                    : "Failed to save environment"}
                 </span>
               ) : null}
-              {draftОкружениеProbeMutation.data ? (
-                <span classИмя={draftОкружениеProbeMutation.data.ok ? "text-xs text-green-600" : "text-xs text-destructive"}>
-                  {draftОкружениеProbeMutation.data.summary}
+              {draftEnvironmentProbeMutation.data ? (
+                <span className={draftEnvironmentProbeMutation.data.ok ? "text-xs text-green-600" : "text-xs text-destructive"}>
+                  {draftEnvironmentProbeMutation.data.summary}
                 </span>
               ) : null}
             </div>

@@ -3,51 +3,51 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   AlertTriangle,
-  АрхивироватьRestore,
-  Архивировать,
+  ArchiveRestore,
+  Archive,
   Ban,
   CheckCircle2,
   Cloud,
   Database,
-  Изменить3,
+  Edit3,
   ExternalLink,
-  КлючRound,
+  KeyRound,
   Link2,
   Loader2,
   Plus,
-  ОбновитьCw,
-  Поиск,
+  RefreshCw,
+  Search,
   ShieldCheck,
   Star,
   Trash2,
   X,
-  Фильтр,
+  Filter,
   Info,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type {
-  КомпанияСекрет,
-  КомпанияСекретИспользованиеBinding,
-  КомпанияСекретПровайдерConfig,
-  СекретДоступEvent,
-  СекретManagedMode,
-  СекретПровайдер,
-  СекретПровайдерConfigСтатус,
-  СекретПровайдерDescriptor,
-  СекретСтатус,
+  CompanySecret,
+  CompanySecretUsageBinding,
+  CompanySecretProviderConfig,
+  SecretAccessEvent,
+  SecretManagedMode,
+  SecretProvider,
+  SecretProviderConfigStatus,
+  SecretProviderDescriptor,
+  SecretStatus,
 } from "@paperclipai/shared";
-import { useКомпания } from "../context/КомпанияContext";
+import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToastActions } from "../context/ToastContext";
 import {
   secretsApi,
-  type СоздатьСекретInput,
-  type СоздатьСекретПровайдерConfigInput,
-  type СекретПровайдерHealthResponse,
-  type ОбновитьСекретПровайдерConfigInput,
+  type CreateSecretInput,
+  type CreateSecretProviderConfigInput,
+  type SecretProviderHealthResponse,
+  type UpdateSecretProviderConfigInput,
 } from "../api/secrets";
-import { ApiОшибка } from "../api/client";
-import { queryКлючs } from "../lib/queryКлючs";
+import { ApiError } from "../api/client";
+import { queryKeys } from "../lib/queryKeys";
 import { EmptyState } from "../components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,102 +58,102 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
-  SheetНазвание,
-  SheetОписание,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import {
   Dialog,
   DialogContent,
-  DialogОписание,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogНазвание,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "../lib/utils";
 import { PageTabBar } from "../components/PageTabBar";
-import { ИмпортFromVaultDialog } from "./secrets/ИмпортFromVaultDialog";
+import { ImportFromVaultDialog } from "./secrets/ImportFromVaultDialog";
 
-type СоздатьMode = "managed" | "external";
-type СекретыTab = "secrets" | "vaults";
+type CreateMode = "managed" | "external";
+type SecretsTab = "secrets" | "vaults";
 
-type ПровайдерVaultForm = {
-  provider: СекретПровайдер;
-  displayИмя: string;
-  status: СекретПровайдерConfigСтатус;
-  isПо умолчанию: boolean;
+type ProviderVaultForm = {
+  provider: SecretProvider;
+  displayName: string;
+  status: SecretProviderConfigStatus;
+  isDefault: boolean;
   backupReminderAcknowledged: boolean;
   region: string;
   namespace: string;
-  secretИмяPrefix: string;
-  kmsКлючId: string;
+  secretNamePrefix: string;
+  kmsKeyId: string;
   ownerTag: string;
   environmentTag: string;
   projectId: string;
   location: string;
   address: string;
-  mountПуть: string;
-  secretПутьPrefix: string;
+  mountPath: string;
+  secretPathPrefix: string;
 };
 
-const PROVIDER_ORDER: СекретПровайдер[] = [
+const PROVIDER_ORDER: SecretProvider[] = [
   "local_encrypted",
   "aws_secrets_manager",
   "gcp_secret_manager",
   "vault",
 ];
 
-function defaultПровайдерVaultСтатус(provider: СекретПровайдер): СекретПровайдерConfigСтатус {
+function defaultProviderVaultStatus(provider: SecretProvider): SecretProviderConfigStatus {
   return provider === "gcp_secret_manager" || provider === "vault" ? "coming_soon" : "ready";
 }
 
-function emptyПровайдерVaultForm(provider: СекретПровайдер = "local_encrypted"): ПровайдерVaultForm {
+function emptyProviderVaultForm(provider: SecretProvider = "local_encrypted"): ProviderVaultForm {
   return {
     provider,
-    displayИмя: "",
-    status: defaultПровайдерVaultСтатус(provider),
-    isПо умолчанию: false,
+    displayName: "",
+    status: defaultProviderVaultStatus(provider),
+    isDefault: false,
     backupReminderAcknowledged: false,
     region: "",
     namespace: "",
-    secretИмяPrefix: "",
-    kmsКлючId: "",
+    secretNamePrefix: "",
+    kmsKeyId: "",
     ownerTag: "",
     environmentTag: "",
     projectId: "",
     location: "",
     address: "",
-    mountПуть: "",
-    secretПутьPrefix: "",
+    mountPath: "",
+    secretPathPrefix: "",
   };
 }
 
-function providerConfigЗначение(config: КомпанияСекретПровайдерConfig["config"], key: string) {
+function providerConfigValue(config: CompanySecretProviderConfig["config"], key: string) {
   if (!config || typeof config !== "object" || Array.isArray(config)) return "";
   const value = (config as Record<string, unknown>)[key];
   return typeof value === "string" ? value : "";
 }
 
-function providerVaultFormFromConfig(config: КомпанияСекретПровайдерConfig): ПровайдерVaultForm {
+function providerVaultFormFromConfig(config: CompanySecretProviderConfig): ProviderVaultForm {
   return {
-    ...emptyПровайдерVaultForm(config.provider),
-    displayИмя: config.displayИмя,
+    ...emptyProviderVaultForm(config.provider),
+    displayName: config.displayName,
     status: config.status,
-    isПо умолчанию: config.isПо умолчанию,
+    isDefault: config.isDefault,
     backupReminderAcknowledged:
       Boolean((config.config as Record<string, unknown> | undefined)?.backupReminderAcknowledged),
-    region: providerConfigЗначение(config.config, "region"),
-    namespace: providerConfigЗначение(config.config, "namespace"),
-    secretИмяPrefix: providerConfigЗначение(config.config, "secretИмяPrefix"),
-    kmsКлючId: providerConfigЗначение(config.config, "kmsКлючId"),
-    ownerTag: providerConfigЗначение(config.config, "ownerTag"),
-    environmentTag: providerConfigЗначение(config.config, "environmentTag"),
-    projectId: providerConfigЗначение(config.config, "projectId"),
-    location: providerConfigЗначение(config.config, "location"),
-    address: providerConfigЗначение(config.config, "address"),
-    mountПуть: providerConfigЗначение(config.config, "mountПуть"),
-    secretПутьPrefix: providerConfigЗначение(config.config, "secretПутьPrefix"),
+    region: providerConfigValue(config.config, "region"),
+    namespace: providerConfigValue(config.config, "namespace"),
+    secretNamePrefix: providerConfigValue(config.config, "secretNamePrefix"),
+    kmsKeyId: providerConfigValue(config.config, "kmsKeyId"),
+    ownerTag: providerConfigValue(config.config, "ownerTag"),
+    environmentTag: providerConfigValue(config.config, "environmentTag"),
+    projectId: providerConfigValue(config.config, "projectId"),
+    location: providerConfigValue(config.config, "location"),
+    address: providerConfigValue(config.config, "address"),
+    mountPath: providerConfigValue(config.config, "mountPath"),
+    secretPathPrefix: providerConfigValue(config.config, "secretPathPrefix"),
   };
 }
 
@@ -174,7 +174,7 @@ function formatRelative(value: Date | string | null | undefined): string {
   return date.toLocaleDateString();
 }
 
-function statusTextTone(status: СекретСтатус) {
+function statusTextTone(status: SecretStatus) {
   switch (status) {
     case "active":
       return "text-emerald-700 dark:text-emerald-300";
@@ -189,56 +189,56 @@ function statusTextTone(status: СекретСтатус) {
   }
 }
 
-function providerLabel(providers: СекретПровайдерDescriptor[] | undefined, id: СекретПровайдер) {
-  return providers?.find((p) => p.id === id)?.label ?? id.replaceВсе("_", " ");
+function providerLabel(providers: SecretProviderDescriptor[] | undefined, id: SecretProvider) {
+  return providers?.find((p) => p.id === id)?.label ?? id.replaceAll("_", " ");
 }
 
-function normalizeСекретКлючForПредпросмотр(input: string) {
+function normalizeSecretKeyForPreview(input: string) {
   return input
     .trim()
-    .toНизкийerCase()
+    .toLowerCase()
     .replace(/[^a-z0-9_.-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 120);
 }
 
 
-function modeLabel(managedMode: СекретManagedMode) {
+function modeLabel(managedMode: SecretManagedMode) {
   return managedMode === "paperclip_managed" ? "Paperclip-managed" : "Linked external";
 }
 
-function modeОписание(managedMode: СекретManagedMode) {
+function modeDescription(managedMode: SecretManagedMode) {
   return managedMode === "paperclip_managed"
     ? "Paperclip owns create and rotation writes for this provider secret."
     : "Paperclip resolves this provider reference but does not rotate the provider value.";
 }
 
-function healthEntryForПровайдер(
-  health: СекретПровайдерHealthResponse | null,
-  providerId: СекретПровайдер,
+function healthEntryForProvider(
+  health: SecretProviderHealthResponse | null,
+  providerId: SecretProvider,
 ) {
   return health?.providers.find((entry) => entry.provider === providerId) ?? null;
 }
 
-export function getСоздатьПровайдерBlockReason(
-  provider: СекретПровайдерDescriptor | null | undefined,
-  mode: СоздатьMode,
-  health: СекретПровайдерHealthResponse | null,
+export function getCreateProviderBlockReason(
+  provider: SecretProviderDescriptor | null | undefined,
+  mode: CreateMode,
+  health: SecretProviderHealthResponse | null,
 ) {
   if (!provider) return "Select a provider.";
-  if (mode === "managed" && provider.supportsManagedЗначениеs === false) {
+  if (mode === "managed" && provider.supportsManagedValues === false) {
     return `${provider.label} does not support Paperclip-managed secret values.`;
   }
-  if (mode === "external" && provider.supportsExternalСсылки === false) {
+  if (mode === "external" && provider.supportsExternalReferences === false) {
     return `${provider.label} does not support linked external references.`;
   }
   if (provider.configured === false) {
-    const healthEntry = healthEntryForПровайдер(health, provider.id);
+    const healthEntry = healthEntryForProvider(health, provider.id);
     return healthEntry?.message
       ? `${provider.label} is not configured in this deployment. ${healthEntry.message}`
       : `${provider.label} is not configured in this deployment.`;
   }
-  const healthEntry = healthEntryForПровайдер(health, provider.id);
+  const healthEntry = healthEntryForProvider(health, provider.id);
   if (healthEntry?.status === "error") {
     return `${provider.label} health check failed: ${healthEntry.message}`;
   }
@@ -246,11 +246,11 @@ export function getСоздатьПровайдерBlockReason(
 }
 
 function providerHealthText(
-  provider: СекретПровайдерDescriptor | null | undefined,
-  health: СекретПровайдерHealthResponse | null,
+  provider: SecretProviderDescriptor | null | undefined,
+  health: SecretProviderHealthResponse | null,
 ) {
   if (!provider) return null;
-  const entry = healthEntryForПровайдер(health, provider.id);
+  const entry = healthEntryForProvider(health, provider.id);
   if (!entry) return null;
   const warnings = entry.warnings?.join(" ");
   return [entry.message, warnings].filter(Boolean).join(" ");
@@ -261,38 +261,38 @@ function detailString(details: Record<string, unknown> | undefined, key: string)
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-export function getПровайдерConfigBlockReason(
-  config: КомпанияСекретПровайдерConfig | null | undefined,
+export function getProviderConfigBlockReason(
+  config: CompanySecretProviderConfig | null | undefined,
 ) {
   if (!config) return null;
   if (config.status === "disabled") return "This provider vault is disabled.";
   if (config.status === "coming_soon") return "This provider vault is saved as draft metadata only.";
-  if (config.healthСтатус === "error") {
+  if (config.healthStatus === "error") {
     return config.healthMessage ?? "This provider vault health check failed.";
   }
   return null;
 }
 
-export function getПо умолчаниюПровайдерConfigId(
-  configs: КомпанияСекретПровайдерConfig[],
-  provider: СекретПровайдер,
+export function getDefaultProviderConfigId(
+  configs: CompanySecretProviderConfig[],
+  provider: SecretProvider,
 ) {
   const providerConfigs = configs.filter((config) => config.provider === provider);
-  const selectable = providerConfigs.filter((config) => !getПровайдерConfigBlockReason(config));
+  const selectable = providerConfigs.filter((config) => !getProviderConfigBlockReason(config));
   return (
-    selectable.find((config) => config.isПо умолчанию)?.id ??
+    selectable.find((config) => config.isDefault)?.id ??
     selectable[0]?.id ??
-    providerConfigs.find((config) => config.isПо умолчанию)?.id ??
+    providerConfigs.find((config) => config.isDefault)?.id ??
     ""
   );
 }
 
-function providerVaultLabel(configs: КомпанияСекретПровайдерConfig[], id: string | null | undefined) {
+function providerVaultLabel(configs: CompanySecretProviderConfig[], id: string | null | undefined) {
   if (!id) return "Deployment default";
-  return configs.find((config) => config.id === id)?.displayИмя ?? "Неизвестно vault";
+  return configs.find((config) => config.id === id)?.displayName ?? "Unknown vault";
 }
 
-function buildПровайдерVaultConfig(form: ПровайдерVaultForm): Record<string, unknown> {
+function buildProviderVaultConfig(form: ProviderVaultForm): Record<string, unknown> {
   const compact = (value: string) => value.trim() || null;
   switch (form.provider) {
     case "local_encrypted":
@@ -301,8 +301,8 @@ function buildПровайдерVaultConfig(form: ПровайдерVaultForm): 
       return {
         region: form.region.trim(),
         namespace: compact(form.namespace),
-        secretИмяPrefix: compact(form.secretИмяPrefix),
-        kmsКлючId: compact(form.kmsКлючId),
+        secretNamePrefix: compact(form.secretNamePrefix),
+        kmsKeyId: compact(form.kmsKeyId),
         ownerTag: compact(form.ownerTag),
         environmentTag: compact(form.environmentTag),
       };
@@ -311,208 +311,208 @@ function buildПровайдерVaultConfig(form: ПровайдерVaultForm): 
         projectId: compact(form.projectId),
         location: compact(form.location),
         namespace: compact(form.namespace),
-        secretИмяPrefix: compact(form.secretИмяPrefix),
+        secretNamePrefix: compact(form.secretNamePrefix),
       };
     case "vault":
       return {
         address: compact(form.address),
         namespace: compact(form.namespace),
-        mountПуть: compact(form.mountПуть),
-        secretПутьPrefix: compact(form.secretПутьPrefix),
+        mountPath: compact(form.mountPath),
+        secretPathPrefix: compact(form.secretPathPrefix),
       };
     default:
       return {};
   }
 }
 
-export function getAwsManagedПутьПредпросмотр(input: {
-  provider: СекретПровайдерDescriptor | null | undefined;
-  health: СекретПровайдерHealthResponse | null;
+export function getAwsManagedPathPreview(input: {
+  provider: SecretProviderDescriptor | null | undefined;
+  health: SecretProviderHealthResponse | null;
   companyId: string;
-  secretКлючSource: string;
+  secretKeySource: string;
 }) {
   if (input.provider?.id !== "aws_secrets_manager") return null;
-  const healthEntry = healthEntryForПровайдер(input.health, "aws_secrets_manager");
+  const healthEntry = healthEntryForProvider(input.health, "aws_secrets_manager");
   const prefix = detailString(healthEntry?.details, "prefix") ?? "paperclip";
   const deploymentId = detailString(healthEntry?.details, "deploymentId") ?? "{deploymentId}";
-  const secretКлюч = normalizeСекретКлючForПредпросмотр(input.secretКлючSource) || "{secretКлюч}";
-  return `${prefix}/${deploymentId}/${input.companyId}/${secretКлюч}`;
+  const secretKey = normalizeSecretKeyForPreview(input.secretKeySource) || "{secretKey}";
+  return `${prefix}/${deploymentId}/${input.companyId}/${secretKey}`;
 }
 
-export function Секреты() {
+export function Secrets() {
   const queryClient = useQueryClient();
-  const { selectedКомпанияId } = useКомпания();
+  const { selectedCompanyId } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToastActions();
-  const [activeTab, setАктивенTab] = useState<СекретыTab>("secrets");
-  const [secretDetailTab, setСекретDetailTab] = useState("details");
-  const [search, setПоиск] = useState("");
-  const [statusФильтр, setСтатусФильтр] = useState<СекретСтатус | "all">("active");
-  const [providerФильтр, setПровайдерФильтр] = useState<СекретПровайдер | "all">("all");
-  const [selectedСекретId, setSelectedСекретId] = useState<string | null>(null);
-  const [usageDialogСекретId, setИспользованиеDialogСекретId] = useState<string | null>(null);
-  const [createOpen, setСоздатьOpen] = useState(false);
-  const [importOpen, setИмпортOpen] = useState(false);
-  const [createMode, setСоздатьMode] = useState<СоздатьMode>("managed");
-  const [createForm, setСоздатьForm] = useState({
+  const [activeTab, setActiveTab] = useState<SecretsTab>("secrets");
+  const [secretDetailTab, setSecretDetailTab] = useState("details");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<SecretStatus | "all">("active");
+  const [providerFilter, setProviderFilter] = useState<SecretProvider | "all">("all");
+  const [selectedSecretId, setSelectedSecretId] = useState<string | null>(null);
+  const [usageDialogSecretId, setUsageDialogSecretId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<CreateMode>("managed");
+  const [createForm, setCreateForm] = useState({
     name: "",
     key: "",
     value: "",
     description: "",
     externalRef: "",
-    provider: "local_encrypted" as СекретПровайдер,
+    provider: "local_encrypted" as SecretProvider,
     providerConfigId: "",
   });
-  const [createОшибка, setСоздатьОшибка] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [rotateOpen, setRotateOpen] = useState(false);
-  const [rotateЗначение, setRotateЗначение] = useState("");
+  const [rotateValue, setRotateValue] = useState("");
   const [rotateExternalRef, setRotateExternalRef] = useState("");
-  const [rotateПровайдерConfigId, setRotateПровайдерConfigId] = useState("");
-  const [rotateОшибка, setRotateОшибка] = useState<string | null>(null);
-  const [deleteПодтвердить, setУдалитьПодтвердить] = useState<КомпанияСекрет | null>(null);
+  const [rotateProviderConfigId, setRotateProviderConfigId] = useState("");
+  const [rotateError, setRotateError] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<CompanySecret | null>(null);
   const [vaultDialogOpen, setVaultDialogOpen] = useState(false);
-  const [editingVault, setИзменитьingVault] = useState<КомпанияСекретПровайдерConfig | null>(null);
-  const [vaultForm, setVaultForm] = useState<ПровайдерVaultForm>(() => emptyПровайдерVaultForm());
-  const [vaultОшибка, setVaultОшибка] = useState<string | null>(null);
+  const [editingVault, setEditingVault] = useState<CompanySecretProviderConfig | null>(null);
+  const [vaultForm, setVaultForm] = useState<ProviderVaultForm>(() => emptyProviderVaultForm());
+  const [vaultError, setVaultError] = useState<string | null>(null);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Секреты" }]);
+    setBreadcrumbs([{ label: "Secrets" }]);
   }, [setBreadcrumbs]);
 
   const secretsQuery = useQuery({
-    queryКлюч: selectedКомпанияId
-      ? queryКлючs.secrets.list(selectedКомпанияId)
+    queryKey: selectedCompanyId
+      ? queryKeys.secrets.list(selectedCompanyId)
       : ["secrets", "__disabled__"],
-    queryFn: () => secretsApi.list(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+    queryFn: () => secretsApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
   });
 
   const providersQuery = useQuery({
-    queryКлюч: selectedКомпанияId
-      ? queryКлючs.secrets.providers(selectedКомпанияId)
+    queryKey: selectedCompanyId
+      ? queryKeys.secrets.providers(selectedCompanyId)
       : ["secret-providers", "__disabled__"],
-    queryFn: () => secretsApi.providers(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+    queryFn: () => secretsApi.providers(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
     staleTime: 5 * 60_000,
   });
 
   const providerHealthQuery = useQuery({
-    queryКлюч: selectedКомпанияId
-      ? ["secret-provider-health", selectedКомпанияId]
+    queryKey: selectedCompanyId
+      ? ["secret-provider-health", selectedCompanyId]
       : ["secret-provider-health", "__disabled__"],
-    queryFn: () => secretsApi.providerHealth(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+    queryFn: () => secretsApi.providerHealth(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
     refetchInterval: 60_000,
     retry: false,
   });
 
   const providerConfigsQuery = useQuery({
-    queryКлюч: selectedКомпанияId
-      ? queryКлючs.secrets.providerConfigs(selectedКомпанияId)
+    queryKey: selectedCompanyId
+      ? queryKeys.secrets.providerConfigs(selectedCompanyId)
       : ["secret-provider-configs", "__disabled__"],
-    queryFn: () => secretsApi.providerConfigs(selectedКомпанияId!),
-    enabled: Boolean(selectedКомпанияId),
+    queryFn: () => secretsApi.providerConfigs(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
     retry: false,
   });
 
   const secrets = secretsQuery.data ?? [];
   const providers = providersQuery.data ?? [];
   const providerConfigs = providerConfigsQuery.data ?? [];
-  const selectedСекрет = useMemo(
-    () => secrets.find((secret) => secret.id === selectedСекретId) ?? null,
-    [secrets, selectedСекретId],
+  const selectedSecret = useMemo(
+    () => secrets.find((secret) => secret.id === selectedSecretId) ?? null,
+    [secrets, selectedSecretId],
   );
-  const usageDialogСекрет = useMemo(
-    () => secrets.find((secret) => secret.id === usageDialogСекретId) ?? null,
-    [secrets, usageDialogСекретId],
+  const usageDialogSecret = useMemo(
+    () => secrets.find((secret) => secret.id === usageDialogSecretId) ?? null,
+    [secrets, usageDialogSecretId],
   );
-  const selectedСоздатьПровайдер = useMemo(
+  const selectedCreateProvider = useMemo(
     () => providers.find((provider) => provider.id === createForm.provider) ?? null,
     [providers, createForm.provider],
   );
-  const createПровайдерConfigs = useMemo(
+  const createProviderConfigs = useMemo(
     () => providerConfigs.filter((config) => config.provider === createForm.provider),
     [createForm.provider, providerConfigs],
   );
-  const selectedСоздатьПровайдерConfig = useMemo(
+  const selectedCreateProviderConfig = useMemo(
     () => providerConfigs.find((config) => config.id === createForm.providerConfigId) ?? null,
     [createForm.providerConfigId, providerConfigs],
   );
-  const selectedRotateПровайдерConfigs = useMemo(
-    () => providerConfigs.filter((config) => config.provider === selectedСекрет?.provider),
-    [providerConfigs, selectedСекрет?.provider],
+  const selectedRotateProviderConfigs = useMemo(
+    () => providerConfigs.filter((config) => config.provider === selectedSecret?.provider),
+    [providerConfigs, selectedSecret?.provider],
   );
-  const selectedRotateПровайдерConfig = useMemo(
-    () => providerConfigs.find((config) => config.id === rotateПровайдерConfigId) ?? null,
-    [providerConfigs, rotateПровайдерConfigId],
+  const selectedRotateProviderConfig = useMemo(
+    () => providerConfigs.find((config) => config.id === rotateProviderConfigId) ?? null,
+    [providerConfigs, rotateProviderConfigId],
   );
-  const createПровайдерBlockReason = getСоздатьПровайдерBlockReason(
-    selectedСоздатьПровайдер,
+  const createProviderBlockReason = getCreateProviderBlockReason(
+    selectedCreateProvider,
     createMode,
     providerHealthQuery.data ?? null,
-  ) ?? getПровайдерConfigBlockReason(selectedСоздатьПровайдерConfig);
-  const rotateПровайдерBlockReason = getПровайдерConfigBlockReason(selectedRotateПровайдерConfig);
-  const createПровайдерHealthText = providerHealthText(
-    selectedСоздатьПровайдер,
+  ) ?? getProviderConfigBlockReason(selectedCreateProviderConfig);
+  const rotateProviderBlockReason = getProviderConfigBlockReason(selectedRotateProviderConfig);
+  const createProviderHealthText = providerHealthText(
+    selectedCreateProvider,
     providerHealthQuery.data ?? null,
   );
-  const awsManagedПутьПредпросмотр = getAwsManagedПутьПредпросмотр({
-    provider: selectedСоздатьПровайдер,
+  const awsManagedPathPreview = getAwsManagedPathPreview({
+    provider: selectedCreateProvider,
     health: providerHealthQuery.data ?? null,
-    companyId: selectedКомпанияId ?? "{companyId}",
-    secretКлючSource: createForm.key.trim() || createForm.name,
+    companyId: selectedCompanyId ?? "{companyId}",
+    secretKeySource: createForm.key.trim() || createForm.name,
   });
 
   const filtered = useMemo(() => {
-    const needle = search.trim().toНизкийerCase();
+    const needle = search.trim().toLowerCase();
     return secrets.filter((secret) => {
-      if (statusФильтр !== "all" && secret.status !== statusФильтр) return false;
-      if (providerФильтр !== "all" && secret.provider !== providerФильтр) return false;
+      if (statusFilter !== "all" && secret.status !== statusFilter) return false;
+      if (providerFilter !== "all" && secret.provider !== providerFilter) return false;
       if (!needle) return true;
       return (
-        secret.name.toНизкийerCase().includes(needle) ||
-        secret.key.toНизкийerCase().includes(needle) ||
-        (secret.description?.toНизкийerCase().includes(needle) ?? false) ||
-        (secret.externalRef?.toНизкийerCase().includes(needle) ?? false)
+        secret.name.toLowerCase().includes(needle) ||
+        secret.key.toLowerCase().includes(needle) ||
+        (secret.description?.toLowerCase().includes(needle) ?? false) ||
+        (secret.externalRef?.toLowerCase().includes(needle) ?? false)
       );
     });
-  }, [secrets, search, statusФильтр, providerФильтр]);
-  const activeСекретФильтрCount = (statusФильтр === "active" ? 0 : 1) + (providerФильтр === "all" ? 0 : 1);
+  }, [secrets, search, statusFilter, providerFilter]);
+  const activeSecretFilterCount = (statusFilter === "active" ? 0 : 1) + (providerFilter === "all" ? 0 : 1);
 
   const usageQuery = useQuery({
-    queryКлюч: selectedСекрет ? queryКлючs.secrets.usage(selectedСекрет.id) : ["secrets", "usage", "__disabled__"],
-    queryFn: () => secretsApi.usage(selectedСекрет!.id),
-    enabled: Boolean(selectedСекрет),
+    queryKey: selectedSecret ? queryKeys.secrets.usage(selectedSecret.id) : ["secrets", "usage", "__disabled__"],
+    queryFn: () => secretsApi.usage(selectedSecret!.id),
+    enabled: Boolean(selectedSecret),
   });
   const eventsQuery = useQuery({
-    queryКлюч: selectedСекрет
-      ? queryКлючs.secrets.accessEvents(selectedСекрет.id)
+    queryKey: selectedSecret
+      ? queryKeys.secrets.accessEvents(selectedSecret.id)
       : ["secrets", "access-events", "__disabled__"],
-    queryFn: () => secretsApi.accessEvents(selectedСекрет!.id),
-    enabled: Boolean(selectedСекрет),
+    queryFn: () => secretsApi.accessEvents(selectedSecret!.id),
+    enabled: Boolean(selectedSecret),
   });
 
   const usageDialogQuery = useQuery({
-    queryКлюч: usageDialogСекрет
-      ? queryКлючs.secrets.usage(usageDialogСекрет.id)
+    queryKey: usageDialogSecret
+      ? queryKeys.secrets.usage(usageDialogSecret.id)
       : ["secrets", "usage-dialog", "__disabled__"],
-    queryFn: () => secretsApi.usage(usageDialogСекрет!.id),
-    enabled: Boolean(usageDialogСекрет),
+    queryFn: () => secretsApi.usage(usageDialogSecret!.id),
+    enabled: Boolean(usageDialogSecret),
   });
 
-  function invalidateВсе(extraIds: string[] = []) {
-    if (!selectedКомпанияId) return;
-    queryClient.invalidateQueries({ queryКлюч: queryКлючs.secrets.list(selectedКомпанияId) });
-    queryClient.invalidateQueries({ queryКлюч: queryКлючs.secrets.providerConfigs(selectedКомпанияId) });
+  function invalidateAll(extraIds: string[] = []) {
+    if (!selectedCompanyId) return;
+    queryClient.invalidateQueries({ queryKey: queryKeys.secrets.list(selectedCompanyId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.secrets.providerConfigs(selectedCompanyId) });
     for (const id of extraIds) {
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.secrets.usage(id) });
-      queryClient.invalidateQueries({ queryКлюч: queryКлючs.secrets.accessEvents(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.secrets.usage(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.secrets.accessEvents(id) });
     }
   }
 
   const createMutation = useMutation({
     mutationFn: () => {
-      const input: СоздатьСекретInput = {
+      const input: CreateSecretInput = {
         name: createForm.name.trim(),
         provider: createForm.provider,
         providerConfigId: createForm.providerConfigId || null,
@@ -525,59 +525,59 @@ export function Секреты() {
       } else {
         input.externalRef = createForm.externalRef.trim();
       }
-      return secretsApi.create(selectedКомпанияId!, input);
+      return secretsApi.create(selectedCompanyId!, input);
     },
-    onУспешно: (created) => {
-      pushToast({ title: "Секрет создан", body: created.name, tone: "success" });
-      setСоздатьOpen(false);
-      setСоздатьForm({
+    onSuccess: (created) => {
+      pushToast({ title: "Secret created", body: created.name, tone: "success" });
+      setCreateOpen(false);
+      setCreateForm({
         name: "",
         key: "",
         value: "",
         description: "",
         externalRef: "",
         provider: createForm.provider,
-        providerConfigId: getПо умолчаниюПровайдерConfigId(providerConfigs, createForm.provider),
+        providerConfigId: getDefaultProviderConfigId(providerConfigs, createForm.provider),
       });
-      setСоздатьОшибка(null);
-      setSelectedСекретId(created.id);
-      invalidateВсе([created.id]);
+      setCreateError(null);
+      setSelectedSecretId(created.id);
+      invalidateAll([created.id]);
     },
-    onОшибка: (error) => {
-      setСоздатьОшибка(error instanceof ApiОшибка ? error.message : (error as Ошибка).message);
+    onError: (error) => {
+      setCreateError(error instanceof ApiError ? error.message : (error as Error).message);
     },
   });
 
   const rotateMutation = useMutation({
     mutationFn: () => {
-      if (!selectedСекрет) throw new Ошибка("Select a secret first");
-      if (selectedСекрет.managedMode === "external_reference") {
-        return secretsApi.rotate(selectedСекрет.id, {
-          externalRef: rotateExternalRef.trim() || selectedСекрет.externalRef || undefined,
-          providerConfigId: rotateПровайдерConfigId || null,
+      if (!selectedSecret) throw new Error("Select a secret first");
+      if (selectedSecret.managedMode === "external_reference") {
+        return secretsApi.rotate(selectedSecret.id, {
+          externalRef: rotateExternalRef.trim() || selectedSecret.externalRef || undefined,
+          providerConfigId: rotateProviderConfigId || null,
         });
       }
-      return secretsApi.rotate(selectedСекрет.id, {
-        value: rotateЗначение,
-        providerConfigId: rotateПровайдерConfigId || null,
+      return secretsApi.rotate(selectedSecret.id, {
+        value: rotateValue,
+        providerConfigId: rotateProviderConfigId || null,
       });
     },
-    onУспешно: (updated) => {
-      pushToast({ title: "Rotated", body: `${updated.name} → v${updated.latestВерсия}`, tone: "success" });
+    onSuccess: (updated) => {
+      pushToast({ title: "Rotated", body: `${updated.name} → v${updated.latestVersion}`, tone: "success" });
       setRotateOpen(false);
-      setRotateЗначение("");
+      setRotateValue("");
       setRotateExternalRef("");
-      setRotateПровайдерConfigId("");
-      setRotateОшибка(null);
-      invalidateВсе([updated.id]);
+      setRotateProviderConfigId("");
+      setRotateError(null);
+      invalidateAll([updated.id]);
     },
-    onОшибка: (error) => {
-      setRotateОшибка(error instanceof Ошибка ? error.message : "Rotate failed");
+    onError: (error) => {
+      setRotateError(error instanceof Error ? error.message : "Rotate failed");
     },
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: СекретСтатус }) => {
+    mutationFn: ({ id, status }: { id: string; status: SecretStatus }) => {
       switch (status) {
         case "active":
           return secretsApi.enable(id);
@@ -589,14 +589,14 @@ export function Секреты() {
           return secretsApi.update(id, { status });
       }
     },
-    onУспешно: (updated) => {
-      pushToast({ title: `Секрет ${updated.status}`, body: updated.name, tone: "info" });
-      invalidateВсе([updated.id]);
+    onSuccess: (updated) => {
+      pushToast({ title: `Secret ${updated.status}`, body: updated.name, tone: "info" });
+      invalidateAll([updated.id]);
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Статус update failed",
-        body: error instanceof Ошибка ? error.message : "Попробовать снова",
+        title: "Status update failed",
+        body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
     },
@@ -604,16 +604,16 @@ export function Секреты() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => secretsApi.remove(id),
-    onУспешно: (_response, id) => {
-      pushToast({ title: "Секрет удалён", tone: "info" });
-      setУдалитьПодтвердить(null);
-      if (selectedСекретId === id) setSelectedСекретId(null);
-      invalidateВсе([id]);
+    onSuccess: (_response, id) => {
+      pushToast({ title: "Secret deleted", tone: "info" });
+      setDeleteConfirm(null);
+      if (selectedSecretId === id) setSelectedSecretId(null);
+      invalidateAll([id]);
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Ошибка удаления",
-        body: error instanceof Ошибка ? error.message : "Попробовать снова",
+        title: "Delete failed",
+        body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
     },
@@ -621,73 +621,73 @@ export function Секреты() {
 
   const saveVaultMutation = useMutation({
     mutationFn: () => {
-      const data: СоздатьСекретПровайдерConfigInput | ОбновитьСекретПровайдерConfigInput = {
-        displayИмя: vaultForm.displayИмя.trim(),
+      const data: CreateSecretProviderConfigInput | UpdateSecretProviderConfigInput = {
+        displayName: vaultForm.displayName.trim(),
         status: vaultForm.status,
-        isПо умолчанию: vaultForm.isПо умолчанию,
-        config: buildПровайдерVaultConfig(vaultForm),
+        isDefault: vaultForm.isDefault,
+        config: buildProviderVaultConfig(vaultForm),
       };
       if (editingVault) {
-        return secretsApi.updateПровайдерConfig(editingVault.id, data);
+        return secretsApi.updateProviderConfig(editingVault.id, data);
       }
-      return secretsApi.createПровайдерConfig(selectedКомпанияId!, {
-        ...(data as ОбновитьСекретПровайдерConfigInput),
+      return secretsApi.createProviderConfig(selectedCompanyId!, {
+        ...(data as UpdateSecretProviderConfigInput),
         provider: vaultForm.provider,
-      } as СоздатьСекретПровайдерConfigInput);
+      } as CreateSecretProviderConfigInput);
     },
-    onУспешно: (saved) => {
-      pushToast({ title: editingVault ? "Провайдер vault updated" : "Провайдер vault created", body: saved.displayИмя, tone: "success" });
+    onSuccess: (saved) => {
+      pushToast({ title: editingVault ? "Provider vault updated" : "Provider vault created", body: saved.displayName, tone: "success" });
       setVaultDialogOpen(false);
-      setИзменитьingVault(null);
-      setVaultForm(emptyПровайдерVaultForm());
-      setVaultОшибка(null);
-      invalidateВсе();
+      setEditingVault(null);
+      setVaultForm(emptyProviderVaultForm());
+      setVaultError(null);
+      invalidateAll();
     },
-    onОшибка: (error) => {
-      setVaultОшибка(error instanceof ApiОшибка ? error.message : (error as Ошибка).message);
+    onError: (error) => {
+      setVaultError(error instanceof ApiError ? error.message : (error as Error).message);
     },
   });
 
   const disableVaultMutation = useMutation({
-    mutationFn: (id: string) => secretsApi.disableПровайдерConfig(id),
-    onУспешно: (updated) => {
-      pushToast({ title: "Провайдер vault disabled", body: updated.displayИмя, tone: "info" });
-      invalidateВсе();
+    mutationFn: (id: string) => secretsApi.disableProviderConfig(id),
+    onSuccess: (updated) => {
+      pushToast({ title: "Provider vault disabled", body: updated.displayName, tone: "info" });
+      invalidateAll();
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "Отключить failed",
-        body: error instanceof Ошибка ? error.message : "Попробовать снова",
+        title: "Disable failed",
+        body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
     },
   });
 
   const defaultVaultMutation = useMutation({
-    mutationFn: (id: string) => secretsApi.setПо умолчаниюПровайдерConfig(id),
-    onУспешно: (updated) => {
-      pushToast({ title: "По умолчанию vault set", body: updated.displayИмя, tone: "success" });
-      invalidateВсе();
+    mutationFn: (id: string) => secretsApi.setDefaultProviderConfig(id),
+    onSuccess: (updated) => {
+      pushToast({ title: "Default vault set", body: updated.displayName, tone: "success" });
+      invalidateAll();
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
-        title: "По умолчанию update failed",
-        body: error instanceof Ошибка ? error.message : "Попробовать снова",
+        title: "Default update failed",
+        body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
     },
   });
 
   const healthVaultMutation = useMutation({
-    mutationFn: (id: string) => secretsApi.checkПровайдерConfigHealth(id),
-    onУспешно: (health) => {
+    mutationFn: (id: string) => secretsApi.checkProviderConfigHealth(id),
+    onSuccess: (health) => {
       pushToast({ title: "Health checked", body: health.message, tone: health.status === "error" ? "error" : "info" });
-      invalidateВсе();
+      invalidateAll();
     },
-    onОшибка: (error) => {
+    onError: (error) => {
       pushToast({
         title: "Health check failed",
-        body: error instanceof Ошибка ? error.message : "Попробовать снова",
+        body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
     },
@@ -695,7 +695,7 @@ export function Секреты() {
 
   useEffect(() => {
     if (!createOpen || providers.length === 0) return;
-    const currentBlockReason = getСоздатьПровайдерBlockReason(
+    const currentBlockReason = getCreateProviderBlockReason(
       providers.find((provider) => provider.id === createForm.provider) ?? null,
       createMode,
       providerHealthQuery.data ?? null,
@@ -703,13 +703,13 @@ export function Секреты() {
     if (!currentBlockReason) return;
     const replacement = providers.find(
       (provider) =>
-        !getСоздатьПровайдерBlockReason(provider, createMode, providerHealthQuery.data ?? null),
+        !getCreateProviderBlockReason(provider, createMode, providerHealthQuery.data ?? null),
     );
     if (replacement && replacement.id !== createForm.provider) {
-      setСоздатьForm((current) => ({
+      setCreateForm((current) => ({
         ...current,
         provider: replacement.id,
-        providerConfigId: getПо умолчаниюПровайдерConfigId(providerConfigs, replacement.id),
+        providerConfigId: getDefaultProviderConfigId(providerConfigs, replacement.id),
       }));
     }
   }, [createForm.provider, createMode, createOpen, providerConfigs, providerHealthQuery.data, providers]);
@@ -718,189 +718,189 @@ export function Секреты() {
     if (!createOpen) return;
     const current = providerConfigs.find((config) => config.id === createForm.providerConfigId);
     if (current?.provider === createForm.provider) return;
-    setСоздатьForm((form) => ({
+    setCreateForm((form) => ({
       ...form,
-      providerConfigId: getПо умолчаниюПровайдерConfigId(providerConfigs, form.provider),
+      providerConfigId: getDefaultProviderConfigId(providerConfigs, form.provider),
     }));
   }, [createForm.provider, createForm.providerConfigId, createOpen, providerConfigs]);
 
   useEffect(() => {
-    if (!rotateOpen || !selectedСекрет) return;
-    setRotateПровайдерConfigId(
-      selectedСекрет.providerConfigId ?? getПо умолчаниюПровайдерConfigId(providerConfigs, selectedСекрет.provider),
+    if (!rotateOpen || !selectedSecret) return;
+    setRotateProviderConfigId(
+      selectedSecret.providerConfigId ?? getDefaultProviderConfigId(providerConfigs, selectedSecret.provider),
     );
-  }, [providerConfigs, rotateOpen, selectedСекрет]);
+  }, [providerConfigs, rotateOpen, selectedSecret]);
 
-  function openСоздатьVault(provider: СекретПровайдер = "local_encrypted") {
-    setИзменитьingVault(null);
-    setVaultForm(emptyПровайдерVaultForm(provider));
-    setVaultОшибка(null);
+  function openCreateVault(provider: SecretProvider = "local_encrypted") {
+    setEditingVault(null);
+    setVaultForm(emptyProviderVaultForm(provider));
+    setVaultError(null);
     setVaultDialogOpen(true);
   }
 
-  function openИзменитьVault(config: КомпанияСекретПровайдерConfig) {
-    setИзменитьingVault(config);
+  function openEditVault(config: CompanySecretProviderConfig) {
+    setEditingVault(config);
     setVaultForm(providerVaultFormFromConfig(config));
-    setVaultОшибка(null);
+    setVaultError(null);
     setVaultDialogOpen(true);
   }
 
-  if (!selectedКомпанияId) {
+  if (!selectedCompanyId) {
     return (
-      <div classИмя="p-6 text-sm text-muted-foreground">Select a company to manage secrets.</div>
+      <div className="p-6 text-sm text-muted-foreground">Select a company to manage secrets.</div>
     );
   }
 
   return (
-    <div classИмя="flex h-full min-h-0 flex-col gap-4">
-      <div classИмя="flex items-center gap-2">
-        <КлючRound classИмя="h-5 w-5 text-muted-foreground" />
-        <h1 classИмя="text-lg font-semibold">Секреты</h1>
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <KeyRound className="h-5 w-5 text-muted-foreground" />
+        <h1 className="text-lg font-semibold">Secrets</h1>
       </div>
 
       <Tabs
         value={activeTab}
-        onЗначениеChange={(value) => setАктивенTab(value as СекретыTab)}
-        classИмя="flex min-h-0 flex-1 flex-col gap-4"
+        onValueChange={(value) => setActiveTab(value as SecretsTab)}
+        className="flex min-h-0 flex-1 flex-col gap-4"
       >
         <PageTabBar
           items={[
-            { value: "secrets", label: "Секреты" },
-            { value: "vaults", label: "Провайдер vaults" },
+            { value: "secrets", label: "Secrets" },
+            { value: "vaults", label: "Provider vaults" },
           ]}
           align="start"
           value={activeTab}
-          onЗначениеChange={(value) => setАктивенTab(value as СекретыTab)}
+          onValueChange={(value) => setActiveTab(value as SecretsTab)}
         />
 
-        <TabsContent value="secrets" classИмя="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
-          <СекретыHowToUse />
-          <div classИмя="flex flex-wrap items-center gap-2">
-            <div classИмя="relative w-48 sm:w-64 md:w-80">
-              <Поиск classИмя="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <TabsContent value="secrets" className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+          <SecretsHowToUse />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-48 sm:w-64 md:w-80">
+              <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
-                onChange={(event) => setПоиск(event.target.value)}
-                placeholder="Поиск by name, key, ref"
-                classИмя="pl-7 text-xs sm:text-sm"
-                aria-label="Поиск secrets"
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by name, key, ref"
+                className="pl-7 text-xs sm:text-sm"
+                aria-label="Search secrets"
                 data-page-search-target="true"
               />
             </div>
-            <СекретыФильтрsPopover
-              statusФильтр={statusФильтр}
-              providerФильтр={providerФильтр}
+            <SecretsFiltersPopover
+              statusFilter={statusFilter}
+              providerFilter={providerFilter}
               providers={providers}
-              activeФильтрCount={activeСекретФильтрCount}
-              onСтатусChange={setСтатусФильтр}
-              onПровайдерChange={setПровайдерФильтр}
+              activeFilterCount={activeSecretFilterCount}
+              onStatusChange={setStatusFilter}
+              onProviderChange={setProviderFilter}
             />
-            <ИмпортFromVaultButton
+            <ImportFromVaultButton
               providerConfigs={providerConfigs}
-              onClick={() => setИмпортOpen(true)}
-              onManageVaults={() => setАктивенTab("vaults")}
-              classИмя="ml-auto"
+              onClick={() => setImportOpen(true)}
+              onManageVaults={() => setActiveTab("vaults")}
+              className="ml-auto"
             />
-            <Button onClick={() => setСоздатьOpen(true)} size="sm">
-              <Plus classИмя="h-3.5 w-3.5 mr-1" /> New secret
+            <Button onClick={() => setCreateOpen(true)} size="sm">
+              <Plus className="h-3.5 w-3.5 mr-1" /> New secret
             </Button>
           </div>
-          <div classИмя="min-h-0 flex-1 overflow-y-auto">
-            {secretsQuery.isОшибка ? (
-              <div classИмя="text-sm text-destructive flex items-center gap-2 py-4">
-                <AlertCircle classИмя="h-4 w-4" /> Ошибка to load secrets:{" "}
-                {(secretsQuery.error as Ошибка).message}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {secretsQuery.isError ? (
+              <div className="text-sm text-destructive flex items-center gap-2 py-4">
+                <AlertCircle className="h-4 w-4" /> Failed to load secrets:{" "}
+                {(secretsQuery.error as Error).message}
                 <Button variant="ghost" size="sm" onClick={() => secretsQuery.refetch()}>
-                  Повторить
+                  Retry
                 </Button>
               </div>
-            ) : secrets.length === 0 && !secretsQuery.isОжидание ? (
+            ) : secrets.length === 0 && !secretsQuery.isPending ? (
               <EmptyState
-                icon={КлючRound}
-                message="Пока нет секретов. Создать your first managed secret or link an external reference."
+                icon={KeyRound}
+                message="No secrets yet. Create your first managed secret or link an external reference."
                 action="New secret"
-                onAction={() => setСоздатьOpen(true)}
+                onAction={() => setCreateOpen(true)}
               />
             ) : filtered.length === 0 ? (
-              <EmptyState icon={Поиск} message="Нет secrets match your filters." />
+              <EmptyState icon={Search} message="No secrets match your filters." />
             ) : (
-              <table classИмя="w-full text-sm">
-              <thead classИмя="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+              <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th classИмя="px-3 py-2 text-left font-medium">Имя</th>
-                  <th classИмя="px-2 py-2 text-left font-medium">Mode</th>
-                  <th classИмя="px-2 py-2 text-left font-medium">Провайдер</th>
-                  <th classИмя="px-2 py-2 text-left font-medium">Статус</th>
-                  <th classИмя="px-2 py-2 text-left font-medium">Версия</th>
-                  <th classИмя="px-2 py-2 text-left font-medium">Last rotated</th>
-                  <th classИмя="px-2 py-2 text-left font-medium">Last resolved</th>
-                  <th classИмя="px-2 py-2 text-left font-medium">Ссылки</th>
-                  <th classИмя="px-2 py-2 text-left font-medium">Reference</th>
-                  <th classИмя="px-3 py-2"></th>
+                  <th className="px-3 py-2 text-left font-medium">Name</th>
+                  <th className="px-2 py-2 text-left font-medium">Mode</th>
+                  <th className="px-2 py-2 text-left font-medium">Provider</th>
+                  <th className="px-2 py-2 text-left font-medium">Status</th>
+                  <th className="px-2 py-2 text-left font-medium">Version</th>
+                  <th className="px-2 py-2 text-left font-medium">Last rotated</th>
+                  <th className="px-2 py-2 text-left font-medium">Last resolved</th>
+                  <th className="px-2 py-2 text-left font-medium">References</th>
+                  <th className="px-2 py-2 text-left font-medium">Reference</th>
+                  <th className="px-3 py-2"></th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((secret) => (
                   <tr
                     key={secret.id}
-                    classИмя={cn(
+                    className={cn(
                       "border-b border-border/60 hover:bg-accent/40 cursor-pointer",
-                      selectedСекретId === secret.id && "bg-accent/60",
+                      selectedSecretId === secret.id && "bg-accent/60",
                     )}
-                    onClick={() => setSelectedСекретId(secret.id)}
+                    onClick={() => setSelectedSecretId(secret.id)}
                   >
-                    <td classИмя="px-3 py-2.5">
-                      <div classИмя="font-medium text-foreground">{secret.name}</div>
+                    <td className="px-3 py-2.5">
+                      <div className="font-medium text-foreground">{secret.name}</div>
                     </td>
-                    <td classИмя="px-2 py-2.5 text-xs text-muted-foreground">
+                    <td className="px-2 py-2.5 text-xs text-muted-foreground">
                       {modeLabel(secret.managedMode)}
                     </td>
-                    <td classИмя="px-2 py-2.5 text-xs">
+                    <td className="px-2 py-2.5 text-xs">
                       <div>{providerLabel(providers, secret.provider)}</div>
                     </td>
-                    <td classИмя="px-2 py-2.5">
-                      <span classИмя={cn("text-xs font-medium", statusTextTone(secret.status))}>
+                    <td className="px-2 py-2.5">
+                      <span className={cn("text-xs font-medium", statusTextTone(secret.status))}>
                         {secret.status}
                       </span>
                     </td>
-                    <td classИмя="px-2 py-2.5 text-xs font-mono">v{secret.latestВерсия}</td>
-                    <td classИмя="px-2 py-2.5 text-xs text-muted-foreground">
+                    <td className="px-2 py-2.5 text-xs font-mono">v{secret.latestVersion}</td>
+                    <td className="px-2 py-2.5 text-xs text-muted-foreground">
                       {formatRelative(secret.lastRotatedAt)}
                     </td>
-                    <td classИмя="px-2 py-2.5 text-xs text-muted-foreground">
+                    <td className="px-2 py-2.5 text-xs text-muted-foreground">
                       {formatRelative(secret.lastResolvedAt)}
                     </td>
-                    <td classИмя="px-2 py-2.5 text-xs">
+                    <td className="px-2 py-2.5 text-xs">
                       <Button
                         variant="ghost"
                         size="sm"
-                        classИмя="h-7 px-2 text-xs"
+                        className="h-7 px-2 text-xs"
                         aria-label={`View references for ${secret.name}`}
                         onClick={(event) => {
                           event.stopPropagation();
-                          setИспользованиеDialogСекретId(secret.id);
+                          setUsageDialogSecretId(secret.id);
                         }}
                       >
                         {secret.referenceCount ?? 0}
                       </Button>
                     </td>
-                    <td classИмя="px-2 py-2.5 text-xs">
+                    <td className="px-2 py-2.5 text-xs">
                       {secret.managedMode === "external_reference" ? (
-                        <span classИмя="inline-flex items-center gap-1 font-mono text-muted-foreground">
-                          <Link2 classИмя="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1 font-mono text-muted-foreground">
+                          <Link2 className="h-3 w-3" />
                           {secret.externalRef ?? "—"}
                         </span>
                       ) : (
-                        <span classИмя="text-muted-foreground">Owned</span>
+                        <span className="text-muted-foreground">Owned</span>
                       )}
                     </td>
-                    <td classИмя="px-3 py-2.5 text-right">
+                    <td className="px-3 py-2.5 text-right">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={(event) => {
                           event.stopPropagation();
-                          setSelectedСекретId(secret.id);
+                          setSelectedSecretId(secret.id);
                         }}
                       >
                         Open
@@ -913,17 +913,17 @@ export function Секреты() {
             )}
           </div>
         </TabsContent>
-        <TabsContent value="vaults" classИмя="min-h-0 flex-1 overflow-y-auto">
-          <ПровайдерVaultsTab
+        <TabsContent value="vaults" className="min-h-0 flex-1 overflow-y-auto">
+          <ProviderVaultsTab
             providers={providers}
             providerConfigs={providerConfigs}
-            loading={providerConfigsQuery.isОжидание}
+            loading={providerConfigsQuery.isPending}
             error={providerConfigsQuery.error}
-            onПовторить={() => providerConfigsQuery.refetch()}
-            onСоздать={openСоздатьVault}
-            onИзменить={openИзменитьVault}
-            onОтключить={(config) => disableVaultMutation.mutate(config.id)}
-            onSetПо умолчанию={(config) => defaultVaultMutation.mutate(config.id)}
+            onRetry={() => providerConfigsQuery.refetch()}
+            onCreate={openCreateVault}
+            onEdit={openEditVault}
+            onDisable={(config) => disableVaultMutation.mutate(config.id)}
+            onSetDefault={(config) => defaultVaultMutation.mutate(config.id)}
             onHealthCheck={(config) => healthVaultMutation.mutate(config.id)}
             pendingActionId={
               disableVaultMutation.variables ??
@@ -935,109 +935,109 @@ export function Секреты() {
         </TabsContent>
       </Tabs>
 
-      <Sheet open={Boolean(selectedСекрет)} onOpenChange={(open) => !open && setSelectedСекретId(null)}>
-        <SheetContent classИмя="w-full sm:max-w-xl flex flex-col gap-0">
-          {selectedСекрет ? (
+      <Sheet open={Boolean(selectedSecret)} onOpenChange={(open) => !open && setSelectedSecretId(null)}>
+        <SheetContent className="w-full sm:max-w-xl flex flex-col gap-0">
+          {selectedSecret ? (
             <>
               <SheetHeader>
-                <SheetНазвание classИмя="flex items-center gap-2 text-base">
-                  <КлючRound classИмя="h-4 w-4" />
-                  {selectedСекрет.name}
-                  <span classИмя={cn("ml-2 text-sm font-normal", statusTextTone(selectedСекрет.status))}>
-                    {selectedСекрет.status}
+                <SheetTitle className="flex items-center gap-2 text-base">
+                  <KeyRound className="h-4 w-4" />
+                  {selectedSecret.name}
+                  <span className={cn("ml-2 text-sm font-normal", statusTextTone(selectedSecret.status))}>
+                    {selectedSecret.status}
                   </span>
-                </SheetНазвание>
-                <SheetОписание>
-                  {providerLabel(providers, selectedСекрет.provider)} · v{selectedСекрет.latestВерсия} · {modeLabel(selectedСекрет.managedMode)}
-                </SheetОписание>
+                </SheetTitle>
+                <SheetDescription>
+                  {providerLabel(providers, selectedSecret.provider)} · v{selectedSecret.latestVersion} · {modeLabel(selectedSecret.managedMode)}
+                </SheetDescription>
               </SheetHeader>
-              <div classИмя="flex flex-wrap gap-2 px-4 pb-2">
+              <div className="flex flex-wrap gap-2 px-4 pb-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
                     setRotateOpen(true);
-                    setRotateЗначение("");
+                    setRotateValue("");
                     setRotateExternalRef("");
-                    setRotateПровайдерConfigId(
-                      selectedСекрет.providerConfigId ??
-                        getПо умолчаниюПровайдерConfigId(providerConfigs, selectedСекрет.provider),
+                    setRotateProviderConfigId(
+                      selectedSecret.providerConfigId ??
+                        getDefaultProviderConfigId(providerConfigs, selectedSecret.provider),
                     );
-                    setRotateОшибка(null);
+                    setRotateError(null);
                   }}
                 >
-                  <ОбновитьCw classИмя="h-3.5 w-3.5 mr-1" />
-                  {selectedСекрет.managedMode === "external_reference" ? "Обновить reference" : "Обновить value"}
+                  <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                  {selectedSecret.managedMode === "external_reference" ? "Update reference" : "Update value"}
                 </Button>
-                {selectedСекрет.status === "active" ? (
+                {selectedSecret.status === "active" ? (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => statusMutation.mutate({ id: selectedСекрет.id, status: "disabled" })}
-                    disabled={statusMutation.isОжидание}
+                    onClick={() => statusMutation.mutate({ id: selectedSecret.id, status: "disabled" })}
+                    disabled={statusMutation.isPending}
                   >
-                    <Ban classИмя="h-3.5 w-3.5 mr-1" /> Отключить
+                    <Ban className="h-3.5 w-3.5 mr-1" /> Disable
                   </Button>
                 ) : (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => statusMutation.mutate({ id: selectedСекрет.id, status: "active" })}
-                    disabled={statusMutation.isОжидание}
+                    onClick={() => statusMutation.mutate({ id: selectedSecret.id, status: "active" })}
+                    disabled={statusMutation.isPending}
                   >
-                    <CheckCircle2 classИмя="h-3.5 w-3.5 mr-1" /> Activate
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Activate
                   </Button>
                 )}
-                {selectedСекрет.status === "archived" ? (
+                {selectedSecret.status === "archived" ? (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => statusMutation.mutate({ id: selectedСекрет.id, status: "active" })}
-                    disabled={statusMutation.isОжидание}
+                    onClick={() => statusMutation.mutate({ id: selectedSecret.id, status: "active" })}
+                    disabled={statusMutation.isPending}
                   >
-                    <АрхивироватьRestore classИмя="h-3.5 w-3.5 mr-1" /> Разархивировать
+                    <ArchiveRestore className="h-3.5 w-3.5 mr-1" /> Unarchive
                   </Button>
                 ) : (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => statusMutation.mutate({ id: selectedСекрет.id, status: "archived" })}
-                    disabled={statusMutation.isОжидание}
+                    onClick={() => statusMutation.mutate({ id: selectedSecret.id, status: "archived" })}
+                    disabled={statusMutation.isPending}
                   >
-                    <Архивировать classИмя="h-3.5 w-3.5 mr-1" /> Архивировать
+                    <Archive className="h-3.5 w-3.5 mr-1" /> Archive
                   </Button>
                 )}
                 <Button
                   size="sm"
                   variant="outline"
-                  classИмя="text-destructive hover:text-destructive"
-                  onClick={() => setУдалитьПодтвердить(selectedСекрет)}
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setDeleteConfirm(selectedSecret)}
                 >
-                  <Trash2 classИмя="h-3.5 w-3.5 mr-1" /> Удалить
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                 </Button>
               </div>
-              <Tabs value={secretDetailTab} onЗначениеChange={setСекретDetailTab} classИмя="flex-1 min-h-0 flex flex-col">
-                <div classИмя="border-b border-border px-4">
+              <Tabs value={secretDetailTab} onValueChange={setSecretDetailTab} className="flex-1 min-h-0 flex flex-col">
+                <div className="border-b border-border px-4">
                   <PageTabBar
                     items={[
-                      { value: "details", label: "Детали" },
-                      { value: "usage", label: usageQuery.data ? `Использование (${usageQuery.data.bindings.length})` : "Использование" },
-                      { value: "events", label: "Доступ events" },
+                      { value: "details", label: "Details" },
+                      { value: "usage", label: usageQuery.data ? `Usage (${usageQuery.data.bindings.length})` : "Usage" },
+                      { value: "events", label: "Access events" },
                     ]}
                     align="start"
                     value={secretDetailTab}
-                    onЗначениеChange={setСекретDetailTab}
+                    onValueChange={setSecretDetailTab}
                   />
                 </div>
-                <div classИмя="flex-1 min-h-0 overflow-y-auto px-4 py-3">
+                <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3">
                   <TabsContent value="details">
-                    <СекретДеталиTab secret={selectedСекрет} providerConfigs={providerConfigs} />
+                    <SecretDetailsTab secret={selectedSecret} providerConfigs={providerConfigs} />
                   </TabsContent>
                   <TabsContent value="usage">
-                    <СекретИспользованиеTab loading={usageQuery.isОжидание} bindings={usageQuery.data?.bindings ?? []} />
+                    <SecretUsageTab loading={usageQuery.isPending} bindings={usageQuery.data?.bindings ?? []} />
                   </TabsContent>
                   <TabsContent value="events">
-                    <СекретEventsTab loading={eventsQuery.isОжидание} events={eventsQuery.data ?? []} />
+                    <SecretEventsTab loading={eventsQuery.isPending} events={eventsQuery.data ?? []} />
                   </TabsContent>
                 </div>
               </Tabs>
@@ -1047,100 +1047,100 @@ export function Секреты() {
       </Sheet>
 
       <Dialog
-        open={Boolean(usageDialogСекрет)}
-        onOpenChange={(open) => !open && setИспользованиеDialogСекретId(null)}
+        open={Boolean(usageDialogSecret)}
+        onOpenChange={(open) => !open && setUsageDialogSecretId(null)}
       >
-        <DialogContent classИмя="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogНазвание>Секрет references</DialogНазвание>
-            <DialogОписание>
-              {usageDialogСекрет
-                ? `${usageDialogСекрет.name} is referenced by ${usageDialogСекрет.referenceCount ?? 0} ${
-                    (usageDialogСекрет.referenceCount ?? 0) === 1 ? "place" : "places"
+            <DialogTitle>Secret references</DialogTitle>
+            <DialogDescription>
+              {usageDialogSecret
+                ? `${usageDialogSecret.name} is referenced by ${usageDialogSecret.referenceCount ?? 0} ${
+                    (usageDialogSecret.referenceCount ?? 0) === 1 ? "place" : "places"
                   }.`
                 : null}
-            </DialogОписание>
+            </DialogDescription>
           </DialogHeader>
-          <СекретИспользованиеTab
-            loading={usageDialogQuery.isОжидание}
+          <SecretUsageTab
+            loading={usageDialogQuery.isPending}
             bindings={usageDialogQuery.data?.bindings ?? []}
           />
         </DialogContent>
       </Dialog>
 
-      {selectedКомпанияId && (
-        <ИмпортFromVaultDialog
+      {selectedCompanyId && (
+        <ImportFromVaultDialog
           open={importOpen}
-          onOpenChange={setИмпортOpen}
-          companyId={selectedКомпанияId}
+          onOpenChange={setImportOpen}
+          companyId={selectedCompanyId}
           providerConfigs={providerConfigs}
-          existingСекреты={secrets}
+          existingSecrets={secrets}
           onManageVaults={() => {
-            setИмпортOpen(false);
-            setАктивенTab("vaults");
+            setImportOpen(false);
+            setActiveTab("vaults");
           }}
-          onИмпортComplete={() => {
+          onImportComplete={() => {
             void secretsQuery.refetch();
           }}
         />
       )}
 
-      <Dialog open={createOpen} onOpenChange={setСоздатьOpen}>
-        <DialogContent classИмя="sm:max-w-lg">
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogНазвание>Создать секрет</DialogНазвание>
-            <DialogОписание>
+            <DialogTitle>Create secret</DialogTitle>
+            <DialogDescription>
               Choose whether Paperclip should own future provider writes, or only resolve an existing
               provider reference at runtime.
-            </DialogОписание>
+            </DialogDescription>
           </DialogHeader>
-          <Tabs value={createMode} onЗначениеChange={(value) => setСоздатьMode(value as СоздатьMode)}>
-            <TabsList classИмя="w-full grid grid-cols-2">
+          <Tabs value={createMode} onValueChange={(value) => setCreateMode(value as CreateMode)}>
+            <TabsList className="w-full grid grid-cols-2">
               <TabsTrigger value="managed">Managed value</TabsTrigger>
               <TabsTrigger value="external">External reference</TabsTrigger>
             </TabsList>
           </Tabs>
-          <div classИмя="space-y-3">
-            <div classИмя="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label classИмя="text-xs font-medium" htmlFor="new-secret-name">Имя</label>
+                <label className="text-xs font-medium" htmlFor="new-secret-name">Name</label>
                 <Input
                   id="new-secret-name"
                   value={createForm.name}
                   onChange={(event) =>
-                    setСоздатьForm((current) => ({ ...current, name: event.target.value }))
+                    setCreateForm((current) => ({ ...current, name: event.target.value }))
                   }
                   placeholder="OPENAI_API_KEY"
                   autoFocus
                 />
               </div>
               <div>
-                <label classИмя="text-xs font-medium" htmlFor="new-secret-key">
-                  Ключ <span classИмя="text-muted-foreground/70">(optional)</span>
+                <label className="text-xs font-medium" htmlFor="new-secret-key">
+                  Key <span className="text-muted-foreground/70">(optional)</span>
                 </label>
                 <Input
                   id="new-secret-key"
                   value={createForm.key}
                   onChange={(event) =>
-                    setСоздатьForm((current) => ({ ...current, key: event.target.value }))
+                    setCreateForm((current) => ({ ...current, key: event.target.value }))
                   }
                   placeholder="auto from name"
                 />
               </div>
             </div>
             <div>
-              <label classИмя="text-xs font-medium" htmlFor="new-secret-provider">Провайдер</label>
+              <label className="text-xs font-medium" htmlFor="new-secret-provider">Provider</label>
               <select
                 id="new-secret-provider"
-                classИмя="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
+                className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
                 value={createForm.provider}
                 onChange={(event) =>
-                  setСоздатьForm((current) => {
-                    const provider = event.target.value as СекретПровайдер;
+                  setCreateForm((current) => {
+                    const provider = event.target.value as SecretProvider;
                     return {
                       ...current,
                       provider,
-                      providerConfigId: getПо умолчаниюПровайдерConfigId(providerConfigs, provider),
+                      providerConfigId: getDefaultProviderConfigId(providerConfigs, provider),
                     };
                   })
                 }
@@ -1150,7 +1150,7 @@ export function Секреты() {
                     key={provider.id}
                     value={provider.id}
                     disabled={Boolean(
-                      getСоздатьПровайдерBlockReason(provider, createMode, providerHealthQuery.data ?? null),
+                      getCreateProviderBlockReason(provider, createMode, providerHealthQuery.data ?? null),
                     )}
                   >
                     {provider.label}
@@ -1162,149 +1162,149 @@ export function Секреты() {
                   </option>
                 ))}
               </select>
-              {createПровайдерBlockReason ? (
-                <p classИмя="mt-1 flex items-center gap-1 text-[11px] text-destructive">
-                  <AlertCircle classИмя="h-3 w-3" />
-                  {createПровайдерBlockReason}
+              {createProviderBlockReason ? (
+                <p className="mt-1 flex items-center gap-1 text-[11px] text-destructive">
+                  <AlertCircle className="h-3 w-3" />
+                  {createProviderBlockReason}
                 </p>
-              ) : createПровайдерHealthText ? (
-                <p classИмя="mt-1 text-[11px] text-muted-foreground">{createПровайдерHealthText}</p>
+              ) : createProviderHealthText ? (
+                <p className="mt-1 text-[11px] text-muted-foreground">{createProviderHealthText}</p>
               ) : null}
             </div>
             <div>
-              <label classИмя="text-xs font-medium" htmlFor="new-secret-vault">Провайдер vault</label>
+              <label className="text-xs font-medium" htmlFor="new-secret-vault">Provider vault</label>
               <select
                 id="new-secret-vault"
-                classИмя="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
+                className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
                 value={createForm.providerConfigId}
                 onChange={(event) =>
-                  setСоздатьForm((current) => ({ ...current, providerConfigId: event.target.value }))
+                  setCreateForm((current) => ({ ...current, providerConfigId: event.target.value }))
                 }
               >
                 <option value="">Deployment default</option>
-                {createПровайдерConfigs.map((config) => {
-                  const blockReason = getПровайдерConfigBlockReason(config);
+                {createProviderConfigs.map((config) => {
+                  const blockReason = getProviderConfigBlockReason(config);
                   return (
                     <option key={config.id} value={config.id} disabled={Boolean(blockReason)}>
-                      {config.displayИмя}
-                      {config.isПо умолчанию ? " (default)" : ""}
+                      {config.displayName}
+                      {config.isDefault ? " (default)" : ""}
                       {blockReason ? ` (${blockReason})` : ""}
                     </option>
                   );
                 })}
               </select>
-              {selectedСоздатьПровайдерConfig ? (
-                <ПровайдерVaultInlineПредупреждение config={selectedСоздатьПровайдерConfig} />
+              {selectedCreateProviderConfig ? (
+                <ProviderVaultInlineWarning config={selectedCreateProviderConfig} />
               ) : (
-                <p classИмя="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 text-[11px] text-muted-foreground">
                   Existing deployment-level provider settings stay available for backwards compatibility.
                 </p>
               )}
             </div>
             {createMode === "managed" ? (
               <>
-                <div classИмя="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2 text-[11px] text-emerald-700 dark:text-emerald-300">
+                <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2 text-[11px] text-emerald-700 dark:text-emerald-300">
                   Paperclip-managed secrets are created in the selected provider and future rotations
                   write a new provider version through Paperclip.
-                  {awsManagedПутьПредпросмотр ? (
-                    <div classИмя="mt-1">
+                  {awsManagedPathPreview ? (
+                    <div className="mt-1">
                       AWS managed path:{" "}
-                      <code classИмя="break-all rounded bg-background/70 px-1 py-0.5">
-                        {awsManagedПутьПредпросмотр}
+                      <code className="break-all rounded bg-background/70 px-1 py-0.5">
+                        {awsManagedPathPreview}
                       </code>
                     </div>
                   ) : null}
                 </div>
                 <div>
-                  <label classИмя="text-xs font-medium" htmlFor="new-secret-value">Значение</label>
+                  <label className="text-xs font-medium" htmlFor="new-secret-value">Value</label>
                   <Textarea
                     id="new-secret-value"
                     value={createForm.value}
                     onChange={(event) =>
-                      setСоздатьForm((current) => ({ ...current, value: event.target.value }))
+                      setCreateForm((current) => ({ ...current, value: event.target.value }))
                     }
                     rows={3}
-                    classИмя="font-mono text-xs"
+                    className="font-mono text-xs"
                     placeholder="Stored once, never re-displayed"
                   />
                 </div>
               </>
             ) : (
               <div>
-                <label classИмя="text-xs font-medium" htmlFor="new-secret-ref">External reference</label>
+                <label className="text-xs font-medium" htmlFor="new-secret-ref">External reference</label>
                 <Input
                   id="new-secret-ref"
                   value={createForm.externalRef}
                   onChange={(event) =>
-                    setСоздатьForm((current) => ({ ...current, externalRef: event.target.value }))
+                    setCreateForm((current) => ({ ...current, externalRef: event.target.value }))
                   }
                   placeholder="arn:aws:secretsmanager:..."
-                  classИмя="font-mono text-xs"
+                  className="font-mono text-xs"
                 />
-                <p classИмя="text-[11px] text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   Existing provider secrets are resolve-only in Paperclip. Rotate the value in the provider,
                   then update this reference only if the path, ARN, or version changes.
                 </p>
               </div>
             )}
             <div>
-              <label classИмя="text-xs font-medium" htmlFor="new-secret-description">
-                Описание <span classИмя="text-muted-foreground/70">(optional)</span>
+              <label className="text-xs font-medium" htmlFor="new-secret-description">
+                Description <span className="text-muted-foreground/70">(optional)</span>
               </label>
               <Input
                 id="new-secret-description"
                 value={createForm.description}
                 onChange={(event) =>
-                  setСоздатьForm((current) => ({ ...current, description: event.target.value }))
+                  setCreateForm((current) => ({ ...current, description: event.target.value }))
                 }
                 placeholder="What is this secret used for? (no values)"
               />
             </div>
-            {createОшибка ? <p classИмя="text-xs text-destructive">{createОшибка}</p> : null}
+            {createError ? <p className="text-xs text-destructive">{createError}</p> : null}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setСоздатьOpen(false)}>
-              Отмена
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>
+              Cancel
             </Button>
             <Button
               onClick={() => {
-                setСоздатьОшибка(null);
+                setCreateError(null);
                 createMutation.mutate();
               }}
               disabled={
-                createMutation.isОжидание ||
-                Boolean(createПровайдерBlockReason) ||
+                createMutation.isPending ||
+                Boolean(createProviderBlockReason) ||
                 !createForm.name.trim() ||
                 (createMode === "managed" ? !createForm.value : !createForm.externalRef.trim())
               }
             >
-              {createMutation.isОжидание ? <Loader2 classИмя="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {createMode === "managed" ? "Создать секрет" : "Link reference"}
+              {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+              {createMode === "managed" ? "Create secret" : "Link reference"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={vaultDialogOpen} onOpenChange={setVaultDialogOpen}>
-        <DialogContent classИмя="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogНазвание>{editingVault ? "Изменить provider vault" : "Создать provider vault"}</DialogНазвание>
-            <DialogОписание>
-              Сохранить only non-sensitive routing metadata. Credentials stay in the runtime environment or provider identity.
-            </DialogОписание>
+            <DialogTitle>{editingVault ? "Edit provider vault" : "Create provider vault"}</DialogTitle>
+            <DialogDescription>
+              Save only non-sensitive routing metadata. Credentials stay in the runtime environment or provider identity.
+            </DialogDescription>
           </DialogHeader>
-          <div classИмя="space-y-4">
-            <div classИмя="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label classИмя="text-xs font-medium" htmlFor="vault-provider">Провайдер</label>
+                <label className="text-xs font-medium" htmlFor="vault-provider">Provider</label>
                 <select
                   id="vault-provider"
-                  classИмя="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none disabled:opacity-60"
+                  className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none disabled:opacity-60"
                   value={vaultForm.provider}
                   disabled={Boolean(editingVault)}
                   onChange={(event) => {
-                    const provider = event.target.value as СекретПровайдер;
-                    setVaultForm(emptyПровайдерVaultForm(provider));
+                    const provider = event.target.value as SecretProvider;
+                    setVaultForm(emptyProviderVaultForm(provider));
                   }}
                 >
                   {PROVIDER_ORDER.map((provider) => (
@@ -1315,197 +1315,197 @@ export function Секреты() {
                 </select>
               </div>
               <div>
-                <label classИмя="text-xs font-medium" htmlFor="vault-name">Display name</label>
+                <label className="text-xs font-medium" htmlFor="vault-name">Display name</label>
                 <Input
                   id="vault-name"
-                  value={vaultForm.displayИмя}
+                  value={vaultForm.displayName}
                   onChange={(event) =>
-                    setVaultForm((current) => ({ ...current, displayИмя: event.target.value }))
+                    setVaultForm((current) => ({ ...current, displayName: event.target.value }))
                   }
                   placeholder="Production local vault"
                 />
               </div>
               <div>
-                <label classИмя="text-xs font-medium" htmlFor="vault-status">Статус</label>
+                <label className="text-xs font-medium" htmlFor="vault-status">Status</label>
                 <select
                   id="vault-status"
-                  classИмя="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
+                  className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
                   value={vaultForm.status}
                   onChange={(event) => {
-                    const status = event.target.value as СекретПровайдерConfigСтатус;
+                    const status = event.target.value as SecretProviderConfigStatus;
                     setVaultForm((current) => ({
                       ...current,
                       status,
-                      isПо умолчанию:
-                        status === "coming_soon" || status === "disabled" ? false : current.isПо умолчанию,
+                      isDefault:
+                        status === "coming_soon" || status === "disabled" ? false : current.isDefault,
                     }));
                   }}
                 >
                   <option value="ready" disabled={vaultForm.provider === "gcp_secret_manager" || vaultForm.provider === "vault"}>
-                    Готово
+                    Ready
                   </option>
                   <option value="warning" disabled={vaultForm.provider === "gcp_secret_manager" || vaultForm.provider === "vault"}>
-                    Предупреждение
+                    Warning
                   </option>
-                  <option value="coming_soon">Скоро</option>
-                  <option value="disabled">Отключитьd</option>
+                  <option value="coming_soon">Coming soon</option>
+                  <option value="disabled">Disabled</option>
                 </select>
               </div>
-              <label classИмя="flex items-center gap-2 pt-6 text-sm">
+              <label className="flex items-center gap-2 pt-6 text-sm">
                 <input
                   type="checkbox"
-                  classИмя="h-4 w-4 rounded border-border"
-                  checked={vaultForm.isПо умолчанию}
+                  className="h-4 w-4 rounded border-border"
+                  checked={vaultForm.isDefault}
                   disabled={vaultForm.status === "coming_soon" || vaultForm.status === "disabled"}
                   onChange={(event) =>
-                    setVaultForm((current) => ({ ...current, isПо умолчанию: event.target.checked }))
+                    setVaultForm((current) => ({ ...current, isDefault: event.target.checked }))
                   }
                 />
-                По умолчанию for {providerLabel(providers, vaultForm.provider)}
+                Default for {providerLabel(providers, vaultForm.provider)}
               </label>
             </div>
 
-            <ПровайдерVaultFields form={vaultForm} onChange={setVaultForm} />
+            <ProviderVaultFields form={vaultForm} onChange={setVaultForm} />
 
             {vaultForm.provider === "gcp_secret_manager" || vaultForm.provider === "vault" ? (
-              <div classИмя="rounded-md border border-sky-500/30 bg-sky-500/5 p-3 text-xs text-sky-700 dark:text-sky-300">
+              <div className="rounded-md border border-sky-500/30 bg-sky-500/5 p-3 text-xs text-sky-700 dark:text-sky-300">
                 This provider can save draft routing metadata, but runtime writes and resolution stay disabled until
                 the provider module is implemented and reviewed.
               </div>
             ) : null}
-            {vaultОшибка ? <p classИмя="text-xs text-destructive">{vaultОшибка}</p> : null}
+            {vaultError ? <p className="text-xs text-destructive">{vaultError}</p> : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setVaultDialogOpen(false)}>
-              Отмена
+              Cancel
             </Button>
             <Button
               onClick={() => {
-                setVaultОшибка(null);
+                setVaultError(null);
                 saveVaultMutation.mutate();
               }}
               disabled={
-                saveVaultMutation.isОжидание ||
-                !vaultForm.displayИмя.trim() ||
+                saveVaultMutation.isPending ||
+                !vaultForm.displayName.trim() ||
                 (vaultForm.provider === "aws_secrets_manager" && !vaultForm.region.trim())
               }
             >
-              {saveVaultMutation.isОжидание ? <Loader2 classИмя="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {editingVault ? "Сохранить vault" : "Создать vault"}
+              {saveVaultMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+              {editingVault ? "Save vault" : "Create vault"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={rotateOpen} onOpenChange={setRotateOpen}>
-        <DialogContent classИмя="sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogНазвание>
-              {selectedСекрет?.managedMode === "external_reference" ? "Обновить external reference" : "Обновить secret value"}
-            </DialogНазвание>
-            <DialogОписание>
-              {selectedСекрет?.managedMode === "external_reference"
-                ? "Создатьs a new Paperclip metadata version that points at an existing provider secret. Paperclip does not write a new provider value."
-                : "Создатьs a new provider-backed version. Consumers pinned to latest pick up the new value on the next run."}
-            </DialogОписание>
+            <DialogTitle>
+              {selectedSecret?.managedMode === "external_reference" ? "Update external reference" : "Update secret value"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedSecret?.managedMode === "external_reference"
+                ? "Creates a new Paperclip metadata version that points at an existing provider secret. Paperclip does not write a new provider value."
+                : "Creates a new provider-backed version. Consumers pinned to latest pick up the new value on the next run."}
+            </DialogDescription>
           </DialogHeader>
           <div>
-            <label classИмя="text-xs font-medium" htmlFor="rotate-secret-vault">Провайдер vault</label>
+            <label className="text-xs font-medium" htmlFor="rotate-secret-vault">Provider vault</label>
             <select
               id="rotate-secret-vault"
-              classИмя="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
-              value={rotateПровайдерConfigId}
-              onChange={(event) => setRotateПровайдерConfigId(event.target.value)}
+              className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
+              value={rotateProviderConfigId}
+              onChange={(event) => setRotateProviderConfigId(event.target.value)}
             >
               <option value="">Deployment default</option>
-              {selectedRotateПровайдерConfigs.map((config) => {
-                const blockReason = getПровайдерConfigBlockReason(config);
+              {selectedRotateProviderConfigs.map((config) => {
+                const blockReason = getProviderConfigBlockReason(config);
                 return (
                   <option key={config.id} value={config.id} disabled={Boolean(blockReason)}>
-                    {config.displayИмя}
-                    {config.isПо умолчанию ? " (default)" : ""}
+                    {config.displayName}
+                    {config.isDefault ? " (default)" : ""}
                     {blockReason ? ` (${blockReason})` : ""}
                   </option>
                 );
               })}
             </select>
-            {selectedRotateПровайдерConfig ? (
-              <ПровайдерVaultInlineПредупреждение config={selectedRotateПровайдерConfig} />
+            {selectedRotateProviderConfig ? (
+              <ProviderVaultInlineWarning config={selectedRotateProviderConfig} />
             ) : (
-              <p classИмя="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-[11px] text-muted-foreground">
                 Rotating with the deployment default preserves current fallback behavior.
               </p>
             )}
           </div>
-          {selectedСекрет?.managedMode === "external_reference" ? (
+          {selectedSecret?.managedMode === "external_reference" ? (
             <div>
-              <label classИмя="text-xs font-medium" htmlFor="rotate-ref">External reference</label>
+              <label className="text-xs font-medium" htmlFor="rotate-ref">External reference</label>
               <Input
                 id="rotate-ref"
                 value={rotateExternalRef}
                 onChange={(event) => setRotateExternalRef(event.target.value)}
-                placeholder={selectedСекрет.externalRef ?? "Обновлено reference"}
-                classИмя="font-mono text-xs"
+                placeholder={selectedSecret.externalRef ?? "Updated reference"}
+                className="font-mono text-xs"
               />
-              <p classИмя="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-[11px] text-muted-foreground">
                 Rotate the actual value in the provider before changing this Paperclip reference.
               </p>
             </div>
           ) : (
             <div>
-              <label classИмя="text-xs font-medium" htmlFor="rotate-value">New value</label>
+              <label className="text-xs font-medium" htmlFor="rotate-value">New value</label>
               <Textarea
                 id="rotate-value"
-                value={rotateЗначение}
-                onChange={(event) => setRotateЗначение(event.target.value)}
+                value={rotateValue}
+                onChange={(event) => setRotateValue(event.target.value)}
                 rows={3}
-                classИмя="font-mono text-xs"
+                className="font-mono text-xs"
                 placeholder="Paste the new value"
               />
             </div>
           )}
-          {rotateОшибка ? <p classИмя="text-xs text-destructive">{rotateОшибка}</p> : null}
+          {rotateError ? <p className="text-xs text-destructive">{rotateError}</p> : null}
           <DialogFooter>
             <Button variant="outline" onClick={() => setRotateOpen(false)}>
-              Отмена
+              Cancel
             </Button>
             <Button
               onClick={() => {
-                setRotateОшибка(null);
+                setRotateError(null);
                 rotateMutation.mutate();
               }}
               disabled={
-                rotateMutation.isОжидание ||
-                Boolean(rotateПровайдерBlockReason) ||
-                (selectedСекрет?.managedMode === "external_reference"
-                  ? !rotateExternalRef.trim() && !selectedСекрет?.externalRef
-                  : !rotateЗначение)
+                rotateMutation.isPending ||
+                Boolean(rotateProviderBlockReason) ||
+                (selectedSecret?.managedMode === "external_reference"
+                  ? !rotateExternalRef.trim() && !selectedSecret?.externalRef
+                  : !rotateValue)
               }
             >
-              {rotateMutation.isОжидание ? <Loader2 classИмя="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {selectedСекрет?.managedMode === "external_reference" ? "Обновить reference" : "Обновить value"}
+              {rotateMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+              {selectedSecret?.managedMode === "external_reference" ? "Update reference" : "Update value"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(deleteПодтвердить)} onOpenChange={(open) => !open && setУдалитьПодтвердить(null)}>
-        <DialogContent classИмя="sm:max-w-md">
+      <Dialog open={Boolean(deleteConfirm)} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogНазвание>Удалить secret</DialogНазвание>
-            <DialogОписание>
-              Permanently removes <strong>{deleteПодтвердить?.name}</strong>. Активен bindings will fail until you remap them.
-            </DialogОписание>
+            <DialogTitle>Delete secret</DialogTitle>
+            <DialogDescription>
+              Permanently removes <strong>{deleteConfirm?.name}</strong>. Active bindings will fail until you remap them.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setУдалитьПодтвердить(null)}>Отмена</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
             <Button
               variant="destructive"
-              onClick={() => deleteПодтвердить && deleteMutation.mutate(deleteПодтвердить.id)}
-              disabled={deleteMutation.isОжидание}
+              onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm.id)}
+              disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isОжидание ? <Loader2 classИмя="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              Удалить
+              {deleteMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1514,16 +1514,16 @@ export function Секреты() {
   );
 }
 
-function СекретыHowToUse() {
+function SecretsHowToUse() {
   return (
-    <div classИмя="flex items-start gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-      <Info classИмя="mt-0.5 h-3.5 w-3.5 shrink-0" />
-      <div classИмя="space-y-1">
-        <p classИмя="font-medium text-foreground">Use secrets by binding them to runtime environment variables.</p>
+    <div className="flex items-start gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+      <div className="space-y-1">
+        <p className="font-medium text-foreground">Use secrets by binding them to runtime environment variables.</p>
         <p>
-          Создать or link a secret here, then open an agent&apos;s Окружение variables or a project&apos;s Env field.
-          Добавить the env key the process expects, for example <code classИмя="font-mono">GH_TOKEN</code>, choose{" "}
-          <span classИмя="font-medium text-foreground">Секрет</span>, and select the stored secret version.
+          Create or link a secret here, then open an agent&apos;s Environment variables or a project&apos;s Env field.
+          Add the env key the process expects, for example <code className="font-mono">GH_TOKEN</code>, choose{" "}
+          <span className="font-medium text-foreground">Secret</span>, and select the stored secret version.
         </p>
         <p>
           Paperclip resolves the value server-side when the run starts and injects it as that env var. Project env
@@ -1534,31 +1534,31 @@ function СекретыHowToUse() {
   );
 }
 
-function СекретыФильтрsPopover({
-  statusФильтр,
-  providerФильтр,
+function SecretsFiltersPopover({
+  statusFilter,
+  providerFilter,
   providers,
-  activeФильтрCount,
-  onСтатусChange,
-  onПровайдерChange,
+  activeFilterCount,
+  onStatusChange,
+  onProviderChange,
 }: {
-  statusФильтр: СекретСтатус | "all";
-  providerФильтр: СекретПровайдер | "all";
-  providers: СекретПровайдерDescriptor[];
-  activeФильтрCount: number;
-  onСтатусChange: (value: СекретСтатус | "all") => void;
-  onПровайдерChange: (value: СекретПровайдер | "all") => void;
+  statusFilter: SecretStatus | "all";
+  providerFilter: SecretProvider | "all";
+  providers: SecretProviderDescriptor[];
+  activeFilterCount: number;
+  onStatusChange: (value: SecretStatus | "all") => void;
+  onProviderChange: (value: SecretProvider | "all") => void;
 }) {
-  const resetФильтрs = () => {
-    onСтатусChange("active");
-    onПровайдерChange("all");
+  const resetFilters = () => {
+    onStatusChange("active");
+    onProviderChange("all");
   };
 
-  const statusOptions: Array<{ value: СекретСтатус | "all"; label: string }> = [
+  const statusOptions: Array<{ value: SecretStatus | "all"; label: string }> = [
     { value: "active", label: "Активен" },
-    { value: "all", label: "Все statuses" },
-    { value: "disabled", label: "Отключитьd" },
-    { value: "archived", label: "Архивирован" },
+    { value: "all", label: "All statuses" },
+    { value: "disabled", label: "Disabled" },
+    { value: "archived", label: "Архивировано" },
   ];
 
   return (
@@ -1567,69 +1567,69 @@ function СекретыФильтрsPopover({
         <Button
           variant="outline"
           size="icon"
-          classИмя={cn("relative h-8 w-8 shrink-0", activeФильтрCount > 0 && "text-blue-600 dark:text-blue-400")}
-          title={activeФильтрCount > 0 ? `Фильтрs: ${activeФильтрCount}` : "Фильтр"}
+          className={cn("relative h-8 w-8 shrink-0", activeFilterCount > 0 && "text-blue-600 dark:text-blue-400")}
+          title={activeFilterCount > 0 ? `Filters: ${activeFilterCount}` : "Фильтр"}
         >
-          <Фильтр classИмя="h-3.5 w-3.5" />
-          {activeФильтрCount > 0 ? (
-            <span classИмя="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">
-              {activeФильтрCount}
+          <Filter className="h-3.5 w-3.5" />
+          {activeFilterCount > 0 ? (
+            <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">
+              {activeFilterCount}
             </span>
           ) : null}
         </Button>
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        classИмя="w-[min(520px,calc(100vw-2rem))] max-h-[min(80vh,34rem)] overflow-y-auto overscroll-contain p-0"
+        className="w-[min(520px,calc(100vw-2rem))] max-h-[min(80vh,34rem)] overflow-y-auto overscroll-contain p-0"
       >
-        <div classИмя="space-y-3 p-3">
-          <div classИмя="flex items-center justify-between">
-            <span classИмя="text-sm font-medium">Фильтрs</span>
-            {activeФильтрCount > 0 ? (
+        <div className="space-y-3 p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Filters</span>
+            {activeFilterCount > 0 ? (
               <button
                 type="button"
-                classИмя="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                onClick={resetФильтрs}
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                onClick={resetFilters}
               >
-                <X classИмя="h-3 w-3" />
-                Очистить
+                <X className="h-3 w-3" />
+                Clear
               </button>
             ) : null}
           </div>
 
-          <div classИмя="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div classИмя="space-y-1">
-              <span classИмя="text-xs text-muted-foreground">Статус</span>
-              <div classИмя="space-y-0.5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <span className="text-xs text-muted-foreground">Status</span>
+              <div className="space-y-0.5">
                 {statusOptions.map((option) => (
-                  <label key={option.value} classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+                  <label key={option.value} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                     <Checkbox
-                      checked={statusФильтр === option.value}
-                      onCheckedChange={() => onСтатусChange(option.value)}
+                      checked={statusFilter === option.value}
+                      onCheckedChange={() => onStatusChange(option.value)}
                     />
-                    <span classИмя="text-sm">{option.label}</span>
+                    <span className="text-sm">{option.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            <div classИмя="space-y-1">
-              <span classИмя="text-xs text-muted-foreground">Провайдер</span>
-              <div classИмя="max-h-48 space-y-0.5 overflow-y-auto pr-1">
-                <label classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+            <div className="space-y-1">
+              <span className="text-xs text-muted-foreground">Provider</span>
+              <div className="max-h-48 space-y-0.5 overflow-y-auto pr-1">
+                <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                   <Checkbox
-                    checked={providerФильтр === "all"}
-                    onCheckedChange={() => onПровайдерChange("all")}
+                    checked={providerFilter === "all"}
+                    onCheckedChange={() => onProviderChange("all")}
                   />
-                  <span classИмя="text-sm">Все providers</span>
+                  <span className="text-sm">All providers</span>
                 </label>
                 {providers.map((provider) => (
-                  <label key={provider.id} classИмя="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
+                  <label key={provider.id} className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 hover:bg-accent/50">
                     <Checkbox
-                      checked={providerФильтр === provider.id}
-                      onCheckedChange={() => onПровайдерChange(provider.id)}
+                      checked={providerFilter === provider.id}
+                      onCheckedChange={() => onProviderChange(provider.id)}
                     />
-                    <span classИмя="text-sm">{provider.label}</span>
+                    <span className="text-sm">{provider.label}</span>
                   </label>
                 ))}
               </div>
@@ -1641,7 +1641,7 @@ function СекретыФильтрsPopover({
   );
 }
 
-function providerConfigСтатусTone(status: СекретПровайдерConfigСтатус) {
+function providerConfigStatusTone(status: SecretProviderConfigStatus) {
   switch (status) {
     case "ready":
       return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
@@ -1656,7 +1656,7 @@ function providerConfigСтатусTone(status: СекретПровайдерCo
   }
 }
 
-function providerFamilyIcon(provider: СекретПровайдер) {
+function providerFamilyIcon(provider: SecretProvider) {
   switch (provider) {
     case "local_encrypted":
       return Database;
@@ -1665,44 +1665,44 @@ function providerFamilyIcon(provider: СекретПровайдер) {
     case "gcp_secret_manager":
       return ShieldCheck;
     case "vault":
-      return КлючRound;
+      return KeyRound;
     default:
-      return КлючRound;
+      return KeyRound;
   }
 }
 
-function ПровайдерVaultInlineПредупреждение({ config }: { config: КомпанияСекретПровайдерConfig }) {
-  const blockReason = getПровайдерConfigBlockReason(config);
+function ProviderVaultInlineWarning({ config }: { config: CompanySecretProviderConfig }) {
+  const blockReason = getProviderConfigBlockReason(config);
   const message = blockReason ?? config.healthMessage;
   if (!message) {
     return (
-      <p classИмя="mt-1 text-[11px] text-muted-foreground">
-        {config.isПо умолчанию ? "По умолчанию vault" : "Vault"} · {config.status.replace("_", " ")}
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        {config.isDefault ? "Default vault" : "Vault"} · {config.status.replace("_", " ")}
       </p>
     );
   }
-  const warning = config.status === "warning" || config.healthСтатус === "warning";
+  const warning = config.status === "warning" || config.healthStatus === "warning";
   return (
-    <p classИмя={cn("mt-1 flex items-center gap-1 text-[11px]", warning ? "text-amber-600 dark:text-amber-400" : "text-destructive")}>
-      {warning ? <AlertTriangle classИмя="h-3 w-3" /> : <AlertCircle classИмя="h-3 w-3" />}
+    <p className={cn("mt-1 flex items-center gap-1 text-[11px]", warning ? "text-amber-600 dark:text-amber-400" : "text-destructive")}>
+      {warning ? <AlertTriangle className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
       {message}
     </p>
   );
 }
 
-interface ИмпортFromVaultButtonProps {
-  providerConfigs: КомпанияСекретПровайдерConfig[];
+interface ImportFromVaultButtonProps {
+  providerConfigs: CompanySecretProviderConfig[];
   onClick: () => void;
   onManageVaults: () => void;
-  classИмя?: string;
+  className?: string;
 }
 
-function ИмпортFromVaultButton({
+function ImportFromVaultButton({
   providerConfigs,
   onClick,
   onManageVaults,
-  classИмя,
-}: ИмпортFromVaultButtonProps) {
+  className,
+}: ImportFromVaultButtonProps) {
   const awsConfigs = providerConfigs.filter(
     (config) => config.provider === "aws_secrets_manager",
   );
@@ -1718,10 +1718,10 @@ function ИмпортFromVaultButton({
         variant="ghost"
         size="sm"
         onClick={onManageVaults}
-        classИмя={cn("text-xs text-muted-foreground", classИмя)}
+        className={cn("text-xs text-muted-foreground", className)}
         title="Configure an AWS provider vault to enable remote import"
       >
-        <Cloud classИмя="h-3.5 w-3.5 mr-1" /> AWS vault disabled — manage
+        <Cloud className="h-3.5 w-3.5 mr-1" /> AWS vault disabled — manage
       </Button>
     );
   }
@@ -1731,54 +1731,54 @@ function ИмпортFromVaultButton({
       variant="outline"
       size="sm"
       onClick={onClick}
-      classИмя={classИмя}
+      className={className}
       data-testid="import-from-vault-button"
     >
-      <Cloud classИмя="h-3.5 w-3.5 mr-1" /> Импорт from vault
+      <Cloud className="h-3.5 w-3.5 mr-1" /> Import from vault
     </Button>
   );
 }
 
-export function ПровайдерVaultsTab({
+export function ProviderVaultsTab({
   providers,
   providerConfigs,
   loading,
   error,
-  onПовторить,
-  onСоздать,
-  onИзменить,
-  onОтключить,
-  onSetПо умолчанию,
+  onRetry,
+  onCreate,
+  onEdit,
+  onDisable,
+  onSetDefault,
   onHealthCheck,
   pendingActionId,
 }: {
-  providers: СекретПровайдерDescriptor[];
-  providerConfigs: КомпанияСекретПровайдерConfig[];
+  providers: SecretProviderDescriptor[];
+  providerConfigs: CompanySecretProviderConfig[];
   loading: boolean;
   error: unknown;
-  onПовторить: () => void;
-  onСоздать: (provider: СекретПровайдер) => void;
-  onИзменить: (config: КомпанияСекретПровайдерConfig) => void;
-  onОтключить: (config: КомпанияСекретПровайдерConfig) => void;
-  onSetПо умолчанию: (config: КомпанияСекретПровайдерConfig) => void;
-  onHealthCheck: (config: КомпанияСекретПровайдерConfig) => void;
+  onRetry: () => void;
+  onCreate: (provider: SecretProvider) => void;
+  onEdit: (config: CompanySecretProviderConfig) => void;
+  onDisable: (config: CompanySecretProviderConfig) => void;
+  onSetDefault: (config: CompanySecretProviderConfig) => void;
+  onHealthCheck: (config: CompanySecretProviderConfig) => void;
   pendingActionId: string | null;
 }) {
   if (loading) {
     return (
-      <div classИмя="flex items-center gap-2 py-4 text-sm text-muted-foreground">
-        <Loader2 classИмя="h-4 w-4 animate-spin" />
-        Загрузка provider vaults
+      <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading provider vaults
       </div>
     );
   }
 
   if (error) {
     return (
-      <div classИмя="py-4 text-sm text-destructive flex items-center gap-2">
-        <AlertCircle classИмя="h-4 w-4" /> Ошибка to load provider vaults: {(error as Ошибка).message}
-        <Button variant="ghost" size="sm" onClick={onПовторить}>
-          Повторить
+      <div className="py-4 text-sm text-destructive flex items-center gap-2">
+        <AlertCircle className="h-4 w-4" /> Failed to load provider vaults: {(error as Error).message}
+        <Button variant="ghost" size="sm" onClick={onRetry}>
+          Retry
         </Button>
       </div>
     );
@@ -1794,53 +1794,53 @@ export function ПровайдерVaultsTab({
   }));
 
   return (
-    <div classИмя="flex min-h-full gap-6">
-      <aside classИмя="hidden w-56 shrink-0 md:block">
-        <nav classИмя="sticky top-0 space-y-1">
+    <div className="flex min-h-full gap-6">
+      <aside className="hidden w-56 shrink-0 md:block">
+        <nav className="sticky top-0 space-y-1">
           {providerRows.map(({ id, provider, Icon }) => (
             <a
               key={id}
               href={`#provider-vaults-${id}`}
-              classИмя="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground"
             >
-              <Icon classИмя="h-4 w-4" />
-              <span classИмя="truncate">{provider?.label ?? id.replaceВсе("_", " ")}</span>
+              <Icon className="h-4 w-4" />
+              <span className="truncate">{provider?.label ?? id.replaceAll("_", " ")}</span>
             </a>
           ))}
         </nav>
       </aside>
 
-      <div classИмя="min-w-0 flex-1 space-y-6">
+      <div className="min-w-0 flex-1 space-y-6">
         {providerRows.map(({ id, provider, Icon, isComingSoonFamily, configs }) => (
-          <section key={id} id={`provider-vaults-${id}`} classИмя={cn("scroll-mt-6 space-y-2", isComingSoonFamily && "opacity-50")}>
-            <div classИмя="flex flex-wrap items-center gap-2">
-              <Icon classИмя="h-4 w-4 text-muted-foreground" />
-              <h2 classИмя="text-sm font-semibold">{provider?.label ?? id.replaceВсе("_", " ")}</h2>
+          <section key={id} id={`provider-vaults-${id}`} className={cn("scroll-mt-6 space-y-2", isComingSoonFamily && "opacity-50")}>
+            <div className="flex flex-wrap items-center gap-2">
+              <Icon className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold">{provider?.label ?? id.replaceAll("_", " ")}</h2>
               {isComingSoonFamily ? (
-                <span classИмя="ml-auto text-xs text-muted-foreground">Скоро</span>
+                <span className="ml-auto text-xs text-muted-foreground">Coming soon</span>
               ) : (
-                <Button variant="outline" size="sm" classИмя="ml-auto" onClick={() => onСоздать(id)}>
-                  <Plus classИмя="h-3.5 w-3.5 mr-1" />
-                  Добавить vault
+                <Button variant="outline" size="sm" className="ml-auto" onClick={() => onCreate(id)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Add vault
                 </Button>
               )}
             </div>
             {configs.length === 0 ? (
-              <div classИмя="rounded-md border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+              <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
                 {isComingSoonFamily
-                  ? "Нетt yet supported."
-                  : "Нет company-specific vaults yet. Секреты can still use the deployment default provider settings."}
+                  ? "Not yet supported."
+                  : "No company-specific vaults yet. Secrets can still use the deployment default provider settings."}
               </div>
             ) : (
-              <div classИмя="space-y-3">
+              <div className="space-y-3">
                 {configs.map((config) => (
-                  <ПровайдерVaultCard
+                  <ProviderVaultCard
                     key={config.id}
                     config={config}
                     pending={pendingActionId === config.id}
-                    onИзменить={() => onИзменить(config)}
-                    onОтключить={() => onОтключить(config)}
-                    onSetПо умолчанию={() => onSetПо умолчанию(config)}
+                    onEdit={() => onEdit(config)}
+                    onDisable={() => onDisable(config)}
+                    onSetDefault={() => onSetDefault(config)}
                     onHealthCheck={() => onHealthCheck(config)}
                   />
                 ))}
@@ -1853,58 +1853,58 @@ export function ПровайдерVaultsTab({
   );
 }
 
-function ПровайдерVaultCard({
+function ProviderVaultCard({
   config,
   pending,
-  onИзменить,
-  onОтключить,
-  onSetПо умолчанию,
+  onEdit,
+  onDisable,
+  onSetDefault,
   onHealthCheck,
 }: {
-  config: КомпанияСекретПровайдерConfig;
+  config: CompanySecretProviderConfig;
   pending: boolean;
-  onИзменить: () => void;
-  onОтключить: () => void;
-  onSetПо умолчанию: () => void;
+  onEdit: () => void;
+  onDisable: () => void;
+  onSetDefault: () => void;
   onHealthCheck: () => void;
 }) {
-  const blockReason = getПровайдерConfigBlockReason(config);
-  const details = config.healthДетали;
+  const blockReason = getProviderConfigBlockReason(config);
+  const details = config.healthDetails;
   return (
-    <div classИмя="rounded-md border border-border bg-background p-4">
-      <div classИмя="flex items-start gap-3">
-        <div classИмя="min-w-0 flex-1">
-          <div classИмя="flex flex-wrap items-center gap-2">
-            <h3 classИмя="text-sm font-medium leading-snug">{config.displayИмя}</h3>
-            {config.isПо умолчанию ? (
-              <span classИмя="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                <Star classИмя="h-3 w-3 fill-current" />
-                По умолчанию
+    <div className="rounded-md border border-border bg-background p-4">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-medium leading-snug">{config.displayName}</h3>
+            {config.isDefault ? (
+              <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                <Star className="h-3 w-3 fill-current" />
+                Default
               </span>
             ) : null}
           </div>
-          <div classИмя="mt-1 flex flex-wrap items-center gap-2">
-            <Badge variant="outline" classИмя={cn("font-medium", providerConfigСтатусTone(config.status))}>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className={cn("font-medium", providerConfigStatusTone(config.status))}>
               {config.status.replace("_", " ")}
             </Badge>
-            {config.healthСтатус ? (
-              <span classИмя="text-xs text-muted-foreground">
-                Health {config.healthСтатус.replace("_", " ")} · {formatRelative(config.healthCheckedAt)}
+            {config.healthStatus ? (
+              <span className="text-xs text-muted-foreground">
+                Health {config.healthStatus.replace("_", " ")} · {formatRelative(config.healthCheckedAt)}
               </span>
             ) : (
-              <span classИмя="text-xs text-muted-foreground">Health not checked</span>
+              <span className="text-xs text-muted-foreground">Health not checked</span>
             )}
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onИзменить}>
-          <Изменить3 classИмя="h-3.5 w-3.5" />
+        <Button variant="ghost" size="sm" onClick={onEdit}>
+          <Edit3 className="h-3.5 w-3.5" />
         </Button>
       </div>
       {config.healthMessage || blockReason ? (
-        <div classИмя={cn("mt-3 rounded-md p-2 text-xs", blockReason ? "bg-destructive/5 text-destructive" : "bg-muted/40 text-muted-foreground")}>
+        <div className={cn("mt-3 rounded-md p-2 text-xs", blockReason ? "bg-destructive/5 text-destructive" : "bg-muted/40 text-muted-foreground")}>
           {blockReason ?? config.healthMessage}
           {details?.guidance?.length ? (
-            <ul classИмя="mt-1 list-disc space-y-0.5 pl-4">
+            <ul className="mt-1 list-disc space-y-0.5 pl-4">
               {details.guidance.map((item) => (
                 <li key={item}>{item}</li>
               ))}
@@ -1912,52 +1912,52 @@ function ПровайдерVaultCard({
           ) : null}
         </div>
       ) : null}
-      <div classИмя="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={onHealthCheck} disabled={pending}>
-          {pending ? <Loader2 classИмя="h-3.5 w-3.5 animate-spin mr-1" /> : <ОбновитьCw classИмя="h-3.5 w-3.5 mr-1" />}
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
           Check health
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={onSetПо умолчанию}
-          disabled={pending || Boolean(blockReason) || config.isПо умолчанию}
+          onClick={onSetDefault}
+          disabled={pending || Boolean(blockReason) || config.isDefault}
         >
-          <Star classИмя="h-3.5 w-3.5 mr-1" />
+          <Star className="h-3.5 w-3.5 mr-1" />
           Make default
         </Button>
         <Button
           variant="outline"
           size="sm"
-          classИмя="text-destructive hover:text-destructive"
-          onClick={onОтключить}
+          className="text-destructive hover:text-destructive"
+          onClick={onDisable}
           disabled={pending || config.status === "disabled"}
         >
-          <Ban classИмя="h-3.5 w-3.5 mr-1" />
-          Отключить
+          <Ban className="h-3.5 w-3.5 mr-1" />
+          Disable
         </Button>
       </div>
     </div>
   );
 }
 
-function ПровайдерVaultFields({
+function ProviderVaultFields({
   form,
   onChange,
 }: {
-  form: ПровайдерVaultForm;
-  onChange: React.Dispatch<React.SetStateAction<ПровайдерVaultForm>>;
+  form: ProviderVaultForm;
+  onChange: React.Dispatch<React.SetStateAction<ProviderVaultForm>>;
 }) {
-  const setField = (key: keyof ПровайдерVaultForm, value: string | boolean) => {
+  const setField = (key: keyof ProviderVaultForm, value: string | boolean) => {
     onChange((current) => ({ ...current, [key]: value }));
   };
 
   if (form.provider === "local_encrypted") {
     return (
-      <label classИмя="flex items-start gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm">
+      <label className="flex items-start gap-2 rounded-md border border-border bg-muted/20 p-3 text-sm">
         <input
           type="checkbox"
-          classИмя="mt-0.5 h-4 w-4 rounded border-border"
+          className="mt-0.5 h-4 w-4 rounded border-border"
           checked={form.backupReminderAcknowledged}
           onChange={(event) => setField("backupReminderAcknowledged", event.target.checked)}
         />
@@ -1970,34 +1970,34 @@ function ПровайдерVaultFields({
 
   if (form.provider === "aws_secrets_manager") {
     return (
-      <div classИмя="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <TextField label="AWS region" value={form.region} onChange={(value) => setField("region", value)} placeholder="us-east-1" required />
-        <TextField label="Имяspace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
-        <TextField label="Название секрета prefix" value={form.secretИмяPrefix} onChange={(value) => setField("secretИмяPrefix", value)} placeholder="paperclip" />
-        <TextField label="KMS key id" value={form.kmsКлючId} onChange={(value) => setField("kmsКлючId", value)} placeholder="alias/paperclip-secrets" />
-        <TextField label="Владелец tag" value={form.ownerTag} onChange={(value) => setField("ownerTag", value)} placeholder="platform" />
-        <TextField label="Окружение tag" value={form.environmentTag} onChange={(value) => setField("environmentTag", value)} placeholder="prod" />
+        <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
+        <TextField label="Secret name prefix" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
+        <TextField label="KMS key id" value={form.kmsKeyId} onChange={(value) => setField("kmsKeyId", value)} placeholder="alias/paperclip-secrets" />
+        <TextField label="Owner tag" value={form.ownerTag} onChange={(value) => setField("ownerTag", value)} placeholder="platform" />
+        <TextField label="Environment tag" value={form.environmentTag} onChange={(value) => setField("environmentTag", value)} placeholder="prod" />
       </div>
     );
   }
 
   if (form.provider === "gcp_secret_manager") {
     return (
-      <div classИмя="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <TextField label="Project id" value={form.projectId} onChange={(value) => setField("projectId", value)} placeholder="paperclip-prod" />
         <TextField label="Location" value={form.location} onChange={(value) => setField("location", value)} placeholder="global" />
-        <TextField label="Имяspace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
-        <TextField label="Название секрета prefix" value={form.secretИмяPrefix} onChange={(value) => setField("secretИмяPrefix", value)} placeholder="paperclip" />
+        <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
+        <TextField label="Secret name prefix" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
       </div>
     );
   }
 
   return (
-    <div classИмя="grid gap-3 sm:grid-cols-2">
-      <TextField label="Добавитьress" value={form.address} onChange={(value) => setField("address", value)} placeholder="https://vault.example.com" />
-      <TextField label="Имяspace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="admin" />
-      <TextField label="Mount path" value={form.mountПуть} onChange={(value) => setField("mountПуть", value)} placeholder="secret" />
-      <TextField label="Секрет path prefix" value={form.secretПутьPrefix} onChange={(value) => setField("secretПутьPrefix", value)} placeholder="paperclip/prod" />
+    <div className="grid gap-3 sm:grid-cols-2">
+      <TextField label="Address" value={form.address} onChange={(value) => setField("address", value)} placeholder="https://vault.example.com" />
+      <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="admin" />
+      <TextField label="Mount path" value={form.mountPath} onChange={(value) => setField("mountPath", value)} placeholder="secret" />
+      <TextField label="Secret path prefix" value={form.secretPathPrefix} onChange={(value) => setField("secretPathPrefix", value)} placeholder="paperclip/prod" />
     </div>
   );
 }
@@ -2015,105 +2015,105 @@ function TextField({
   placeholder?: string;
   required?: boolean;
 }) {
-  const id = `provider-vault-${label.toНизкийerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const id = `provider-vault-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
     <div>
-      <label classИмя="text-xs font-medium" htmlFor={id}>
+      <label className="text-xs font-medium" htmlFor={id}>
         {label}
-        {required ? null : <span classИмя="text-muted-foreground/70"> (optional)</span>}
+        {required ? null : <span className="text-muted-foreground/70"> (optional)</span>}
       </label>
       <Input id={id} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
     </div>
   );
 }
 
-function СекретДеталиTab({
+function SecretDetailsTab({
   secret,
   providerConfigs,
 }: {
-  secret: КомпанияСекрет;
-  providerConfigs: КомпанияСекретПровайдерConfig[];
+  secret: CompanySecret;
+  providerConfigs: CompanySecretProviderConfig[];
 }) {
   return (
-    <dl classИмя="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
       <DetailRow label="Описание">
-        <span>{secret.description ?? <span classИмя="text-muted-foreground">—</span>}</span>
+        <span>{secret.description ?? <span className="text-muted-foreground">—</span>}</span>
       </DetailRow>
       <DetailRow label="Custody">{modeLabel(secret.managedMode)}</DetailRow>
-      <DetailRow label="Провайдер">{secret.provider.replaceВсе("_", " ")}</DetailRow>
-      <DetailRow label="Провайдер vault">{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
-      <DetailRow label="Latest version">v{secret.latestВерсия}</DetailRow>
-      <DetailRow label="Создано">{formatRelative(secret.createdAt)}</DetailRow>
-      <DetailRow label="Обновлено">{formatRelative(secret.updatedAt)}</DetailRow>
+      <DetailRow label="Provider">{secret.provider.replaceAll("_", " ")}</DetailRow>
+      <DetailRow label="Provider vault">{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
+      <DetailRow label="Latest version">v{secret.latestVersion}</DetailRow>
+      <DetailRow label="Created">{formatRelative(secret.createdAt)}</DetailRow>
+      <DetailRow label="Updated">{formatRelative(secret.updatedAt)}</DetailRow>
       <DetailRow label="Last rotated">{formatRelative(secret.lastRotatedAt)}</DetailRow>
       <DetailRow label="Last resolved">{formatRelative(secret.lastResolvedAt)}</DetailRow>
       {secret.externalRef ? (
-        <div classИмя="col-span-2">
-          <dt classИмя="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">
-            {secret.managedMode === "external_reference" ? "Linked provider reference" : "Провайдер-managed path"}
+        <div className="col-span-2">
+          <dt className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">
+            {secret.managedMode === "external_reference" ? "Linked provider reference" : "Provider-managed path"}
           </dt>
-          <dd classИмя="font-mono text-xs break-all flex items-center gap-1">
-            <ExternalLink classИмя="h-3 w-3" /> {secret.externalRef}
+          <dd className="font-mono text-xs break-all flex items-center gap-1">
+            <ExternalLink className="h-3 w-3" /> {secret.externalRef}
           </dd>
         </div>
       ) : null}
-      <div classИмя="col-span-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-2 text-[11px] text-amber-700 dark:text-amber-300">
-        {modeОписание(secret.managedMode)} Paperclip never re-displays stored values.
+      <div className="col-span-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-2 text-[11px] text-amber-700 dark:text-amber-300">
+        {modeDescription(secret.managedMode)} Paperclip never re-displays stored values.
       </div>
     </dl>
   );
 }
 
-function DetailRow({ label, children }: { label: string; children: React.ReactНетde }) {
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt classИмя="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd classИмя="text-foreground">{children}</dd>
+      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="text-foreground">{children}</dd>
     </div>
   );
 }
 
-function СекретИспользованиеTab({ loading, bindings }: { loading: boolean; bindings: КомпанияСекретИспользованиеBinding[] }) {
+function SecretUsageTab({ loading, bindings }: { loading: boolean; bindings: CompanySecretUsageBinding[] }) {
   if (loading) {
-    return <div classИмя="py-6 text-center text-xs text-muted-foreground">Загрузка…</div>;
+    return <div className="py-6 text-center text-xs text-muted-foreground">Loading…</div>;
   }
   if (bindings.length === 0) {
     return (
-      <div classИмя="py-6 text-center text-xs text-muted-foreground">
-        Нет active bindings. Добавить this secret in agent, project, environment, or plugin config to start using it.
+      <div className="py-6 text-center text-xs text-muted-foreground">
+        No active bindings. Add this secret in agent, project, environment, or plugin config to start using it.
       </div>
     );
   }
   return (
-    <div classИмя="space-y-2">
+    <div className="space-y-2">
       {bindings.map((binding) => (
         <div
           key={binding.id}
-          classИмя="rounded-md border border-border bg-muted/30 p-2 text-xs"
+          className="rounded-md border border-border bg-muted/30 p-2 text-xs"
         >
-          <div classИмя="flex items-center justify-between gap-2">
-            <span classИмя="font-medium capitalize">{binding.target.type}</span>
-            <span classИмя="font-mono text-muted-foreground">v{binding.versionSelector}</span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-medium capitalize">{binding.target.type}</span>
+            <span className="font-mono text-muted-foreground">v{binding.versionSelector}</span>
           </div>
-          <div classИмя="mt-0.5 flex min-w-0 items-center gap-2">
+          <div className="mt-0.5 flex min-w-0 items-center gap-2">
             {binding.target.href ? (
-              <Link to={binding.target.href} classИмя="truncate font-medium text-primary hover:underline">
+              <Link to={binding.target.href} className="truncate font-medium text-primary hover:underline">
                 {binding.target.label}
               </Link>
             ) : (
-              <span classИмя="truncate font-medium">{binding.target.label}</span>
+              <span className="truncate font-medium">{binding.target.label}</span>
             )}
             {binding.target.status ? (
-              <Badge variant="outline" classИмя="h-5 px-1.5 text-[10px] font-normal">
-                {binding.target.status.replaceВсе("_", " ")}
+              <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-normal">
+                {binding.target.status.replaceAll("_", " ")}
               </Badge>
             ) : null}
           </div>
-          <div classИмя="font-mono text-[11px] text-muted-foreground break-all">
+          <div className="font-mono text-[11px] text-muted-foreground break-all">
             {binding.targetId}
           </div>
-          <div classИмя="text-[11px] text-muted-foreground">
-            {binding.configПуть} {binding.required ? "· required" : "· optional"}
+          <div className="text-[11px] text-muted-foreground">
+            {binding.configPath} {binding.required ? "· required" : "· optional"}
           </div>
         </div>
       ))}
@@ -2121,32 +2121,32 @@ function СекретИспользованиеTab({ loading, bindings }: { load
   );
 }
 
-function СекретEventsTab({ loading, events }: { loading: boolean; events: СекретДоступEvent[] }) {
+function SecretEventsTab({ loading, events }: { loading: boolean; events: SecretAccessEvent[] }) {
   if (loading) {
-    return <div classИмя="py-6 text-center text-xs text-muted-foreground">Загрузка…</div>;
+    return <div className="py-6 text-center text-xs text-muted-foreground">Loading…</div>;
   }
   if (events.length === 0) {
     return (
-      <div classИмя="py-6 text-center text-xs text-muted-foreground">
-        Нет access events recorded yet. Each runtime resolution writes a redacted entry here.
+      <div className="py-6 text-center text-xs text-muted-foreground">
+        No access events recorded yet. Each runtime resolution writes a redacted entry here.
       </div>
     );
   }
   return (
-    <div classИмя="space-y-1.5">
+    <div className="space-y-1.5">
       {events.map((event) => (
-        <div key={event.id} classИмя="rounded border border-border px-2 py-1.5 text-xs">
-          <div classИмя="flex items-center justify-between">
-            <span classИмя="capitalize">
-              {event.consumerТип} · {event.outcome}
+        <div key={event.id} className="rounded border border-border px-2 py-1.5 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="capitalize">
+              {event.consumerType} · {event.outcome}
             </span>
-            <span classИмя="text-[11px] text-muted-foreground">{formatRelative(event.createdAt)}</span>
+            <span className="text-[11px] text-muted-foreground">{formatRelative(event.createdAt)}</span>
           </div>
-          <div classИмя="font-mono text-[11px] text-muted-foreground break-all">
+          <div className="font-mono text-[11px] text-muted-foreground break-all">
             {event.consumerId}
           </div>
           {event.errorCode ? (
-            <div classИмя="text-[11px] text-destructive">{event.errorCode}</div>
+            <div className="text-[11px] text-destructive">{event.errorCode}</div>
           ) : null}
         </div>
       ))}

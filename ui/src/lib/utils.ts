@@ -1,9 +1,9 @@
-import { type ClassЗначение, clsx } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { deriveАгентUrlКлюч, deriveProjectUrlКлюч, normalizeProjectUrlКлюч, hasНетnAsciiContent } from "@paperclipai/shared";
-import type { БиллингТип, FinanceDirection, FinanceEventKind } from "@paperclipai/shared";
+import { deriveAgentUrlKey, deriveProjectUrlKey, normalizeProjectUrlKey, hasNonAsciiContent } from "@paperclipai/shared";
+import type { BillingType, FinanceDirection, FinanceEventKind } from "@paperclipai/shared";
 
-export function cn(...inputs: ClassЗначение[]) {
+export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
@@ -68,14 +68,14 @@ export function relativeTime(date: Date | string): string {
   return formatDate(date);
 }
 
-export function formatТокенs(n: number): string {
+export function formatTokens(n: number): string {
   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
   return String(n);
 }
 
-/** Человекize a millisecond duration into a compact `1h 2m`, `45m 12s`, `12s` string. */
+/** Humanize a millisecond duration into a compact `1h 2m`, `45m 12s`, `12s` string. */
 export function formatDurationMs(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return "0s";
   const totalSeconds = Math.round(ms / 1000);
@@ -94,7 +94,7 @@ export function formatDurationMs(ms: number): string {
 }
 
 /** Map a raw provider slug to a display-friendly name. */
-export function providerDisplayИмя(provider: string): string {
+export function providerDisplayName(provider: string): string {
   const map: Record<string, string> = {
     anthropic: "Anthropic",
     aws_bedrock: "AWS Bedrock",
@@ -105,22 +105,22 @@ export function providerDisplayИмя(provider: string): string {
     cursor: "Cursor",
     jetbrains: "JetBrains AI",
   };
-  return map[provider.toНизкийerCase()] ?? provider;
+  return map[provider.toLowerCase()] ?? provider;
 }
 
-export function billingТипDisplayИмя(billingТип: БиллингТип): string {
-  const map: Record<БиллингТип, string> = {
+export function billingTypeDisplayName(billingType: BillingType): string {
+  const map: Record<BillingType, string> = {
     metered_api: "Metered API",
     subscription_included: "Subscription",
     subscription_overage: "Subscription overage",
-    credits: "Кредиты",
+    credits: "Credits",
     fixed: "Fixed",
     unknown: "Неизвестно",
   };
-  return map[billingТип];
+  return map[billingType];
 }
 
-export function quotaSourceDisplayИмя(source: string): string {
+export function quotaSourceDisplayName(source: string): string {
   const map: Record<string, string> = {
     "anthropic-oauth": "Anthropic OAuth",
     "claude-cli": "Claude CLI",
@@ -131,7 +131,7 @@ export function quotaSourceDisplayИмя(source: string): string {
   return map[source] ?? source;
 }
 
-function coerceБиллингТип(value: unknown): БиллингТип | null {
+function coerceBillingType(value: unknown): BillingType | null {
   if (
     value === "metered_api" ||
     value === "subscription_included" ||
@@ -145,7 +145,7 @@ function coerceБиллингТип(value: unknown): БиллингТип | null
   return null;
 }
 
-function readЗапуститьCostUsd(payload: Record<string, unknown> | null): number {
+function readRunCostUsd(payload: Record<string, unknown> | null): number {
   if (!payload) return 0;
   for (const key of ["costUsd", "cost_usd", "total_cost_usd"] as const) {
     const value = payload[key];
@@ -154,16 +154,16 @@ function readЗапуститьCostUsd(payload: Record<string, unknown> | null):
   return 0;
 }
 
-export function visibleЗапуститьCostUsd(
+export function visibleRunCostUsd(
   usage: Record<string, unknown> | null,
   result: Record<string, unknown> | null = null,
 ): number {
-  const billingТип = coerceБиллингТип(usage?.billingТип) ?? coerceБиллингТип(result?.billingТип);
-  if (billingТип === "subscription_included") return 0;
-  return readЗапуститьCostUsd(usage) || readЗапуститьCostUsd(result);
+  const billingType = coerceBillingType(usage?.billingType) ?? coerceBillingType(result?.billingType);
+  if (billingType === "subscription_included") return 0;
+  return readRunCostUsd(usage) || readRunCostUsd(result);
 }
 
-export function financeEventKindDisplayИмя(eventKind: FinanceEventKind): string {
+export function financeEventKindDisplayName(eventKind: FinanceEventKind): string {
   const map: Record<FinanceEventKind, string> = {
     inference_charge: "Inference charge",
     platform_fee: "Platform fee",
@@ -176,14 +176,14 @@ export function financeEventKindDisplayИмя(eventKind: FinanceEventKind): stri
     logpush_charge: "Logpush",
     provisioned_capacity_charge: "Provisioned capacity",
     training_charge: "Training",
-    custom_model_import_charge: "Свой model import",
-    custom_model_storage_charge: "Свой model storage",
+    custom_model_import_charge: "Custom model import",
+    custom_model_storage_charge: "Custom model storage",
     manual_adjustment: "Manual adjustment",
   };
   return map[eventKind];
 }
 
-export function financeDirectionDisplayИмя(direction: FinanceDirection): string {
+export function financeDirectionDisplayName(direction: FinanceDirection): string {
   return direction === "credit" ? "Credit" : "Debit";
 }
 
@@ -193,31 +193,31 @@ export function issueUrl(issue: { id: string; identifier?: string | null }): str
 }
 
 /** Build an agent route URL using the short URL key when available. */
-export function agentRouteRef(agent: { id: string; urlКлюч?: string | null; name?: string | null }): string {
-  return agent.urlКлюч ?? deriveАгентUrlКлюч(agent.name, agent.id);
+export function agentRouteRef(agent: { id: string; urlKey?: string | null; name?: string | null }): string {
+  return agent.urlKey ?? deriveAgentUrlKey(agent.name, agent.id);
 }
 
 /** Build an agent URL using the short URL key when available. */
-export function agentUrl(agent: { id: string; urlКлюч?: string | null; name?: string | null }): string {
+export function agentUrl(agent: { id: string; urlKey?: string | null; name?: string | null }): string {
   return `/agents/${agentRouteRef(agent)}`;
 }
 
 /** Build a project route reference, falling back to UUID when the derived key is ambiguous. */
-export function projectRouteRef(project: { id: string; urlКлюч?: string | null; name?: string | null }): string {
-  const key = project.urlКлюч ?? deriveProjectUrlКлюч(project.name, project.id);
+export function projectRouteRef(project: { id: string; urlKey?: string | null; name?: string | null }): string {
+  const key = project.urlKey ?? deriveProjectUrlKey(project.name, project.id);
   // Guard for rolling deploys or legacy data where the server returned a bare slug without UUID suffix.
-  if (key === normalizeProjectUrlКлюч(project.name) && hasНетnAsciiContent(project.name)) return project.id;
+  if (key === normalizeProjectUrlKey(project.name) && hasNonAsciiContent(project.name)) return project.id;
   return key;
 }
 
 /** Build a project URL using the short URL key when available. */
-export function projectUrl(project: { id: string; urlКлюч?: string | null; name?: string | null }): string {
+export function projectUrl(project: { id: string; urlKey?: string | null; name?: string | null }): string {
   return `/projects/${projectRouteRef(project)}`;
 }
 
 /** Build a project workspace URL scoped under its project. */
-export function projectРабочая областьUrl(
-  project: { id: string; urlКлюч?: string | null; name?: string | null },
+export function projectWorkspaceUrl(
+  project: { id: string; urlKey?: string | null; name?: string | null },
   workspaceId: string,
 ): string {
   return `${projectUrl(project)}/workspaces/${workspaceId}`;

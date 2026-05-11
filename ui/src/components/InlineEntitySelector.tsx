@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type ReactНетde } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { orderItemsBySelectedAndRecent } from "../lib/recent-selections";
@@ -18,13 +18,13 @@ interface InlineEntitySelectorProps {
   searchPlaceholder: string;
   emptyMessage: string;
   onChange: (id: string) => void;
-  onПодтвердить?: () => void;
-  classИмя?: string;
-  renderTriggerЗначение?: (option: InlineEntityOption | null) => ReactНетde;
-  renderOption?: (option: InlineEntityOption, isSelected: boolean) => ReactНетde;
+  onConfirm?: () => void;
+  className?: string;
+  renderTriggerValue?: (option: InlineEntityOption | null) => ReactNode;
+  renderOption?: (option: InlineEntityOption, isSelected: boolean) => ReactNode;
   recentOptionIds?: string[];
-  /** Skip the Портal so the popover stays in the DOM tree (fixes scroll inside Dialogs). */
-  disableПортal?: boolean;
+  /** Skip the Portal so the popover stays in the DOM tree (fixes scroll inside Dialogs). */
+  disablePortal?: boolean;
   /** Open the popover when the trigger receives keyboard/programmatic focus. */
   openOnFocus?: boolean;
 }
@@ -41,22 +41,22 @@ export const InlineEntitySelector = forwardRef<HTMLButtonElement, InlineEntitySe
       searchPlaceholder,
       emptyMessage,
       onChange,
-      onПодтвердить,
-      classИмя,
-      renderTriggerЗначение,
+      onConfirm,
+      className,
+      renderTriggerValue,
       renderOption,
       recentOptionIds = EMPTY_RECENT_OPTION_IDS,
-      disableПортal,
+      disablePortal,
       openOnFocus = true,
     },
     ref,
   ) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
-    const [highlightedIndex, setВысокийlightedIndex] = useState(0);
+    const [highlightedIndex, setHighlightedIndex] = useState(0);
     const highlightedIndexRef = useRef(0);
     const inputRef = useRef<HTMLInputElement>(null);
-    const shouldPreventЗакрытьАвтоFocusRef = useRef(false);
+    const shouldPreventCloseAutoFocusRef = useRef(false);
     const isPointerDownRef = useRef(false);
 
     const allOptions = useMemo<InlineEntityOption[]>(() => {
@@ -65,37 +65,37 @@ export const InlineEntitySelector = forwardRef<HTMLButtonElement, InlineEntitySe
     }, [noneLabel, options, recentOptionIds, value]);
 
     const filteredOptions = useMemo(() => {
-      const term = query.trim().toНизкийerCase();
+      const term = query.trim().toLowerCase();
       if (!term) return allOptions;
       return allOptions.filter((option) => {
-        const haystack = `${option.label} ${option.searchText ?? ""}`.toНизкийerCase();
+        const haystack = `${option.label} ${option.searchText ?? ""}`.toLowerCase();
         return haystack.includes(term);
       });
     }, [allOptions, query]);
 
     const currentOption = options.find((option) => option.id === value) ?? null;
 
-    const setВысокийlightedIndexЗначение = useCallback((next: number | ((current: number) => number)) => {
+    const setHighlightedIndexValue = useCallback((next: number | ((current: number) => number)) => {
       const resolved = typeof next === "function" ? next(highlightedIndexRef.current) : next;
       highlightedIndexRef.current = resolved;
-      setВысокийlightedIndex(resolved);
+      setHighlightedIndex(resolved);
     }, []);
 
     useEffect(() => {
       if (!open) return;
       const selectedIndex = filteredOptions.findIndex((option) => option.id === value);
-      setВысокийlightedIndexЗначение(selectedIndex >= 0 ? selectedIndex : 0);
-    }, [filteredOptions, open, setВысокийlightedIndexЗначение, value]);
+      setHighlightedIndexValue(selectedIndex >= 0 ? selectedIndex : 0);
+    }, [filteredOptions, open, setHighlightedIndexValue, value]);
 
-    const commitSelection = (index: number, moveДалее: boolean) => {
+    const commitSelection = (index: number, moveNext: boolean) => {
       const option = filteredOptions[index] ?? filteredOptions[0];
       if (option) onChange(option.id);
-      shouldPreventЗакрытьАвтоFocusRef.current = moveДалее;
+      shouldPreventCloseAutoFocusRef.current = moveNext;
       setOpen(false);
       setQuery("");
-      if (moveДалее && onПодтвердить) {
+      if (moveNext && onConfirm) {
         requestAnimationFrame(() => {
-          onПодтвердить();
+          onConfirm();
         });
       }
     };
@@ -112,9 +112,9 @@ export const InlineEntitySelector = forwardRef<HTMLButtonElement, InlineEntitySe
           <button
             ref={ref}
             type="button"
-            classИмя={cn(
+            className={cn(
               "inline-flex min-w-0 items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-1 text-sm font-medium text-foreground transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              classИмя,
+              className,
             )}
             onPointerDown={() => { isPointerDownRef.current = true; }}
             onFocus={() => {
@@ -122,19 +122,19 @@ export const InlineEntitySelector = forwardRef<HTMLButtonElement, InlineEntitySe
               isPointerDownRef.current = false;
             }}
           >
-            {renderTriggerЗначение
-              ? renderTriggerЗначение(currentOption)
-              : (currentOption?.label ?? <span classИмя="text-muted-foreground">{placeholder}</span>)}
+            {renderTriggerValue
+              ? renderTriggerValue(currentOption)
+              : (currentOption?.label ?? <span className="text-muted-foreground">{placeholder}</span>)}
           </button>
         </PopoverTrigger>
         <PopoverContent
           align="start"
           side="bottom"
           collisionPadding={16}
-          classИмя="w-[min(20rem,calc(100vw-2rem))] p-1"
-          disableПортal={disableПортal}
-          onOpenАвтоFocus={(event) => {
-            event.preventПо умолчанию();
+          className="w-[min(20rem,calc(100vw-2rem))] p-1"
+          disablePortal={disablePortal}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
             // On touch devices, don't auto-focus the search input to avoid
             // opening the virtual keyboard which reshapes the viewport and
             // pushes the popover off-screen.
@@ -145,77 +145,77 @@ export const InlineEntitySelector = forwardRef<HTMLButtonElement, InlineEntitySe
               inputRef.current?.focus();
             }
           }}
-          onЗакрытьАвтоFocus={(event) => {
-            if (!shouldPreventЗакрытьАвтоFocusRef.current) return;
-            event.preventПо умолчанию();
-            shouldPreventЗакрытьАвтоFocusRef.current = false;
+          onCloseAutoFocus={(event) => {
+            if (!shouldPreventCloseAutoFocusRef.current) return;
+            event.preventDefault();
+            shouldPreventCloseAutoFocusRef.current = false;
           }}
         >
           <input
             ref={inputRef}
-            classИмя="w-full border-b border-border bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground/60"
+            className="w-full border-b border-border bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground/60"
             placeholder={searchPlaceholder}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
             }}
-            onКлючDown={(event) => {
+            onKeyDown={(event) => {
               if (event.key === "ArrowDown") {
-                event.preventПо умолчанию();
+                event.preventDefault();
                 event.stopPropagation();
-                setВысокийlightedIndexЗначение((current) =>
+                setHighlightedIndexValue((current) =>
                   filteredOptions.length === 0 ? 0 : (current + 1) % filteredOptions.length,
                 );
                 return;
               }
               if (event.key === "ArrowUp") {
-                event.preventПо умолчанию();
+                event.preventDefault();
                 event.stopPropagation();
-                setВысокийlightedIndexЗначение((current) => {
+                setHighlightedIndexValue((current) => {
                   if (filteredOptions.length === 0) return 0;
                   return current <= 0 ? filteredOptions.length - 1 : current - 1;
                 });
                 return;
               }
               if (event.key === "Enter") {
-                event.preventПо умолчанию();
+                event.preventDefault();
                 event.stopPropagation();
                 commitSelection(highlightedIndexRef.current, true);
                 return;
               }
-              if (event.key === "Tab" && !event.shiftКлюч) {
-                event.preventПо умолчанию();
+              if (event.key === "Tab" && !event.shiftKey) {
+                event.preventDefault();
                 event.stopPropagation();
                 commitSelection(highlightedIndexRef.current, true);
                 return;
               }
               if (event.key === "Escape") {
-                event.preventПо умолчанию();
+                event.preventDefault();
                 event.stopPropagation();
                 setOpen(false);
               }
             }}
           />
-          <div classИмя="max-h-56 overflow-y-auto overscroll-contain py-1 touch-pan-y">
+          <div className="max-h-56 overflow-y-auto overscroll-contain py-1 touch-pan-y">
             {filteredOptions.length === 0 ? (
-              <p classИмя="px-2 py-2 text-xs text-muted-foreground">{emptyMessage}</p>
+              <p className="px-2 py-2 text-xs text-muted-foreground">{emptyMessage}</p>
             ) : (
               filteredOptions.map((option, index) => {
                 const isSelected = option.id === value;
-                const isВысокийlighted = index === highlightedIndex;
+                const isHighlighted = index === highlightedIndex;
                 return (
                   <button
                     key={option.id || "__none__"}
                     type="button"
-                    classИмя={cn(
+                    className={cn(
                       "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm touch-manipulation",
-                      isВысокийlighted && "bg-accent",
+                      isHighlighted && "bg-accent",
                     )}
-                    onMouseEnter={() => setВысокийlightedIndexЗначение(index)}
+                    onMouseEnter={() => setHighlightedIndexValue(index)}
                     onClick={() => commitSelection(index, true)}
                   >
-                    {renderOption ? renderOption(option, isSelected) : <span classИмя="truncate">{option.label}</span>}
-                    <Check classИмя={cn("ml-auto h-3.5 w-3.5 text-muted-foreground", isSelected ? "opacity-100" : "opacity-0")} />
+                    {renderOption ? renderOption(option, isSelected) : <span className="truncate">{option.label}</span>}
+                    <Check className={cn("ml-auto h-3.5 w-3.5 text-muted-foreground", isSelected ? "opacity-100" : "opacity-0")} />
                   </button>
                 );
               })

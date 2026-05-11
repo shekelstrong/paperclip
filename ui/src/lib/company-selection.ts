@@ -1,16 +1,16 @@
-export type КомпанияSelectionSource = "manual" | "route_sync" | "bootstrap";
+export type CompanySelectionSource = "manual" | "route_sync" | "bootstrap";
 
-export function shouldSyncКомпанияSelectionFromRoute(params: {
-  selectionSource: КомпанияSelectionSource;
-  selectedКомпанияId: string | null;
-  routeКомпанияId: string;
+export function shouldSyncCompanySelectionFromRoute(params: {
+  selectionSource: CompanySelectionSource;
+  selectedCompanyId: string | null;
+  routeCompanyId: string;
 }): boolean {
-  const { selectionSource, selectedКомпанияId, routeКомпанияId } = params;
+  const { selectionSource, selectedCompanyId, routeCompanyId } = params;
 
-  if (selectedКомпанияId === routeКомпанияId) return false;
+  if (selectedCompanyId === routeCompanyId) return false;
 
   // Let manual company switches finish their remembered-path navigation first.
-  if (selectionSource === "manual" && selectedКомпанияId) {
+  if (selectionSource === "manual" && selectedCompanyId) {
     return false;
   }
 

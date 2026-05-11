@@ -1,24 +1,24 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactНетde } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   DocumentRevision,
   FeedbackDataSharingPreference,
   FeedbackVote,
-  FeedbackVoteЗначение,
-  Задача,
-  ЗадачаDocument,
+  FeedbackVoteValue,
+  Issue,
+  IssueDocument,
 } from "@paperclipai/shared";
-import { isSystemЗадачаDocumentКлюч } from "@paperclipai/shared";
+import { isSystemIssueDocumentKey } from "@paperclipai/shared";
 import { useLocation } from "@/lib/router";
-import { ApiОшибка } from "../api/client";
+import { ApiError } from "../api/client";
 import { issuesApi } from "../api/issues";
-import { useАвтоsaveIndicator } from "../hooks/useАвтоsaveIndicator";
+import { useAutosaveIndicator } from "../hooks/useAutosaveIndicator";
 import { deriveDocumentRevisionState } from "../lib/document-revisions";
-import { queryКлючs } from "../lib/queryКлючs";
+import { queryKeys } from "../lib/queryKeys";
 import { cn, relativeTime } from "../lib/utils";
 import { FoldCurtain } from "./FoldCurtain";
 import { MarkdownBody } from "./MarkdownBody";
-import { MarkdownИзменитьor, type MentionOption } from "./MarkdownИзменитьor";
+import { MarkdownEditor, type MentionOption } from "./MarkdownEditor";
 import { OutputFeedbackButtons } from "./OutputFeedbackButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,10 +32,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Check, ChevronDown, ChevronRight, Копировать, Diff, Скачать, FilePenLine, FileText, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Copy, Diff, Download, FilePenLine, FileText, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
 import { DocumentDiffModal } from "./DocumentDiffModal";
 
-type ЧерновикState = {
+type DraftState = {
   key: string;
   title: string;
   body: string;
@@ -45,19 +45,19 @@ type ЧерновикState = {
 
 type DocumentConflictState = {
   key: string;
-  serverDocument: ЗадачаDocument;
-  localЧерновик: ЧерновикState;
+  serverDocument: IssueDocument;
+  localDraft: DraftState;
   showRemote: boolean;
 };
 
 const DOCUMENT_AUTOSAVE_DEBOUNCE_MS = 900;
 const DOCUMENT_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
-const getFoldedДокументыStorageКлюч = (issueId: string) => `paperclip:issue-document-folds:${issueId}`;
+const getFoldedDocumentsStorageKey = (issueId: string) => `paperclip:issue-document-folds:${issueId}`;
 
-function loadFoldedDocumentКлючs(issueId: string) {
+function loadFoldedDocumentKeys(issueId: string) {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(getFoldedДокументыStorageКлюч(issueId));
+    const raw = window.localStorage.getItem(getFoldedDocumentsStorageKey(issueId));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : [];
@@ -66,29 +66,29 @@ function loadFoldedDocumentКлючs(issueId: string) {
   }
 }
 
-function saveFoldedDocumentКлючs(issueId: string, keys: string[]) {
+function saveFoldedDocumentKeys(issueId: string, keys: string[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(getFoldedДокументыStorageКлюч(issueId), JSON.stringify(keys));
+  window.localStorage.setItem(getFoldedDocumentsStorageKey(issueId), JSON.stringify(keys));
 }
 
-function renderFoldableBody(body: string, classИмя?: string) {
+function renderFoldableBody(body: string, className?: string) {
   return (
     <FoldCurtain>
-      <MarkdownBody classИмя={classИмя} softBreaks={false}>{body}</MarkdownBody>
+      <MarkdownBody className={className} softBreaks={false}>{body}</MarkdownBody>
     </FoldCurtain>
   );
 }
 
-function isPlanКлюч(key: string) {
-  return key.trim().toНизкийerCase() === "plan";
+function isPlanKey(key: string) {
+  return key.trim().toLowerCase() === "plan";
 }
 
-function titlesMatchКлюч(title: string | null | undefined, key: string) {
-  return (title ?? "").trim().toНизкийerCase() === key.trim().toНизкийerCase();
+function titlesMatchKey(title: string | null | undefined, key: string) {
+  return (title ?? "").trim().toLowerCase() === key.trim().toLowerCase();
 }
 
-function isDocumentConflictОшибка(error: unknown) {
-  return error instanceof ApiОшибка && error.status === 409;
+function isDocumentConflictError(error: unknown) {
+  return error instanceof ApiError && error.status === 409;
 }
 
 function downloadDocumentFile(key: string, body: string) {
@@ -105,16 +105,16 @@ function downloadDocumentFile(key: string, body: string) {
 
 function getRevisionActorLabel(revision: DocumentRevision) {
   if (revision.createdByUserId) return "board";
-  if (revision.createdByАгентId) return "agent";
+  if (revision.createdByAgentId) return "agent";
   return "system";
 }
 
-function documentHasUnsavedChanges(doc: ЗадачаDocument, draft: ЧерновикState | null) {
+function documentHasUnsavedChanges(doc: IssueDocument, draft: DraftState | null) {
   if (!draft || draft.isNew || draft.key !== doc.key) return false;
   return draft.body !== doc.body || (doc.title ?? "") !== draft.title;
 }
 
-function toDocumentSummary(document: ЗадачаDocument) {
+function toDocumentSummary(document: IssueDocument) {
   return {
     id: document.id,
     companyId: document.companyId,
@@ -124,95 +124,95 @@ function toDocumentSummary(document: ЗадачаDocument) {
     format: document.format,
     latestRevisionId: document.latestRevisionId,
     latestRevisionNumber: document.latestRevisionNumber,
-    createdByАгентId: document.createdByАгентId,
+    createdByAgentId: document.createdByAgentId,
     createdByUserId: document.createdByUserId,
-    updatedByАгентId: document.updatedByАгентId,
+    updatedByAgentId: document.updatedByAgentId,
     updatedByUserId: document.updatedByUserId,
     createdAt: document.createdAt,
     updatedAt: document.updatedAt,
   };
 }
 
-export function ЗадачаДокументыSection({
+export function IssueDocumentsSection({
   issue,
-  canУдалитьДокументы,
+  canDeleteDocuments,
   feedbackVotes = [],
   feedbackDataSharingPreference = "prompt",
   feedbackTermsUrl = null,
   mentions,
-  imageЗагрузитьHandler,
+  imageUploadHandler,
   onVote,
   extraActions,
 }: {
-  issue: Задача;
-  canУдалитьДокументы: boolean;
+  issue: Issue;
+  canDeleteDocuments: boolean;
   feedbackVotes?: FeedbackVote[];
   feedbackDataSharingPreference?: FeedbackDataSharingPreference;
   feedbackTermsUrl?: string | null;
   mentions?: MentionOption[];
-  imageЗагрузитьHandler?: (file: File) => Promise<string>;
+  imageUploadHandler?: (file: File) => Promise<string>;
   onVote?: (
     revisionId: string,
-    vote: FeedbackVoteЗначение,
+    vote: FeedbackVoteValue,
     options?: { allowSharing?: boolean; reason?: string },
   ) => Promise<void>;
-  extraActions?: ReactНетde;
+  extraActions?: ReactNode;
 }) {
   const queryClient = useQueryClient();
   const location = useLocation();
-  const [confirmУдалитьКлюч, setПодтвердитьУдалитьКлюч] = useState<string | null>(null);
-  const [error, setОшибка] = useState<string | null>(null);
-  const [draft, setЧерновик] = useState<ЧерновикState | null>(null);
+  const [confirmDeleteKey, setConfirmDeleteKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<DraftState | null>(null);
   const [documentConflict, setDocumentConflict] = useState<DocumentConflictState | null>(null);
-  const [foldedDocumentКлючs, setFoldedDocumentКлючs] = useState<string[]>(() => loadFoldedDocumentКлючs(issue.id));
-  const [autosaveDocumentКлюч, setАвтоsaveDocumentКлюч] = useState<string | null>(null);
-  const [copiedDocumentКлюч, setCopiedDocumentКлюч] = useState<string | null>(null);
-  const [highlightDocumentКлюч, setВысокийlightDocumentКлюч] = useState<string | null>(null);
-  const [revisionMenuOpenКлюч, setRevisionMenuOpenКлюч] = useState<string | null>(null);
+  const [foldedDocumentKeys, setFoldedDocumentKeys] = useState<string[]>(() => loadFoldedDocumentKeys(issue.id));
+  const [autosaveDocumentKey, setAutosaveDocumentKey] = useState<string | null>(null);
+  const [copiedDocumentKey, setCopiedDocumentKey] = useState<string | null>(null);
+  const [highlightDocumentKey, setHighlightDocumentKey] = useState<string | null>(null);
+  const [revisionMenuOpenKey, setRevisionMenuOpenKey] = useState<string | null>(null);
   const [selectedRevisionIds, setSelectedRevisionIds] = useState<Record<string, string | null>>({});
-  const [diffViewКлюч, setDiffViewКлюч] = useState<string | null>(null);
-  const autosaveDebounceRef = useRef<ReturnТип<typeof setTimeout> | null>(null);
-  const copiedDocumentTimerRef = useRef<ReturnТип<typeof setTimeout> | null>(null);
+  const [diffViewKey, setDiffViewKey] = useState<string | null>(null);
+  const autosaveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copiedDocumentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasScrolledToHashRef = useRef(false);
   const {
     state: autosaveState,
     markDirty,
     reset,
-    runСохранить,
-  } = useАвтоsaveIndicator();
+    runSave,
+  } = useAutosaveIndicator();
 
   const { data: documents } = useQuery({
-    queryКлюч: queryКлючs.issues.documents(issue.id),
-    queryFn: () => issuesApi.listДокументы(issue.id),
+    queryKey: queryKeys.issues.documents(issue.id),
+    queryFn: () => issuesApi.listDocuments(issue.id),
   });
 
   const { data: activeDocumentRevisions, isFetching: isFetchingDocumentRevisions } = useQuery({
-    queryКлюч: revisionMenuOpenКлюч
-      ? queryКлючs.issues.documentRevisions(issue.id, revisionMenuOpenКлюч)
+    queryKey: revisionMenuOpenKey
+      ? queryKeys.issues.documentRevisions(issue.id, revisionMenuOpenKey)
       : ["issues", "document-revisions", issue.id, "__idle__"],
     queryFn: async () => {
-      if (!revisionMenuOpenКлюч) return [];
-      return issuesApi.listDocumentRevisions(issue.id, revisionMenuOpenКлюч);
+      if (!revisionMenuOpenKey) return [];
+      return issuesApi.listDocumentRevisions(issue.id, revisionMenuOpenKey);
     },
-    enabled: Boolean(revisionMenuOpenКлюч),
+    enabled: Boolean(revisionMenuOpenKey),
   });
 
-  const invalidateЗадачаДокументы = useCallback(() => {
-    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(issue.id) });
-    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.documents(issue.id) });
+  const invalidateIssueDocuments = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issue.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.issues.documents(issue.id) });
     queryClient.invalidateQueries({
       predicate: (query) =>
-        Array.isArray(query.queryКлюч)
-        && query.queryКлюч[0] === "issues"
-        && query.queryКлюч[1] === "document-revisions"
-        && query.queryКлюч[2] === issue.id,
+        Array.isArray(query.queryKey)
+        && query.queryKey[0] === "issues"
+        && query.queryKey[1] === "document-revisions"
+        && query.queryKey[2] === issue.id,
     });
   }, [issue.id, queryClient]);
 
-  const syncDocumentCaches = useCallback((document: ЗадачаDocument) => {
-    if (isSystemЗадачаDocumentКлюч(document.key)) return;
-    queryClient.setQueryData<ЗадачаDocument[] | undefined>(
-      queryКлючs.issues.documents(issue.id),
+  const syncDocumentCaches = useCallback((document: IssueDocument) => {
+    if (isSystemIssueDocumentKey(document.key)) return;
+    queryClient.setQueryData<IssueDocument[] | undefined>(
+      queryKeys.issues.documents(issue.id),
       (current) => {
         if (!current) return [document];
         const existingIndex = current.findIndex((entry) => entry.key === document.key);
@@ -220,8 +220,8 @@ export function ЗадачаДокументыSection({
         return current.map((entry, index) => index === existingIndex ? document : entry);
       },
     );
-    queryClient.setQueryData<Задача | undefined>(
-      queryКлючs.issues.detail(issue.id),
+    queryClient.setQueryData<Issue | undefined>(
+      queryKeys.issues.detail(issue.id),
       (current) => {
         if (!current) return current;
         const nextSummaries = (() => {
@@ -241,186 +241,186 @@ export function ЗадачаДокументыSection({
   }, [issue.id, queryClient]);
 
   const upsertDocument = useMutation({
-    mutationFn: async (nextЧерновик: ЧерновикState) =>
-      issuesApi.upsertDocument(issue.id, nextЧерновик.key, {
-        title: isPlanКлюч(nextЧерновик.key) ? null : nextЧерновик.title.trim() || null,
+    mutationFn: async (nextDraft: DraftState) =>
+      issuesApi.upsertDocument(issue.id, nextDraft.key, {
+        title: isPlanKey(nextDraft.key) ? null : nextDraft.title.trim() || null,
         format: "markdown",
-        body: nextЧерновик.body,
-        baseRevisionId: nextЧерновик.baseRevisionId,
+        body: nextDraft.body,
+        baseRevisionId: nextDraft.baseRevisionId,
       }),
   });
 
   const deleteDocument = useMutation({
     mutationFn: (key: string) => issuesApi.deleteDocument(issue.id, key),
-    onУспешно: () => {
-      setОшибка(null);
-      setПодтвердитьУдалитьКлюч(null);
-      invalidateЗадачаДокументы();
+    onSuccess: () => {
+      setError(null);
+      setConfirmDeleteKey(null);
+      invalidateIssueDocuments();
     },
-    onОшибка: (err) => {
-      setОшибка(err instanceof Ошибка ? err.message : "Ошибка to delete document");
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : "Failed to delete document");
     },
   });
 
   const restoreDocumentRevision = useMutation({
     mutationFn: ({ key, revisionId }: { key: string; revisionId: string }) =>
       issuesApi.restoreDocumentRevision(issue.id, key, revisionId),
-    onУспешно: (document, variables) => {
+    onSuccess: (document, variables) => {
       syncDocumentCaches(document);
       setSelectedRevisionIds((current) => ({ ...current, [variables.key]: null }));
-      setЧерновик((current) => current?.key === variables.key ? null : current);
+      setDraft((current) => current?.key === variables.key ? null : current);
       setDocumentConflict((current) => current?.key === variables.key ? null : current);
-      resetАвтоsaveState();
-      setОшибка(null);
-      invalidateЗадачаДокументы();
+      resetAutosaveState();
+      setError(null);
+      invalidateIssueDocuments();
     },
-    onОшибка: (err) => {
-      setОшибка(err instanceof Ошибка ? err.message : "Ошибка to restore document revision");
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : "Failed to restore document revision");
     },
   });
 
-  const sortedДокументы = useMemo(() => {
-    return (documents ?? []).filter((doc) => !isSystemЗадачаDocumentКлюч(doc.key)).sort((a, b) => {
+  const sortedDocuments = useMemo(() => {
+    return (documents ?? []).filter((doc) => !isSystemIssueDocumentKey(doc.key)).sort((a, b) => {
       if (a.key === "plan" && b.key !== "plan") return -1;
       if (a.key !== "plan" && b.key === "plan") return 1;
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
   }, [documents]);
 
-  const feedbackVoteByЦельId = useMemo(() => {
-    const map = new Map<string, FeedbackVoteЗначение>();
+  const feedbackVoteByTargetId = useMemo(() => {
+    const map = new Map<string, FeedbackVoteValue>();
     for (const feedbackVote of feedbackVotes) {
-      if (feedbackVote.targetТип !== "issue_document_revision") continue;
+      if (feedbackVote.targetType !== "issue_document_revision") continue;
       map.set(feedbackVote.targetId, feedbackVote.vote);
     }
     return map;
   }, [feedbackVotes]);
 
-  const hasRealPlan = sortedДокументы.some((doc) => doc.key === "plan");
-  const isEmpty = sortedДокументы.length === 0 && !issue.legacyPlanDocument;
-  const newDocumentКлючОшибка =
+  const hasRealPlan = sortedDocuments.some((doc) => doc.key === "plan");
+  const isEmpty = sortedDocuments.length === 0 && !issue.legacyPlanDocument;
+  const newDocumentKeyError =
     draft?.isNew && draft.key.trim().length > 0 && !DOCUMENT_KEY_PATTERN.test(draft.key.trim())
       ? "Use lowercase letters, numbers, -, or _, and start with a letter or number."
       : null;
 
-  const resetАвтоsaveState = useCallback(() => {
-    setАвтоsaveDocumentКлюч(null);
+  const resetAutosaveState = useCallback(() => {
+    setAutosaveDocumentKey(null);
     reset();
   }, [reset]);
 
   const markDocumentDirty = useCallback((key: string) => {
-    setАвтоsaveDocumentКлюч(key);
+    setAutosaveDocumentKey(key);
     markDirty();
   }, [markDirty]);
 
   const beginNewDocument = () => {
-    resetАвтоsaveState();
+    resetAutosaveState();
     setDocumentConflict(null);
-    setЧерновик({
+    setDraft({
       key: "",
       title: "",
       body: "",
       baseRevisionId: null,
       isNew: true,
     });
-    setОшибка(null);
+    setError(null);
   };
 
-  const beginИзменить = (key: string) => {
-    const doc = sortedДокументы.find((entry) => entry.key === key);
+  const beginEdit = (key: string) => {
+    const doc = sortedDocuments.find((entry) => entry.key === key);
     if (!doc) return;
-    const conflictedЧерновик = documentConflict?.key === key ? documentConflict.localЧерновик : null;
-    setFoldedDocumentКлючs((current) => current.filter((entry) => entry !== key));
-    resetАвтоsaveState();
+    const conflictedDraft = documentConflict?.key === key ? documentConflict.localDraft : null;
+    setFoldedDocumentKeys((current) => current.filter((entry) => entry !== key));
+    resetAutosaveState();
     setDocumentConflict((current) => current?.key === key ? current : null);
-    setЧерновик({
-      key: conflictedЧерновик?.key ?? doc.key,
-      title: conflictedЧерновик?.title ?? doc.title ?? "",
-      body: conflictedЧерновик?.body ?? doc.body,
-      baseRevisionId: conflictedЧерновик?.baseRevisionId ?? doc.latestRevisionId,
+    setDraft({
+      key: conflictedDraft?.key ?? doc.key,
+      title: conflictedDraft?.title ?? doc.title ?? "",
+      body: conflictedDraft?.body ?? doc.body,
+      baseRevisionId: conflictedDraft?.baseRevisionId ?? doc.latestRevisionId,
       isNew: false,
     });
-    setОшибка(null);
+    setError(null);
   };
 
-  const cancelЧерновик = () => {
+  const cancelDraft = () => {
     if (autosaveDebounceRef.current) {
       clearTimeout(autosaveDebounceRef.current);
     }
-    resetАвтоsaveState();
+    resetAutosaveState();
     setDocumentConflict(null);
-    setЧерновик(null);
-    setОшибка(null);
+    setDraft(null);
+    setError(null);
   };
 
-  const commitЧерновик = useCallback(async (
-    currentЧерновик: ЧерновикState | null,
-    options?: { clearAfterСохранить?: boolean; trackАвтоsave?: boolean; overrideConflict?: boolean },
+  const commitDraft = useCallback(async (
+    currentDraft: DraftState | null,
+    options?: { clearAfterSave?: boolean; trackAutosave?: boolean; overrideConflict?: boolean },
   ) => {
-    if (!currentЧерновик || upsertDocument.isОжидание) return false;
-    const normalizedКлюч = currentЧерновик.key.trim().toНизкийerCase();
-    const normalizedBody = currentЧерновик.body.trim();
-    const normalizedНазвание = currentЧерновик.title.trim();
-    const activeConflict = documentConflict?.key === normalizedКлюч ? documentConflict : null;
+    if (!currentDraft || upsertDocument.isPending) return false;
+    const normalizedKey = currentDraft.key.trim().toLowerCase();
+    const normalizedBody = currentDraft.body.trim();
+    const normalizedTitle = currentDraft.title.trim();
+    const activeConflict = documentConflict?.key === normalizedKey ? documentConflict : null;
 
     if (activeConflict && !options?.overrideConflict) {
-      if (options?.trackАвтоsave) {
-        resetАвтоsaveState();
+      if (options?.trackAutosave) {
+        resetAutosaveState();
       }
       return false;
     }
 
-    if (!normalizedКлюч || !normalizedBody) {
-      if (currentЧерновик.isNew) {
-        setОшибка("Document key and body are required");
+    if (!normalizedKey || !normalizedBody) {
+      if (currentDraft.isNew) {
+        setError("Document key and body are required");
       } else if (!normalizedBody) {
-        setОшибка("Document body cannot be empty");
+        setError("Document body cannot be empty");
       }
-      if (options?.trackАвтоsave) {
-        resetАвтоsaveState();
-      }
-      return false;
-    }
-
-    if (!DOCUMENT_KEY_PATTERN.test(normalizedКлюч)) {
-      setОшибка("Document key must start with a letter or number and use only lowercase letters, numbers, -, or _.");
-      if (options?.trackАвтоsave) {
-        resetАвтоsaveState();
+      if (options?.trackAutosave) {
+        resetAutosaveState();
       }
       return false;
     }
 
-    const existing = sortedДокументы.find((doc) => doc.key === normalizedКлюч);
+    if (!DOCUMENT_KEY_PATTERN.test(normalizedKey)) {
+      setError("Document key must start with a letter or number and use only lowercase letters, numbers, -, or _.");
+      if (options?.trackAutosave) {
+        resetAutosaveState();
+      }
+      return false;
+    }
+
+    const existing = sortedDocuments.find((doc) => doc.key === normalizedKey);
     if (
-      !currentЧерновик.isNew &&
+      !currentDraft.isNew &&
       existing &&
-      existing.body === currentЧерновик.body &&
-      (existing.title ?? "") === currentЧерновик.title
+      existing.body === currentDraft.body &&
+      (existing.title ?? "") === currentDraft.title
     ) {
-      if (options?.clearAfterСохранить) {
-        setЧерновик((value) => (value?.key === normalizedКлюч ? null : value));
+      if (options?.clearAfterSave) {
+        setDraft((value) => (value?.key === normalizedKey ? null : value));
       }
-      if (options?.trackАвтоsave) {
-        resetАвтоsaveState();
+      if (options?.trackAutosave) {
+        resetAutosaveState();
       }
       return true;
     }
 
     const save = async () => {
       const saved = await upsertDocument.mutateAsync({
-        ...currentЧерновик,
-        key: normalizedКлюч,
-        title: isPlanКлюч(normalizedКлюч) ? "" : normalizedНазвание,
-        body: currentЧерновик.body,
+        ...currentDraft,
+        key: normalizedKey,
+        title: isPlanKey(normalizedKey) ? "" : normalizedTitle,
+        body: currentDraft.body,
         baseRevisionId: options?.overrideConflict
-          ? activeConflict?.serverDocument.latestRevisionId ?? currentЧерновик.baseRevisionId
-          : currentЧерновик.baseRevisionId,
+          ? activeConflict?.serverDocument.latestRevisionId ?? currentDraft.baseRevisionId
+          : currentDraft.baseRevisionId,
       });
-      setОшибка(null);
-      setDocumentConflict((current) => current?.key === normalizedКлюч ? null : current);
-      setЧерновик((value) => {
-        if (!value || value.key !== normalizedКлюч) return value;
-        if (options?.clearAfterСохранить) return null;
+      setError(null);
+      setDocumentConflict((current) => current?.key === normalizedKey ? null : current);
+      setDraft((value) => {
+        if (!value || value.key !== normalizedKey) return value;
+        if (options?.clearAfterSave) return null;
         return {
           key: saved.key,
           title: saved.title ?? "",
@@ -430,51 +430,51 @@ export function ЗадачаДокументыSection({
         };
       });
       syncDocumentCaches(saved);
-      invalidateЗадачаДокументы();
+      invalidateIssueDocuments();
     };
 
     try {
-      if (options?.trackАвтоsave) {
-        setАвтоsaveDocumentКлюч(normalizedКлюч);
-        await runСохранить(save);
+      if (options?.trackAutosave) {
+        setAutosaveDocumentKey(normalizedKey);
+        await runSave(save);
       } else {
         await save();
       }
       return true;
     } catch (err) {
-      if (isDocumentConflictОшибка(err)) {
+      if (isDocumentConflictError(err)) {
         try {
-          const latestDocument = await issuesApi.getDocument(issue.id, normalizedКлюч);
+          const latestDocument = await issuesApi.getDocument(issue.id, normalizedKey);
           setDocumentConflict({
-            key: normalizedКлюч,
+            key: normalizedKey,
             serverDocument: latestDocument,
-            localЧерновик: {
-              key: normalizedКлюч,
-              title: isPlanКлюч(normalizedКлюч) ? "" : normalizedНазвание,
-              body: currentЧерновик.body,
-              baseRevisionId: currentЧерновик.baseRevisionId,
+            localDraft: {
+              key: normalizedKey,
+              title: isPlanKey(normalizedKey) ? "" : normalizedTitle,
+              body: currentDraft.body,
+              baseRevisionId: currentDraft.baseRevisionId,
               isNew: false,
             },
             showRemote: true,
           });
-          setFoldedDocumentКлючs((current) => current.filter((key) => key !== normalizedКлюч));
-          setОшибка(null);
-          resetАвтоsaveState();
+          setFoldedDocumentKeys((current) => current.filter((key) => key !== normalizedKey));
+          setError(null);
+          resetAutosaveState();
           return false;
         } catch {
-          setОшибка("Document changed remotely and the latest version could not be loaded");
+          setError("Document changed remotely and the latest version could not be loaded");
           return false;
         }
       }
-      setОшибка(err instanceof Ошибка ? err.message : "Ошибка to save document");
+      setError(err instanceof Error ? err.message : "Failed to save document");
       return false;
     }
-  }, [documentConflict, invalidateЗадачаДокументы, issue.id, resetАвтоsaveState, runСохранить, sortedДокументы, syncDocumentCaches, upsertDocument]);
+  }, [documentConflict, invalidateIssueDocuments, issue.id, resetAutosaveState, runSave, sortedDocuments, syncDocumentCaches, upsertDocument]);
 
   const reloadDocumentFromServer = useCallback((key: string) => {
     if (documentConflict?.key !== key) return;
     const serverDocument = documentConflict.serverDocument;
-    setЧерновик({
+    setDraft({
       key: serverDocument.key,
       title: serverDocument.title ?? "",
       body: serverDocument.body,
@@ -482,68 +482,68 @@ export function ЗадачаДокументыSection({
       isNew: false,
     });
     setDocumentConflict(null);
-    resetАвтоsaveState();
-    setОшибка(null);
-  }, [documentConflict, resetАвтоsaveState]);
+    resetAutosaveState();
+    setError(null);
+  }, [documentConflict, resetAutosaveState]);
 
-  const overwriteDocumentFromЧерновик = useCallback(async (key: string) => {
+  const overwriteDocumentFromDraft = useCallback(async (key: string) => {
     if (documentConflict?.key !== key) return;
-    const sourceЧерновик =
+    const sourceDraft =
       draft && draft.key === key && !draft.isNew
         ? draft
-        : documentConflict.localЧерновик;
-    await commitЧерновик(
+        : documentConflict.localDraft;
+    await commitDraft(
       {
-        ...sourceЧерновик,
+        ...sourceDraft,
         baseRevisionId: documentConflict.serverDocument.latestRevisionId,
       },
       {
-        clearAfterСохранить: false,
-        trackАвтоsave: true,
+        clearAfterSave: false,
+        trackAutosave: true,
         overrideConflict: true,
       },
     );
-  }, [commitЧерновик, documentConflict, draft]);
+  }, [commitDraft, documentConflict, draft]);
 
-  const keepConflictedЧерновик = useCallback((key: string) => {
+  const keepConflictedDraft = useCallback((key: string) => {
     if (documentConflict?.key !== key) return;
-    setЧерновик(documentConflict.localЧерновик);
+    setDraft(documentConflict.localDraft);
     setDocumentConflict((current) =>
       current?.key === key
         ? { ...current, showRemote: false }
         : current,
     );
-    setОшибка(null);
+    setError(null);
   }, [documentConflict]);
 
   const copyDocumentBody = useCallback(async (key: string, body: string) => {
     try {
       await navigator.clipboard.writeText(body);
-      setCopiedDocumentКлюч(key);
+      setCopiedDocumentKey(key);
       if (copiedDocumentTimerRef.current) {
         clearTimeout(copiedDocumentTimerRef.current);
       }
       copiedDocumentTimerRef.current = setTimeout(() => {
-        setCopiedDocumentКлюч((current) => current === key ? null : current);
+        setCopiedDocumentKey((current) => current === key ? null : current);
       }, 1400);
     } catch {
-      setОшибка("Could not copy document");
+      setError("Could not copy document");
     }
   }, []);
 
   const getDocumentRevisions = useCallback((key: string) => {
-    const cached = queryClient.getQueryData<DocumentRevision[]>(queryКлючs.issues.documentRevisions(issue.id, key));
+    const cached = queryClient.getQueryData<DocumentRevision[]>(queryKeys.issues.documentRevisions(issue.id, key));
     if (cached) return cached;
-    if (revisionMenuOpenКлюч === key) return activeDocumentRevisions ?? [];
+    if (revisionMenuOpenKey === key) return activeDocumentRevisions ?? [];
     return [];
-  }, [activeDocumentRevisions, issue.id, queryClient, revisionMenuOpenКлюч]);
+  }, [activeDocumentRevisions, issue.id, queryClient, revisionMenuOpenKey]);
 
   const returnToLatestRevision = useCallback((key: string) => {
     setSelectedRevisionIds((current) => ({ ...current, [key]: null }));
-    setОшибка(null);
+    setError(null);
   }, []);
 
-  const previewRevision = useCallback((doc: ЗадачаDocument, revisionId: string) => {
+  const previewRevision = useCallback((doc: IssueDocument, revisionId: string) => {
     const revisionState = deriveDocumentRevisionState(doc, getDocumentRevisions(doc.key));
     const selectedRevision = revisionState.revisions.find((revision) => revision.id === revisionId);
     if (!selectedRevision) return;
@@ -552,42 +552,42 @@ export function ЗадачаДокументыSection({
       return;
     }
     if (documentConflict?.key === doc.key || documentHasUnsavedChanges(doc, draft)) {
-      setОшибка("Сохранить or cancel your local changes before viewing an older revision.");
+      setError("Save or cancel your local changes before viewing an older revision.");
       return;
     }
-    resetАвтоsaveState();
-    setЧерновик((current) => current?.key === doc.key ? null : current);
+    resetAutosaveState();
+    setDraft((current) => current?.key === doc.key ? null : current);
     setDocumentConflict((current) => current?.key === doc.key ? null : current);
-    setFoldedDocumentКлючs((current) => current.filter((entry) => entry !== doc.key));
+    setFoldedDocumentKeys((current) => current.filter((entry) => entry !== doc.key));
     setSelectedRevisionIds((current) => ({ ...current, [doc.key]: selectedRevision.id }));
-    setОшибка(null);
-  }, [documentConflict, draft, getDocumentRevisions, resetАвтоsaveState, returnToLatestRevision]);
+    setError(null);
+  }, [documentConflict, draft, getDocumentRevisions, resetAutosaveState, returnToLatestRevision]);
 
-  const handleЧерновикBlur = async (event: React.FocusEvent<HTMLDivElement>) => {
-    if (event.currentЦель.contains(event.relatedЦель as Нетde | null)) return;
+  const handleDraftBlur = async (event: React.FocusEvent<HTMLDivElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
     if (autosaveDebounceRef.current) {
       clearTimeout(autosaveDebounceRef.current);
     }
-    await commitЧерновик(draft, { clearAfterСохранить: true, trackАвтоsave: true });
+    await commitDraft(draft, { clearAfterSave: true, trackAutosave: true });
   };
 
-  const handleЧерновикКлючDown = async (event: React.КлючboardEvent) => {
+  const handleDraftKeyDown = async (event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
-      event.preventПо умолчанию();
-      cancelЧерновик();
+      event.preventDefault();
+      cancelDraft();
       return;
     }
-    if ((event.metaКлюч || event.ctrlКлюч) && event.key === "Enter") {
-      event.preventПо умолчанию();
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
       if (autosaveDebounceRef.current) {
         clearTimeout(autosaveDebounceRef.current);
       }
-      await commitЧерновик(draft, { clearAfterСохранить: false, trackАвтоsave: true });
+      await commitDraft(draft, { clearAfterSave: false, trackAutosave: true });
     }
   };
 
   useEffect(() => {
-    setFoldedDocumentКлючs(loadFoldedDocumentКлючs(issue.id));
+    setFoldedDocumentKeys(loadFoldedDocumentKeys(issue.id));
   }, [issue.id]);
 
   useEffect(() => {
@@ -595,47 +595,47 @@ export function ЗадачаДокументыSection({
   }, [issue.id, location.hash]);
 
   useEffect(() => {
-    const validКлючs = new Set(sortedДокументы.map((doc) => doc.key));
-    setFoldedDocumentКлючs((current) => {
-      const next = current.filter((key) => validКлючs.has(key));
+    const validKeys = new Set(sortedDocuments.map((doc) => doc.key));
+    setFoldedDocumentKeys((current) => {
+      const next = current.filter((key) => validKeys.has(key));
       if (next.length !== current.length) {
-        saveFoldedDocumentКлючs(issue.id, next);
+        saveFoldedDocumentKeys(issue.id, next);
       }
       return next;
     });
-  }, [issue.id, sortedДокументы]);
+  }, [issue.id, sortedDocuments]);
 
   useEffect(() => {
-    saveFoldedDocumentКлючs(issue.id, foldedDocumentКлючs);
-  }, [foldedDocumentКлючs, issue.id]);
+    saveFoldedDocumentKeys(issue.id, foldedDocumentKeys);
+  }, [foldedDocumentKeys, issue.id]);
 
   useEffect(() => {
     if (!documentConflict) return;
-    const latest = sortedДокументы.find((doc) => doc.key === documentConflict.key);
+    const latest = sortedDocuments.find((doc) => doc.key === documentConflict.key);
     if (!latest || latest.latestRevisionId === documentConflict.serverDocument.latestRevisionId) return;
     setDocumentConflict((current) =>
       current?.key === latest.key
         ? { ...current, serverDocument: latest }
         : current,
     );
-  }, [documentConflict, sortedДокументы]);
+  }, [documentConflict, sortedDocuments]);
 
   useEffect(() => {
     const hash = location.hash;
     if (!hash.startsWith("#document-")) return;
-    const documentКлюч = decodeURIComponent(hash.slice("#document-".length));
-    const targetExists = sortedДокументы.some((doc) => doc.key === documentКлюч)
-      || (documentКлюч === "plan" && Boolean(issue.legacyPlanDocument));
+    const documentKey = decodeURIComponent(hash.slice("#document-".length));
+    const targetExists = sortedDocuments.some((doc) => doc.key === documentKey)
+      || (documentKey === "plan" && Boolean(issue.legacyPlanDocument));
     if (!targetExists || hasScrolledToHashRef.current) return;
-    setFoldedDocumentКлючs((current) => current.filter((key) => key !== documentКлюч));
-    const element = document.getElementById(`document-${documentКлюч}`);
+    setFoldedDocumentKeys((current) => current.filter((key) => key !== documentKey));
+    const element = document.getElementById(`document-${documentKey}`);
     if (!element) return;
     hasScrolledToHashRef.current = true;
-    setВысокийlightDocumentКлюч(documentКлюч);
+    setHighlightDocumentKey(documentKey);
     element.scrollIntoView({ behavior: "smooth", block: "center" });
-    const timer = setTimeout(() => setВысокийlightDocumentКлюч((current) => current === documentКлюч ? null : current), 3000);
+    const timer = setTimeout(() => setHighlightDocumentKey((current) => current === documentKey ? null : current), 3000);
     return () => clearTimeout(timer);
-  }, [issue.legacyPlanDocument, location.hash, sortedДокументы]);
+  }, [issue.legacyPlanDocument, location.hash, sortedDocuments]);
 
   useEffect(() => {
     return () => {
@@ -651,14 +651,14 @@ export function ЗадачаДокументыSection({
   useEffect(() => {
     if (!draft || draft.isNew) return;
     if (documentConflict?.key === draft.key) return;
-    const existing = sortedДокументы.find((doc) => doc.key === draft.key);
+    const existing = sortedDocuments.find((doc) => doc.key === draft.key);
     if (!existing) return;
     const hasChanges =
       existing.body !== draft.body ||
       (existing.title ?? "") !== draft.title;
     if (!hasChanges) {
       if (autosaveState !== "saved") {
-        resetАвтоsaveState();
+        resetAutosaveState();
       }
       return;
     }
@@ -667,7 +667,7 @@ export function ЗадачаДокументыSection({
       clearTimeout(autosaveDebounceRef.current);
     }
     autosaveDebounceRef.current = setTimeout(() => {
-      void commitЧерновик(draft, { clearAfterСохранить: false, trackАвтоsave: true });
+      void commitDraft(draft, { clearAfterSave: false, trackAutosave: true });
     }, DOCUMENT_AUTOSAVE_DEBOUNCE_MS);
 
     return () => {
@@ -675,12 +675,12 @@ export function ЗадачаДокументыSection({
         clearTimeout(autosaveDebounceRef.current);
       }
     };
-  }, [autosaveState, commitЧерновик, documentConflict, draft, markDocumentDirty, resetАвтоsaveState, sortedДокументы]);
+  }, [autosaveState, commitDraft, documentConflict, draft, markDocumentDirty, resetAutosaveState, sortedDocuments]);
 
-  const documentBodyShellClassИмя = "mt-3";
-  const documentBodyContentClassИмя = "paperclip-edit-in-place-content min-h-[220px] text-[15px] leading-7";
+  const documentBodyShellClassName = "mt-3";
+  const documentBodyContentClassName = "paperclip-edit-in-place-content min-h-[220px] text-[15px] leading-7";
   const toggleFoldedDocument = (key: string) => {
-    setFoldedDocumentКлючs((current) =>
+    setFoldedDocumentKeys((current) =>
       current.includes(key)
         ? current.filter((entry) => entry !== key)
         : [...current, key],
@@ -688,82 +688,82 @@ export function ЗадачаДокументыSection({
   };
 
   return (
-    <div classИмя="space-y-3">
+    <div className="space-y-3">
       {isEmpty && !draft?.isNew ? (
-        <div classИмя="flex flex-wrap items-center justify-end gap-2 min-w-0">
+        <div className="flex flex-wrap items-center justify-end gap-2 min-w-0">
           {extraActions}
-          <Button variant="outline" size="sm" onClick={beginNewDocument} classИмя="shrink-0">
-            <Plus classИмя="mr-1.5 h-3.5 w-3.5" />
-            <span classИмя="hidden sm:inline">New document</span>
-            <span classИмя="sm:hidden">New</span>
+          <Button variant="outline" size="sm" onClick={beginNewDocument} className="shrink-0">
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            <span className="hidden sm:inline">New document</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </div>
       ) : (
-        <div classИмя="flex flex-wrap items-center gap-2 min-w-0">
-          <h3 classИмя="w-full text-sm font-medium text-muted-foreground shrink-0 sm:w-auto">Документы</h3>
-          <div classИмя="flex flex-wrap items-center gap-2 min-w-0 sm:ml-auto">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <h3 className="w-full text-sm font-medium text-muted-foreground shrink-0 sm:w-auto">Documents</h3>
+          <div className="flex flex-wrap items-center gap-2 min-w-0 sm:ml-auto">
             {extraActions}
-            <Button variant="outline" size="sm" onClick={beginNewDocument} classИмя="shrink-0">
-              <Plus classИмя="mr-1.5 h-3.5 w-3.5" />
-              <span classИмя="hidden sm:inline">New document</span>
-              <span classИмя="sm:hidden">New</span>
+            <Button variant="outline" size="sm" onClick={beginNewDocument} className="shrink-0">
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              <span className="hidden sm:inline">New document</span>
+              <span className="sm:hidden">New</span>
             </Button>
           </div>
         </div>
       )}
 
-      {error && <p classИмя="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
 
       {draft?.isNew && (
         <div
-          classИмя="space-y-3 rounded-lg border border-border bg-accent/10 p-3"
-          onBlurCapture={handleЧерновикBlur}
-          onКлючDown={handleЧерновикКлючDown}
+          className="space-y-3 rounded-lg border border-border bg-accent/10 p-3"
+          onBlurCapture={handleDraftBlur}
+          onKeyDown={handleDraftKeyDown}
         >
           <Input
             autoFocus
             value={draft.key}
             onChange={(event) =>
-              setЧерновик((current) => current ? { ...current, key: event.target.value.toНизкийerCase() } : current)
+              setDraft((current) => current ? { ...current, key: event.target.value.toLowerCase() } : current)
             }
             placeholder="Document key"
           />
-          {newDocumentКлючОшибка && (
-            <p classИмя="text-xs text-destructive">{newDocumentКлючОшибка}</p>
+          {newDocumentKeyError && (
+            <p className="text-xs text-destructive">{newDocumentKeyError}</p>
           )}
-          {!isPlanКлюч(draft.key) && (
+          {!isPlanKey(draft.key) && (
             <Input
               value={draft.title}
               onChange={(event) =>
-                setЧерновик((current) => current ? { ...current, title: event.target.value } : current)
+                setDraft((current) => current ? { ...current, title: event.target.value } : current)
               }
-              placeholder="Опционально title"
+              placeholder="Optional title"
             />
           )}
-          <MarkdownИзменитьor
+          <MarkdownEditor
             value={draft.body}
             onChange={(body) =>
-              setЧерновик((current) => current ? { ...current, body } : current)
+              setDraft((current) => current ? { ...current, body } : current)
             }
             placeholder="Markdown body"
             bordered={false}
-            classИмя="bg-transparent"
-            contentClassИмя="min-h-[220px] text-[15px] leading-7"
+            className="bg-transparent"
+            contentClassName="min-h-[220px] text-[15px] leading-7"
             mentions={mentions}
-            imageЗагрузитьHandler={imageЗагрузитьHandler}
-            onОтправить={() => void commitЧерновик(draft, { clearAfterСохранить: false, trackАвтоsave: false })}
+            imageUploadHandler={imageUploadHandler}
+            onSubmit={() => void commitDraft(draft, { clearAfterSave: false, trackAutosave: false })}
           />
-          <div classИмя="flex items-center justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={cancelЧерновик}>
-              <X classИмя="mr-1.5 h-3.5 w-3.5" />
-              Отмена
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={cancelDraft}>
+              <X className="mr-1.5 h-3.5 w-3.5" />
+              Cancel
             </Button>
             <Button
               size="sm"
-              onClick={() => void commitЧерновик(draft, { clearAfterСохранить: false, trackАвтоsave: false })}
-              disabled={upsertDocument.isОжидание}
+              onClick={() => void commitDraft(draft, { clearAfterSave: false, trackAutosave: false })}
+              disabled={upsertDocument.isPending}
             >
-              {upsertDocument.isОжидание ? "Saving..." : "Создать document"}
+              {upsertDocument.isPending ? "Saving..." : "Create document"}
             </Button>
           </div>
         </div>
@@ -772,110 +772,110 @@ export function ЗадачаДокументыSection({
       {!hasRealPlan && issue.legacyPlanDocument ? (
         <div
           id="document-plan"
-          classИмя={cn(
+          className={cn(
             "rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 transition-colors duration-1000",
-            highlightDocumentКлюч === "plan" && "border-primary/50 bg-primary/5",
+            highlightDocumentKey === "plan" && "border-primary/50 bg-primary/5",
           )}
         >
-          <div classИмя="mb-2 flex items-center gap-2">
-            <FileText classИмя="h-4 w-4 text-amber-600" />
-            <span classИмя="rounded-full border border-amber-500/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
+          <div className="mb-2 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-amber-600" />
+            <span className="rounded-full border border-amber-500/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
               PLAN
             </span>
           </div>
-          {renderFoldableBody(issue.legacyPlanDocument.body, documentBodyContentClassИмя)}
+          {renderFoldableBody(issue.legacyPlanDocument.body, documentBodyContentClassName)}
         </div>
       ) : null}
 
-      <div classИмя="space-y-3">
-        {sortedДокументы.map((doc) => {
-          const activeЧерновик = draft?.key === doc.key && !draft.isNew ? draft : null;
+      <div className="space-y-3">
+        {sortedDocuments.map((doc) => {
+          const activeDraft = draft?.key === doc.key && !draft.isNew ? draft : null;
           const activeConflict = documentConflict?.key === doc.key ? documentConflict : null;
-          const isFolded = foldedDocumentКлючs.includes(doc.key);
-          const rawRevisionИстория = getDocumentRevisions(doc.key);
-          const revisionState = deriveDocumentRevisionState(doc, rawRevisionИстория);
-          const revisionИстория = revisionState.revisions;
+          const isFolded = foldedDocumentKeys.includes(doc.key);
+          const rawRevisionHistory = getDocumentRevisions(doc.key);
+          const revisionState = deriveDocumentRevisionState(doc, rawRevisionHistory);
+          const revisionHistory = revisionState.revisions;
           const currentRevision = revisionState.currentRevision;
           const selectedRevisionId = selectedRevisionIds[doc.key] ?? null;
           const selectedHistoricalRevision = selectedRevisionId
-            ? revisionИстория.find((revision) => revision.id === selectedRevisionId) ?? null
+            ? revisionHistory.find((revision) => revision.id === selectedRevisionId) ?? null
             : null;
-          const isHistoricalПредпросмотр = Boolean(selectedHistoricalRevision);
-          const displayedНазвание = selectedHistoricalRevision
+          const isHistoricalPreview = Boolean(selectedHistoricalRevision);
+          const displayedTitle = selectedHistoricalRevision
             ? selectedHistoricalRevision.title ?? ""
-            : activeЧерновик?.title ?? currentRevision.title ?? "";
-          const displayedBody = selectedHistoricalRevision?.body ?? activeЧерновик?.body ?? currentRevision.body;
+            : activeDraft?.title ?? currentRevision.title ?? "";
+          const displayedBody = selectedHistoricalRevision?.body ?? activeDraft?.body ?? currentRevision.body;
           const displayedRevisionNumber = selectedHistoricalRevision?.revisionNumber ?? currentRevision.revisionNumber;
-          const displayedОбновленоAt = selectedHistoricalRevision?.createdAt ?? currentRevision.createdAt;
-          const showНазвание = !isPlanКлюч(doc.key) && !!displayedНазвание.trim() && !titlesMatchКлюч(displayedНазвание, doc.key);
-          const canVoteOnDocument = Boolean(doc.latestRevisionId && doc.updatedByАгентId && !doc.updatedByUserId && onVote);
+          const displayedUpdatedAt = selectedHistoricalRevision?.createdAt ?? currentRevision.createdAt;
+          const showTitle = !isPlanKey(doc.key) && !!displayedTitle.trim() && !titlesMatchKey(displayedTitle, doc.key);
+          const canVoteOnDocument = Boolean(doc.latestRevisionId && doc.updatedByAgentId && !doc.updatedByUserId && onVote);
 
           return (
             <div
               key={doc.id}
               id={`document-${doc.key}`}
-              classИмя={cn(
+              className={cn(
                 "rounded-lg border border-border p-3 transition-colors duration-1000",
-                highlightDocumentКлюч === doc.key && "border-primary/50 bg-primary/5",
+                highlightDocumentKey === doc.key && "border-primary/50 bg-primary/5",
               )}
             >
-              <div classИмя="flex items-start justify-between gap-3">
-                <div classИмя="min-w-0">
-                  <div classИмя="flex items-center gap-2 min-w-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <button
                       type="button"
-                      classИмя="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
                       onClick={() => toggleFoldedDocument(doc.key)}
                       aria-label={isFolded ? `Expand ${doc.key} document` : `Collapse ${doc.key} document`}
                       aria-expanded={!isFolded}
                     >
-                      {isFolded ? <ChevronRight classИмя="h-3.5 w-3.5" /> : <ChevronDown classИмя="h-3.5 w-3.5" />}
+                      {isFolded ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     </button>
-                    <span classИмя="shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                    <span className="shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                       {doc.key}
                     </span>
                     <DropdownMenu
-                      open={revisionMenuOpenКлюч === doc.key}
-                      onOpenChange={(open) => setRevisionMenuOpenКлюч(open ? doc.key : null)}
+                      open={revisionMenuOpenKey === doc.key}
+                      onOpenChange={(open) => setRevisionMenuOpenKey(open ? doc.key : null)}
                     >
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          classИмя={cn(
+                          className={cn(
                             "h-auto px-1.5 py-0 text-[11px] font-normal text-muted-foreground hover:text-foreground",
-                            isHistoricalПредпросмотр && "text-amber-300 hover:text-amber-200",
+                            isHistoricalPreview && "text-amber-300 hover:text-amber-200",
                           )}
                         >
                           rev {displayedRevisionNumber}
-                          <ChevronDown classИмя="h-3 w-3" />
+                          <ChevronDown className="h-3 w-3" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" classИмя="w-72">
+                      <DropdownMenuContent align="start" className="w-72">
                         <DropdownMenuLabel>Revision history</DropdownMenuLabel>
-                        {revisionMenuOpenКлюч === doc.key && isFetchingDocumentRevisions && rawRevisionИстория.length === 0 ? (
-                          <DropdownMenuItem disabled>Загрузка revisions...</DropdownMenuItem>
-                        ) : revisionИстория.length > 0 ? (
+                        {revisionMenuOpenKey === doc.key && isFetchingDocumentRevisions && rawRevisionHistory.length === 0 ? (
+                          <DropdownMenuItem disabled>Loading revisions...</DropdownMenuItem>
+                        ) : revisionHistory.length > 0 ? (
                           <DropdownMenuRadioGroup value={selectedRevisionId ?? currentRevision.id ?? ""}>
-                            {revisionИстория.map((revision) => {
+                            {revisionHistory.map((revision) => {
                               const isCurrentRevision = revision.id === currentRevision.id;
                               return (
                                 <DropdownMenuRadioItem
                                   key={revision.id}
                                   value={revision.id}
                                   onSelect={() => previewRevision(doc, revision.id)}
-                                  classИмя="items-start"
+                                  className="items-start"
                                 >
-                                  <div classИмя="flex min-w-0 flex-col">
-                                    <div classИмя="flex items-center gap-2">
-                                      <span classИмя="font-medium">rev {revision.revisionNumber}</span>
+                                  <div className="flex min-w-0 flex-col">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium">rev {revision.revisionNumber}</span>
                                       {isCurrentRevision ? (
-                                        <span classИмя="rounded-full border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                                        <span className="rounded-full border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                                           Current
                                         </span>
                                       ) : null}
                                     </div>
-                                    <span classИмя="text-xs text-muted-foreground">
+                                    <span className="text-xs text-muted-foreground">
                                       {relativeTime(revision.createdAt)} • {getRevisionActorLabel(revision)}
                                     </span>
                                   </div>
@@ -884,34 +884,34 @@ export function ЗадачаДокументыSection({
                             })}
                           </DropdownMenuRadioGroup>
                         ) : (
-                          <DropdownMenuItem disabled>Нет revisions yet</DropdownMenuItem>
+                          <DropdownMenuItem disabled>No revisions yet</DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <a
                       href={`#document-${encodeURIComponent(doc.key)}`}
-                      classИмя="truncate text-[11px] text-muted-foreground transition-colors hover:text-foreground hover:underline"
+                      className="truncate text-[11px] text-muted-foreground transition-colors hover:text-foreground hover:underline"
                     >
-                      updated {relativeTime(displayedОбновленоAt)}
+                      updated {relativeTime(displayedUpdatedAt)}
                     </a>
                   </div>
-                  {showНазвание && <p classИмя="mt-2 text-sm font-medium">{displayedНазвание}</p>}
+                  {showTitle && <p className="mt-2 text-sm font-medium">{displayedTitle}</p>}
                 </div>
-                <div classИмя="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    classИмя={cn(
+                    className={cn(
                       "text-muted-foreground transition-colors",
-                      copiedDocumentКлюч === doc.key && "text-foreground",
+                      copiedDocumentKey === doc.key && "text-foreground",
                     )}
-                    title={copiedDocumentКлюч === doc.key ? "Copied" : "Копировать document"}
+                    title={copiedDocumentKey === doc.key ? "Copied" : "Copy document"}
                     onClick={() => void copyDocumentBody(doc.key, displayedBody)}
                   >
-                    {copiedDocumentКлюч === doc.key ? (
-                      <Check classИмя="h-3.5 w-3.5" />
+                    {copiedDocumentKey === doc.key ? (
+                      <Check className="h-3.5 w-3.5" />
                     ) : (
-                      <Копировать classИмя="h-3.5 w-3.5" />
+                      <Copy className="h-3.5 w-3.5" />
                     )}
                   </Button>
                   <DropdownMenu>
@@ -919,40 +919,40 @@ export function ЗадачаДокументыSection({
                       <Button
                         variant="ghost"
                         size="icon-xs"
-                        classИмя="text-muted-foreground"
+                        className="text-muted-foreground"
                         title="Document actions"
                       >
-                        <MoreHorizontal classИмя="h-3.5 w-3.5" />
+                        <MoreHorizontal className="h-3.5 w-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                      {!isHistoricalПредпросмотр ? (
-                        <DropdownMenuItem onClick={() => beginИзменить(doc.key)}>
-                          <FilePenLine classИмя="h-3.5 w-3.5" />
-                          Изменить document
+                      {!isHistoricalPreview ? (
+                        <DropdownMenuItem onClick={() => beginEdit(doc.key)}>
+                          <FilePenLine className="h-3.5 w-3.5" />
+                          Edit document
                         </DropdownMenuItem>
                       ) : null}
-                      {!isHistoricalПредпросмотр ? <DropdownMenuSeparator /> : null}
+                      {!isHistoricalPreview ? <DropdownMenuSeparator /> : null}
                       <DropdownMenuItem
                         onClick={() => downloadDocumentFile(doc.key, displayedBody)}
                       >
-                        <Скачать classИмя="h-3.5 w-3.5" />
-                        Скачать document
+                        <Download className="h-3.5 w-3.5" />
+                        Download document
                       </DropdownMenuItem>
                       {doc.latestRevisionNumber > 1 ? (
-                        <DropdownMenuItem onClick={() => setDiffViewКлюч(doc.key)}>
-                          <Diff classИмя="h-3.5 w-3.5" />
+                        <DropdownMenuItem onClick={() => setDiffViewKey(doc.key)}>
+                          <Diff className="h-3.5 w-3.5" />
                           View diff
                         </DropdownMenuItem>
                       ) : null}
-                      {canУдалитьДокументы ? <DropdownMenuSeparator /> : null}
-                      {canУдалитьДокументы ? (
+                      {canDeleteDocuments ? <DropdownMenuSeparator /> : null}
+                      {canDeleteDocuments ? (
                         <DropdownMenuItem
                           variant="destructive"
-                          onClick={() => setПодтвердитьУдалитьКлюч(doc.key)}
+                          onClick={() => setConfirmDeleteKey(doc.key)}
                         >
-                          <Trash2 classИмя="h-3.5 w-3.5" />
-                          Удалить document
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete document
                         </DropdownMenuItem>
                       ) : null}
                     </DropdownMenuContent>
@@ -962,34 +962,34 @@ export function ЗадачаДокументыSection({
 
               {!isFolded ? (
                 <div
-                  classИмя="mt-3 space-y-3"
-                  onBlurCapture={!isHistoricalПредпросмотр
+                  className="mt-3 space-y-3"
+                  onBlurCapture={!isHistoricalPreview
                     ? async (event) => {
-                        if (activeЧерновик) {
-                          await handleЧерновикBlur(event);
+                        if (activeDraft) {
+                          await handleDraftBlur(event);
                         }
                       }
                     : undefined}
-                  onКлючDown={!isHistoricalПредпросмотр
+                  onKeyDown={!isHistoricalPreview
                     ? async (event) => {
-                        if (activeЧерновик) {
-                          await handleЧерновикКлючDown(event);
+                        if (activeDraft) {
+                          await handleDraftKeyDown(event);
                         }
                       }
                     : undefined}
                 >
-                  {isHistoricalПредпросмотр && selectedHistoricalRevision && (
-                    <div classИмя="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-3">
-                      <div classИмя="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div classИмя="space-y-1">
-                          <p classИмя="text-sm font-medium text-amber-200">
+                  {isHistoricalPreview && selectedHistoricalRevision && (
+                    <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-amber-200">
                             Viewing revision {selectedHistoricalRevision.revisionNumber}
                           </p>
-                          <p classИмя="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             This is a historical preview. Restoring it creates a new latest revision and keeps history append-only.
                           </p>
                         </div>
-                        <div classИмя="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -1003,9 +1003,9 @@ export function ЗадачаДокументыSection({
                               key: doc.key,
                               revisionId: selectedHistoricalRevision.id,
                             })}
-                            disabled={restoreDocumentRevision.isОжидание}
+                            disabled={restoreDocumentRevision.isPending}
                           >
-                            {restoreDocumentRevision.isОжидание && restoreDocumentRevision.variables?.key === doc.key
+                            {restoreDocumentRevision.isPending && restoreDocumentRevision.variables?.key === doc.key
                               ? "Restoring..."
                               : "Restore this revision"}
                           </Button>
@@ -1013,16 +1013,16 @@ export function ЗадачаДокументыSection({
                       </div>
                     </div>
                   )}
-                  {activeConflict && !isHistoricalПредпросмотр && (
-                    <div classИмя="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-3">
-                      <div classИмя="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div classИмя="space-y-1">
-                          <p classИмя="text-sm font-medium text-amber-200">Out of date</p>
-                          <p classИмя="text-xs text-muted-foreground">
+                  {activeConflict && !isHistoricalPreview && (
+                    <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-amber-200">Out of date</p>
+                          <p className="text-xs text-muted-foreground">
                             This document changed while you were editing. Your local draft is preserved and autosave is paused.
                           </p>
                         </div>
-                        <div classИмя="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -1039,7 +1039,7 @@ export function ЗадачаДокументыSection({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => keepConflictedЧерновик(doc.key)}
+                            onClick={() => keepConflictedDraft(doc.key)}
                           >
                             Keep my draft
                           </Button>
@@ -1052,51 +1052,51 @@ export function ЗадачаДокументыSection({
                           </Button>
                           <Button
                             size="sm"
-                            onClick={() => void overwriteDocumentFromЧерновик(doc.key)}
-                            disabled={upsertDocument.isОжидание}
+                            onClick={() => void overwriteDocumentFromDraft(doc.key)}
+                            disabled={upsertDocument.isPending}
                           >
-                            {upsertDocument.isОжидание ? "Saving..." : "Overwrite remote"}
+                            {upsertDocument.isPending ? "Saving..." : "Overwrite remote"}
                           </Button>
                         </div>
                       </div>
                       {activeConflict.showRemote && (
-                        <div classИмя="mt-3 rounded-md border border-border/70 bg-background/60 p-3">
-                          <div classИмя="mb-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+                        <div className="mt-3 rounded-md border border-border/70 bg-background/60 p-3">
+                          <div className="mb-2 flex items-center gap-2 text-[11px] text-muted-foreground">
                             <span>Remote revision {activeConflict.serverDocument.latestRevisionNumber}</span>
                             <span>•</span>
                             <span>updated {relativeTime(activeConflict.serverDocument.updatedAt)}</span>
                           </div>
-                          {!isPlanКлюч(doc.key) && activeConflict.serverDocument.title ? (
-                            <p classИмя="mb-2 text-sm font-medium">{activeConflict.serverDocument.title}</p>
+                          {!isPlanKey(doc.key) && activeConflict.serverDocument.title ? (
+                            <p className="mb-2 text-sm font-medium">{activeConflict.serverDocument.title}</p>
                           ) : null}
                           {renderFoldableBody(activeConflict.serverDocument.body, "text-[14px] leading-7")}
                         </div>
                       )}
                     </div>
                   )}
-                  {activeЧерновик && !isPlanКлюч(doc.key) && !isHistoricalПредпросмотр && (
+                  {activeDraft && !isPlanKey(doc.key) && !isHistoricalPreview && (
                     <Input
-                      value={activeЧерновик.title}
+                      value={activeDraft.title}
                       onChange={(event) => {
                         markDocumentDirty(doc.key);
-                        setЧерновик((current) => current ? { ...current, title: event.target.value } : current);
+                        setDraft((current) => current ? { ...current, title: event.target.value } : current);
                       }}
-                      placeholder="Опционально title"
+                      placeholder="Optional title"
                     />
                   )}
                   <div
-                    classИмя={`${documentBodyShellClassИмя} ${
-                      activeЧерновик || isHistoricalПредпросмотр ? "" : "rounded-md hover:bg-accent/10"
+                    className={`${documentBodyShellClassName} ${
+                      activeDraft || isHistoricalPreview ? "" : "rounded-md hover:bg-accent/10"
                     }`}
                   >
-                    {isHistoricalПредпросмотр ? (
-                      renderFoldableBody(displayedBody, documentBodyContentClassИмя)
-                    ) : activeЧерновик ? (
-                      <MarkdownИзменитьor
+                    {isHistoricalPreview ? (
+                      renderFoldableBody(displayedBody, documentBodyContentClassName)
+                    ) : activeDraft ? (
+                      <MarkdownEditor
                         value={displayedBody}
                         onChange={(body) => {
                           markDocumentDirty(doc.key);
-                          setЧерновик((current) => {
+                          setDraft((current) => {
                             if (current && current.key === doc.key && !current.isNew) {
                               return { ...current, body };
                             }
@@ -1105,38 +1105,38 @@ export function ЗадачаДокументыSection({
                         }}
                         placeholder="Markdown body"
                         bordered={false}
-                        classИмя="bg-transparent"
-                        contentClassИмя={documentBodyContentClassИмя}
+                        className="bg-transparent"
+                        contentClassName={documentBodyContentClassName}
                         mentions={mentions}
-                        imageЗагрузитьHandler={imageЗагрузитьHandler}
-                        onОтправить={() => void commitЧерновик(activeЧерновик ?? draft, { clearAfterСохранить: false, trackАвтоsave: true })}
+                        imageUploadHandler={imageUploadHandler}
+                        onSubmit={() => void commitDraft(activeDraft ?? draft, { clearAfterSave: false, trackAutosave: true })}
                       />
                     ) : (
-                      renderFoldableBody(displayedBody, documentBodyContentClassИмя)
+                      renderFoldableBody(displayedBody, documentBodyContentClassName)
                     )}
                   </div>
-                  <div classИмя="flex min-h-4 items-center justify-end px-1">
+                  <div className="flex min-h-4 items-center justify-end px-1">
                     <span
-                      classИмя={`text-[11px] transition-opacity duration-150 ${
-                        isHistoricalПредпросмотр
+                      className={`text-[11px] transition-opacity duration-150 ${
+                        isHistoricalPreview
                           ? "text-amber-300"
                           : activeConflict
                           ? "text-amber-300"
                           : autosaveState === "error"
                             ? "text-destructive"
                             : "text-muted-foreground"
-                      } ${activeЧерновик || isHistoricalПредпросмотр ? "opacity-100" : "opacity-0"}`}
+                      } ${activeDraft || isHistoricalPreview ? "opacity-100" : "opacity-0"}`}
                     >
-                      {isHistoricalПредпросмотр
+                      {isHistoricalPreview
                         ? "Viewing historical revision"
-                        : activeЧерновик
+                        : activeDraft
                           ? activeConflict
                           ? "Out of date"
-                          : autosaveDocumentКлюч === doc.key
+                          : autosaveDocumentKey === doc.key
                             ? autosaveState === "saving"
-                              ? "Автоsaving..."
+                              ? "Autosaving..."
                               : autosaveState === "saved"
-                                ? "Сохранитьd"
+                                ? "Saved"
                                 : autosaveState === "error"
                                   ? "Could not save"
                                   : ""
@@ -1146,10 +1146,10 @@ export function ЗадачаДокументыSection({
                   </div>
                   {canVoteOnDocument && doc.latestRevisionId ? (
                     <OutputFeedbackButtons
-                      activeVote={feedbackVoteByЦельId.get(doc.latestRevisionId) ?? null}
+                      activeVote={feedbackVoteByTargetId.get(doc.latestRevisionId) ?? null}
                       sharingPreference={feedbackDataSharingPreference}
                       termsUrl={feedbackTermsUrl}
-                      onVote={(vote: FeedbackVoteЗначение, options?: { allowSharing?: boolean; reason?: string }) =>
+                      onVote={(vote: FeedbackVoteValue, options?: { allowSharing?: boolean; reason?: string }) =>
                         onVote?.(doc.latestRevisionId!, vote, options) ?? Promise.resolve()
                       }
                     />
@@ -1157,27 +1157,27 @@ export function ЗадачаДокументыSection({
                 </div>
               ) : null}
 
-              {confirmУдалитьКлюч === doc.key && (
-                <div classИмя="mt-3 flex items-center justify-between gap-3 rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3">
-                  <p classИмя="text-sm text-destructive font-medium">
-                    Удалить this document? This cannot be undone.
+              {confirmDeleteKey === doc.key && (
+                <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3">
+                  <p className="text-sm text-destructive font-medium">
+                    Delete this document? This cannot be undone.
                   </p>
-                  <div classИмя="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setПодтвердитьУдалитьКлюч(null)}
-                      disabled={deleteDocument.isОжидание}
+                      onClick={() => setConfirmDeleteKey(null)}
+                      disabled={deleteDocument.isPending}
                     >
-                      Отмена
+                      Cancel
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => deleteDocument.mutate(doc.key)}
-                      disabled={deleteDocument.isОжидание}
+                      disabled={deleteDocument.isPending}
                     >
-                      {deleteDocument.isОжидание ? "Deleting..." : "Удалить"}
+                      {deleteDocument.isPending ? "Deleting..." : "Удалить"}
                     </Button>
                   </div>
                 </div>
@@ -1187,16 +1187,16 @@ export function ЗадачаДокументыSection({
         })}
       </div>
 
-      {diffViewКлюч && (() => {
-        const diffDoc = sortedДокументы.find((d) => d.key === diffViewКлюч);
+      {diffViewKey && (() => {
+        const diffDoc = sortedDocuments.find((d) => d.key === diffViewKey);
         if (!diffDoc) return null;
         return (
           <DocumentDiffModal
             issueId={issue.id}
-            documentКлюч={diffDoc.key}
+            documentKey={diffDoc.key}
             latestRevisionNumber={diffDoc.latestRevisionNumber}
             open
-            onOpenChange={(open) => { if (!open) setDiffViewКлюч(null); }}
+            onOpenChange={(open) => { if (!open) setDiffViewKey(null); }}
           />
         );
       })()}

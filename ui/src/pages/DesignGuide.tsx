@@ -1,24 +1,24 @@
 import { useState } from "react";
 import {
   BookOpen,
-  Бот,
+  Bot,
   Check,
   ChevronDown,
   CircleDot,
-  Команда as КомандаIcon,
+  Command as CommandIcon,
   DollarSign,
   Hexagon,
-  История,
-  Входящие,
-  LayoutПанель управления,
+  History,
+  Inbox,
+  LayoutDashboard,
   ListTodo,
   Mail,
   Plus,
-  Поиск,
-  Настройки,
-  Цель,
+  Search,
+  Settings,
+  Target,
   Trash2,
-  Загрузить,
+  Upload,
   User,
   Zap,
 } from "lucide-react";
@@ -34,8 +34,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Card,
   CardHeader,
-  CardНазвание,
-  CardОписание,
+  CardTitle,
+  CardDescription,
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
@@ -44,8 +44,8 @@ import {
   DialogTrigger,
   DialogContent,
   DialogHeader,
-  DialogНазвание,
-  DialogОписание,
+  DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -56,7 +56,7 @@ import {
 import {
   Select,
   SelectTrigger,
-  SelectЗначение,
+  SelectValue,
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
@@ -79,8 +79,8 @@ import {
   SheetTrigger,
   SheetContent,
   SheetHeader,
-  SheetНазвание,
-  SheetОписание,
+  SheetTitle,
+  SheetDescription,
   SheetFooter,
 } from "@/components/ui/sheet";
 import {
@@ -90,13 +90,13 @@ import {
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Команда,
-  КомандаInput,
-  КомандаList,
-  КомандаGroup,
-  КомандаItem,
-  КомандаEmpty,
-  КомандаSeparator,
+  Command,
+  CommandInput,
+  CommandList,
+  CommandGroup,
+  CommandItem,
+  CommandEmpty,
+  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Breadcrumb,
@@ -112,27 +112,27 @@ import {
   AvatarGroup,
   AvatarGroupCount,
 } from "@/components/ui/avatar";
-import { СтатусBadge } from "@/components/СтатусBadge";
-import { СтатусIcon } from "@/components/СтатусIcon";
-import { ПриоритетIcon } from "@/components/ПриоритетIcon";
-import { agentСтатусDot, agentСтатусDotПо умолчанию } from "@/lib/status-colors";
+import { StatusBadge } from "@/components/StatusBadge";
+import { StatusIcon } from "@/components/StatusIcon";
+import { PriorityIcon } from "@/components/PriorityIcon";
+import { agentStatusDot, agentStatusDotDefault } from "@/lib/status-colors";
 import { EntityRow } from "@/components/EntityRow";
 import { EmptyState } from "@/components/EmptyState";
 import { MetricCard } from "@/components/MetricCard";
-import { ФильтрBar, type ФильтрЗначение } from "@/components/ФильтрBar";
-import { InlineИзменитьor } from "@/components/InlineИзменитьor";
+import { FilterBar, type FilterValue } from "@/components/FilterBar";
+import { InlineEditor } from "@/components/InlineEditor";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { Identity } from "@/components/Identity";
-import { ЗадачаReferencePill } from "@/components/ЗадачаReferencePill";
+import { IssueReferencePill } from "@/components/IssueReferencePill";
 
 /* ------------------------------------------------------------------ */
 /*  Section wrapper                                                    */
 /* ------------------------------------------------------------------ */
 
-function Section({ title, children }: { title: string; children: React.ReactНетde }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section classИмя="space-y-4">
-      <h3 classИмя="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+    <section className="space-y-4">
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
         {title}
       </h3>
       <Separator />
@@ -141,10 +141,10 @@ function Section({ title, children }: { title: string; children: React.ReactНе
   );
 }
 
-function SubSection({ title, children }: { title: string; children: React.ReactНетde }) {
+function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div classИмя="space-y-3">
-      <h4 classИмя="text-sm font-medium">{title}</h4>
+    <div className="space-y-3">
+      <h4 className="text-sm font-medium">{title}</h4>
       {children}
     </div>
   );
@@ -156,14 +156,14 @@ function SubSection({ title, children }: { title: string; children: React.React�
 
 function Swatch({ name, cssVar }: { name: string; cssVar: string }) {
   return (
-    <div classИмя="flex items-center gap-3">
+    <div className="flex items-center gap-3">
       <div
-        classИмя="h-8 w-8 rounded-md border border-border shrink-0"
+        className="h-8 w-8 rounded-md border border-border shrink-0"
         style={{ backgroundColor: `var(${cssVar})` }}
       />
       <div>
-        <p classИмя="text-xs font-mono">{cssVar}</p>
-        <p classИмя="text-xs text-muted-foreground">{name}</p>
+        <p className="text-xs font-mono">{cssVar}</p>
+        <p className="text-xs text-muted-foreground">{name}</p>
       </div>
     </div>
   );
@@ -174,27 +174,27 @@ function Swatch({ name, cssVar }: { name: string; cssVar: string }) {
 /* ------------------------------------------------------------------ */
 
 export function DesignGuide() {
-  const [status, setСтатус] = useState("todo");
-  const [priority, setПриоритет] = useState("medium");
-  const [selectЗначение, setSelectЗначение] = useState("in_progress");
+  const [status, setStatus] = useState("todo");
+  const [priority, setPriority] = useState("medium");
+  const [selectValue, setSelectValue] = useState("in_progress");
   const [menuChecked, setMenuChecked] = useState(true);
   const [collapsibleOpen, setCollapsibleOpen] = useState(false);
   const [inlineText, setInlineText] = useState("Click to edit this text");
-  const [inlineНазвание, setInlineНазвание] = useState("Изменитьable Название");
+  const [inlineTitle, setInlineTitle] = useState("Editable Title");
   const [inlineDesc, setInlineDesc] = useState(
     "This is an editable description. Click to edit it — the textarea auto-sizes to fit the content without layout shift."
   );
-  const [filters, setФильтрs] = useState<ФильтрЗначение[]>([
+  const [filters, setFilters] = useState<FilterValue[]>([
     { key: "status", label: "Статус", value: "Активен" },
-    { key: "priority", label: "Приоритет", value: "Высокий" },
+    { key: "priority", label: "Приоритет", value: "High" },
   ]);
 
   return (
-    <div classИмя="space-y-10 max-w-4xl">
+    <div className="space-y-10 max-w-4xl">
       {/* Page header */}
       <div>
-        <h2 classИмя="text-xl font-bold">Design Guide</h2>
-        <p classИмя="text-sm text-muted-foreground mt-1">
+        <h2 className="text-xl font-bold">Design Guide</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           Every component, style, and pattern used across Paperclip.
         </p>
       </div>
@@ -203,31 +203,31 @@ export function DesignGuide() {
       {/*  COVERAGE                                                     */}
       {/* ============================================================ */}
       <Section title="Component Coverage">
-        <p classИмя="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           This page should be updated when new UI primitives or app-level patterns ship.
         </p>
-        <div classИмя="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           <SubSection title="UI primitives">
-            <div classИмя="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {[
                 "avatar", "badge", "breadcrumb", "button", "card", "checkbox", "collapsible",
                 "command", "dialog", "dropdown-menu", "input", "label", "popover", "scroll-area",
                 "select", "separator", "sheet", "skeleton", "tabs", "textarea", "tooltip",
               ].map((name) => (
-                <Badge key={name} variant="outline" classИмя="font-mono text-[10px]">
+                <Badge key={name} variant="outline" className="font-mono text-[10px]">
                   {name}
                 </Badge>
               ))}
             </div>
           </SubSection>
           <SubSection title="App components">
-            <div classИмя="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {[
-                "СтатусBadge", "СтатусIcon", "ПриоритетIcon", "EntityRow", "EmptyState", "MetricCard",
-                "ФильтрBar", "InlineИзменитьor", "PageSkeleton", "Identity", "CommentThread", "MarkdownИзменитьor",
-                "PropertiesPanel", "Sidebar", "КомандаPalette",
+                "StatusBadge", "StatusIcon", "PriorityIcon", "EntityRow", "EmptyState", "MetricCard",
+                "FilterBar", "InlineEditor", "PageSkeleton", "Identity", "CommentThread", "MarkdownEditor",
+                "PropertiesPanel", "Sidebar", "CommandPalette",
               ].map((name) => (
-                <Badge key={name} variant="ghost" classИмя="font-mono text-[10px]">
+                <Badge key={name} variant="ghost" className="font-mono text-[10px]">
                   {name}
                 </Badge>
               ))}
@@ -241,8 +241,8 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title="Colors">
         <SubSection title="Core">
-          <div classИмя="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Swatch name="Назадground" cssVar="--background" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <Swatch name="Background" cssVar="--background" />
             <Swatch name="Foreground" cssVar="--foreground" />
             <Swatch name="Card" cssVar="--card" />
             <Swatch name="Primary" cssVar="--primary" />
@@ -258,14 +258,14 @@ export function DesignGuide() {
         </SubSection>
 
         <SubSection title="Sidebar">
-          <div classИмя="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Swatch name="Sidebar" cssVar="--sidebar" />
             <Swatch name="Sidebar border" cssVar="--sidebar-border" />
           </div>
         </SubSection>
 
         <SubSection title="Chart">
-          <div classИмя="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Swatch name="Chart 1" cssVar="--chart-1" />
             <Swatch name="Chart 2" cssVar="--chart-2" />
             <Swatch name="Chart 3" cssVar="--chart-3" />
@@ -279,26 +279,26 @@ export function DesignGuide() {
       {/*  TYPOGRAPHY                                                   */}
       {/* ============================================================ */}
       <Section title="Typography">
-        <div classИмя="space-y-3">
-          <h2 classИмя="text-xl font-bold">Page Название — text-xl font-bold</h2>
-          <h2 classИмя="text-lg font-semibold">Section Название — text-lg font-semibold</h2>
-          <h3 classИмя="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-3">
+          <h2 className="text-xl font-bold">Page Title — text-xl font-bold</h2>
+          <h2 className="text-lg font-semibold">Section Title — text-lg font-semibold</h2>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Section Heading — text-sm font-semibold uppercase tracking-wide
           </h3>
-          <p classИмя="text-sm font-medium">Card Название — text-sm font-medium</p>
-          <p classИмя="text-sm font-semibold">Card Название Alt — text-sm font-semibold</p>
-          <p classИмя="text-sm">Body text — text-sm</p>
-          <p classИмя="text-sm text-muted-foreground">
+          <p className="text-sm font-medium">Card Title — text-sm font-medium</p>
+          <p className="text-sm font-semibold">Card Title Alt — text-sm font-semibold</p>
+          <p className="text-sm">Body text — text-sm</p>
+          <p className="text-sm text-muted-foreground">
             Muted description — text-sm text-muted-foreground
           </p>
-          <p classИмя="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Tiny label — text-xs text-muted-foreground
           </p>
-          <p classИмя="text-sm font-mono text-muted-foreground">
+          <p className="text-sm font-mono text-muted-foreground">
             Mono identifier — text-sm font-mono text-muted-foreground
           </p>
-          <p classИмя="text-2xl font-bold">Large stat — text-2xl font-bold</p>
-          <p classИмя="font-mono text-xs">Log/code text — font-mono text-xs</p>
+          <p className="text-2xl font-bold">Large stat — text-2xl font-bold</p>
+          <p className="font-mono text-xs">Log/code text — font-mono text-xs</p>
         </div>
       </Section>
 
@@ -306,7 +306,7 @@ export function DesignGuide() {
       {/*  SPACING & RADIUS                                             */}
       {/* ============================================================ */}
       <Section title="Radius">
-        <div classИмя="flex items-end gap-4 flex-wrap">
+        <div className="flex items-end gap-4 flex-wrap">
           {[
             ["sm", "var(--radius-sm)"],
             ["md", "var(--radius-md)"],
@@ -314,12 +314,12 @@ export function DesignGuide() {
             ["xl", "var(--radius-xl)"],
             ["full", "9999px"],
           ].map(([label, radius]) => (
-            <div key={label} classИмя="flex flex-col items-center gap-1">
+            <div key={label} className="flex flex-col items-center gap-1">
               <div
-                classИмя="h-12 w-12 bg-primary"
+                className="h-12 w-12 bg-primary"
                 style={{ borderRadius: radius }}
               />
-              <span classИмя="text-xs text-muted-foreground">{label}</span>
+              <span className="text-xs text-muted-foreground">{label}</span>
             </div>
           ))}
         </div>
@@ -330,8 +330,8 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title="Buttons">
         <SubSection title="Variants">
-          <div classИмя="flex items-center gap-2 flex-wrap">
-            <Button variant="default">По умолчанию</Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="default">Default</Button>
             <Button variant="secondary">Secondary</Button>
             <Button variant="outline">Outline</Button>
             <Button variant="ghost">Ghost</Button>
@@ -341,36 +341,36 @@ export function DesignGuide() {
         </SubSection>
 
         <SubSection title="Sizes">
-          <div classИмя="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button size="xs">Extra Small</Button>
             <Button size="sm">Small</Button>
-            <Button size="default">По умолчанию</Button>
+            <Button size="default">Default</Button>
             <Button size="lg">Large</Button>
           </div>
         </SubSection>
 
         <SubSection title="Icon buttons">
-          <div classИмя="flex items-center gap-2 flex-wrap">
-            <Button variant="ghost" size="icon-xs"><Поиск /></Button>
-            <Button variant="ghost" size="icon-sm"><Поиск /></Button>
-            <Button variant="outline" size="icon"><Поиск /></Button>
-            <Button variant="outline" size="icon-lg"><Поиск /></Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="ghost" size="icon-xs"><Search /></Button>
+            <Button variant="ghost" size="icon-sm"><Search /></Button>
+            <Button variant="outline" size="icon"><Search /></Button>
+            <Button variant="outline" size="icon-lg"><Search /></Button>
           </div>
         </SubSection>
 
         <SubSection title="With icons">
-          <div classИмя="flex items-center gap-2 flex-wrap">
-            <Button><Plus /> Новая задача</Button>
-            <Button variant="outline"><Загрузить /> Загрузить</Button>
-            <Button variant="destructive"><Trash2 /> Удалить</Button>
-            <Button size="sm"><Plus /> Добавить</Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button><Plus /> New Issue</Button>
+            <Button variant="outline"><Upload /> Upload</Button>
+            <Button variant="destructive"><Trash2 /> Delete</Button>
+            <Button size="sm"><Plus /> Add</Button>
           </div>
         </SubSection>
 
         <SubSection title="States">
-          <div classИмя="flex items-center gap-2 flex-wrap">
-            <Button disabled>Отключитьd</Button>
-            <Button variant="outline" disabled>Отключитьd Outline</Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button disabled>Disabled</Button>
+            <Button variant="outline" disabled>Disabled Outline</Button>
           </div>
         </SubSection>
       </Section>
@@ -380,8 +380,8 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title="Badges">
         <SubSection title="Variants">
-          <div classИмя="flex items-center gap-2 flex-wrap">
-            <Badge variant="default">По умолчанию</Badge>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="default">Default</Badge>
             <Badge variant="secondary">Secondary</Badge>
             <Badge variant="outline">Outline</Badge>
             <Badge variant="destructive">Destructive</Badge>
@@ -393,9 +393,9 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  STATUS BADGES & ICONS                                        */}
       {/* ============================================================ */}
-      <Section title="Статус System">
-        <SubSection title="СтатусBadge (all statuses)">
-          <div classИмя="flex items-center gap-2 flex-wrap">
+      <Section title="Status System">
+        <SubSection title="StatusBadge (all statuses)">
+          <div className="flex items-center gap-2 flex-wrap">
             {[
               "active", "running", "paused", "idle", "archived", "planned",
               "achieved", "completed", "failed", "timed_out", "succeeded", "error",
@@ -403,83 +403,83 @@ export function DesignGuide() {
               "done", "terminated", "cancelled", "pending", "revision_requested",
               "approved", "rejected",
             ].map((s) => (
-              <СтатусBadge key={s} status={s} />
+              <StatusBadge key={s} status={s} />
             ))}
           </div>
         </SubSection>
 
-        <SubSection title="СтатусIcon (interactive)">
-          <div classИмя="flex items-center gap-3 flex-wrap">
+        <SubSection title="StatusIcon (interactive)">
+          <div className="flex items-center gap-3 flex-wrap">
             {["backlog", "todo", "in_progress", "in_review", "done", "cancelled", "blocked"].map(
               (s) => (
-                <div key={s} classИмя="flex items-center gap-1.5">
-                  <СтатусIcon status={s} />
-                  <span classИмя="text-xs text-muted-foreground">{s}</span>
+                <div key={s} className="flex items-center gap-1.5">
+                  <StatusIcon status={s} />
+                  <span className="text-xs text-muted-foreground">{s}</span>
                 </div>
               )
             )}
           </div>
-          <div classИмя="flex items-center gap-2 mt-2">
-            <СтатусIcon status={status} onChange={setСтатус} />
-            <span classИмя="text-sm">Click the icon to change status (current: {status})</span>
+          <div className="flex items-center gap-2 mt-2">
+            <StatusIcon status={status} onChange={setStatus} />
+            <span className="text-sm">Click the icon to change status (current: {status})</span>
           </div>
         </SubSection>
 
-        <SubSection title="ПриоритетIcon (interactive)">
-          <div classИмя="flex items-center gap-3 flex-wrap">
+        <SubSection title="PriorityIcon (interactive)">
+          <div className="flex items-center gap-3 flex-wrap">
             {["critical", "high", "medium", "low"].map((p) => (
-              <div key={p} classИмя="flex items-center gap-1.5">
-                <ПриоритетIcon priority={p} />
-                <span classИмя="text-xs text-muted-foreground">{p}</span>
+              <div key={p} className="flex items-center gap-1.5">
+                <PriorityIcon priority={p} />
+                <span className="text-xs text-muted-foreground">{p}</span>
               </div>
             ))}
           </div>
-          <div classИмя="flex items-center gap-2 mt-2">
-            <ПриоритетIcon priority={priority} onChange={setПриоритет} />
-            <span classИмя="text-sm">Click the icon to change (current: {priority})</span>
+          <div className="flex items-center gap-2 mt-2">
+            <PriorityIcon priority={priority} onChange={setPriority} />
+            <span className="text-sm">Click the icon to change (current: {priority})</span>
           </div>
         </SubSection>
 
-        <SubSection title="Индикаторы статуса">
-          <div classИмя="flex items-center gap-4 flex-wrap">
+        <SubSection title="Agent status dots">
+          <div className="flex items-center gap-4 flex-wrap">
             {(["running", "active", "paused", "error", "archived"] as const).map((label) => (
-              <div key={label} classИмя="flex items-center gap-2">
-                <span classИмя="relative flex h-2.5 w-2.5">
-                  <span classИмя={`inline-flex h-full w-full rounded-full ${agentСтатусDot[label] ?? agentСтатусDotПо умолчанию}`} />
+              <div key={label} className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className={`inline-flex h-full w-full rounded-full ${agentStatusDot[label] ?? agentStatusDotDefault}`} />
                 </span>
-                <span classИмя="text-xs text-muted-foreground">{label}</span>
+                <span className="text-xs text-muted-foreground">{label}</span>
               </div>
             ))}
           </div>
         </SubSection>
 
-        <SubSection title="Запустить invocation badges">
-          <div classИмя="flex items-center gap-2 flex-wrap">
+        <SubSection title="Run invocation badges">
+          <div className="flex items-center gap-2 flex-wrap">
             {[
               ["timer", "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"],
               ["assignment", "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300"],
               ["on_demand", "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300"],
               ["automation", "bg-muted text-muted-foreground"],
             ].map(([label, cls]) => (
-              <span key={label} classИмя={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${cls}`}>
+              <span key={label} className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${cls}`}>
                 {label}
               </span>
             ))}
           </div>
         </SubSection>
 
-        <SubSection title="ЗадачаReferencePill">
-          <p classИмя="text-xs text-muted-foreground">
-            Used wherever a task is referenced — in markdown, the Related Работа tab, and activity summaries.
-            Pass <code classИмя="font-mono">status</code> to show the target issue&apos;s state at a glance.
-            Use <code classИмя="font-mono">strikethrough</code> for &quot;removed&quot; contexts.
+        <SubSection title="IssueReferencePill">
+          <p className="text-xs text-muted-foreground">
+            Used wherever a task is referenced — in markdown, the Related Work tab, and activity summaries.
+            Pass <code className="font-mono">status</code> to show the target issue&apos;s state at a glance.
+            Use <code className="font-mono">strikethrough</code> for &quot;removed&quot; contexts.
           </p>
-          <div classИмя="flex items-center gap-2 flex-wrap">
-            <ЗадачаReferencePill issue={{ id: "demo-1", identifier: "PAP-123", title: "Identifier only — no status yet" }} />
-            <ЗадачаReferencePill issue={{ id: "demo-2", identifier: "PAP-456", title: "With in_progress status", status: "in_progress" }} />
-            <ЗадачаReferencePill issue={{ id: "demo-3", identifier: "PAP-789", title: "Готово status", status: "done" }} />
-            <ЗадачаReferencePill issue={{ id: "demo-4", identifier: "PAP-101", title: "Заблокирован status", status: "blocked" }} />
-            <ЗадачаReferencePill strikethrough issue={{ id: "demo-5", identifier: "PAP-202", title: "Удалитьd (strikethrough)", status: "todo" }} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <IssueReferencePill issue={{ id: "demo-1", identifier: "PAP-123", title: "Identifier only — no status yet" }} />
+            <IssueReferencePill issue={{ id: "demo-2", identifier: "PAP-456", title: "With in_progress status", status: "in_progress" }} />
+            <IssueReferencePill issue={{ id: "demo-3", identifier: "PAP-789", title: "Done status", status: "done" }} />
+            <IssueReferencePill issue={{ id: "demo-4", identifier: "PAP-101", title: "Blocked status", status: "blocked" }} />
+            <IssueReferencePill strikethrough issue={{ id: "demo-5", identifier: "PAP-202", title: "Removed (strikethrough)", status: "todo" }} />
           </div>
         </SubSection>
       </Section>
@@ -488,10 +488,10 @@ export function DesignGuide() {
       {/*  FORM ELEMENTS                                                */}
       {/* ============================================================ */}
       <Section title="Form Elements">
-        <div classИмя="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           <SubSection title="Input">
-            <Input placeholder="По умолчанию input" />
-            <Input placeholder="Отключитьd input" disabled classИмя="mt-2" />
+            <Input placeholder="Default input" />
+            <Input placeholder="Disabled input" disabled className="mt-2" />
           </SubSection>
 
           <SubSection title="Textarea">
@@ -499,50 +499,50 @@ export function DesignGuide() {
           </SubSection>
 
           <SubSection title="Checkbox & Label">
-            <div classИмя="space-y-3">
-              <div classИмя="flex items-center gap-2">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
                 <Checkbox id="check1" defaultChecked />
                 <Label htmlFor="check1">Checked item</Label>
               </div>
-              <div classИмя="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Checkbox id="check2" />
                 <Label htmlFor="check2">Unchecked item</Label>
               </div>
-              <div classИмя="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Checkbox id="check3" disabled />
-                <Label htmlFor="check3">Отключитьd item</Label>
+                <Label htmlFor="check3">Disabled item</Label>
               </div>
             </div>
           </SubSection>
 
-          <SubSection title="Inline Изменитьor">
-            <div classИмя="space-y-4">
+          <SubSection title="Inline Editor">
+            <div className="space-y-4">
               <div>
-                <p classИмя="text-xs text-muted-foreground mb-1">Название (single-line)</p>
-                <InlineИзменитьor
-                  value={inlineНазвание}
-                  onСохранить={setInlineНазвание}
+                <p className="text-xs text-muted-foreground mb-1">Title (single-line)</p>
+                <InlineEditor
+                  value={inlineTitle}
+                  onSave={setInlineTitle}
                   as="h2"
-                  classИмя="text-xl font-bold"
+                  className="text-xl font-bold"
                 />
               </div>
               <div>
-                <p classИмя="text-xs text-muted-foreground mb-1">Body text (single-line)</p>
-                <InlineИзменитьor
+                <p className="text-xs text-muted-foreground mb-1">Body text (single-line)</p>
+                <InlineEditor
                   value={inlineText}
-                  onСохранить={setInlineText}
+                  onSave={setInlineText}
                   as="p"
-                  classИмя="text-sm"
+                  className="text-sm"
                 />
               </div>
               <div>
-                <p classИмя="text-xs text-muted-foreground mb-1">Описание (multiline, auto-sizing)</p>
-                <InlineИзменитьor
+                <p className="text-xs text-muted-foreground mb-1">Description (multiline, auto-sizing)</p>
+                <InlineEditor
                   value={inlineDesc}
-                  onСохранить={setInlineDesc}
+                  onSave={setInlineDesc}
                   as="p"
-                  classИмя="text-sm text-muted-foreground"
-                  placeholder="Добавить a description..."
+                  className="text-sm text-muted-foreground"
+                  placeholder="Add a description..."
                   multiline
                 />
               </div>
@@ -555,32 +555,32 @@ export function DesignGuide() {
       {/*  SELECT                                                       */}
       {/* ============================================================ */}
       <Section title="Select">
-        <div classИмя="grid gap-6 md:grid-cols-2">
-          <SubSection title="По умолчанию size">
-            <Select value={selectЗначение} onЗначениеChange={setSelectЗначение}>
-              <SelectTrigger classИмя="w-full">
-                <SelectЗначение placeholder="Select status" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <SubSection title="Default size">
+            <Select value={selectValue} onValueChange={setSelectValue}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="backlog">Назадlog</SelectItem>
+                <SelectItem value="backlog">Backlog</SelectItem>
                 <SelectItem value="todo">Todo</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="in_review">In Review</SelectItem>
-                <SelectItem value="done">Готово</SelectItem>
+                <SelectItem value="done">Done</SelectItem>
               </SelectContent>
             </Select>
-            <p classИмя="text-xs text-muted-foreground">Current value: {selectЗначение}</p>
+            <p className="text-xs text-muted-foreground">Current value: {selectValue}</p>
           </SubSection>
           <SubSection title="Small trigger">
-            <Select defaultЗначение="high">
-              <SelectTrigger size="sm" classИмя="w-full">
-                <SelectЗначение />
+            <Select defaultValue="high">
+              <SelectTrigger size="sm" className="w-full">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="critical">Критично</SelectItem>
-                <SelectItem value="high">Высокий</SelectItem>
-                <SelectItem value="medium">Средний</SelectItem>
-                <SelectItem value="low">Низкий</SelectItem>
+                <SelectItem value="critical">Critical</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
               </SelectContent>
             </Select>
           </SubSection>
@@ -595,17 +595,17 @@ export function DesignGuide() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
               Quick Actions
-              <ChevronDown classИмя="h-4 w-4" />
+              <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" classИмя="w-56">
+          <DropdownMenuContent align="start" className="w-56">
             <DropdownMenuItem>
-              <Check classИмя="h-4 w-4" />
+              <Check className="h-4 w-4" />
               Mark as done
               <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <BookOpen classИмя="h-4 w-4" />
+              <BookOpen className="h-4 w-4" />
               Open docs
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -616,8 +616,8 @@ export function DesignGuide() {
               Watch issue
             </DropdownMenuCheckboxItem>
             <DropdownMenuItem variant="destructive">
-              <Trash2 classИмя="h-4 w-4" />
-              Удалить issue
+              <Trash2 className="h-4 w-4" />
+              Delete issue
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -631,10 +631,10 @@ export function DesignGuide() {
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm">Open Popover</Button>
           </PopoverTrigger>
-          <PopoverContent classИмя="space-y-2">
-            <p classИмя="text-sm font-medium">Агент heartbeat</p>
-            <p classИмя="text-xs text-muted-foreground">
-              Last run succeeded 24s ago. Далее timer run in 9m.
+          <PopoverContent className="space-y-2">
+            <p className="text-sm font-medium">Agent heartbeat</p>
+            <p className="text-xs text-muted-foreground">
+              Last run succeeded 24s ago. Next timer run in 9m.
             </p>
             <Button size="xs">Wake now</Button>
           </PopoverContent>
@@ -645,16 +645,16 @@ export function DesignGuide() {
       {/*  COLLAPSIBLE                                                  */}
       {/* ============================================================ */}
       <Section title="Collapsible">
-        <Collapsible open={collapsibleOpen} onOpenChange={setCollapsibleOpen} classИмя="space-y-2">
+        <Collapsible open={collapsibleOpen} onOpenChange={setCollapsibleOpen} className="space-y-2">
           <CollapsibleTrigger asChild>
             <Button variant="outline" size="sm">
               {collapsibleOpen ? "Hide" : "Show"} advanced filters
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent classИмя="rounded-md border border-border p-3">
-            <div classИмя="space-y-2">
-              <Label htmlFor="owner-filter">Владелец</Label>
-              <Input id="owner-filter" placeholder="Фильтр by agent name" />
+          <CollapsibleContent className="rounded-md border border-border p-3">
+            <div className="space-y-2">
+              <Label htmlFor="owner-filter">Owner</Label>
+              <Input id="owner-filter" placeholder="Filter by agent name" />
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -670,22 +670,22 @@ export function DesignGuide() {
           </SheetTrigger>
           <SheetContent side="right">
             <SheetHeader>
-              <SheetНазвание>Задача Properties</SheetНазвание>
-              <SheetОписание>Изменить metadata without leaving the current page.</SheetОписание>
+              <SheetTitle>Issue Properties</SheetTitle>
+              <SheetDescription>Edit metadata without leaving the current page.</SheetDescription>
             </SheetHeader>
-            <div classИмя="space-y-4 px-4">
-              <div classИмя="space-y-1">
-                <Label htmlFor="sheet-title">Название</Label>
-                <Input id="sheet-title" defaultЗначение="Improve onboarding docs" />
+            <div className="space-y-4 px-4">
+              <div className="space-y-1">
+                <Label htmlFor="sheet-title">Title</Label>
+                <Input id="sheet-title" defaultValue="Improve onboarding docs" />
               </div>
-              <div classИмя="space-y-1">
-                <Label htmlFor="sheet-description">Описание</Label>
-                <Textarea id="sheet-description" defaultЗначение="Capture setup pitfalls and screenshots." />
+              <div className="space-y-1">
+                <Label htmlFor="sheet-description">Description</Label>
+                <Textarea id="sheet-description" defaultValue="Capture setup pitfalls and screenshots." />
               </div>
             </div>
             <SheetFooter>
-              <Button variant="outline">Отмена</Button>
-              <Button>Сохранить</Button>
+              <Button variant="outline">Cancel</Button>
+              <Button>Save</Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
@@ -695,10 +695,10 @@ export function DesignGuide() {
       {/*  SCROLL AREA                                                  */}
       {/* ============================================================ */}
       <Section title="Scroll Area">
-        <ScrollArea classИмя="h-36 rounded-md border border-border">
-          <div classИмя="space-y-2 p-3">
+        <ScrollArea className="h-36 rounded-md border border-border">
+          <div className="space-y-2 p-3">
             {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} classИмя="rounded-md border border-border p-2 text-sm">
+              <div key={i} className="rounded-md border border-border p-2 text-sm">
                 Heartbeat run #{i + 1}: completed successfully
               </div>
             ))}
@@ -709,35 +709,35 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  COMMAND                                                      */}
       {/* ============================================================ */}
-      <Section title="Команда (CMDK)">
-        <div classИмя="rounded-md border border-border">
-          <Команда>
-            <КомандаInput placeholder="Тип a command or search..." />
-            <КомандаList>
-              <КомандаEmpty>Результаты не найдены.</КомандаEmpty>
-              <КомандаGroup heading="Pages">
-                <КомандаItem>
-                  <LayoutПанель управления classИмя="h-4 w-4" />
-                  Панель управления
-                </КомандаItem>
-                <КомандаItem>
-                  <CircleDot classИмя="h-4 w-4" />
-                  Задачи
-                </КомандаItem>
-              </КомандаGroup>
-              <КомандаSeparator />
-              <КомандаGroup heading="Actions">
-                <КомандаItem>
-                  <КомандаIcon classИмя="h-4 w-4" />
+      <Section title="Command (CMDK)">
+        <div className="rounded-md border border-border">
+          <Command>
+            <CommandInput placeholder="Type a command or search..." />
+            <CommandList>
+              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandGroup heading="Pages">
+                <CommandItem>
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </CommandItem>
+                <CommandItem>
+                  <CircleDot className="h-4 w-4" />
+                  Issues
+                </CommandItem>
+              </CommandGroup>
+              <CommandSeparator />
+              <CommandGroup heading="Actions">
+                <CommandItem>
+                  <CommandIcon className="h-4 w-4" />
                   Open command palette
-                </КомандаItem>
-                <КомандаItem>
-                  <Plus classИмя="h-4 w-4" />
-                  Создать new issue
-                </КомандаItem>
-              </КомандаGroup>
-            </КомандаList>
-          </Команда>
+                </CommandItem>
+                <CommandItem>
+                  <Plus className="h-4 w-4" />
+                  Create new issue
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
         </div>
       </Section>
 
@@ -748,7 +748,7 @@ export function DesignGuide() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="#">Проекты</BreadcrumbLink>
+              <BreadcrumbLink href="#">Projects</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
@@ -756,7 +756,7 @@ export function DesignGuide() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Задача List</BreadcrumbPage>
+              <BreadcrumbPage>Issue List</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -769,23 +769,23 @@ export function DesignGuide() {
         <SubSection title="Standard Card">
           <Card>
             <CardHeader>
-              <CardНазвание>Card Название</CardНазвание>
-              <CardОписание>Card description with supporting text.</CardОписание>
+              <CardTitle>Card Title</CardTitle>
+              <CardDescription>Card description with supporting text.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p classИмя="text-sm">Card content goes here. This is the main body area.</p>
+              <p className="text-sm">Card content goes here. This is the main body area.</p>
             </CardContent>
-            <CardFooter classИмя="gap-2">
+            <CardFooter className="gap-2">
               <Button size="sm">Action</Button>
-              <Button variant="outline" size="sm">Отмена</Button>
+              <Button variant="outline" size="sm">Cancel</Button>
             </CardFooter>
           </Card>
         </SubSection>
 
         <SubSection title="Metric Cards">
-          <div classИмя="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <MetricCard icon={Бот} value={12} label="Активные агенты" description="+3 this week" />
-            <MetricCard icon={CircleDot} value={48} label="Открытые задачи" />
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <MetricCard icon={Bot} value={12} label="Active Agents" description="+3 this week" />
+            <MetricCard icon={CircleDot} value={48} label="Open Issues" />
             <MetricCard icon={DollarSign} value="$1,234" label="Monthly Cost" description="Under budget" />
             <MetricCard icon={Zap} value="99.9%" label="Uptime" />
           </div>
@@ -796,44 +796,44 @@ export function DesignGuide() {
       {/*  TABS                                                         */}
       {/* ============================================================ */}
       <Section title="Tabs">
-        <SubSection title="По умолчанию (pill) variant">
-          <Tabs defaultЗначение="overview">
+        <SubSection title="Default (pill) variant">
+          <Tabs defaultValue="overview">
             <TabsList>
-              <TabsTrigger value="overview">Обзор</TabsTrigger>
-              <TabsTrigger value="runs">Запуститьs</TabsTrigger>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="runs">Runs</TabsTrigger>
               <TabsTrigger value="config">Config</TabsTrigger>
-              <TabsTrigger value="costs">Расходы</TabsTrigger>
+              <TabsTrigger value="costs">Costs</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
-              <p classИмя="text-sm text-muted-foreground py-4">Обзор tab content.</p>
+              <p className="text-sm text-muted-foreground py-4">Overview tab content.</p>
             </TabsContent>
             <TabsContent value="runs">
-              <p classИмя="text-sm text-muted-foreground py-4">Запуститьs tab content.</p>
+              <p className="text-sm text-muted-foreground py-4">Runs tab content.</p>
             </TabsContent>
             <TabsContent value="config">
-              <p classИмя="text-sm text-muted-foreground py-4">Config tab content.</p>
+              <p className="text-sm text-muted-foreground py-4">Config tab content.</p>
             </TabsContent>
             <TabsContent value="costs">
-              <p classИмя="text-sm text-muted-foreground py-4">Расходы tab content.</p>
+              <p className="text-sm text-muted-foreground py-4">Costs tab content.</p>
             </TabsContent>
           </Tabs>
         </SubSection>
 
         <SubSection title="Line variant">
-          <Tabs defaultЗначение="summary">
+          <Tabs defaultValue="summary">
             <TabsList variant="line">
               <TabsTrigger value="summary">Summary</TabsTrigger>
-              <TabsTrigger value="details">Детали</TabsTrigger>
-              <TabsTrigger value="comments">Комментарии</TabsTrigger>
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="comments">Comments</TabsTrigger>
             </TabsList>
             <TabsContent value="summary">
-              <p classИмя="text-sm text-muted-foreground py-4">Summary content with underline tabs.</p>
+              <p className="text-sm text-muted-foreground py-4">Summary content with underline tabs.</p>
             </TabsContent>
             <TabsContent value="details">
-              <p classИмя="text-sm text-muted-foreground py-4">Детали content.</p>
+              <p className="text-sm text-muted-foreground py-4">Details content.</p>
             </TabsContent>
             <TabsContent value="comments">
-              <p classИмя="text-sm text-muted-foreground py-4">Комментарии content.</p>
+              <p className="text-sm text-muted-foreground py-4">Comments content.</p>
             </TabsContent>
           </Tabs>
         </SubSection>
@@ -843,56 +843,56 @@ export function DesignGuide() {
       {/*  ENTITY ROWS                                                  */}
       {/* ============================================================ */}
       <Section title="Entity Rows">
-        <div classИмя="border border-border rounded-md">
+        <div className="border border-border rounded-md">
           <EntityRow
             leading={
               <>
-                <СтатусIcon status="in_progress" />
-                <ПриоритетIcon priority="high" />
+                <StatusIcon status="in_progress" />
+                <PriorityIcon priority="high" />
               </>
             }
             identifier="PAP-001"
             title="Implement authentication flow"
-            subtitle="Assigned to Агент Alpha"
-            trailing={<СтатусBadge status="in_progress" />}
+            subtitle="Assigned to Agent Alpha"
+            trailing={<StatusBadge status="in_progress" />}
             onClick={() => {}}
           />
           <EntityRow
             leading={
               <>
-                <СтатусIcon status="done" />
-                <ПриоритетIcon priority="medium" />
+                <StatusIcon status="done" />
+                <PriorityIcon priority="medium" />
               </>
             }
             identifier="PAP-002"
             title="Set up CI/CD pipeline"
-            subtitle="Завершён 2 days ago"
-            trailing={<СтатусBadge status="done" />}
+            subtitle="Completed 2 days ago"
+            trailing={<StatusBadge status="done" />}
             onClick={() => {}}
           />
           <EntityRow
             leading={
               <>
-                <СтатусIcon status="todo" />
-                <ПриоритетIcon priority="low" />
+                <StatusIcon status="todo" />
+                <PriorityIcon priority="low" />
               </>
             }
             identifier="PAP-003"
             title="Write API documentation"
-            trailing={<СтатусBadge status="todo" />}
+            trailing={<StatusBadge status="todo" />}
             onClick={() => {}}
           />
           <EntityRow
             leading={
               <>
-                <СтатусIcon status="blocked" />
-                <ПриоритетIcon priority="critical" />
+                <StatusIcon status="blocked" />
+                <PriorityIcon priority="critical" />
               </>
             }
             identifier="PAP-004"
             title="Deploy to production"
-            subtitle="Заблокирован by PAP-001"
-            trailing={<СтатусBadge status="blocked" />}
+            subtitle="Blocked by PAP-001"
+            trailing={<StatusBadge status="blocked" />}
             selected
           />
         </div>
@@ -901,24 +901,24 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  FILTER BAR                                                   */}
       {/* ============================================================ */}
-      <Section title="Фильтр Bar">
-        <ФильтрBar
+      <Section title="Filter Bar">
+        <FilterBar
           filters={filters}
-          onУдалить={(key) => setФильтрs((f) => f.filter((x) => x.key !== key))}
-          onОчистить={() => setФильтрs([])}
+          onRemove={(key) => setFilters((f) => f.filter((x) => x.key !== key))}
+          onClear={() => setFilters([])}
         />
         {filters.length === 0 && (
           <Button
             variant="outline"
             size="sm"
             onClick={() =>
-              setФильтрs([
+              setFilters([
                 { key: "status", label: "Статус", value: "Активен" },
-                { key: "priority", label: "Приоритет", value: "Высокий" },
+                { key: "priority", label: "Приоритет", value: "High" },
               ])
             }
           >
-            Сбросить filters
+            Reset filters
           </Button>
         )}
       </Section>
@@ -928,7 +928,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title="Avatars">
         <SubSection title="Sizes">
-          <div classИмя="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <Avatar size="sm"><AvatarFallback>SM</AvatarFallback></Avatar>
             <Avatar><AvatarFallback>DF</AvatarFallback></Avatar>
             <Avatar size="lg"><AvatarFallback>LG</AvatarFallback></Avatar>
@@ -950,23 +950,23 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title="Identity">
         <SubSection title="Sizes">
-          <div classИмя="flex items-center gap-6">
-            <Identity name="Агент Alpha" size="sm" />
-            <Identity name="Агент Alpha" />
-            <Identity name="Агент Alpha" size="lg" />
+          <div className="flex items-center gap-6">
+            <Identity name="Agent Alpha" size="sm" />
+            <Identity name="Agent Alpha" />
+            <Identity name="Agent Alpha" size="lg" />
           </div>
         </SubSection>
 
         <SubSection title="Initials derivation">
-          <div classИмя="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <Identity name="Агент-CEO" size="sm" />
             <Identity name="Alpha" size="sm" />
             <Identity name="Quality Assurance Lead" size="sm" />
           </div>
         </SubSection>
 
-        <SubSection title="Свой initials">
-          <Identity name="Назадend Service" initials="BS" size="sm" />
+        <SubSection title="Custom initials">
+          <Identity name="Backend Service" initials="BS" size="sm" />
         </SubSection>
       </Section>
 
@@ -974,7 +974,7 @@ export function DesignGuide() {
       {/*  TOOLTIPS                                                     */}
       {/* ============================================================ */}
       <Section title="Tooltips">
-        <div classИмя="flex items-center gap-4">
+        <div className="flex items-center gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="outline" size="sm">Hover me</Button>
@@ -983,9 +983,9 @@ export function DesignGuide() {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon-sm"><Настройки /></Button>
+              <Button variant="ghost" size="icon-sm"><Settings /></Button>
             </TooltipTrigger>
-            <TooltipContent>Настройки</TooltipContent>
+            <TooltipContent>Settings</TooltipContent>
           </Tooltip>
         </div>
       </Section>
@@ -1000,24 +1000,24 @@ export function DesignGuide() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogНазвание>Dialog Название</DialogНазвание>
-              <DialogОписание>
+              <DialogTitle>Dialog Title</DialogTitle>
+              <DialogDescription>
                 This is a sample dialog showing the standard layout with header, content, and footer.
-              </DialogОписание>
+              </DialogDescription>
             </DialogHeader>
-            <div classИмя="space-y-3">
+            <div className="space-y-3">
               <div>
-                <Label>Имя</Label>
-                <Input placeholder="Enter a name" classИмя="mt-1.5" />
+                <Label>Name</Label>
+                <Input placeholder="Enter a name" className="mt-1.5" />
               </div>
               <div>
-                <Label>Описание</Label>
-                <Textarea placeholder="Describe..." classИмя="mt-1.5" />
+                <Label>Description</Label>
+                <Textarea placeholder="Describe..." className="mt-1.5" />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline">Отмена</Button>
-              <Button>Сохранить</Button>
+              <Button variant="outline">Cancel</Button>
+              <Button>Save</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1027,11 +1027,11 @@ export function DesignGuide() {
       {/*  EMPTY STATE                                                  */}
       {/* ============================================================ */}
       <Section title="Empty State">
-        <div classИмя="border border-border rounded-md">
+        <div className="border border-border rounded-md">
           <EmptyState
-            icon={Входящие}
-            message="Нет items to show. Создать your first one to get started."
-            action="Создать Item"
+            icon={Inbox}
+            message="No items to show. Create your first one to get started."
+            action="Create Item"
             onAction={() => {}}
           />
         </div>
@@ -1040,21 +1040,21 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  PROGRESS BARS                                                */}
       {/* ============================================================ */}
-      <Section title="Progress Bars (Бюджет)">
-        <div classИмя="space-y-3">
+      <Section title="Progress Bars (Budget)">
+        <div className="space-y-3">
           {[
             { label: "Under budget (40%)", pct: 40, color: "bg-green-400" },
-            { label: "Предупреждение (75%)", pct: 75, color: "bg-yellow-400" },
+            { label: "Warning (75%)", pct: 75, color: "bg-yellow-400" },
             { label: "Over budget (95%)", pct: 95, color: "bg-red-400" },
           ].map(({ label, pct, color }) => (
-            <div key={label} classИмя="space-y-1">
-              <div classИмя="flex items-center justify-between">
-                <span classИмя="text-xs text-muted-foreground">{label}</span>
-                <span classИмя="text-xs font-mono">{pct}%</span>
+            <div key={label} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{label}</span>
+                <span className="text-xs font-mono">{pct}%</span>
               </div>
-              <div classИмя="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                 <div
-                  classИмя={`h-full rounded-full transition-[width,background-color] duration-150 ${color}`}
+                  className={`h-full rounded-full transition-[width,background-color] duration-150 ${color}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -1067,20 +1067,20 @@ export function DesignGuide() {
       {/*  LOG VIEWER                                                   */}
       {/* ============================================================ */}
       <Section title="Log Viewer">
-        <div classИмя="bg-neutral-950 rounded-lg p-3 font-mono text-xs max-h-80 overflow-y-auto">
-          <div classИмя="text-foreground">[12:00:01] INFO  Агент started successfully</div>
-          <div classИмя="text-foreground">[12:00:02] INFO  Processing task PAP-001</div>
-          <div classИмя="text-yellow-400">[12:00:05] WARN  Rate limit approaching (80%)</div>
-          <div classИмя="text-foreground">[12:00:08] INFO  Задача PAP-001 completed</div>
-          <div classИмя="text-red-400">[12:00:12] ERROR Connection timeout to upstream service</div>
-          <div classИмя="text-blue-300">[12:00:12] SYS   Повторитьing connection in 5s...</div>
-          <div classИмя="text-foreground">[12:00:17] INFO  Reconnected successfully</div>
-          <div classИмя="flex items-center gap-1.5">
-            <span classИмя="relative flex h-1.5 w-1.5">
-              <span classИмя="absolute inline-flex h-full w-full rounded-full bg-cyan-400 animate-pulse" />
-              <span classИмя="inline-flex h-full w-full rounded-full bg-cyan-400" />
+        <div className="bg-neutral-950 rounded-lg p-3 font-mono text-xs max-h-80 overflow-y-auto">
+          <div className="text-foreground">[12:00:01] INFO  Agent started successfully</div>
+          <div className="text-foreground">[12:00:02] INFO  Processing task PAP-001</div>
+          <div className="text-yellow-400">[12:00:05] WARN  Rate limit approaching (80%)</div>
+          <div className="text-foreground">[12:00:08] INFO  Task PAP-001 completed</div>
+          <div className="text-red-400">[12:00:12] ERROR Connection timeout to upstream service</div>
+          <div className="text-blue-300">[12:00:12] SYS   Retrying connection in 5s...</div>
+          <div className="text-foreground">[12:00:17] INFO  Reconnected successfully</div>
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-cyan-400 animate-pulse" />
+              <span className="inline-flex h-full w-full rounded-full bg-cyan-400" />
             </span>
-            <span classИмя="text-cyan-400">Live</span>
+            <span className="text-cyan-400">Live</span>
           </div>
         </div>
       </Section>
@@ -1089,25 +1089,25 @@ export function DesignGuide() {
       {/*  PROPERTY ROW PATTERN                                         */}
       {/* ============================================================ */}
       <Section title="Property Row Pattern">
-        <div classИмя="border border-border rounded-md p-4 space-y-1 max-w-sm">
-          <div classИмя="flex items-center justify-between py-1.5">
-            <span classИмя="text-xs text-muted-foreground">Статус</span>
-            <СтатусBadge status="active" />
+        <div className="border border-border rounded-md p-4 space-y-1 max-w-sm">
+          <div className="flex items-center justify-between py-1.5">
+            <span className="text-xs text-muted-foreground">Status</span>
+            <StatusBadge status="active" />
           </div>
-          <div classИмя="flex items-center justify-between py-1.5">
-            <span classИмя="text-xs text-muted-foreground">Приоритет</span>
-            <ПриоритетIcon priority="high" />
+          <div className="flex items-center justify-between py-1.5">
+            <span className="text-xs text-muted-foreground">Priority</span>
+            <PriorityIcon priority="high" />
           </div>
-          <div classИмя="flex items-center justify-between py-1.5">
-            <span classИмя="text-xs text-muted-foreground">Исполнитель</span>
-            <div classИмя="flex items-center gap-1.5">
+          <div className="flex items-center justify-between py-1.5">
+            <span className="text-xs text-muted-foreground">Assignee</span>
+            <div className="flex items-center gap-1.5">
               <Avatar size="sm"><AvatarFallback>A</AvatarFallback></Avatar>
-              <span classИмя="text-xs">Агент Alpha</span>
+              <span className="text-xs">Agent Alpha</span>
             </div>
           </div>
-          <div classИмя="flex items-center justify-between py-1.5">
-            <span classИмя="text-xs text-muted-foreground">Создано</span>
-            <span classИмя="text-xs">Jan 15, 2025</span>
+          <div className="flex items-center justify-between py-1.5">
+            <span className="text-xs text-muted-foreground">Created</span>
+            <span className="text-xs">Jan 15, 2025</span>
           </div>
         </div>
       </Section>
@@ -1117,64 +1117,64 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title="Navigation Patterns">
         <SubSection title="Sidebar nav items">
-          <div classИмя="w-60 border border-border rounded-md p-3 space-y-0.5 bg-card">
-            <div classИмя="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-accent text-accent-foreground">
-              <LayoutПанель управления classИмя="h-4 w-4" />
-              Панель управления
+          <div className="w-60 border border-border rounded-md p-3 space-y-0.5 bg-card">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-accent text-accent-foreground">
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard
             </div>
-            <div classИмя="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground cursor-pointer">
-              <CircleDot classИмя="h-4 w-4" />
-              Задачи
-              <span classИмя="ml-auto text-xs bg-primary text-primary-foreground rounded-full px-1.5 py-0.5">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground cursor-pointer">
+              <CircleDot className="h-4 w-4" />
+              Issues
+              <span className="ml-auto text-xs bg-primary text-primary-foreground rounded-full px-1.5 py-0.5">
                 12
               </span>
             </div>
-            <div classИмя="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground cursor-pointer">
-              <Бот classИмя="h-4 w-4" />
-              Агенты
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground cursor-pointer">
+              <Bot className="h-4 w-4" />
+              Agents
             </div>
-            <div classИмя="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground cursor-pointer">
-              <Hexagon classИмя="h-4 w-4" />
-              Проекты
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground cursor-pointer">
+              <Hexagon className="h-4 w-4" />
+              Projects
             </div>
           </div>
         </SubSection>
 
         <SubSection title="View toggle">
-          <div classИмя="flex items-center border border-border rounded-md w-fit">
-            <button classИмя="px-3 py-1.5 text-xs font-medium bg-accent text-foreground rounded-l-md">
-              <ListTodo classИмя="h-3.5 w-3.5 inline mr-1" />
+          <div className="flex items-center border border-border rounded-md w-fit">
+            <button className="px-3 py-1.5 text-xs font-medium bg-accent text-foreground rounded-l-md">
+              <ListTodo className="h-3.5 w-3.5 inline mr-1" />
               List
             </button>
-            <button classИмя="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent/50 rounded-r-md">
-              <Цель classИмя="h-3.5 w-3.5 inline mr-1" />
-              Оргструктура
+            <button className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent/50 rounded-r-md">
+              <Target className="h-3.5 w-3.5 inline mr-1" />
+              Org
             </button>
           </div>
         </SubSection>
       </Section>
 
       {/* ============================================================ */}
-      {/*  GROUPED LIST (Задачи pattern)                                */}
+      {/*  GROUPED LIST (Issues pattern)                                */}
       {/* ============================================================ */}
-      <Section title="Grouped List (Задачи pattern)">
+      <Section title="Grouped List (Issues pattern)">
         <div>
-          <div classИмя="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-t-md">
-            <СтатусIcon status="in_progress" />
-            <span classИмя="text-sm font-medium">In Progress</span>
-            <span classИмя="text-xs text-muted-foreground ml-1">2</span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-t-md">
+            <StatusIcon status="in_progress" />
+            <span className="text-sm font-medium">In Progress</span>
+            <span className="text-xs text-muted-foreground ml-1">2</span>
           </div>
-          <div classИмя="border border-border rounded-b-md">
+          <div className="border border-border rounded-b-md">
             <EntityRow
-              leading={<ПриоритетIcon priority="high" />}
+              leading={<PriorityIcon priority="high" />}
               identifier="PAP-101"
               title="Build agent heartbeat system"
               onClick={() => {}}
             />
             <EntityRow
-              leading={<ПриоритетIcon priority="medium" />}
+              leading={<PriorityIcon priority="medium" />}
               identifier="PAP-102"
-              title="Добавить cost tracking dashboard"
+              title="Add cost tracking dashboard"
               onClick={() => {}}
             />
           </div>
@@ -1185,25 +1185,25 @@ export function DesignGuide() {
       {/*  COMMENT THREAD PATTERN                                       */}
       {/* ============================================================ */}
       <Section title="Comment Thread Pattern">
-        <div classИмя="space-y-3 max-w-2xl">
-          <h3 classИмя="text-sm font-semibold">Комментарии (2)</h3>
-          <div classИмя="space-y-3">
-            <div classИмя="rounded-md border border-border p-3">
-              <div classИмя="flex items-center justify-between mb-1">
-                <span classИмя="text-xs font-medium text-muted-foreground">Агент</span>
-                <span classИмя="text-xs text-muted-foreground">Jan 15, 2025</span>
+        <div className="space-y-3 max-w-2xl">
+          <h3 className="text-sm font-semibold">Comments (2)</h3>
+          <div className="space-y-3">
+            <div className="rounded-md border border-border p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground">Agent</span>
+                <span className="text-xs text-muted-foreground">Jan 15, 2025</span>
               </div>
-              <p classИмя="text-sm">Запущен working on the authentication module. Will need API keys configured.</p>
+              <p className="text-sm">Started working on the authentication module. Will need API keys configured.</p>
             </div>
-            <div classИмя="rounded-md border border-border p-3">
-              <div classИмя="flex items-center justify-between mb-1">
-                <span classИмя="text-xs font-medium text-muted-foreground">Человек</span>
-                <span classИмя="text-xs text-muted-foreground">Jan 16, 2025</span>
+            <div className="rounded-md border border-border p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground">Human</span>
+                <span className="text-xs text-muted-foreground">Jan 16, 2025</span>
               </div>
-              <p classИмя="text-sm">API keys have been added to the vault. Please proceed.</p>
+              <p className="text-sm">API keys have been added to the vault. Please proceed.</p>
             </div>
           </div>
-          <div classИмя="space-y-2">
+          <div className="space-y-2">
             <Textarea placeholder="Leave a comment..." rows={3} />
             <Button size="sm">Comment</Button>
           </div>
@@ -1214,30 +1214,30 @@ export function DesignGuide() {
       {/*  COST TABLE PATTERN                                           */}
       {/* ============================================================ */}
       <Section title="Cost Table Pattern">
-        <div classИмя="border border-border rounded-lg overflow-hidden">
-          <table classИмя="w-full text-xs">
-            <thead classИмя="border-b border-border bg-accent/20">
+        <div className="border border-border rounded-lg overflow-hidden">
+          <table className="w-full text-xs">
+            <thead className="border-b border-border bg-accent/20">
               <tr>
-                <th classИмя="text-left px-3 py-2 font-medium text-muted-foreground">Модель</th>
-                <th classИмя="text-left px-3 py-2 font-medium text-muted-foreground">Токенs</th>
-                <th classИмя="text-left px-3 py-2 font-medium text-muted-foreground">Cost</th>
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Model</th>
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Tokens</th>
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Cost</th>
               </tr>
             </thead>
             <tbody>
-              <tr classИмя="border-b border-border">
-                <td classИмя="px-3 py-2">claude-sonnet-4-20250514</td>
-                <td classИмя="px-3 py-2 font-mono">1.2M</td>
-                <td classИмя="px-3 py-2 font-mono">$18.00</td>
+              <tr className="border-b border-border">
+                <td className="px-3 py-2">claude-sonnet-4-20250514</td>
+                <td className="px-3 py-2 font-mono">1.2M</td>
+                <td className="px-3 py-2 font-mono">$18.00</td>
               </tr>
-              <tr classИмя="border-b border-border">
-                <td classИмя="px-3 py-2">claude-haiku-4-20250506</td>
-                <td classИмя="px-3 py-2 font-mono">500k</td>
-                <td classИмя="px-3 py-2 font-mono">$1.25</td>
+              <tr className="border-b border-border">
+                <td className="px-3 py-2">claude-haiku-4-20250506</td>
+                <td className="px-3 py-2 font-mono">500k</td>
+                <td className="px-3 py-2 font-mono">$1.25</td>
               </tr>
               <tr>
-                <td classИмя="px-3 py-2 font-medium">Total</td>
-                <td classИмя="px-3 py-2 font-mono">1.7M</td>
-                <td classИмя="px-3 py-2 font-mono font-medium">$19.25</td>
+                <td className="px-3 py-2 font-medium">Total</td>
+                <td className="px-3 py-2 font-mono">1.7M</td>
+                <td className="px-3 py-2 font-mono font-medium">$19.25</td>
               </tr>
             </tbody>
           </table>
@@ -1249,21 +1249,21 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title="Skeletons">
         <SubSection title="Individual">
-          <div classИмя="space-y-2">
-            <Skeleton classИмя="h-4 w-48" />
-            <Skeleton classИмя="h-8 w-full max-w-sm" />
-            <Skeleton classИмя="h-20 w-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-8 w-full max-w-sm" />
+            <Skeleton className="h-20 w-full" />
           </div>
         </SubSection>
 
         <SubSection title="Page Skeleton (list)">
-          <div classИмя="border border-border rounded-md p-4">
+          <div className="border border-border rounded-md p-4">
             <PageSkeleton variant="list" />
           </div>
         </SubSection>
 
         <SubSection title="Page Skeleton (detail)">
-          <div classИмя="border border-border rounded-md p-4">
+          <div className="border border-border rounded-md p-4">
             <PageSkeleton variant="detail" />
           </div>
         </SubSection>
@@ -1273,13 +1273,13 @@ export function DesignGuide() {
       {/*  SEPARATOR                                                    */}
       {/* ============================================================ */}
       <Section title="Separator">
-        <div classИмя="space-y-4">
-          <p classИмя="text-sm text-muted-foreground">Horizontal</p>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Horizontal</p>
           <Separator />
-          <div classИмя="flex items-center gap-4 h-8">
-            <span classИмя="text-sm">Left</span>
+          <div className="flex items-center gap-4 h-8">
+            <span className="text-sm">Left</span>
             <Separator orientation="vertical" />
-            <span classИмя="text-sm">Right</span>
+            <span className="text-sm">Right</span>
           </div>
         </div>
       </Section>
@@ -1288,31 +1288,31 @@ export function DesignGuide() {
       {/*  ICON REFERENCE                                               */}
       {/* ============================================================ */}
       <Section title="Common Icons (Lucide)">
-        <div classИмя="grid grid-cols-4 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-4 md:grid-cols-6 gap-4">
           {[
-            ["Входящие", Входящие],
+            ["Входящие", Inbox],
             ["ListTodo", ListTodo],
             ["CircleDot", CircleDot],
             ["Hexagon", Hexagon],
-            ["Цель", Цель],
-            ["LayoutПанель управления", LayoutПанель управления],
-            ["Бот", Бот],
+            ["Target", Target],
+            ["LayoutDashboard", LayoutDashboard],
+            ["Bot", Bot],
             ["DollarSign", DollarSign],
-            ["История", История],
-            ["Поиск", Поиск],
+            ["History", History],
+            ["Поиск", Search],
             ["Plus", Plus],
             ["Trash2", Trash2],
-            ["Настройки", Настройки],
+            ["Настройки", Settings],
             ["User", User],
             ["Mail", Mail],
-            ["Загрузить", Загрузить],
+            ["Загрузить", Upload],
             ["Zap", Zap],
           ].map(([name, Icon]) => {
-            const LucideIcon = Icon as React.FC<{ classИмя?: string }>;
+            const LucideIcon = Icon as React.FC<{ className?: string }>;
             return (
-              <div key={name as string} classИмя="flex flex-col items-center gap-1.5 p-2">
-                <LucideIcon classИмя="h-4 w-4 text-muted-foreground" />
-                <span classИмя="text-[10px] text-muted-foreground font-mono">{name as string}</span>
+              <div key={name as string} className="flex flex-col items-center gap-1.5 p-2">
+                <LucideIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground font-mono">{name as string}</span>
               </div>
             );
           })}
@@ -1322,19 +1322,19 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  KEYBOARD SHORTCUTS                                           */}
       {/* ============================================================ */}
-      <Section title="Ключboard Shortcuts">
-        <div classИмя="border border-border rounded-md divide-y divide-border text-sm">
+      <Section title="Keyboard Shortcuts">
+        <div className="border border-border rounded-md divide-y divide-border text-sm">
           {[
-            ["Cmd+K / Ctrl+K", "Open Команда Palette"],
-            ["C", "Новая задача (outside inputs)"],
+            ["Cmd+K / Ctrl+K", "Open Command Palette"],
+            ["C", "New Issue (outside inputs)"],
             ["[", "Toggle Sidebar"],
             ["]", "Toggle Properties Panel"],
 
-            ["Cmd+Enter / Ctrl+Enter", "Отправить markdown comment"],
+            ["Cmd+Enter / Ctrl+Enter", "Submit markdown comment"],
           ].map(([key, desc]) => (
-            <div key={key} classИмя="flex items-center justify-between px-4 py-2">
-              <span classИмя="text-muted-foreground">{desc}</span>
-              <kbd classИмя="px-2 py-0.5 text-xs font-mono bg-muted rounded border border-border">
+            <div key={key} className="flex items-center justify-between px-4 py-2">
+              <span className="text-muted-foreground">{desc}</span>
+              <kbd className="px-2 py-0.5 text-xs font-mono bg-muted rounded border border-border">
                 {key}
               </kbd>
             </div>

@@ -1,10 +1,10 @@
-import type { Рабочая областьЗапуститьtimeControlЦель } from "@paperclipai/shared";
+import type { WorkspaceRuntimeControlTarget } from "@paperclipai/shared";
 
-export function sanitizeРабочая областьЗапуститьtimeControlЦель(
-  target: Рабочая областьЗапуститьtimeControlЦель = {},
-): Рабочая областьЗапуститьtimeControlЦель {
+export function sanitizeWorkspaceRuntimeControlTarget(
+  target: WorkspaceRuntimeControlTarget = {},
+): WorkspaceRuntimeControlTarget {
   return {
-    workspaceКомандаId: target.workspaceКомандаId ?? null,
+    workspaceCommandId: target.workspaceCommandId ?? null,
     runtimeServiceId: target.runtimeServiceId ?? null,
     serviceIndex: target.serviceIndex ?? null,
   };

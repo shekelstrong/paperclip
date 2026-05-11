@@ -1,15 +1,15 @@
-import type { Задача } from "@paperclipai/shared";
-import type { АктивенЗапуститьForЗадача } from "../api/heartbeats";
+import type { Issue } from "@paperclipai/shared";
+import type { ActiveRunForIssue } from "../api/heartbeats";
 
-export function shouldTrackЗадачаАктивенЗапустить(
-  issue: Pick<Задача, "status" | "executionЗапуститьId"> | null | undefined,
+export function shouldTrackIssueActiveRun(
+  issue: Pick<Issue, "status" | "executionRunId"> | null | undefined,
 ): boolean {
-  return Boolean(issue && (issue.status === "in_progress" || issue.executionЗапуститьId));
+  return Boolean(issue && (issue.status === "in_progress" || issue.executionRunId));
 }
 
-export function resolveЗадачаАктивенЗапустить(
-  issue: Pick<Задача, "status" | "executionЗапуститьId"> | null | undefined,
-  activeЗапустить: АктивенЗапуститьForЗадача | null | undefined,
-): АктивенЗапуститьForЗадача | null {
-  return shouldTrackЗадачаАктивенЗапустить(issue) ? (activeЗапустить ?? null) : null;
+export function resolveIssueActiveRun(
+  issue: Pick<Issue, "status" | "executionRunId"> | null | undefined,
+  activeRun: ActiveRunForIssue | null | undefined,
+): ActiveRunForIssue | null {
+  return shouldTrackIssueActiveRun(issue) ? (activeRun ?? null) : null;
 }

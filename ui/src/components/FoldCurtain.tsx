@@ -3,22 +3,22 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type ReactНетde,
+  type ReactNode,
 } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface FoldCurtainProps {
-  children: ReactНетde;
-  /** Max height (px) when collapsed. По умолчаниюs to 420 (desktop) / 320 (< 640px viewport). */
+  children: ReactNode;
+  /** Max height (px) when collapsed. Defaults to 420 (desktop) / 320 (< 640px viewport). */
   collapsedHeight?: number;
   /** Only curtain when natural height ≥ collapsedHeight + this buffer. */
   activationBuffer?: number;
   moreLabel?: string;
   lessLabel?: string;
-  classИмя?: string;
-  contentClassИмя?: string;
+  className?: string;
+  contentClassName?: string;
 }
 
 const MOBILE_BREAKPOINT = 640;
@@ -60,17 +60,17 @@ export function FoldCurtain({
   children,
   collapsedHeight: explicitCollapsedHeight,
   activationBuffer = 120,
-  moreLabel = "Показать больше",
-  lessLabel = "Показать меньше",
-  classИмя,
-  contentClassИмя,
+  moreLabel = "Show more",
+  lessLabel = "Show less",
+  className,
+  contentClassName,
 }: FoldCurtainProps) {
   const collapsedHeight = useResponsiveCollapsedHeight(explicitCollapsedHeight);
   const contentRef = useRef<HTMLDivElement>(null);
   const [naturalHeight, setNaturalHeight] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [hasMeasured, setHasMeasured] = useState(false);
-  const [allowTransition, setВсеowTransition] = useState(false);
+  const [allowTransition, setAllowTransition] = useState(false);
 
   useLayoutEffect(() => {
     const el = contentRef.current;
@@ -97,13 +97,13 @@ export function FoldCurtain({
     : undefined;
 
   return (
-    <div classИмя={cn("fold-curtain", classИмя)} data-expanded={expanded ? "true" : "false"}>
+    <div className={cn("fold-curtain", className)} data-expanded={expanded ? "true" : "false"}>
       <div
         ref={contentRef}
-        classИмя={cn(
+        className={cn(
           "fold-curtain__content relative overflow-hidden",
           allowTransition && "motion-safe:transition-[max-height] motion-reduce:transition-none",
-          contentClassИмя,
+          contentClassName,
         )}
         style={{
           maxHeight: isClipped
@@ -119,23 +119,23 @@ export function FoldCurtain({
         {children}
       </div>
       {shouldCurtain ? (
-        <div classИмя="fold-curtain__toggle mt-2 flex justify-center print:hidden">
+        <div className="fold-curtain__toggle mt-2 flex justify-center print:hidden">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             aria-expanded={expanded}
             onClick={() => {
-              setВсеowTransition(true);
+              setAllowTransition(true);
               setExpanded((v) => !v);
             }}
-            classИмя="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
           >
             {expanded ? lessLabel : moreLabel}
             {expanded ? (
-              <ChevronUp classИмя="h-3.5 w-3.5" />
+              <ChevronUp className="h-3.5 w-3.5" />
             ) : (
-              <ChevronDown classИмя="h-3.5 w-3.5" />
+              <ChevronDown className="h-3.5 w-3.5" />
             )}
           </Button>
         </div>

@@ -1,30 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-interface КопироватьTextProps {
+interface CopyTextProps {
   text: string;
-  /** What to display. По умолчаниюs to `text`. */
-  children?: React.ReactНетde;
-  containerClassИмя?: string;
-  classИмя?: string;
+  /** What to display. Defaults to `text`. */
+  children?: React.ReactNode;
+  containerClassName?: string;
+  className?: string;
   ariaLabel?: string;
   title?: string;
-  /** Tooltip message shown after copying. По умолчанию: "Copied!" */
+  /** Tooltip message shown after copying. Default: "Copied!" */
   copiedLabel?: string;
 }
 
-export function КопироватьText({
+export function CopyText({
   text,
   children,
-  containerClassИмя,
-  classИмя,
+  containerClassName,
+  className,
   ariaLabel,
   title,
   copiedLabel = "Copied!",
-}: КопироватьTextProps) {
+}: CopyTextProps) {
   const [visible, setVisible] = useState(false);
   const [label, setLabel] = useState(copiedLabel);
-  const timerRef = useRef<ReturnТип<typeof setTimeout>>(undefined);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
@@ -42,15 +42,15 @@ export function КопироватьText({
         document.body.appendChild(textarea);
         try {
           textarea.select();
-          const success = document.execКоманда("copy");
-          if (!success) throw new Ошибка("execКоманда copy failed");
+          const success = document.execCommand("copy");
+          if (!success) throw new Error("execCommand copy failed");
         } finally {
           document.body.removeChild(textarea);
         }
       }
       setLabel(copiedLabel);
     } catch {
-      setLabel("Копировать failed");
+      setLabel("Copy failed");
     }
     clearTimeout(timerRef.current);
     setVisible(true);
@@ -58,15 +58,15 @@ export function КопироватьText({
   }, [copiedLabel, text]);
 
   return (
-    <span classИмя={cn("relative inline-flex", containerClassИмя)}>
+    <span className={cn("relative inline-flex", containerClassName)}>
       <button
         ref={triggerRef}
         type="button"
         aria-label={ariaLabel}
         title={title}
-        classИмя={cn(
+        className={cn(
           "cursor-copy hover:text-foreground transition-colors",
-          classИмя,
+          className,
         )}
         onClick={handleClick}
       >
@@ -75,7 +75,7 @@ export function КопироватьText({
       <span
         role="status"
         aria-live="polite"
-        classИмя={cn(
+        className={cn(
           "pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 rounded-md bg-foreground text-background px-2 py-1 text-xs whitespace-nowrap transition-opacity duration-300",
           visible ? "opacity-100" : "opacity-0",
         )}

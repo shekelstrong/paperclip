@@ -1,5 +1,5 @@
 import type { QuotaWindow } from "@paperclipai/shared";
-import { cn, quotaSourceDisplayИмя } from "@/lib/utils";
+import { cn, quotaSourceDisplayName } from "@/lib/utils";
 
 interface ClaudeSubscriptionPanelProps {
   windows: QuotaWindow[];
@@ -18,7 +18,7 @@ const WINDOW_ORDER = [
 ] as const;
 
 function normalizeLabel(text: string): string {
-  return text.toНизкийerCase().replace(/[^a-z0-9]+/g, "");
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
 function detailText(window: QuotaWindow): string | null {
@@ -29,9 +29,9 @@ function detailText(window: QuotaWindow): string | null {
       day: "numeric",
       hour: "numeric",
       minute: "2-digit",
-      timeZoneИмя: "short",
+      timeZoneName: "short",
     });
-    return `Сброситьs ${formatted}`;
+    return `Resets ${formatted}`;
   }
   return null;
 }
@@ -59,30 +59,30 @@ export function ClaudeSubscriptionPanel({
   const ordered = orderedWindows(windows);
 
   return (
-    <div classИмя="border border-border px-4 py-4">
-      <div classИмя="flex items-start justify-between gap-3 border-b border-border pb-3">
-        <div classИмя="min-w-0">
-          <div classИмя="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+    <div className="border border-border px-4 py-4">
+      <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
+        <div className="min-w-0">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Anthropic subscription
           </div>
-          <div classИмя="mt-1 text-sm text-muted-foreground">
+          <div className="mt-1 text-sm text-muted-foreground">
             Live Claude quota windows.
           </div>
         </div>
         {source ? (
-          <span classИмя="shrink-0 border border-border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            {quotaSourceDisplayИмя(source)}
+          <span className="shrink-0 border border-border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            {quotaSourceDisplayName(source)}
           </span>
         ) : null}
       </div>
 
       {error ? (
-        <div classИмя="mt-4 border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div className="mt-4 border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </div>
       ) : null}
 
-      <div classИмя="mt-4 space-y-4">
+      <div className="mt-4 space-y-4">
         {ordered.map((window) => {
           const normalized = normalizeLabel(window.label);
           const detail = detailText(window);
@@ -90,16 +90,16 @@ export function ClaudeSubscriptionPanel({
             return (
               <div
                 key={window.label}
-                classИмя="border border-border px-3.5 py-3"
+                className="border border-border px-3.5 py-3"
               >
-                <div classИмя="flex items-center justify-between gap-3">
-                  <div classИмя="text-sm font-medium text-foreground">{window.label}</div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-medium text-foreground">{window.label}</div>
                   {window.valueLabel ? (
-                    <div classИмя="text-sm font-medium text-foreground">{window.valueLabel}</div>
+                    <div className="text-sm font-medium text-foreground">{window.valueLabel}</div>
                   ) : null}
                 </div>
                 {detail ? (
-                  <div classИмя="mt-2 text-sm text-muted-foreground">{detail}</div>
+                  <div className="mt-2 text-sm text-muted-foreground">{detail}</div>
                 ) : null}
               </div>
             );
@@ -109,25 +109,25 @@ export function ClaudeSubscriptionPanel({
           return (
             <div
               key={window.label}
-              classИмя="border border-border px-3.5 py-3"
+              className="border border-border px-3.5 py-3"
             >
-              <div classИмя="flex items-start justify-between gap-3">
-                <div classИмя="min-w-0">
-                  <div classИмя="text-sm font-medium text-foreground">{window.label}</div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-foreground">{window.label}</div>
                   {detail ? (
-                    <div classИмя="mt-1 text-xs text-muted-foreground">{detail}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{detail}</div>
                   ) : null}
                 </div>
                 {window.usedPercent != null ? (
-                  <div classИмя="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                  <div className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
                     {window.usedPercent}% used
                   </div>
                 ) : null}
               </div>
 
-              <div classИмя="mt-3 h-2 overflow-hidden bg-muted">
+              <div className="mt-3 h-2 overflow-hidden bg-muted">
                 <div
-                  classИмя={cn("h-full transition-[width] duration-200", fillClass(window.usedPercent))}
+                  className={cn("h-full transition-[width] duration-200", fillClass(window.usedPercent))}
                   style={{ width: `${width}%` }}
                 />
               </div>

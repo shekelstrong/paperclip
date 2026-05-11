@@ -1,41 +1,41 @@
 import type {
-  Агент,
-  АгентDetail,
-  АгентInstructionsBundle,
-  АгентInstructionsFileDetail,
-  АгентНавыкSnapshot,
-  АдаптерОкружениеПроверитьResult,
-  АгентКлючСоздано,
-  АгентЗапуститьtimeState,
-  АгентЗадачаSession,
-  АгентWakeupResponse,
-  HeartbeatЗапустить,
-  Согласование,
-  АгентConfigRevision,
+  Agent,
+  AgentDetail,
+  AgentInstructionsBundle,
+  AgentInstructionsFileDetail,
+  AgentSkillSnapshot,
+  AdapterEnvironmentTestResult,
+  AgentKeyCreated,
+  AgentRuntimeState,
+  AgentTaskSession,
+  AgentWakeupResponse,
+  HeartbeatRun,
+  Approval,
+  AgentConfigRevision,
 } from "@paperclipai/shared";
 import type {
-  АдаптерМодельПрофильDefinition,
-  АдаптерМодельПрофильКлюч,
+  AdapterModelProfileDefinition,
+  AdapterModelProfileKey,
 } from "@paperclipai/adapter-utils";
-import { isUuidLike, normalizeАгентUrlКлюч } from "@paperclipai/shared";
-import { ApiОшибка, api } from "./client";
+import { isUuidLike, normalizeAgentUrlKey } from "@paperclipai/shared";
+import { ApiError, api } from "./client";
 
-export interface АгентКлюч {
+export interface AgentKey {
   id: string;
   name: string;
   createdAt: Date;
   revokedAt: Date | null;
 }
 
-export interface АдаптерМодель {
+export interface AdapterModel {
   id: string;
   label: string;
 }
 
-export type { АдаптерМодельПрофильКлюч };
-export type АдаптерМодельПрофиль = АдаптерМодельПрофильDefinition;
+export type { AdapterModelProfileKey };
+export type AdapterModelProfile = AdapterModelProfileDefinition;
 
-export interface DetectedАдаптерМодель {
+export interface DetectedAdapterModel {
   model: string;
   provider: string;
   source: string;
@@ -51,56 +51,56 @@ export interface ClaudeLoginResult {
   stderr: string;
 }
 
-export interface ОргструктураНетde {
+export interface OrgNode {
   id: string;
   name: string;
   role: string;
   status: string;
-  reports: ОргструктураНетde[];
+  reports: OrgNode[];
 }
 
-export interface АгентHireResponse {
-  agent: Агент;
-  approval: Согласование | null;
+export interface AgentHireResponse {
+  agent: Agent;
+  approval: Approval | null;
 }
 
-export interface АгентPermissionОбновить {
-  canСоздатьАгенты: boolean;
-  canAssignЗадачи: boolean;
+export interface AgentPermissionUpdate {
+  canCreateAgents: boolean;
+  canAssignTasks: boolean;
 }
 
-export interface АгентWakeRequest {
+export interface AgentWakeRequest {
   source?: "timer" | "assignment" | "on_demand" | "automation";
   triggerDetail?: "manual" | "ping" | "callback" | "system";
   reason?: string | null;
   payload?: Record<string, unknown> | null;
-  idempotencyКлюч?: string | null;
+  idempotencyKey?: string | null;
   forceFreshSession?: boolean;
 }
 
-function withКомпанияОбласть(path: string, companyId?: string) {
+function withCompanyScope(path: string, companyId?: string) {
   if (!companyId) return path;
   const separator = path.includes("?") ? "&" : "?";
   return `${path}${separator}companyId=${encodeURIComponent(companyId)}`;
 }
 
-function agentПуть(id: string, companyId?: string, suffix = "") {
-  return withКомпанияОбласть(`/agents/${encodeURIComponent(id)}${suffix}`, companyId);
+function agentPath(id: string, companyId?: string, suffix = "") {
+  return withCompanyScope(`/agents/${encodeURIComponent(id)}${suffix}`, companyId);
 }
 
 export const agentsApi = {
-  list: (companyId: string) => api.get<Агент[]>(`/companies/${companyId}/agents`),
-  org: (companyId: string) => api.get<ОргструктураНетde[]>(`/companies/${companyId}/org`),
-  listКонфигурацияs: (companyId: string) =>
+  list: (companyId: string) => api.get<Agent[]>(`/companies/${companyId}/agents`),
+  org: (companyId: string) => api.get<OrgNode[]>(`/companies/${companyId}/org`),
+  listConfigurations: (companyId: string) =>
     api.get<Record<string, unknown>[]>(`/companies/${companyId}/agent-configurations`),
   get: async (id: string, companyId?: string) => {
     try {
-      return await api.get<АгентDetail>(agentПуть(id, companyId));
+      return await api.get<AgentDetail>(agentPath(id, companyId));
     } catch (error) {
-      // Назадward-compat fallback: if backend shortname lookup reports ambiguity,
+      // Backward-compat fallback: if backend shortname lookup reports ambiguity,
       // resolve using company agent list while ignoring terminated agents.
       if (
-        !(error instanceof ApiОшибка) ||
+        !(error instanceof ApiError) ||
         error.status !== 409 ||
         !companyId ||
         isUuidLike(id)
@@ -108,100 +108,100 @@ export const agentsApi = {
         throw error;
       }
 
-      const urlКлюч = normalizeАгентUrlКлюч(id);
-      if (!urlКлюч) throw error;
+      const urlKey = normalizeAgentUrlKey(id);
+      if (!urlKey) throw error;
 
-      const agents = await api.get<Агент[]>(`/companies/${companyId}/agents`);
+      const agents = await api.get<Agent[]>(`/companies/${companyId}/agents`);
       const matches = agents.filter(
-        (agent) => agent.status !== "terminated" && normalizeАгентUrlКлюч(agent.urlКлюч) === urlКлюч,
+        (agent) => agent.status !== "terminated" && normalizeAgentUrlKey(agent.urlKey) === urlKey,
       );
       if (matches.length !== 1) throw error;
-      return api.get<АгентDetail>(agentПуть(matches[0]!.id, companyId));
+      return api.get<AgentDetail>(agentPath(matches[0]!.id, companyId));
     }
   },
-  getКонфигурация: (id: string, companyId?: string) =>
-    api.get<Record<string, unknown>>(agentПуть(id, companyId, "/configuration")),
+  getConfiguration: (id: string, companyId?: string) =>
+    api.get<Record<string, unknown>>(agentPath(id, companyId, "/configuration")),
   listConfigRevisions: (id: string, companyId?: string) =>
-    api.get<АгентConfigRevision[]>(agentПуть(id, companyId, "/config-revisions")),
+    api.get<AgentConfigRevision[]>(agentPath(id, companyId, "/config-revisions")),
   getConfigRevision: (id: string, revisionId: string, companyId?: string) =>
-    api.get<АгентConfigRevision>(agentПуть(id, companyId, `/config-revisions/${revisionId}`)),
+    api.get<AgentConfigRevision>(agentPath(id, companyId, `/config-revisions/${revisionId}`)),
   rollbackConfigRevision: (id: string, revisionId: string, companyId?: string) =>
-    api.post<Агент>(agentПуть(id, companyId, `/config-revisions/${revisionId}/rollback`), {}),
+    api.post<Agent>(agentPath(id, companyId, `/config-revisions/${revisionId}/rollback`), {}),
   create: (companyId: string, data: Record<string, unknown>) =>
-    api.post<Агент>(`/companies/${companyId}/agents`, data),
+    api.post<Agent>(`/companies/${companyId}/agents`, data),
   hire: (companyId: string, data: Record<string, unknown>) =>
-    api.post<АгентHireResponse>(`/companies/${companyId}/agent-hires`, data),
+    api.post<AgentHireResponse>(`/companies/${companyId}/agent-hires`, data),
   update: (id: string, data: Record<string, unknown>, companyId?: string) =>
-    api.patch<Агент>(agentПуть(id, companyId), data),
-  updatePermissions: (id: string, data: АгентPermissionОбновить, companyId?: string) =>
-    api.patch<АгентDetail>(agentПуть(id, companyId, "/permissions"), data),
+    api.patch<Agent>(agentPath(id, companyId), data),
+  updatePermissions: (id: string, data: AgentPermissionUpdate, companyId?: string) =>
+    api.patch<AgentDetail>(agentPath(id, companyId, "/permissions"), data),
   instructionsBundle: (id: string, companyId?: string) =>
-    api.get<АгентInstructionsBundle>(agentПуть(id, companyId, "/instructions-bundle")),
+    api.get<AgentInstructionsBundle>(agentPath(id, companyId, "/instructions-bundle")),
   updateInstructionsBundle: (
     id: string,
     data: {
       mode?: "managed" | "external";
-      rootПуть?: string | null;
+      rootPath?: string | null;
       entryFile?: string;
       clearLegacyPromptTemplate?: boolean;
     },
     companyId?: string,
-  ) => api.patch<АгентInstructionsBundle>(agentПуть(id, companyId, "/instructions-bundle"), data),
-  instructionsFile: (id: string, relativeПуть: string, companyId?: string) =>
-    api.get<АгентInstructionsFileDetail>(
-      agentПуть(id, companyId, `/instructions-bundle/file?path=${encodeURIComponent(relativeПуть)}`),
+  ) => api.patch<AgentInstructionsBundle>(agentPath(id, companyId, "/instructions-bundle"), data),
+  instructionsFile: (id: string, relativePath: string, companyId?: string) =>
+    api.get<AgentInstructionsFileDetail>(
+      agentPath(id, companyId, `/instructions-bundle/file?path=${encodeURIComponent(relativePath)}`),
     ),
   saveInstructionsFile: (
     id: string,
     data: { path: string; content: string; clearLegacyPromptTemplate?: boolean },
     companyId?: string,
-  ) => api.put<АгентInstructionsFileDetail>(agentПуть(id, companyId, "/instructions-bundle/file"), data),
-  deleteInstructionsFile: (id: string, relativeПуть: string, companyId?: string) =>
-    api.delete<АгентInstructionsBundle>(
-      agentПуть(id, companyId, `/instructions-bundle/file?path=${encodeURIComponent(relativeПуть)}`),
+  ) => api.put<AgentInstructionsFileDetail>(agentPath(id, companyId, "/instructions-bundle/file"), data),
+  deleteInstructionsFile: (id: string, relativePath: string, companyId?: string) =>
+    api.delete<AgentInstructionsBundle>(
+      agentPath(id, companyId, `/instructions-bundle/file?path=${encodeURIComponent(relativePath)}`),
     ),
-  pause: (id: string, companyId?: string) => api.post<Агент>(agentПуть(id, companyId, "/pause"), {}),
-  resume: (id: string, companyId?: string) => api.post<Агент>(agentПуть(id, companyId, "/resume"), {}),
-  approve: (id: string, companyId?: string) => api.post<Агент>(agentПуть(id, companyId, "/approve"), {}),
-  terminate: (id: string, companyId?: string) => api.post<Агент>(agentПуть(id, companyId, "/terminate"), {}),
-  remove: (id: string, companyId?: string) => api.delete<{ ok: true }>(agentПуть(id, companyId)),
-  listКлючs: (id: string, companyId?: string) => api.get<АгентКлюч[]>(agentПуть(id, companyId, "/keys")),
+  pause: (id: string, companyId?: string) => api.post<Agent>(agentPath(id, companyId, "/pause"), {}),
+  resume: (id: string, companyId?: string) => api.post<Agent>(agentPath(id, companyId, "/resume"), {}),
+  approve: (id: string, companyId?: string) => api.post<Agent>(agentPath(id, companyId, "/approve"), {}),
+  terminate: (id: string, companyId?: string) => api.post<Agent>(agentPath(id, companyId, "/terminate"), {}),
+  remove: (id: string, companyId?: string) => api.delete<{ ok: true }>(agentPath(id, companyId)),
+  listKeys: (id: string, companyId?: string) => api.get<AgentKey[]>(agentPath(id, companyId, "/keys")),
   skills: (id: string, companyId?: string) =>
-    api.get<АгентНавыкSnapshot>(agentПуть(id, companyId, "/skills")),
-  syncНавыки: (id: string, desiredНавыки: string[], companyId?: string) =>
-    api.post<АгентНавыкSnapshot>(agentПуть(id, companyId, "/skills/sync"), { desiredНавыки }),
-  createКлюч: (id: string, name: string, companyId?: string) =>
-    api.post<АгентКлючСоздано>(agentПуть(id, companyId, "/keys"), { name }),
-  revokeКлюч: (agentId: string, keyId: string, companyId?: string) =>
-    api.delete<{ ok: true }>(agentПуть(agentId, companyId, `/keys/${encodeURIComponent(keyId)}`)),
+    api.get<AgentSkillSnapshot>(agentPath(id, companyId, "/skills")),
+  syncSkills: (id: string, desiredSkills: string[], companyId?: string) =>
+    api.post<AgentSkillSnapshot>(agentPath(id, companyId, "/skills/sync"), { desiredSkills }),
+  createKey: (id: string, name: string, companyId?: string) =>
+    api.post<AgentKeyCreated>(agentPath(id, companyId, "/keys"), { name }),
+  revokeKey: (agentId: string, keyId: string, companyId?: string) =>
+    api.delete<{ ok: true }>(agentPath(agentId, companyId, `/keys/${encodeURIComponent(keyId)}`)),
   runtimeState: (id: string, companyId?: string) =>
-    api.get<АгентЗапуститьtimeState>(agentПуть(id, companyId, "/runtime-state")),
+    api.get<AgentRuntimeState>(agentPath(id, companyId, "/runtime-state")),
   taskSessions: (id: string, companyId?: string) =>
-    api.get<АгентЗадачаSession[]>(agentПуть(id, companyId, "/task-sessions")),
-  resetSession: (id: string, taskКлюч?: string | null, companyId?: string) =>
-    api.post<void>(agentПуть(id, companyId, "/runtime-state/reset-session"), { taskКлюч: taskКлюч ?? null }),
-  adapterМодельs: (
+    api.get<AgentTaskSession[]>(agentPath(id, companyId, "/task-sessions")),
+  resetSession: (id: string, taskKey?: string | null, companyId?: string) =>
+    api.post<void>(agentPath(id, companyId, "/runtime-state/reset-session"), { taskKey: taskKey ?? null }),
+  adapterModels: (
     companyId: string,
     type: string,
     options?: { refresh?: boolean; environmentId?: string | null },
   ) => {
-    const params = new URLПоискParams();
+    const params = new URLSearchParams();
     if (options?.refresh) params.set("refresh", "1");
     if (options?.environmentId) params.set("environmentId", options.environmentId);
     const query = params.size > 0 ? `?${params.toString()}` : "";
-    return api.get<АдаптерМодель[]>(
+    return api.get<AdapterModel[]>(
       `/companies/${encodeURIComponent(companyId)}/adapters/${encodeURIComponent(type)}/models${query}`,
     );
   },
-  detectМодель: (companyId: string, type: string) =>
-    api.get<DetectedАдаптерМодель | null>(
+  detectModel: (companyId: string, type: string) =>
+    api.get<DetectedAdapterModel | null>(
       `/companies/${encodeURIComponent(companyId)}/adapters/${encodeURIComponent(type)}/detect-model`,
     ),
-  adapterМодельПрофильs: (companyId: string, type: string) =>
-    api.get<АдаптерМодельПрофиль[]>(
+  adapterModelProfiles: (companyId: string, type: string) =>
+    api.get<AdapterModelProfile[]>(
       `/companies/${encodeURIComponent(companyId)}/adapters/${encodeURIComponent(type)}/model-profiles`,
     ),
-  testОкружение: (
+  testEnvironment: (
     companyId: string,
     type: string,
     data: {
@@ -209,24 +209,24 @@ export const agentsApi = {
       environmentId?: string | null;
     },
   ) =>
-    api.post<АдаптерОкружениеПроверитьResult>(
+    api.post<AdapterEnvironmentTestResult>(
       `/companies/${companyId}/adapters/${type}/test-environment`,
       data,
     ),
-  invoke: (id: string, companyId?: string, data: АгентWakeRequest = {}) =>
-    api.post<HeartbeatЗапустить>(agentПуть(id, companyId, "/heartbeat/invoke"), data),
+  invoke: (id: string, companyId?: string, data: AgentWakeRequest = {}) =>
+    api.post<HeartbeatRun>(agentPath(id, companyId, "/heartbeat/invoke"), data),
   wakeup: (
     id: string,
-    data: АгентWakeRequest,
+    data: AgentWakeRequest,
     companyId?: string,
-  ) => api.post<АгентWakeupResponse>(agentПуть(id, companyId, "/wakeup"), data),
+  ) => api.post<AgentWakeupResponse>(agentPath(id, companyId, "/wakeup"), data),
   loginWithClaude: (id: string, companyId?: string) =>
-    api.post<ClaudeLoginResult>(agentПуть(id, companyId, "/claude-login"), {}),
-  availableНавыки: () =>
-    api.get<{ skills: AvailableНавык[] }>("/skills/available"),
+    api.post<ClaudeLoginResult>(agentPath(id, companyId, "/claude-login"), {}),
+  availableSkills: () =>
+    api.get<{ skills: AvailableSkill[] }>("/skills/available"),
 };
 
-export interface AvailableНавык {
+export interface AvailableSkill {
   name: string;
   description: string;
   isPaperclipManaged: boolean;

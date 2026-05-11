@@ -1,29 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   WORKSPACE_BRANCH_ROUTINE_VARIABLE,
-  type Агент,
-  type ExecutionРабочая область,
-  type ExecutionРабочая областьMode,
-  type ЗадачаExecutionРабочая областьНастройки,
+  type Agent,
+  type ExecutionWorkspace,
+  type ExecutionWorkspaceMode,
+  type IssueExecutionWorkspaceSettings,
   type Project,
-  type ПроцедураVariable,
+  type RoutineVariable,
 } from "@paperclipai/shared";
 import { useQuery } from "@tanstack/react-query";
-import { instanceНастройкиApi } from "../api/instanceНастройки";
-import { queryКлючs } from "../lib/queryКлючs";
-import { ЗадачаРабочая областьCard } from "./ЗадачаРабочая областьCard";
-import { АгентIcon } from "./АгентIconPicker";
+import { instanceSettingsApi } from "../api/instanceSettings";
+import { queryKeys } from "../lib/queryKeys";
+import { IssueWorkspaceCard } from "./IssueWorkspaceCard";
+import { AgentIcon } from "./AgentIconPicker";
 import { InlineEntitySelector, type InlineEntityOption } from "./InlineEntitySelector";
-import { getRecentИсполнительIds, sortАгентыByRecency, trackRecentИсполнитель } from "../lib/recent-assignees";
+import { getRecentAssigneeIds, sortAgentsByRecency, trackRecentAssignee } from "../lib/recent-assignees";
 import { getRecentProjectIds, trackRecentProject } from "../lib/recent-projects";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogОписание,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogНазвание,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,34 +32,34 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectЗначение,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-function buildInitialЗначениеs(variables: ПроцедураVariable[]) {
-  return Object.fromEntries(variables.map((variable) => [variable.name, variable.defaultЗначение ?? ""]));
+function buildInitialValues(variables: RoutineVariable[]) {
+  return Object.fromEntries(variables.map((variable) => [variable.name, variable.defaultValue ?? ""]));
 }
 
-function buildInitialЗапуститьSelection(input: {
-  defaultИсполнительАгентId?: string | null;
+function buildInitialRunSelection(input: {
+  defaultAssigneeAgentId?: string | null;
   defaultProjectId?: string | null;
 }) {
   return {
-    assigneeАгентId: input.defaultИсполнительАгентId ?? "",
+    assigneeAgentId: input.defaultAssigneeAgentId ?? "",
     projectId: input.defaultProjectId ?? "",
   };
 }
 
-function defaultProjectРабочая областьIdForProject(project: Project | null | undefined) {
+function defaultProjectWorkspaceIdForProject(project: Project | null | undefined) {
   if (!project) return null;
-  return project.executionРабочая областьPolicy?.defaultProjectРабочая областьId
+  return project.executionWorkspacePolicy?.defaultProjectWorkspaceId
     ?? project.workspaces?.find((workspace) => workspace.isPrimary)?.id
     ?? project.workspaces?.[0]?.id
     ?? null;
 }
 
-function defaultExecutionРабочая областьModeForProject(project: Project | null | undefined): ExecutionРабочая областьMode {
-  const defaultMode = project?.executionРабочая областьPolicy?.enabled ? project.executionРабочая областьPolicy.defaultMode : null;
+function defaultExecutionWorkspaceModeForProject(project: Project | null | undefined): ExecutionWorkspaceMode {
+  const defaultMode = project?.executionWorkspacePolicy?.enabled ? project.executionWorkspacePolicy.defaultMode : null;
   if (
     defaultMode === "isolated_workspace" ||
     defaultMode === "operator_branch" ||
@@ -70,13 +70,13 @@ function defaultExecutionРабочая областьModeForProject(project: Pr
   return "shared_workspace";
 }
 
-function issueModeForExistingРабочая область(mode: string | null | undefined): ExecutionРабочая областьMode {
+function issueModeForExistingWorkspace(mode: string | null | undefined): ExecutionWorkspaceMode {
   if (mode === "isolated_workspace" || mode === "operator_branch" || mode === "shared_workspace") return mode;
   if (mode === "adapter_managed" || mode === "cloud_sandbox") return "agent_default";
   return "shared_workspace";
 }
 
-function issueРабочая областьPreferenceFromЧерновик(value: unknown, fallback: ExecutionРабочая областьMode): ExecutionРабочая областьMode {
+function issueWorkspacePreferenceFromDraft(value: unknown, fallback: ExecutionWorkspaceMode): ExecutionWorkspaceMode {
   if (
     value === "inherit" ||
     value === "shared_workspace" ||
@@ -90,143 +90,143 @@ function issueРабочая областьPreferenceFromЧерновик(value:
   return fallback;
 }
 
-type ПроцедураЗапуститьРабочая областьConfig = {
-  executionРабочая областьId: string | null;
-  executionРабочая областьPreference: ExecutionРабочая областьMode;
-  executionРабочая областьНастройки: ЗадачаExecutionРабочая областьНастройки;
-  projectРабочая областьId: string | null;
+type RoutineRunWorkspaceConfig = {
+  executionWorkspaceId: string | null;
+  executionWorkspacePreference: ExecutionWorkspaceMode;
+  executionWorkspaceSettings: IssueExecutionWorkspaceSettings;
+  projectWorkspaceId: string | null;
 };
 
-function buildInitialРабочая областьConfig(
+function buildInitialWorkspaceConfig(
   project: Project | null | undefined,
-  defaultExecutionРабочая область?: ExecutionРабочая область | null,
-): ПроцедураЗапуститьРабочая областьConfig {
-  if (defaultExecutionРабочая область && defaultExecutionРабочая область.projectId === project?.id) {
+  defaultExecutionWorkspace?: ExecutionWorkspace | null,
+): RoutineRunWorkspaceConfig {
+  if (defaultExecutionWorkspace && defaultExecutionWorkspace.projectId === project?.id) {
     return {
-      executionРабочая областьId: defaultExecutionРабочая область.id,
-      executionРабочая областьPreference: "reuse_existing",
-      executionРабочая областьНастройки: {
-        mode: issueModeForExistingРабочая область(defaultExecutionРабочая область.mode),
+      executionWorkspaceId: defaultExecutionWorkspace.id,
+      executionWorkspacePreference: "reuse_existing",
+      executionWorkspaceSettings: {
+        mode: issueModeForExistingWorkspace(defaultExecutionWorkspace.mode),
       },
-      projectРабочая областьId: defaultExecutionРабочая область.projectРабочая областьId ?? defaultProjectРабочая областьIdForProject(project),
+      projectWorkspaceId: defaultExecutionWorkspace.projectWorkspaceId ?? defaultProjectWorkspaceIdForProject(project),
     };
   }
 
-  const defaultMode = defaultExecutionРабочая областьModeForProject(project);
+  const defaultMode = defaultExecutionWorkspaceModeForProject(project);
   return {
-    executionРабочая областьId: null as string | null,
-    executionРабочая областьPreference: defaultMode,
-    executionРабочая областьНастройки: { mode: defaultMode },
-    projectРабочая областьId: defaultProjectРабочая областьIdForProject(project),
+    executionWorkspaceId: null as string | null,
+    executionWorkspacePreference: defaultMode,
+    executionWorkspaceSettings: { mode: defaultMode },
+    projectWorkspaceId: defaultProjectWorkspaceIdForProject(project),
   };
 }
 
 function workspaceConfigEquals(
-  a: ПроцедураЗапуститьРабочая областьConfig,
-  b: ПроцедураЗапуститьРабочая областьConfig,
+  a: RoutineRunWorkspaceConfig,
+  b: RoutineRunWorkspaceConfig,
 ) {
-  return a.executionРабочая областьId === b.executionРабочая областьId
-    && a.executionРабочая областьPreference === b.executionРабочая областьPreference
-    && a.projectРабочая областьId === b.projectРабочая областьId
-    && JSON.stringify(a.executionРабочая областьНастройки ?? null) === JSON.stringify(b.executionРабочая областьНастройки ?? null);
+  return a.executionWorkspaceId === b.executionWorkspaceId
+    && a.executionWorkspacePreference === b.executionWorkspacePreference
+    && a.projectWorkspaceId === b.projectWorkspaceId
+    && JSON.stringify(a.executionWorkspaceSettings ?? null) === JSON.stringify(b.executionWorkspaceSettings ?? null);
 }
 
-function applyРабочая областьЧерновик(
-  current: ПроцедураЗапуститьРабочая областьConfig,
+function applyWorkspaceDraft(
+  current: RoutineRunWorkspaceConfig,
   data: Record<string, unknown>,
 ) {
   const next = {
     ...current,
-    executionРабочая областьId: (data.executionРабочая областьId as string | null | undefined) ?? null,
-    executionРабочая областьPreference: issueРабочая областьPreferenceFromЧерновик(
-      data.executionРабочая областьPreference,
-      current.executionРабочая областьPreference,
+    executionWorkspaceId: (data.executionWorkspaceId as string | null | undefined) ?? null,
+    executionWorkspacePreference: issueWorkspacePreferenceFromDraft(
+      data.executionWorkspacePreference,
+      current.executionWorkspacePreference,
     ),
-    executionРабочая областьНастройки:
-      (data.executionРабочая областьНастройки as ЗадачаExecutionРабочая областьНастройки | null | undefined)
-      ?? current.executionРабочая областьНастройки,
+    executionWorkspaceSettings:
+      (data.executionWorkspaceSettings as IssueExecutionWorkspaceSettings | null | undefined)
+      ?? current.executionWorkspaceSettings,
   };
   return workspaceConfigEquals(current, next) ? current : next;
 }
 
-function isMissingОбязательноЗначение(value: unknown) {
+function isMissingRequiredValue(value: unknown) {
   return value == null || (typeof value === "string" && value.trim().length === 0);
 }
 
-function supportsПроцедураЗапуститьРабочая областьSelection(
+function supportsRoutineRunWorkspaceSelection(
   project: Project | null | undefined,
-  isolatedРабочие областиВключитьd: boolean,
+  isolatedWorkspacesEnabled: boolean,
 ) {
-  return isolatedРабочие областиВключитьd && Boolean(project?.executionРабочая областьPolicy?.enabled);
+  return isolatedWorkspacesEnabled && Boolean(project?.executionWorkspacePolicy?.enabled);
 }
 
-export function routineЗапуститьNeedsКонфигурация(input: {
-  variables: ПроцедураVariable[];
+export function routineRunNeedsConfiguration(input: {
+  variables: RoutineVariable[];
   project: Project | null | undefined;
-  isolatedРабочие областиВключитьd: boolean;
+  isolatedWorkspacesEnabled: boolean;
 }) {
   return input.variables.length > 0
-    || supportsПроцедураЗапуститьРабочая областьSelection(input.project, input.isolatedРабочие областиВключитьd);
+    || supportsRoutineRunWorkspaceSelection(input.project, input.isolatedWorkspacesEnabled);
 }
 
-export interface ПроцедураЗапуститьDialogОтправитьData {
+export interface RoutineRunDialogSubmitData {
   variables?: Record<string, string | number | boolean>;
-  assigneeАгентId?: string | null;
+  assigneeAgentId?: string | null;
   projectId?: string | null;
-  executionРабочая областьId?: string | null;
-  executionРабочая областьPreference?: string | null;
-  executionРабочая областьНастройки?: ЗадачаExecutionРабочая областьНастройки | null;
+  executionWorkspaceId?: string | null;
+  executionWorkspacePreference?: string | null;
+  executionWorkspaceSettings?: IssueExecutionWorkspaceSettings | null;
 }
 
-export function ПроцедураЗапуститьVariablesDialog({
+export function RoutineRunVariablesDialog({
   open,
   onOpenChange,
   companyId,
-  routineИмя,
+  routineName,
   projects,
   agents,
   defaultProjectId,
-  defaultИсполнительАгентId,
-  defaultExecutionРабочая область,
+  defaultAssigneeAgentId,
+  defaultExecutionWorkspace,
   variables,
-  isОжидание,
-  onОтправить,
+  isPending,
+  onSubmit,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companyId: string | null | undefined;
-  routineИмя?: string | null;
+  routineName?: string | null;
   projects: Project[];
-  agents: Агент[];
+  agents: Agent[];
   defaultProjectId?: string | null;
-  defaultИсполнительАгентId?: string | null;
-  defaultExecutionРабочая область?: ExecutionРабочая область | null;
-  variables: ПроцедураVariable[];
-  isОжидание: boolean;
-  onОтправить: (data: ПроцедураЗапуститьDialogОтправитьData) => void;
+  defaultAssigneeAgentId?: string | null;
+  defaultExecutionWorkspace?: ExecutionWorkspace | null;
+  variables: RoutineVariable[];
+  isPending: boolean;
+  onSubmit: (data: RoutineRunDialogSubmitData) => void;
 }) {
-  const [values, setЗначениеs] = useState<Record<string, unknown>>({});
-  const [selection, setSelection] = useState(() => buildInitialЗапуститьSelection({
-    defaultИсполнительАгентId,
+  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [selection, setSelection] = useState(() => buildInitialRunSelection({
+    defaultAssigneeAgentId,
     defaultProjectId,
   }));
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selection.projectId) ?? null,
     [projects, selection.projectId],
   );
-  const recentИсполнительIds = useMemo(() => getRecentИсполнительIds(), [open]);
+  const recentAssigneeIds = useMemo(() => getRecentAssigneeIds(), [open]);
   const recentProjectIds = useMemo(() => getRecentProjectIds(), [open]);
   const assigneeOptions = useMemo<InlineEntityOption[]>(
     () =>
-      sortАгентыByRecency(
+      sortAgentsByRecency(
         agents.filter((agent) => agent.status !== "terminated"),
-        recentИсполнительIds,
+        recentAssigneeIds,
       ).map((agent) => ({
         id: agent.id,
         label: agent.name,
         searchText: `${agent.name} ${agent.role} ${agent.title ?? ""}`,
       })),
-    [agents, recentИсполнительIds],
+    [agents, recentAssigneeIds],
   );
   const projectOptions = useMemo<InlineEntityOption[]>(
     () => projects.map((project) => ({
@@ -236,207 +236,207 @@ export function ПроцедураЗапуститьVariablesDialog({
     })),
     [projects],
   );
-  const currentИсполнитель = selection.assigneeАгентId
-    ? agents.find((agent) => agent.id === selection.assigneeАгентId) ?? null
+  const currentAssignee = selection.assigneeAgentId
+    ? agents.find((agent) => agent.id === selection.assigneeAgentId) ?? null
     : null;
-  const [workspaceConfig, setРабочая областьConfig] = useState(() =>
-    buildInitialРабочая областьConfig(selectedProject, defaultExecutionРабочая область));
-  const [workspaceConfigValid, setРабочая областьConfigValid] = useState(true);
-  const [workspaceВеткаИмя, setРабочая областьВеткаИмя] = useState<string | null>(null);
+  const [workspaceConfig, setWorkspaceConfig] = useState(() =>
+    buildInitialWorkspaceConfig(selectedProject, defaultExecutionWorkspace));
+  const [workspaceConfigValid, setWorkspaceConfigValid] = useState(true);
+  const [workspaceBranchName, setWorkspaceBranchName] = useState<string | null>(null);
 
-  const { data: experimentalНастройки } = useQuery({
-    queryКлюч: queryКлючs.instance.experimentalНастройки,
-    queryFn: () => instanceНастройкиApi.getExperimental(),
+  const { data: experimentalSettings } = useQuery({
+    queryKey: queryKeys.instance.experimentalSettings,
+    queryFn: () => instanceSettingsApi.getExperimental(),
     retry: false,
   });
 
-  const workspaceSelectionВключитьd = supportsПроцедураЗапуститьРабочая областьSelection(
+  const workspaceSelectionEnabled = supportsRoutineRunWorkspaceSelection(
     selectedProject,
-    experimentalНастройки?.enableIsolatedРабочие области === true,
+    experimentalSettings?.enableIsolatedWorkspaces === true,
   );
 
   useEffect(() => {
     if (!open) return;
-    setЗначениеs(buildInitialЗначениеs(variables));
-    const nextSelection = buildInitialЗапуститьSelection({ defaultИсполнительАгентId, defaultProjectId });
+    setValues(buildInitialValues(variables));
+    const nextSelection = buildInitialRunSelection({ defaultAssigneeAgentId, defaultProjectId });
     setSelection(nextSelection);
-    setРабочая областьConfig(buildInitialРабочая областьConfig(
+    setWorkspaceConfig(buildInitialWorkspaceConfig(
       projects.find((project) => project.id === nextSelection.projectId) ?? null,
-      defaultExecutionРабочая область,
+      defaultExecutionWorkspace,
     ));
-    setРабочая областьConfigValid(true);
-    setРабочая областьВеткаИмя(defaultExecutionРабочая область?.branchИмя ?? null);
-  }, [defaultИсполнительАгентId, defaultExecutionРабочая область, defaultProjectId, open, projects, variables]);
+    setWorkspaceConfigValid(true);
+    setWorkspaceBranchName(defaultExecutionWorkspace?.branchName ?? null);
+  }, [defaultAssigneeAgentId, defaultExecutionWorkspace, defaultProjectId, open, projects, variables]);
 
-  const workspaceВеткаАвтоЗначение = workspaceSelectionВключитьd && workspaceВеткаИмя
-    ? workspaceВеткаИмя
+  const workspaceBranchAutoValue = workspaceSelectionEnabled && workspaceBranchName
+    ? workspaceBranchName
     : null;
 
-  const isАвтоРабочая областьВеткаVariable = useCallback(
-    (variable: ПроцедураVariable) =>
-      variable.name === WORKSPACE_BRANCH_ROUTINE_VARIABLE && Boolean(workspaceВеткаАвтоЗначение),
-    [workspaceВеткаАвтоЗначение],
+  const isAutoWorkspaceBranchVariable = useCallback(
+    (variable: RoutineVariable) =>
+      variable.name === WORKSPACE_BRANCH_ROUTINE_VARIABLE && Boolean(workspaceBranchAutoValue),
+    [workspaceBranchAutoValue],
   );
 
-  const missingОбязательно = useMemo(
+  const missingRequired = useMemo(
     () =>
       variables
         .filter((variable) => variable.required)
-        .filter((variable) => !isАвтоРабочая областьВеткаVariable(variable))
-        .filter((variable) => isMissingОбязательноЗначение(values[variable.name]))
+        .filter((variable) => !isAutoWorkspaceBranchVariable(variable))
+        .filter((variable) => isMissingRequiredValue(values[variable.name]))
         .map((variable) => variable.label || variable.name),
-    [isАвтоРабочая областьВеткаVariable, values, variables],
+    [isAutoWorkspaceBranchVariable, values, variables],
   );
 
-  const workspaceЗадача = useMemo(() => ({
+  const workspaceIssue = useMemo(() => ({
     companyId: companyId ?? null,
     projectId: selectedProject?.id ?? null,
-    projectРабочая областьId: workspaceConfig.projectРабочая областьId,
-    executionРабочая областьId: workspaceConfig.executionРабочая областьId,
-    executionРабочая областьPreference: workspaceConfig.executionРабочая областьPreference,
-    executionРабочая областьНастройки: workspaceConfig.executionРабочая областьНастройки,
-    currentExecutionРабочая область:
-      workspaceConfig.executionРабочая областьId && workspaceConfig.executionРабочая областьId === defaultExecutionРабочая область?.id
-        ? defaultExecutionРабочая область
+    projectWorkspaceId: workspaceConfig.projectWorkspaceId,
+    executionWorkspaceId: workspaceConfig.executionWorkspaceId,
+    executionWorkspacePreference: workspaceConfig.executionWorkspacePreference,
+    executionWorkspaceSettings: workspaceConfig.executionWorkspaceSettings,
+    currentExecutionWorkspace:
+      workspaceConfig.executionWorkspaceId && workspaceConfig.executionWorkspaceId === defaultExecutionWorkspace?.id
+        ? defaultExecutionWorkspace
         : null,
   }), [
     companyId,
-    defaultExecutionРабочая область,
+    defaultExecutionWorkspace,
     selectedProject?.id,
-    workspaceConfig.executionРабочая областьId,
-    workspaceConfig.executionРабочая областьPreference,
-    workspaceConfig.executionРабочая областьНастройки,
-    workspaceConfig.projectРабочая областьId,
+    workspaceConfig.executionWorkspaceId,
+    workspaceConfig.executionWorkspacePreference,
+    workspaceConfig.executionWorkspaceSettings,
+    workspaceConfig.projectWorkspaceId,
   ]);
 
-  const canОтправить =
-    selection.assigneeАгентId.trim().length > 0 &&
-    missingОбязательно.length === 0 &&
-    (!workspaceSelectionВключитьd || workspaceConfigValid);
+  const canSubmit =
+    selection.assigneeAgentId.trim().length > 0 &&
+    missingRequired.length === 0 &&
+    (!workspaceSelectionEnabled || workspaceConfigValid);
 
-  const handleРабочая областьОбновить = useCallback((data: Record<string, unknown>) => {
-    setРабочая областьConfig((current) => applyРабочая областьЧерновик(current, data));
+  const handleWorkspaceUpdate = useCallback((data: Record<string, unknown>) => {
+    setWorkspaceConfig((current) => applyWorkspaceDraft(current, data));
   }, []);
 
-  const handleРабочая областьЧерновикChange = useCallback((
+  const handleWorkspaceDraftChange = useCallback((
     data: Record<string, unknown>,
-    meta: { canСохранить: boolean; workspaceВеткаИмя?: string | null },
+    meta: { canSave: boolean; workspaceBranchName?: string | null },
   ) => {
-    setРабочая областьConfig((current) => applyРабочая областьЧерновик(current, data));
-    setРабочая областьConfigValid((current) => (current === meta.canСохранить ? current : meta.canСохранить));
-    setРабочая областьВеткаИмя((current) => {
-      const defaultРабочая областьВеткаИмя = defaultExecutionРабочая область?.branchИмя ?? null;
-      const next = meta.workspaceВеткаИмя
-        ?? (data.executionРабочая областьId === defaultExecutionРабочая область?.id ? defaultРабочая областьВеткаИмя : null)
+    setWorkspaceConfig((current) => applyWorkspaceDraft(current, data));
+    setWorkspaceConfigValid((current) => (current === meta.canSave ? current : meta.canSave));
+    setWorkspaceBranchName((current) => {
+      const defaultWorkspaceBranchName = defaultExecutionWorkspace?.branchName ?? null;
+      const next = meta.workspaceBranchName
+        ?? (data.executionWorkspaceId === defaultExecutionWorkspace?.id ? defaultWorkspaceBranchName : null)
         ?? null;
       return current === next ? current : next;
     });
-  }, [defaultExecutionРабочая область]);
+  }, [defaultExecutionWorkspace]);
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !isОжидание && onOpenChange(next)}>
-      <DialogContent classИмя="flex h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] max-w-xl flex-col gap-0 overflow-hidden p-0 sm:h-auto sm:max-h-[min(calc(100dvh-2rem),42rem)]">
-        <DialogHeader classИмя="shrink-0 border-b border-border/60 px-6 pb-4 pr-12 pt-6">
-          {routineИмя && (
-            <p classИмя="text-muted-foreground text-sm">{routineИмя}</p>
+    <Dialog open={open} onOpenChange={(next) => !isPending && onOpenChange(next)}>
+      <DialogContent className="flex h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] max-w-xl flex-col gap-0 overflow-hidden p-0 sm:h-auto sm:max-h-[min(calc(100dvh-2rem),42rem)]">
+        <DialogHeader className="shrink-0 border-b border-border/60 px-6 pb-4 pr-12 pt-6">
+          {routineName && (
+            <p className="text-muted-foreground text-sm">{routineName}</p>
           )}
-          <DialogНазвание>Запустить процедуру</DialogНазвание>
-          <DialogОписание>
-            Choose the agent and optional project for this one run. Процедура defaults are prefilled and won&apos;t be changed.
-          </DialogОписание>
+          <DialogTitle>Run routine</DialogTitle>
+          <DialogDescription>
+            Choose the agent and optional project for this one run. Routine defaults are prefilled and won&apos;t be changed.
+          </DialogDescription>
         </DialogHeader>
 
-        <div classИмя="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
-          <div classИмя="grid gap-4 md:grid-cols-2">
-            <div classИмя="space-y-1.5">
-              <Label classИмя="text-xs">Агент *</Label>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Agent *</Label>
               <InlineEntitySelector
-                value={selection.assigneeАгентId}
+                value={selection.assigneeAgentId}
                 options={assigneeOptions}
-                recentOptionIds={recentИсполнительIds}
+                recentOptionIds={recentAssigneeIds}
                 placeholder="Агент"
                 noneLabel="Select an agent"
-                searchPlaceholder="Поиск agents..."
+                searchPlaceholder="Search agents..."
                 emptyMessage="Агенты не найдены."
-                disableПортal
+                disablePortal
                 openOnFocus={false}
-                onChange={(assigneeАгентId) => {
-                  if (assigneeАгентId) trackRecentИсполнитель(assigneeАгентId);
-                  setSelection((current) => ({ ...current, assigneeАгентId }));
+                onChange={(assigneeAgentId) => {
+                  if (assigneeAgentId) trackRecentAssignee(assigneeAgentId);
+                  setSelection((current) => ({ ...current, assigneeAgentId }));
                 }}
-                renderTriggerЗначение={(option) =>
+                renderTriggerValue={(option) =>
                   option ? (
-                    currentИсполнитель ? (
+                    currentAssignee ? (
                       <>
-                        <АгентIcon icon={currentИсполнитель.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                        <span classИмя="truncate">{option.label}</span>
+                        <AgentIcon icon={currentAssignee.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{option.label}</span>
                       </>
                     ) : (
-                      <span classИмя="truncate">{option.label}</span>
+                      <span className="truncate">{option.label}</span>
                     )
                   ) : (
-                    <span classИмя="text-muted-foreground">Select an agent</span>
+                    <span className="text-muted-foreground">Select an agent</span>
                   )
                 }
                 renderOption={(option) => {
-                  if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+                  if (!option.id) return <span className="truncate">{option.label}</span>;
                   const assignee = agents.find((agent) => agent.id === option.id);
                   return (
                     <>
-                      {assignee ? <АгентIcon icon={assignee.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
-                      <span classИмя="truncate">{option.label}</span>
+                      {assignee ? <AgentIcon icon={assignee.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                      <span className="truncate">{option.label}</span>
                     </>
                   );
                 }}
               />
             </div>
-            <div classИмя="space-y-1.5">
-              <Label classИмя="text-xs">Project</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Project</Label>
               <InlineEntitySelector
                 value={selection.projectId}
                 options={projectOptions}
                 recentOptionIds={recentProjectIds}
                 placeholder="Project"
-                noneLabel="Нет project"
-                searchPlaceholder="Поиск projects..."
-                emptyMessage="Проекты не найдены."
-                disableПортal
+                noneLabel="No project"
+                searchPlaceholder="Search projects..."
+                emptyMessage="No projects found."
+                disablePortal
                 openOnFocus={false}
                 onChange={(projectId) => {
                   const project = projects.find((entry) => entry.id === projectId) ?? null;
                   if (projectId) trackRecentProject(projectId);
                   setSelection((current) => ({ ...current, projectId }));
-                  setРабочая областьConfig(buildInitialРабочая областьConfig(project, defaultExecutionРабочая область));
-                  setРабочая областьConfigValid(true);
-                  setРабочая областьВеткаИмя(
-                    defaultExecutionРабочая область && defaultExecutionРабочая область.projectId === project?.id
-                      ? defaultExecutionРабочая область.branchИмя
+                  setWorkspaceConfig(buildInitialWorkspaceConfig(project, defaultExecutionWorkspace));
+                  setWorkspaceConfigValid(true);
+                  setWorkspaceBranchName(
+                    defaultExecutionWorkspace && defaultExecutionWorkspace.projectId === project?.id
+                      ? defaultExecutionWorkspace.branchName
                       : null,
                   );
                 }}
-                renderTriggerЗначение={(option) =>
+                renderTriggerValue={(option) =>
                   option && selectedProject ? (
                     <>
                       <span
-                        classИмя="h-3.5 w-3.5 shrink-0 rounded-sm"
+                        className="h-3.5 w-3.5 shrink-0 rounded-sm"
                         style={{ backgroundColor: selectedProject.color ?? "#64748b" }}
                       />
-                      <span classИмя="truncate">{option.label}</span>
+                      <span className="truncate">{option.label}</span>
                     </>
                   ) : (
-                    <span classИмя="text-muted-foreground">Нет project</span>
+                    <span className="text-muted-foreground">No project</span>
                   )
                 }
                 renderOption={(option) => {
-                  if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+                  if (!option.id) return <span className="truncate">{option.label}</span>;
                   const project = projects.find((entry) => entry.id === option.id);
                   return (
                     <>
                       <span
-                        classИмя="h-3.5 w-3.5 shrink-0 rounded-sm"
+                        className="h-3.5 w-3.5 shrink-0 rounded-sm"
                         style={{ backgroundColor: project?.color ?? "#64748b" }}
                       />
-                      <span classИмя="truncate">{option.label}</span>
+                      <span className="truncate">{option.label}</span>
                     </>
                   );
                 }}
@@ -445,36 +445,36 @@ export function ПроцедураЗапуститьVariablesDialog({
           </div>
 
           {variables.map((variable) => (
-            <div key={variable.name} classИмя="space-y-1.5">
-              <Label classИмя="text-xs">
+            <div key={variable.name} className="space-y-1.5">
+              <Label className="text-xs">
                 {variable.label || variable.name}
                 {variable.required ? " *" : ""}
               </Label>
-              {isАвтоРабочая областьВеткаVariable(variable) ? (
+              {isAutoWorkspaceBranchVariable(variable) ? (
                 <Input
                   readOnly
                   disabled
-                  value={workspaceВеткаАвтоЗначение ?? ""}
+                  value={workspaceBranchAutoValue ?? ""}
                 />
               ) : variable.type === "textarea" ? (
                 <Textarea
                   rows={4}
                   value={typeof values[variable.name] === "string" ? values[variable.name] as string : ""}
-                  onChange={(event) => setЗначениеs((current) => ({ ...current, [variable.name]: event.target.value }))}
+                  onChange={(event) => setValues((current) => ({ ...current, [variable.name]: event.target.value }))}
                 />
               ) : variable.type === "boolean" ? (
                 <Select
                   value={values[variable.name] === true ? "true" : values[variable.name] === false ? "false" : "__unset__"}
-                  onЗначениеChange={(next) => setЗначениеs((current) => ({
+                  onValueChange={(next) => setValues((current) => ({
                     ...current,
                     [variable.name]: next === "__unset__" ? "" : next === "true",
                   }))}
                 >
                   <SelectTrigger>
-                    <SelectЗначение />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__unset__">Нет value</SelectItem>
+                    <SelectItem value="__unset__">No value</SelectItem>
                     <SelectItem value="true">True</SelectItem>
                     <SelectItem value="false">False</SelectItem>
                   </SelectContent>
@@ -482,16 +482,16 @@ export function ПроцедураЗапуститьVariablesDialog({
               ) : variable.type === "select" ? (
                 <Select
                   value={typeof values[variable.name] === "string" && values[variable.name] ? values[variable.name] as string : "__unset__"}
-                  onЗначениеChange={(next) => setЗначениеs((current) => ({
+                  onValueChange={(next) => setValues((current) => ({
                     ...current,
                     [variable.name]: next === "__unset__" ? "" : next,
                   }))}
                 >
                   <SelectTrigger>
-                    <SelectЗначение placeholder="Choose a value" />
+                    <SelectValue placeholder="Choose a value" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__unset__">Нет value</SelectItem>
+                    <SelectItem value="__unset__">No value</SelectItem>
                     {variable.options.map((option) => (
                       <SelectItem key={option} value={option}>{option}</SelectItem>
                     ))}
@@ -501,79 +501,79 @@ export function ПроцедураЗапуститьVariablesDialog({
                 <Input
                   type={variable.type === "number" ? "number" : "text"}
                   value={values[variable.name] == null ? "" : String(values[variable.name])}
-                  onChange={(event) => setЗначениеs((current) => ({ ...current, [variable.name]: event.target.value }))}
+                  onChange={(event) => setValues((current) => ({ ...current, [variable.name]: event.target.value }))}
                 />
               )}
             </div>
           ))}
 
-          {workspaceSelectionВключитьd && selectedProject && companyId ? (
-            <ЗадачаРабочая областьCard
+          {workspaceSelectionEnabled && selectedProject && companyId ? (
+            <IssueWorkspaceCard
               key={`${open ? "open" : "closed"}:${selectedProject.id}`}
-              issue={workspaceЗадача}
+              issue={workspaceIssue}
               project={selectedProject}
-              initialИзменитьing
-              liveПредпросмотр
-              onОбновить={handleРабочая областьОбновить}
-              onЧерновикChange={handleРабочая областьЧерновикChange}
+              initialEditing
+              livePreview
+              onUpdate={handleWorkspaceUpdate}
+              onDraftChange={handleWorkspaceDraftChange}
             />
           ) : null}
         </div>
 
         <DialogFooter
-          showЗакрытьButton={false}
-          classИмя="shrink-0 border-t border-border/60 bg-background px-6 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4"
+          showCloseButton={false}
+          className="shrink-0 border-t border-border/60 bg-background px-6 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4"
         >
-          {!selection.assigneeАгентId ? (
-            <p classИмя="mr-auto text-xs text-amber-600">Требуется агент по умолчанию for this run.</p>
-          ) : missingОбязательно.length > 0 ? (
-            <p classИмя="mr-auto text-xs text-amber-600">
-              Missing: {missingОбязательно.join(", ")}
+          {!selection.assigneeAgentId ? (
+            <p className="mr-auto text-xs text-amber-600">Default agent required for this run.</p>
+          ) : missingRequired.length > 0 ? (
+            <p className="mr-auto text-xs text-amber-600">
+              Missing: {missingRequired.join(", ")}
             </p>
-          ) : workspaceSelectionВключитьd && !workspaceConfigValid ? (
-            <p classИмя="mr-auto text-xs text-amber-600">
+          ) : workspaceSelectionEnabled && !workspaceConfigValid ? (
+            <p className="mr-auto text-xs text-amber-600">
               Choose an existing workspace before running.
             </p>
           ) : (
-            <span classИмя="mr-auto" />
+            <span className="mr-auto" />
           )}
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isОжидание}>
-            Отмена
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
+            Cancel
           </Button>
           <Button
             onClick={() => {
               const nextVariables: Record<string, string | number | boolean> = {};
               for (const variable of variables) {
-                if (isАвтоРабочая областьВеткаVariable(variable)) {
-                  nextVariables[variable.name] = workspaceВеткаАвтоЗначение!;
+                if (isAutoWorkspaceBranchVariable(variable)) {
+                  nextVariables[variable.name] = workspaceBranchAutoValue!;
                   continue;
                 }
-                const rawЗначение = values[variable.name];
-                if (isMissingОбязательноЗначение(rawЗначение)) continue;
+                const rawValue = values[variable.name];
+                if (isMissingRequiredValue(rawValue)) continue;
                 if (variable.type === "number") {
-                  nextVariables[variable.name] = Number(rawЗначение);
+                  nextVariables[variable.name] = Number(rawValue);
                 } else if (variable.type === "boolean") {
-                  nextVariables[variable.name] = rawЗначение === true;
+                  nextVariables[variable.name] = rawValue === true;
                 } else {
-                  nextVariables[variable.name] = String(rawЗначение);
+                  nextVariables[variable.name] = String(rawValue);
                 }
               }
-              onОтправить({
+              onSubmit({
                 variables: nextVariables,
-                assigneeАгентId: selection.assigneeАгентId,
+                assigneeAgentId: selection.assigneeAgentId,
                 projectId: selection.projectId || null,
-                ...(workspaceSelectionВключитьd
+                ...(workspaceSelectionEnabled
                   ? {
-                    executionРабочая областьId: workspaceConfig.executionРабочая областьId,
-                    executionРабочая областьPreference: workspaceConfig.executionРабочая областьPreference,
-                    executionРабочая областьНастройки: workspaceConfig.executionРабочая областьНастройки,
+                    executionWorkspaceId: workspaceConfig.executionWorkspaceId,
+                    executionWorkspacePreference: workspaceConfig.executionWorkspacePreference,
+                    executionWorkspaceSettings: workspaceConfig.executionWorkspaceSettings,
                   }
                   : {}),
               });
             }}
-            disabled={isОжидание || !canОтправить}
+            disabled={isPending || !canSubmit}
           >
-            {isОжидание ? "Выполняется..." : "Запустить процедуру"}
+            {isPending ? "Running..." : "Run routine"}
           </Button>
         </DialogFooter>
       </DialogContent>

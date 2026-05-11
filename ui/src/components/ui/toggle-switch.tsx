@@ -13,7 +13,7 @@ export const ToggleSwitch = React.forwardRef<
   ToggleSwitchProps
 >(
   (
-    { checked, onCheckedChange, size = "default", classИмя, disabled, ...props },
+    { checked, onCheckedChange, size = "default", className, disabled, ...props },
     ref,
   ) => {
     const isLg = size === "lg";
@@ -26,20 +26,20 @@ export const ToggleSwitch = React.forwardRef<
         aria-checked={checked}
         data-slot="toggle"
         disabled={disabled}
-        classИмя={cn(
+        className={cn(
           "relative inline-flex shrink-0 items-center rounded-full transition-colors",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-50",
           // Track: larger on mobile (<640px), standard on desktop
           isLg ? "h-7 w-12 sm:h-6 sm:w-11" : "h-6 w-10 sm:h-5 sm:w-9",
           checked ? "bg-green-600" : "bg-muted",
-          classИмя,
+          className,
         )}
         onClick={() => onCheckedChange(!checked)}
         {...props}
       >
         <span
-          classИмя={cn(
+          className={cn(
             "pointer-events-none inline-block rounded-full bg-white shadow-sm transition-transform",
             // Thumb
             isLg ? "size-5.5 sm:size-5" : "size-4.5 sm:size-3.5",
@@ -56,4 +56,4 @@ export const ToggleSwitch = React.forwardRef<
   },
 );
 
-ToggleSwitch.displayИмя = "ToggleSwitch";
+ToggleSwitch.displayName = "ToggleSwitch";

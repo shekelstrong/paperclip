@@ -1,12 +1,12 @@
 import type { CSSProperties } from "react";
 import {
-  parseАгентMentionHref,
-  parseЗадачаReferenceHref,
+  parseAgentMentionHref,
+  parseIssueReferenceHref,
   parseProjectMentionHref,
-  parseНавыкMentionHref,
+  parseSkillMentionHref,
   parseUserMentionHref,
 } from "@paperclipai/shared";
-import { getАгентIcon } from "./agent-icons";
+import { getAgentIcon } from "./agent-icons";
 import { hexToRgb, pickTextColorForPillBg } from "./color-contrast";
 
 export type ParsedMentionChip =
@@ -41,7 +41,7 @@ export function parseMentionChipHref(href: string): ParsedMentionChip | null {
     return null;
   }
 
-  const issue = parseЗадачаReferenceHref(href);
+  const issue = parseIssueReferenceHref(href);
   if (issue) {
     return {
       kind: "issue",
@@ -49,7 +49,7 @@ export function parseMentionChipHref(href: string): ParsedMentionChip | null {
     };
   }
 
-  const agent = parseАгентMentionHref(href);
+  const agent = parseAgentMentionHref(href);
   if (agent) {
     return {
       kind: "agent",
@@ -75,7 +75,7 @@ export function parseMentionChipHref(href: string): ParsedMentionChip | null {
     };
   }
 
-  const skill = parseНавыкMentionHref(href);
+  const skill = parseSkillMentionHref(href);
   if (skill) {
     return {
       kind: "skill",
@@ -97,7 +97,7 @@ export function mentionChipInlineStyle(mention: ParsedMentionChip): CSSPropertie
   }
 
   if (mention.kind === "agent") {
-    const iconMask = buildАгентIconMask(mention.icon);
+    const iconMask = buildAgentIconMask(mention.icon);
     if (iconMask) {
       style["--paperclip-mention-icon-mask"] = iconMask;
     }
@@ -157,16 +157,16 @@ function projectMentionColors(color: string): Pick<CSSProperties, "borderColor" 
   };
 }
 
-function buildАгентIconMask(iconИмя: string | null): string | null {
-  const cacheКлюч = iconИмя ?? "__default__";
-  const cached = iconMaskCache.get(cacheКлюч);
+function buildAgentIconMask(iconName: string | null): string | null {
+  const cacheKey = iconName ?? "__default__";
+  const cached = iconMaskCache.get(cacheKey);
   if (cached) return cached;
 
-  const Icon = getАгентIcon(iconИмя);
-  const iconНетde = resolveLucideIconНетde(Icon);
-  if (!Array.isArray(iconНетde) || iconНетde.length === 0) return null;
+  const Icon = getAgentIcon(iconName);
+  const iconNode = resolveLucideIconNode(Icon);
+  if (!Array.isArray(iconNode) || iconNode.length === 0) return null;
 
-  const body = iconНетde.map(([tag, attrs]) => {
+  const body = iconNode.map(([tag, attrs]) => {
     const attrString = Object.entries(attrs)
       .filter(([key]) => key !== "key")
       .map(([key, value]) => `${key}="${escapeAttribute(String(value))}"`)
@@ -179,40 +179,40 @@ function buildАгентIconMask(iconИмя: string | null): string | null {
     `fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" ` +
     `stroke-linejoin="round">${body}</svg>`;
   const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-  iconMaskCache.set(cacheКлюч, url);
+  iconMaskCache.set(cacheKey, url);
   return url;
 }
 
-function resolveLucideIconНетde(
+function resolveLucideIconNode(
   icon: unknown,
 ): Array<[string, Record<string, string>]> | null {
-  const staticIconНетde = (
+  const staticIconNode = (
     icon as {
-      iconНетde?: Array<[string, Record<string, string>]>;
+      iconNode?: Array<[string, Record<string, string>]>;
     }
-  ).iconНетde;
-  if (Array.isArray(staticIconНетde) && staticIconНетde.length > 0) {
-    return staticIconНетde;
+  ).iconNode;
+  if (Array.isArray(staticIconNode) && staticIconNode.length > 0) {
+    return staticIconNode;
   }
 
   const render = (
     icon as {
       render?: (props: Record<string, unknown>, ref: unknown) => {
-        props?: { iconНетde?: Array<[string, Record<string, string>]> };
+        props?: { iconNode?: Array<[string, Record<string, string>]> };
       } | null;
     }
   ).render;
   const rendered = typeof render === "function" ? render({}, null) : null;
-  const renderedIconНетde = rendered?.props?.iconНетde;
-  return Array.isArray(renderedIconНетde) && renderedIconНетde.length > 0
-    ? renderedIconНетde
+  const renderedIconNode = rendered?.props?.iconNode;
+  return Array.isArray(renderedIconNode) && renderedIconNode.length > 0
+    ? renderedIconNode
     : null;
 }
 
 function escapeAttribute(value: string): string {
   return value
-    .replaceВсе("&", "&amp;")
-    .replaceВсе('"', "&quot;")
-    .replaceВсе("<", "&lt;")
-    .replaceВсе(">", "&gt;");
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }

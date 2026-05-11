@@ -1,23 +1,23 @@
 import * as React from "react";
 import * as RouterDom from "react-router-dom";
 import type { NavigateOptions, To } from "react-router-dom";
-import type { Задача } from "@paperclipai/shared";
-import { useКомпания } from "@/context/КомпанияContext";
-import { ЗадачаLinkQuicklook } from "@/components/ЗадачаLinkQuicklook";
+import type { Issue } from "@paperclipai/shared";
+import { useCompany } from "@/context/CompanyContext";
+import { IssueLinkQuicklook } from "@/components/IssueLinkQuicklook";
 import {
-  applyКомпанияPrefix,
-  extractКомпанияPrefixFromПуть,
-  normalizeКомпанияPrefix,
+  applyCompanyPrefix,
+  extractCompanyPrefixFromPath,
+  normalizeCompanyPrefix,
 } from "@/lib/company-routes";
-import { parseЗадачаПутьIdFromПуть } from "@/lib/issue-reference";
+import { parseIssuePathIdFromPath } from "@/lib/issue-reference";
 
 function resolveTo(to: To, companyPrefix: string | null): To {
   if (typeof to === "string") {
-    return applyКомпанияPrefix(to, companyPrefix);
+    return applyCompanyPrefix(to, companyPrefix);
   }
 
   if (to.pathname && to.pathname.startsWith("/")) {
-    const pathname = applyКомпанияPrefix(to.pathname, companyPrefix);
+    const pathname = applyCompanyPrefix(to.pathname, companyPrefix);
     if (pathname !== to.pathname) {
       return { ...to, pathname };
     }
@@ -26,41 +26,41 @@ function resolveTo(to: To, companyPrefix: string | null): To {
   return to;
 }
 
-function useАктивенКомпанияPrefix(): string | null {
-  const { selectedКомпания } = useКомпания();
+function useActiveCompanyPrefix(): string | null {
+  const { selectedCompany } = useCompany();
   const params = RouterDom.useParams<{ companyPrefix?: string }>();
   const location = RouterDom.useLocation();
 
   if (params.companyPrefix) {
-    return normalizeКомпанияPrefix(params.companyPrefix);
+    return normalizeCompanyPrefix(params.companyPrefix);
   }
 
-  const pathPrefix = extractКомпанияPrefixFromПуть(location.pathname);
+  const pathPrefix = extractCompanyPrefixFromPath(location.pathname);
   if (pathPrefix) return pathPrefix;
 
-  return selectedКомпания ? normalizeКомпанияPrefix(selectedКомпания.issuePrefix) : null;
+  return selectedCompany ? normalizeCompanyPrefix(selectedCompany.issuePrefix) : null;
 }
 
 export * from "react-router-dom";
 
-type КомпанияLinkProps = React.ComponentProps<typeof RouterDom.Link> & {
-  disableЗадачаQuicklook?: boolean;
-  issuePrefetch?: Задача | null;
+type CompanyLinkProps = React.ComponentProps<typeof RouterDom.Link> & {
+  disableIssueQuicklook?: boolean;
+  issuePrefetch?: Issue | null;
 };
 
-export const Link = React.forwardRef<HTMLAnchorElement, КомпанияLinkProps>(
-  function КомпанияLink({ to, disableЗадачаQuicklook = false, issuePrefetch = null, ...props }, ref) {
-    const companyPrefix = useАктивенКомпанияPrefix();
+export const Link = React.forwardRef<HTMLAnchorElement, CompanyLinkProps>(
+  function CompanyLink({ to, disableIssueQuicklook = false, issuePrefetch = null, ...props }, ref) {
+    const companyPrefix = useActiveCompanyPrefix();
     const resolvedTo = resolveTo(to, companyPrefix);
-    const issueПутьId = parseЗадачаПутьIdFromПуть(typeof resolvedTo === "string" ? resolvedTo : resolvedTo.pathname);
+    const issuePathId = parseIssuePathIdFromPath(typeof resolvedTo === "string" ? resolvedTo : resolvedTo.pathname);
 
-    if (issueПутьId) {
+    if (issuePathId) {
       return (
-        <ЗадачаLinkQuicklook
+        <IssueLinkQuicklook
           ref={ref}
           to={resolvedTo}
-          issueПутьId={issueПутьId}
-          disableЗадачаQuicklook={disableЗадачаQuicklook}
+          issuePathId={issuePathId}
+          disableIssueQuicklook={disableIssueQuicklook}
           issuePrefetch={issuePrefetch}
           {...props}
         />
@@ -72,20 +72,20 @@ export const Link = React.forwardRef<HTMLAnchorElement, КомпанияLinkProp
 );
 
 export const NavLink = React.forwardRef<HTMLAnchorElement, React.ComponentProps<typeof RouterDom.NavLink>>(
-  function КомпанияNavLink({ to, ...props }, ref) {
-    const companyPrefix = useАктивенКомпанияPrefix();
+  function CompanyNavLink({ to, ...props }, ref) {
+    const companyPrefix = useActiveCompanyPrefix();
     return <RouterDom.NavLink ref={ref} to={resolveTo(to, companyPrefix)} {...props} />;
   },
 );
 
 export function Navigate({ to, ...props }: React.ComponentProps<typeof RouterDom.Navigate>) {
-  const companyPrefix = useАктивенКомпанияPrefix();
+  const companyPrefix = useActiveCompanyPrefix();
   return <RouterDom.Navigate to={resolveTo(to, companyPrefix)} {...props} />;
 }
 
-export function useNavigate(): ReturnТип<typeof RouterDom.useNavigate> {
+export function useNavigate(): ReturnType<typeof RouterDom.useNavigate> {
   const navigate = RouterDom.useNavigate();
-  const companyPrefix = useАктивенКомпанияPrefix();
+  const companyPrefix = useActiveCompanyPrefix();
 
   return React.useCallback(
     ((to: To | number, options?: NavigateOptions) => {
@@ -94,7 +94,7 @@ export function useNavigate(): ReturnТип<typeof RouterDom.useNavigate> {
         return;
       }
       navigate(resolveTo(to, companyPrefix), options);
-    }) as ReturnТип<typeof RouterDom.useNavigate>,
+    }) as ReturnType<typeof RouterDom.useNavigate>,
     [navigate, companyPrefix],
   );
 }

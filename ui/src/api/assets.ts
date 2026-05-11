@@ -18,7 +18,7 @@ export const assetsApi = {
     return api.postForm<AssetImage>(`/companies/${companyId}/assets/images`, form);
   },
 
-  uploadКомпанияLogo: async (companyId: string, file: File) => {
+  uploadCompanyLogo: async (companyId: string, file: File) => {
     const buffer = await file.arrayBuffer();
     const safeFile = new File([buffer], file.name, { type: file.type });
 

@@ -1,65 +1,65 @@
-import type { Задача, ЗадачаСтатус } from "@paperclipai/shared";
-import { workflowСортировка } from "./workflow-sort";
+import type { Issue, IssueStatus } from "@paperclipai/shared";
+import { workflowSort } from "./workflow-sort";
 
-export type SubЗадачаProgressЦельKind = "next" | "blocked";
+export type SubIssueProgressTargetKind = "next" | "blocked";
 
-export type SubЗадачаProgressЦель = {
-  issue: Задача;
-  kind: SubЗадачаProgressЦельKind;
+export type SubIssueProgressTarget = {
+  issue: Issue;
+  kind: SubIssueProgressTargetKind;
 };
 
-export type SubЗадачаProgressSummary = {
+export type SubIssueProgressSummary = {
   totalCount: number;
   doneCount: number;
   inProgressCount: number;
   blockedCount: number;
-  countsByСтатус: Partial<Record<ЗадачаСтатус, number>>;
-  target: SubЗадачаProgressЦель | null;
+  countsByStatus: Partial<Record<IssueStatus, number>>;
+  target: SubIssueProgressTarget | null;
 };
 
-export function shouldRenderRichSubЗадачиSection(childЗадачиЗагрузка: boolean, childЗадачаCount: number): boolean {
-  return childЗадачиЗагрузка || childЗадачаCount > 0;
+export function shouldRenderRichSubIssuesSection(childIssuesLoading: boolean, childIssueCount: number): boolean {
+  return childIssuesLoading || childIssueCount > 0;
 }
 
 const MIN_CHILD_ISSUES_FOR_PROGRESS_SUMMARY = 2;
 
-export function shouldRenderSubЗадачаProgressSummary(enabled: boolean | undefined, childЗадачаCount: number): boolean {
-  return enabled === true && childЗадачаCount >= MIN_CHILD_ISSUES_FOR_PROGRESS_SUMMARY;
+export function shouldRenderSubIssueProgressSummary(enabled: boolean | undefined, childIssueCount: number): boolean {
+  return enabled === true && childIssueCount >= MIN_CHILD_ISSUES_FOR_PROGRESS_SUMMARY;
 }
 
-export function buildSubЗадачаProgressSummary(issues: Задача[]): SubЗадачаProgressSummary {
-  const countsByСтатус: Partial<Record<ЗадачаСтатус, number>> = {};
-  const progressЗадачи = issues.filter((issue) => issue.status !== "cancelled");
-  for (const issue of progressЗадачи) {
-    countsByСтатус[issue.status] = (countsByСтатус[issue.status] ?? 0) + 1;
+export function buildSubIssueProgressSummary(issues: Issue[]): SubIssueProgressSummary {
+  const countsByStatus: Partial<Record<IssueStatus, number>> = {};
+  const progressIssues = issues.filter((issue) => issue.status !== "cancelled");
+  for (const issue of progressIssues) {
+    countsByStatus[issue.status] = (countsByStatus[issue.status] ?? 0) + 1;
   }
 
-  const orderedЗадачи = workflowСортировка(progressЗадачи);
-  const nextЗадача = orderedЗадачи.find((issue) => isActionableСтатус(issue.status)) ?? null;
-  const remainingЗадачи = orderedЗадачи.filter((issue) => !isTerminalСтатус(issue.status));
-  const blockedЗадача =
-    nextЗадача === null && remainingЗадачи.length > 0 && remainingЗадачи.every((issue) => issue.status === "blocked")
-      ? remainingЗадачи[0]
+  const orderedIssues = workflowSort(progressIssues);
+  const nextIssue = orderedIssues.find((issue) => isActionableStatus(issue.status)) ?? null;
+  const remainingIssues = orderedIssues.filter((issue) => !isTerminalStatus(issue.status));
+  const blockedIssue =
+    nextIssue === null && remainingIssues.length > 0 && remainingIssues.every((issue) => issue.status === "blocked")
+      ? remainingIssues[0]
       : null;
 
   return {
-    totalCount: progressЗадачи.length,
-    doneCount: countsByСтатус.done ?? 0,
-    inProgressCount: countsByСтатус.in_progress ?? 0,
-    blockedCount: countsByСтатус.blocked ?? 0,
-    countsByСтатус,
-    target: nextЗадача
-      ? { issue: nextЗадача, kind: "next" }
-      : blockedЗадача
-        ? { issue: blockedЗадача, kind: "blocked" }
+    totalCount: progressIssues.length,
+    doneCount: countsByStatus.done ?? 0,
+    inProgressCount: countsByStatus.in_progress ?? 0,
+    blockedCount: countsByStatus.blocked ?? 0,
+    countsByStatus,
+    target: nextIssue
+      ? { issue: nextIssue, kind: "next" }
+      : blockedIssue
+        ? { issue: blockedIssue, kind: "blocked" }
         : null,
   };
 }
 
-function isActionableСтатус(status: ЗадачаСтатус): boolean {
+function isActionableStatus(status: IssueStatus): boolean {
   return status !== "done" && status !== "cancelled" && status !== "blocked";
 }
 
-function isTerminalСтатус(status: ЗадачаСтатус): boolean {
+function isTerminalStatus(status: IssueStatus): boolean {
   return status === "done" || status === "cancelled";
 }

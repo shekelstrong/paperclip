@@ -8,11 +8,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PluginRecord } from "@paperclipai/shared";
 import { Link } from "@/lib/router";
-import { AlertTriangle, FlaskConical, Plus, Power, Puzzle, Настройки, Trash } from "lucide-react";
-import { useКомпания } from "@/context/КомпанияContext";
+import { AlertTriangle, FlaskConical, Plus, Power, Puzzle, Settings, Trash } from "lucide-react";
+import { useCompany } from "@/context/CompanyContext";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { pluginsApi } from "@/api/plugins";
-import { queryКлючs } from "@/lib/queryКлючs";
+import { queryKeys } from "@/lib/queryKeys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,16 +21,16 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
-  DialogОписание,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogНазвание,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToastActions } from "@/context/ToastContext";
 import { cn } from "@/lib/utils";
 
-function firstНетnEmptyLine(value: string | null | undefined): string | null {
+function firstNonEmptyLine(value: string | null | undefined): string | null {
   if (!value) return null;
   const line = value
     .split(/\r?\n/)
@@ -39,8 +39,8 @@ function firstНетnEmptyLine(value: string | null | undefined): string | null 
   return line ?? null;
 }
 
-function getPluginОшибкаSummary(plugin: PluginRecord): string {
-  return firstНетnEmptyLine(plugin.lastОшибка) ?? "Plugin entered an error state without a stored error message.";
+function getPluginErrorSummary(plugin: PluginRecord): string {
+  return firstNonEmptyLine(plugin.lastError) ?? "Plugin entered an error state without a stored error message.";
 }
 
 /**
@@ -48,20 +48,20 @@ function getPluginОшибкаSummary(plugin: PluginRecord): string {
  *
  * Provides a management UI for the Paperclip plugin system:
  * - Lists all installed plugins with their status, version, and category badges.
- * - Всеows installing new plugins by npm package name.
+ * - Allows installing new plugins by npm package name.
  * - Provides per-plugin actions: enable, disable, navigate to settings.
  * - Uninstall with a two-step confirmation dialog to prevent accidental removal.
  *
  * Data flow:
  * - Reads from `GET /api/plugins` via `pluginsApi.list()`.
  * - Mutations (install / uninstall / enable / disable) invalidate
- *   `queryКлючs.plugins.all` so the list refreshes automatically.
+ *   `queryKeys.plugins.all` so the list refreshes automatically.
  *
- * @see PluginНастройки — linked from the Настройки icon on each plugin row.
+ * @see PluginSettings — linked from the Settings icon on each plugin row.
  * @see doc/plugins/PLUGIN_SPEC.md §3 — Plugin Lifecycle for status semantics.
  */
 export function PluginManager() {
-  const { selectedКомпания } = useКомпания();
+  const { selectedCompany } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
   const { pushToast } = useToastActions();
@@ -69,122 +69,122 @@ export function PluginManager() {
   const [installPackage, setInstallPackage] = useState("");
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
   const [uninstallPluginId, setUninstallPluginId] = useState<string | null>(null);
-  const [uninstallPluginИмя, setUninstallPluginИмя] = useState<string>("");
-  const [errorДеталиPlugin, setОшибкаДеталиPlugin] = useState<PluginRecord | null>(null);
+  const [uninstallPluginName, setUninstallPluginName] = useState<string>("");
+  const [errorDetailsPlugin, setErrorDetailsPlugin] = useState<PluginRecord | null>(null);
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedКомпания?.name ?? "Компания", href: "/dashboard" },
+      { label: selectedCompany?.name ?? "Компания", href: "/dashboard" },
       { label: "Настройки", href: "/instance/settings/heartbeats" },
       { label: "Plugins" },
     ]);
-  }, [selectedКомпания?.name, setBreadcrumbs]);
+  }, [selectedCompany?.name, setBreadcrumbs]);
 
-  const { data: plugins, isЗагрузка, error } = useQuery({
-    queryКлюч: queryКлючs.plugins.all,
+  const { data: plugins, isLoading, error } = useQuery({
+    queryKey: queryKeys.plugins.all,
     queryFn: () => pluginsApi.list(),
   });
 
   const examplesQuery = useQuery({
-    queryКлюч: queryКлючs.plugins.examples,
+    queryKey: queryKeys.plugins.examples,
     queryFn: () => pluginsApi.listExamples(),
   });
 
   const invalidatePluginQueries = () => {
-    queryClient.invalidateQueries({ queryКлюч: queryКлючs.plugins.all });
-    queryClient.invalidateQueries({ queryКлюч: queryКлючs.plugins.examples });
-    queryClient.invalidateQueries({ queryКлюч: queryКлючs.plugins.uiContributions });
+    queryClient.invalidateQueries({ queryKey: queryKeys.plugins.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.plugins.examples });
+    queryClient.invalidateQueries({ queryKey: queryKeys.plugins.uiContributions });
   };
 
   const installMutation = useMutation({
-    mutationFn: (params: { packageИмя: string; version?: string; isLocalПуть?: boolean }) =>
+    mutationFn: (params: { packageName: string; version?: string; isLocalPath?: boolean }) =>
       pluginsApi.install(params),
-    onУспешно: () => {
+    onSuccess: () => {
       invalidatePluginQueries();
       setInstallDialogOpen(false);
       setInstallPackage("");
       pushToast({ title: "Plugin installed successfully", tone: "success" });
     },
-    onОшибка: (err: Ошибка) => {
-      pushToast({ title: "Ошибка to install plugin", body: err.message, tone: "error" });
+    onError: (err: Error) => {
+      pushToast({ title: "Failed to install plugin", body: err.message, tone: "error" });
     },
   });
 
   const uninstallMutation = useMutation({
     mutationFn: (pluginId: string) => pluginsApi.uninstall(pluginId),
-    onУспешно: () => {
+    onSuccess: () => {
       invalidatePluginQueries();
       pushToast({ title: "Plugin uninstalled successfully", tone: "success" });
     },
-    onОшибка: (err: Ошибка) => {
-      pushToast({ title: "Ошибка to uninstall plugin", body: err.message, tone: "error" });
+    onError: (err: Error) => {
+      pushToast({ title: "Failed to uninstall plugin", body: err.message, tone: "error" });
     },
   });
 
   const enableMutation = useMutation({
     mutationFn: (pluginId: string) => pluginsApi.enable(pluginId),
-    onУспешно: () => {
+    onSuccess: () => {
       invalidatePluginQueries();
       pushToast({ title: "Plugin enabled", tone: "success" });
     },
-    onОшибка: (err: Ошибка) => {
-      pushToast({ title: "Ошибка to enable plugin", body: err.message, tone: "error" });
+    onError: (err: Error) => {
+      pushToast({ title: "Failed to enable plugin", body: err.message, tone: "error" });
     },
   });
 
   const disableMutation = useMutation({
     mutationFn: (pluginId: string) => pluginsApi.disable(pluginId),
-    onУспешно: () => {
+    onSuccess: () => {
       invalidatePluginQueries();
       pushToast({ title: "Plugin disabled", tone: "info" });
     },
-    onОшибка: (err: Ошибка) => {
-      pushToast({ title: "Ошибка to disable plugin", body: err.message, tone: "error" });
+    onError: (err: Error) => {
+      pushToast({ title: "Failed to disable plugin", body: err.message, tone: "error" });
     },
   });
 
   const installedPlugins = plugins ?? [];
   const examples = examplesQuery.data ?? [];
-  const installedByPackageИмя = new Map(installedPlugins.map((plugin) => [plugin.packageИмя, plugin]));
-  const examplePackageИмяs = new Set(examples.map((example) => example.packageИмя));
+  const installedByPackageName = new Map(installedPlugins.map((plugin) => [plugin.packageName, plugin]));
+  const examplePackageNames = new Set(examples.map((example) => example.packageName));
   const errorSummaryByPluginId = useMemo(
     () =>
       new Map(
-        installedPlugins.map((plugin) => [plugin.id, getPluginОшибкаSummary(plugin)])
+        installedPlugins.map((plugin) => [plugin.id, getPluginErrorSummary(plugin)])
       ),
     [installedPlugins]
   );
 
-  if (isЗагрузка) return <div classИмя="p-4 text-sm text-muted-foreground">Загрузка plugins...</div>;
-  if (error) return <div classИмя="p-4 text-sm text-destructive">Ошибка to load plugins.</div>;
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Loading plugins...</div>;
+  if (error) return <div className="p-4 text-sm text-destructive">Failed to load plugins.</div>;
 
   return (
-    <div classИмя="space-y-6 max-w-5xl">
-      <div classИмя="flex items-center justify-between">
-        <div classИмя="flex items-center gap-2">
-          <Puzzle classИмя="h-6 w-6 text-muted-foreground" />
-          <h1 classИмя="text-xl font-semibold">Plugin Manager</h1>
+    <div className="space-y-6 max-w-5xl">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Puzzle className="h-6 w-6 text-muted-foreground" />
+          <h1 className="text-xl font-semibold">Plugin Manager</h1>
         </div>
         
         <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" classИмя="gap-2">
-              <Plus classИмя="h-4 w-4" />
+            <Button size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
               Install Plugin
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogНазвание>Install Plugin</DialogНазвание>
-              <DialogОписание>
+              <DialogTitle>Install Plugin</DialogTitle>
+              <DialogDescription>
                 Enter the npm package name of the plugin you wish to install.
-              </DialogОписание>
+              </DialogDescription>
             </DialogHeader>
-            <div classИмя="grid gap-4 py-4">
-              <div classИмя="grid gap-2">
-                <Label htmlFor="packageИмя">npm Package Имя</Label>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="packageName">npm Package Name</Label>
                 <Input
-                  id="packageИмя"
+                  id="packageName"
                   placeholder="@paperclipai/plugin-example"
                   value={installPackage}
                   onChange={(e) => setInstallPackage(e.target.value)}
@@ -192,106 +192,106 @@ export function PluginManager() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setInstallDialogOpen(false)}>Отмена</Button>
+              <Button variant="outline" onClick={() => setInstallDialogOpen(false)}>Cancel</Button>
               <Button
-                onClick={() => installMutation.mutate({ packageИмя: installPackage })}
-                disabled={!installPackage || installMutation.isОжидание}
+                onClick={() => installMutation.mutate({ packageName: installPackage })}
+                disabled={!installPackage || installMutation.isPending}
               >
-                {installMutation.isОжидание ? "Installing..." : "Install"}
+                {installMutation.isPending ? "Installing..." : "Install"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div classИмя="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3">
-        <div classИмя="flex items-start gap-3">
-          <AlertTriangle classИмя="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-          <div classИмя="space-y-1 text-sm">
-            <p classИмя="font-medium text-foreground">Plugins are alpha.</p>
-            <p classИмя="text-muted-foreground">
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+          <div className="space-y-1 text-sm">
+            <p className="font-medium text-foreground">Plugins are alpha.</p>
+            <p className="text-muted-foreground">
               The plugin runtime and API surface are still changing. Expect breaking changes while this feature settles.
             </p>
           </div>
         </div>
       </div>
 
-      <section classИмя="space-y-3">
-        <div classИмя="flex items-center gap-2">
-          <FlaskConical classИмя="h-5 w-5 text-muted-foreground" />
-          <h2 classИмя="text-base font-semibold">Available Plugins</h2>
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <FlaskConical className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-base font-semibold">Available Plugins</h2>
           <Badge variant="outline">Examples</Badge>
         </div>
 
-        {examplesQuery.isЗагрузка ? (
-          <div classИмя="text-sm text-muted-foreground">Загрузка bundled examples...</div>
+        {examplesQuery.isLoading ? (
+          <div className="text-sm text-muted-foreground">Loading bundled examples...</div>
         ) : examplesQuery.error ? (
-          <div classИмя="text-sm text-destructive">Ошибка to load bundled examples.</div>
+          <div className="text-sm text-destructive">Failed to load bundled examples.</div>
         ) : examples.length === 0 ? (
-          <div classИмя="rounded-md border border-dashed px-4 py-3 text-sm text-muted-foreground">
-            Нет bundled example plugins were found in this checkout.
+          <div className="rounded-md border border-dashed px-4 py-3 text-sm text-muted-foreground">
+            No bundled example plugins were found in this checkout.
           </div>
         ) : (
-          <ul classИмя="divide-y rounded-md border bg-card">
+          <ul className="divide-y rounded-md border bg-card">
             {examples.map((example) => {
-              const installedPlugin = installedByPackageИмя.get(example.packageИмя);
-              const installОжидание =
-                installMutation.isОжидание &&
-                installMutation.variables?.isLocalПуть &&
-                installMutation.variables.packageИмя === example.localПуть;
+              const installedPlugin = installedByPackageName.get(example.packageName);
+              const installPending =
+                installMutation.isPending &&
+                installMutation.variables?.isLocalPath &&
+                installMutation.variables.packageName === example.localPath;
 
               return (
-                <li key={example.packageИмя}>
-                  <div classИмя="flex items-center gap-4 px-4 py-3">
-                    <div classИмя="min-w-0 flex-1">
-                      <div classИмя="flex flex-wrap items-center gap-2">
-                        <span classИмя="font-medium">{example.displayИмя}</span>
+                <li key={example.packageName}>
+                  <div className="flex items-center gap-4 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{example.displayName}</span>
                         <Badge variant="outline">Example</Badge>
                         {installedPlugin ? (
                           <Badge
                             variant={installedPlugin.status === "ready" ? "default" : "secondary"}
-                            classИмя={installedPlugin.status === "ready" ? "bg-green-600 hover:bg-green-700" : ""}
+                            className={installedPlugin.status === "ready" ? "bg-green-600 hover:bg-green-700" : ""}
                           >
                             {installedPlugin.status}
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">Нетt installed</Badge>
+                          <Badge variant="secondary">Not installed</Badge>
                         )}
                       </div>
-                      <p classИмя="mt-1 text-sm text-muted-foreground">{example.description}</p>
-                      <p classИмя="mt-1 text-xs text-muted-foreground">{example.packageИмя}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{example.description}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{example.packageName}</p>
                     </div>
-                    <div classИмя="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       {installedPlugin ? (
                         <>
                           {installedPlugin.status !== "ready" && (
                             <Button
                               variant="outline"
                               size="sm"
-                              disabled={enableMutation.isОжидание}
+                              disabled={enableMutation.isPending}
                               onClick={() => enableMutation.mutate(installedPlugin.id)}
                             >
-                              Включить
+                              Enable
                             </Button>
                           )}
                           <Button variant="outline" size="sm" asChild>
                             <Link to={`/instance/settings/plugins/${installedPlugin.id}`}>
-                              {installedPlugin.status === "ready" ? "Open Настройки" : "Review"}
+                              {installedPlugin.status === "ready" ? "Open Settings" : "Review"}
                             </Link>
                           </Button>
                         </>
                       ) : (
                         <Button
                           size="sm"
-                          disabled={installОжидание || installMutation.isОжидание}
+                          disabled={installPending || installMutation.isPending}
                           onClick={() =>
                             installMutation.mutate({
-                              packageИмя: example.localПуть,
-                              isLocalПуть: true,
+                              packageName: example.localPath,
+                              isLocalPath: true,
                             })
                           }
                         >
-                          {installОжидание ? "Installing..." : "Install Example"}
+                          {installPending ? "Installing..." : "Install Example"}
                         </Button>
                       )}
                     </div>
@@ -303,59 +303,59 @@ export function PluginManager() {
         )}
       </section>
 
-      <section classИмя="space-y-3">
-        <div classИмя="flex items-center gap-2">
-          <Puzzle classИмя="h-5 w-5 text-muted-foreground" />
-          <h2 classИмя="text-base font-semibold">Installed Plugins</h2>
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Puzzle className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-base font-semibold">Installed Plugins</h2>
         </div>
 
         {!installedPlugins.length ? (
-          <Card classИмя="bg-muted/30">
-            <CardContent classИмя="flex flex-col items-center justify-center py-10">
-              <Puzzle classИмя="h-10 w-10 text-muted-foreground mb-4" />
-              <p classИмя="text-sm font-medium">Нет plugins installed</p>
-              <p classИмя="text-xs text-muted-foreground mt-1">
+          <Card className="bg-muted/30">
+            <CardContent className="flex flex-col items-center justify-center py-10">
+              <Puzzle className="h-10 w-10 text-muted-foreground mb-4" />
+              <p className="text-sm font-medium">No plugins installed</p>
+              <p className="text-xs text-muted-foreground mt-1">
                 Install a plugin to extend functionality.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <ul classИмя="divide-y rounded-md border bg-card">
+          <ul className="divide-y rounded-md border bg-card">
             {installedPlugins.map((plugin) => (
               <li key={plugin.id}>
-                <div classИмя="flex items-start gap-4 px-4 py-3">
-                  <div classИмя="min-w-0 flex-1">
-                    <div classИмя="flex flex-wrap items-center gap-2">
+                <div className="flex items-start gap-4 px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Link
                         to={`/instance/settings/plugins/${plugin.id}`}
-                        classИмя="font-medium hover:underline truncate block"
-                        title={plugin.manifestJson.displayИмя ?? plugin.packageИмя}
+                        className="font-medium hover:underline truncate block"
+                        title={plugin.manifestJson.displayName ?? plugin.packageName}
                       >
-                        {plugin.manifestJson.displayИмя ?? plugin.packageИмя}
+                        {plugin.manifestJson.displayName ?? plugin.packageName}
                       </Link>
-                      {examplePackageИмяs.has(plugin.packageИмя) && (
+                      {examplePackageNames.has(plugin.packageName) && (
                         <Badge variant="outline">Example</Badge>
                       )}
                     </div>
                     <div>
-                      <p classИмя="text-xs text-muted-foreground mt-0.5 truncate" title={plugin.packageИмя}>
-                        {plugin.packageИмя} · v{plugin.manifestJson.version ?? plugin.version}
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate" title={plugin.packageName}>
+                        {plugin.packageName} · v{plugin.manifestJson.version ?? plugin.version}
                       </p>
                     </div>
-                    <p classИмя="text-sm text-muted-foreground truncate mt-0.5" title={plugin.manifestJson.description}>
-                      {plugin.manifestJson.description || "Нет описания provided."}
+                    <p className="text-sm text-muted-foreground truncate mt-0.5" title={plugin.manifestJson.description}>
+                      {plugin.manifestJson.description || "No description provided."}
                     </p>
                     {plugin.status === "error" && (
-                      <div classИмя="mt-3 rounded-md border border-red-500/25 bg-red-500/[0.06] px-3 py-2">
-                        <div classИмя="flex flex-wrap items-start gap-3">
-                          <div classИмя="min-w-0 flex-1">
-                            <div classИмя="flex items-center gap-2 text-sm font-medium text-red-700 dark:text-red-300">
-                              <AlertTriangle classИмя="h-4 w-4 shrink-0" />
+                      <div className="mt-3 rounded-md border border-red-500/25 bg-red-500/[0.06] px-3 py-2">
+                        <div className="flex flex-wrap items-start gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 text-sm font-medium text-red-700 dark:text-red-300">
+                              <AlertTriangle className="h-4 w-4 shrink-0" />
                               <span>Plugin error</span>
                             </div>
                             <p
-                              classИмя="mt-1 text-sm text-red-700/90 dark:text-red-200/90 break-words"
-                              title={plugin.lastОшибка ?? undefined}
+                              className="mt-1 text-sm text-red-700/90 dark:text-red-200/90 break-words"
+                              title={plugin.lastError ?? undefined}
                             >
                               {errorSummaryByPluginId.get(plugin.id)}
                             </p>
@@ -363,8 +363,8 @@ export function PluginManager() {
                           <Button
                             variant="outline"
                             size="sm"
-                            classИмя="border-red-500/30 bg-background/60 text-red-700 hover:bg-red-500/10 hover:text-red-800 dark:text-red-200 dark:hover:text-red-100"
-                            onClick={() => setОшибкаДеталиPlugin(plugin)}
+                            className="border-red-500/30 bg-background/60 text-red-700 hover:bg-red-500/10 hover:text-red-800 dark:text-red-200 dark:hover:text-red-100"
+                            onClick={() => setErrorDetailsPlugin(plugin)}
                           >
                             View full error
                           </Button>
@@ -372,9 +372,9 @@ export function PluginManager() {
                       </div>
                     )}
                   </div>
-                  <div classИмя="flex shrink-0 self-center">
-                    <div classИмя="flex flex-col items-end gap-2">
-                      <div classИмя="flex items-center gap-2">
+                  <div className="flex shrink-0 self-center">
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2">
                         <Badge
                           variant={
                             plugin.status === "ready"
@@ -383,7 +383,7 @@ export function PluginManager() {
                                 ? "destructive"
                               : "secondary"
                           }
-                          classИмя={cn(
+                          className={cn(
                             "shrink-0",
                             plugin.status === "ready" ? "bg-green-600 hover:bg-green-700" : ""
                           )}
@@ -393,7 +393,7 @@ export function PluginManager() {
                         <Button
                           variant="outline"
                           size="icon-sm"
-                          classИмя="h-8 w-8"
+                          className="h-8 w-8"
                           title={plugin.status === "ready" ? "Отключить" : "Включить"}
                           onClick={() => {
                             if (plugin.status === "ready") {
@@ -402,27 +402,27 @@ export function PluginManager() {
                               enableMutation.mutate(plugin.id);
                             }
                           }}
-                          disabled={enableMutation.isОжидание || disableMutation.isОжидание}
+                          disabled={enableMutation.isPending || disableMutation.isPending}
                         >
-                          <Power classИмя={cn("h-4 w-4", plugin.status === "ready" ? "text-green-600" : "")} />
+                          <Power className={cn("h-4 w-4", plugin.status === "ready" ? "text-green-600" : "")} />
                         </Button>
                         <Button
                           variant="outline"
                           size="icon-sm"
-                          classИмя="h-8 w-8 text-destructive hover:text-destructive"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
                           title="Uninstall"
                           onClick={() => {
                             setUninstallPluginId(plugin.id);
-                            setUninstallPluginИмя(plugin.manifestJson.displayИмя ?? plugin.packageИмя);
+                            setUninstallPluginName(plugin.manifestJson.displayName ?? plugin.packageName);
                           }}
-                          disabled={uninstallMutation.isОжидание}
+                          disabled={uninstallMutation.isPending}
                         >
-                          <Trash classИмя="h-4 w-4" />
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
-                      <Button variant="outline" size="sm" classИмя="mt-2 h-8" asChild>
+                      <Button variant="outline" size="sm" className="mt-2 h-8" asChild>
                         <Link to={`/instance/settings/plugins/${plugin.id}`}>
-                          <Настройки classИмя="h-4 w-4" />
+                          <Settings className="h-4 w-4" />
                           Configure
                         </Link>
                       </Button>
@@ -441,16 +441,16 @@ export function PluginManager() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogНазвание>Uninstall Plugin</DialogНазвание>
-            <DialogОписание>
-              Are you sure you want to uninstall <strong>{uninstallPluginИмя}</strong>? This action cannot be undone.
-            </DialogОписание>
+            <DialogTitle>Uninstall Plugin</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to uninstall <strong>{uninstallPluginName}</strong>? This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setUninstallPluginId(null)}>Отмена</Button>
+            <Button variant="outline" onClick={() => setUninstallPluginId(null)}>Cancel</Button>
             <Button
               variant="destructive"
-              disabled={uninstallMutation.isОжидание}
+              disabled={uninstallMutation.isPending}
               onClick={() => {
                 if (uninstallPluginId) {
                   uninstallMutation.mutate(uninstallPluginId, {
@@ -459,47 +459,47 @@ export function PluginManager() {
                 }
               }}
             >
-              {uninstallMutation.isОжидание ? "Uninstalling..." : "Uninstall"}
+              {uninstallMutation.isPending ? "Uninstalling..." : "Uninstall"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog
-        open={errorДеталиPlugin !== null}
-        onOpenChange={(open) => { if (!open) setОшибкаДеталиPlugin(null); }}
+        open={errorDetailsPlugin !== null}
+        onOpenChange={(open) => { if (!open) setErrorDetailsPlugin(null); }}
       >
-        <DialogContent classИмя="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogНазвание>Ошибка Детали</DialogНазвание>
-            <DialogОписание>
-              {errorДеталиPlugin?.manifestJson.displayИмя ?? errorДеталиPlugin?.packageИмя ?? "Plugin"} hit an error state.
-            </DialogОписание>
+            <DialogTitle>Error Details</DialogTitle>
+            <DialogDescription>
+              {errorDetailsPlugin?.manifestJson.displayName ?? errorDetailsPlugin?.packageName ?? "Plugin"} hit an error state.
+            </DialogDescription>
           </DialogHeader>
-          <div classИмя="space-y-4">
-            <div classИмя="rounded-md border border-red-500/25 bg-red-500/[0.06] px-4 py-3">
-              <div classИмя="flex items-start gap-3">
-                <AlertTriangle classИмя="mt-0.5 h-4 w-4 shrink-0 text-red-700 dark:text-red-300" />
-                <div classИмя="space-y-1 text-sm">
-                  <p classИмя="font-medium text-red-700 dark:text-red-300">
+          <div className="space-y-4">
+            <div className="rounded-md border border-red-500/25 bg-red-500/[0.06] px-4 py-3">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-700 dark:text-red-300" />
+                <div className="space-y-1 text-sm">
+                  <p className="font-medium text-red-700 dark:text-red-300">
                     What errored
                   </p>
-                  <p classИмя="text-red-700/90 dark:text-red-200/90 break-words">
-                    {errorДеталиPlugin ? getPluginОшибкаSummary(errorДеталиPlugin) : "Нет error summary available."}
+                  <p className="text-red-700/90 dark:text-red-200/90 break-words">
+                    {errorDetailsPlugin ? getPluginErrorSummary(errorDetailsPlugin) : "No error summary available."}
                   </p>
                 </div>
               </div>
             </div>
-            <div classИмя="space-y-2">
-              <p classИмя="text-sm font-medium">Full error output</p>
-              <pre classИмя="max-h-[50vh] overflow-auto rounded-md border bg-muted/40 p-3 text-xs leading-5 whitespace-pre-wrap break-words">
-                {errorДеталиPlugin?.lastОшибка ?? "Нет stored error message."}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Full error output</p>
+              <pre className="max-h-[50vh] overflow-auto rounded-md border bg-muted/40 p-3 text-xs leading-5 whitespace-pre-wrap break-words">
+                {errorDetailsPlugin?.lastError ?? "No stored error message."}
               </pre>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setОшибкаДеталиPlugin(null)}>
-              Закрыть
+            <Button variant="outline" onClick={() => setErrorDetailsPlugin(null)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

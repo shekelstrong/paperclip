@@ -1,35 +1,35 @@
 import { memo, useMemo } from "react";
 import type { TranscriptEntry } from "../adapters";
-import type { LiveЗапуститьForЗадача } from "../api/heartbeats";
-import { ЗадачаChatThread } from "./ЗадачаChatThread";
-import type { ЗадачаChatLinkedЗапустить } from "../lib/issue-chat-messages";
+import type { LiveRunForIssue } from "../api/heartbeats";
+import { IssueChatThread } from "./IssueChatThread";
+import type { IssueChatLinkedRun } from "../lib/issue-chat-messages";
 
 const EMPTY_COMMENTS: [] = [];
 const EMPTY_TIMELINE_EVENTS: [] = [];
 const EMPTY_LIVE_RUNS: [] = [];
 const EMPTY_LINKED_RUNS: [] = [];
-const handleEmbeddedДобавить = async () => {};
+const handleEmbeddedAdd = async () => {};
 
-function isЗапуститьАктивен(run: LiveЗапуститьForЗадача) {
+function isRunActive(run: LiveRunForIssue) {
   return run.status === "queued" || run.status === "running";
 }
 
-interface ЗапуститьChatSurfaceProps {
-  run: LiveЗапуститьForЗадача;
+interface RunChatSurfaceProps {
+  run: LiveRunForIssue;
   transcript: TranscriptEntry[];
   hasOutput: boolean;
   companyId?: string | null;
 }
 
-export const ЗапуститьChatSurface = memo(function ЗапуститьChatSurface({
+export const RunChatSurface = memo(function RunChatSurface({
   run,
   transcript,
   hasOutput,
   companyId,
-}: ЗапуститьChatSurfaceProps) {
-  const active = isЗапуститьАктивен(run);
-  const liveЗапуститьs = useMemo(() => (active ? [run] : EMPTY_LIVE_RUNS), [active, run]);
-  const linkedЗапуститьs = useMemo<ЗадачаChatLinkedЗапустить[]>(
+}: RunChatSurfaceProps) {
+  const active = isRunActive(run);
+  const liveRuns = useMemo(() => (active ? [run] : EMPTY_LIVE_RUNS), [active, run]);
+  const linkedRuns = useMemo<IssueChatLinkedRun[]>(
     () =>
       active
         ? EMPTY_LINKED_RUNS
@@ -37,34 +37,34 @@ export const ЗапуститьChatSurface = memo(function ЗапуститьCha
             runId: run.id,
             status: run.status,
             agentId: run.agentId,
-            agentИмя: run.agentИмя,
+            agentName: run.agentName,
             createdAt: run.createdAt,
             startedAt: run.startedAt,
             finishedAt: run.finishedAt,
           }],
     [active, run],
   );
-  const transcriptsByЗапуститьId = useMemo(
+  const transcriptsByRunId = useMemo(
     () => new Map([[run.id, transcript as readonly TranscriptEntry[]]]),
     [run.id, transcript],
   );
 
   return (
-    <ЗадачаChatThread
+    <IssueChatThread
       comments={EMPTY_COMMENTS}
-      linkedЗапуститьs={linkedЗапуститьs}
+      linkedRuns={linkedRuns}
       timelineEvents={EMPTY_TIMELINE_EVENTS}
-      liveЗапуститьs={liveЗапуститьs}
+      liveRuns={liveRuns}
       companyId={companyId}
-      onДобавить={handleEmbeddedДобавить}
+      onAdd={handleEmbeddedAdd}
       showComposer={false}
       showJumpToLatest={false}
       variant="embedded"
-      emptyMessage={active ? "Waiting for run output..." : "Нет run output captured."}
+      emptyMessage={active ? "Waiting for run output..." : "No run output captured."}
       enableLiveTranscriptPolling={false}
-      transcriptsByЗапуститьId={transcriptsByЗапуститьId}
-      hasOutputForЗапустить={(runId) => runId === run.id && hasOutput}
-      includeSucceededЗапуститьsWithoutOutput
+      transcriptsByRunId={transcriptsByRunId}
+      hasOutputForRun={(runId) => runId === run.id && hasOutput}
+      includeSucceededRunsWithoutOutput
     />
   );
 });
