@@ -25,16 +25,21 @@ jobs:
             git pull origin master
 
             echo "=== Установка зависимостей ==="
-            pnpm install --no-frozen-lockfile
+            pnpm install --no-frozen-lockfile 2>&1 | tail -3
 
             echo "=== Сборка UI ==="
-            cd ui && npx vite build
+            cd ui && npx vite build 2>&1 | tail -3
+            cd /opt/paperclip-ru
 
             echo "=== Перезапуск ==="
-            pkill -f "paperclip" || true
-            sleep 2
-            cd /opt/paperclip-ru && nohup pnpm dev > server.log 2>&1 &
-
+            # Kill old server only, not the SSH session
+            for pid in $(ps aux | grep "pnpm dev" | grep -v grep | awk '{print $2}'); do
+              kill "$pid" 2>/dev/null || true
+            done
             sleep 3
-            curl -s http://localhost:3101/api/health || true
-            echo "✅ Деплой завершён"
+            cd /opt/paperclip-ru && nohup pnpm dev > /dev/null 2>&1 &
+            sleep 4
+
+            echo "=== Проверка ==="
+            curl -sf http://localhost:3101/api/health && echo "OK" || echo "WARN"
+            echo "DEPLOYED"
