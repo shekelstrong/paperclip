@@ -1,17 +1,17 @@
 export {
-  getUIAdapter,
-  listUIAdapters,
-  findUIAdapter,
-  registerUIAdapter,
-  unregisterUIAdapter,
-  syncExternalAdapters,
-  onAdapterChange,
+  getUIАдаптер,
+  listUIАдаптеры,
+  findUIАдаптер,
+  registerUIАдаптер,
+  unregisterUIАдаптер,
+  syncExternalАдаптеры,
+  onАдаптерChange,
 } from "./registry";
 export { buildTranscript } from "./transcript";
 export type {
   TranscriptEntry,
   StdoutLineParser,
-  UIAdapterModule,
-  AdapterConfigFieldsProps,
+  UIАдаптерModule,
+  АдаптерConfigFieldsProps,
 } from "./types";
-export type { RunLogChunk } from "./transcript";
+export type { ЗапуститьLogChunk } from "./transcript";

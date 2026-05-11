@@ -2,186 +2,186 @@ import { Navigate, Outlet, Route, Routes, useLocation, useParams } from "@/lib/r
 import { Button } from "@/components/ui/button";
 import { Layout } from "./components/Layout";
 import { OnboardingWizard } from "./components/OnboardingWizard";
-import { CloudAccessGate } from "./components/CloudAccessGate";
-import { Dashboard } from "./pages/Dashboard";
-import { DashboardLive } from "./pages/DashboardLive";
-import { Companies } from "./pages/Companies";
-import { Agents } from "./pages/Agents";
-import { AgentDetail } from "./pages/AgentDetail";
-import { Projects } from "./pages/Projects";
+import { CloudДоступGate } from "./components/CloudДоступGate";
+import { Панель управления } from "./pages/Панель управления";
+import { Панель управленияLive } from "./pages/Панель управленияLive";
+import { Компании } from "./pages/Компании";
+import { Агенты } from "./pages/Агенты";
+import { АгентDetail } from "./pages/АгентDetail";
+import { Проекты } from "./pages/Проекты";
 import { ProjectDetail } from "./pages/ProjectDetail";
-import { ProjectWorkspaceDetail } from "./pages/ProjectWorkspaceDetail";
-import { Workspaces } from "./pages/Workspaces";
-import { Issues } from "./pages/Issues";
-import { Search } from "./pages/Search";
-import { IssueDetail } from "./pages/IssueDetail";
-import { IssueChatLongThreadPerf } from "./pages/IssueChatLongThreadPerf";
-import { Routines } from "./pages/Routines";
-import { RoutineDetail } from "./pages/RoutineDetail";
-import { UserProfile } from "./pages/UserProfile";
-import { ExecutionWorkspaceDetail } from "./pages/ExecutionWorkspaceDetail";
-import { Goals } from "./pages/Goals";
-import { GoalDetail } from "./pages/GoalDetail";
-import { Approvals } from "./pages/Approvals";
-import { ApprovalDetail } from "./pages/ApprovalDetail";
-import { Costs } from "./pages/Costs";
-import { Activity } from "./pages/Activity";
-import { Inbox } from "./pages/Inbox";
-import { CompanySettings } from "./pages/CompanySettings";
-import { CompanyEnvironments } from "./pages/CompanyEnvironments";
-import { CompanyAccess } from "./pages/CompanyAccess";
-import { CompanyInvites } from "./pages/CompanyInvites";
-import { CompanySkills } from "./pages/CompanySkills";
-import { Secrets } from "./pages/Secrets";
-import { CompanyExport } from "./pages/CompanyExport";
-import { CompanyImport } from "./pages/CompanyImport";
+import { ProjectРабочая областьDetail } from "./pages/ProjectРабочая областьDetail";
+import { Рабочие области } from "./pages/Рабочие области";
+import { Задачи } from "./pages/Задачи";
+import { Поиск } from "./pages/Поиск";
+import { ЗадачаDetail } from "./pages/ЗадачаDetail";
+import { ЗадачаChatLongThreadPerf } from "./pages/ЗадачаChatLongThreadPerf";
+import { Процедуры } from "./pages/Процедуры";
+import { ПроцедураDetail } from "./pages/ПроцедураDetail";
+import { UserПрофиль } from "./pages/UserПрофиль";
+import { ExecutionРабочая областьDetail } from "./pages/ExecutionРабочая областьDetail";
+import { Цели } from "./pages/Цели";
+import { ЦельDetail } from "./pages/ЦельDetail";
+import { Согласования } from "./pages/Согласования";
+import { СогласованиеDetail } from "./pages/СогласованиеDetail";
+import { Расходы } from "./pages/Расходы";
+import { Активность } from "./pages/Активность";
+import { Входящие } from "./pages/Входящие";
+import { КомпанияНастройки } from "./pages/КомпанияНастройки";
+import { КомпанияОкружения } from "./pages/КомпанияОкружения";
+import { КомпанияДоступ } from "./pages/КомпанияДоступ";
+import { КомпанияInvites } from "./pages/КомпанияInvites";
+import { КомпанияНавыки } from "./pages/КомпанияНавыки";
+import { Секреты } from "./pages/Секреты";
+import { КомпанияЭкспорт } from "./pages/КомпанияЭкспорт";
+import { КомпанияИмпорт } from "./pages/КомпанияИмпорт";
 import { DesignGuide } from "./pages/DesignGuide";
-import { InstanceGeneralSettings } from "./pages/InstanceGeneralSettings";
-import { InstanceAccess } from "./pages/InstanceAccess";
-import { InstanceSettings } from "./pages/InstanceSettings";
-import { InstanceExperimentalSettings } from "./pages/InstanceExperimentalSettings";
-import { ProfileSettings } from "./pages/ProfileSettings";
+import { InstanceОбщиеНастройки } from "./pages/InstanceОбщиеНастройки";
+import { InstanceДоступ } from "./pages/InstanceДоступ";
+import { InstanceНастройки } from "./pages/InstanceНастройки";
+import { InstanceExperimentalНастройки } from "./pages/InstanceExperimentalНастройки";
+import { ПрофильНастройки } from "./pages/ПрофильНастройки";
 import { PluginManager } from "./pages/PluginManager";
-import { PluginSettings } from "./pages/PluginSettings";
-import { AdapterManager } from "./pages/AdapterManager";
+import { PluginНастройки } from "./pages/PluginНастройки";
+import { АдаптерManager } from "./pages/АдаптерManager";
 import { PluginPage } from "./pages/PluginPage";
-import { OrgChart } from "./pages/OrgChart";
-import { NewAgent } from "./pages/NewAgent";
+import { ОргструктураChart } from "./pages/ОргструктураChart";
+import { NewАгент } from "./pages/NewАгент";
 import { AuthPage } from "./pages/Auth";
-import { BoardClaimPage } from "./pages/BoardClaim";
+import { СоветClaimPage } from "./pages/СоветClaim";
 import { CliAuthPage } from "./pages/CliAuth";
 import { InviteLandingPage } from "./pages/InviteLanding";
 import { JoinRequestQueue } from "./pages/JoinRequestQueue";
-import { NotFoundPage } from "./pages/NotFound";
-import { useCompany } from "./context/CompanyContext";
+import { НетtFoundPage } from "./pages/НетtFound";
+import { useКомпания } from "./context/КомпанияContext";
 import { useDialogActions } from "./context/DialogContext";
-import { loadLastInboxTab } from "./lib/inbox";
-import { shouldRedirectCompanylessRouteToOnboarding } from "./lib/onboarding-route";
+import { loadLastВходящиеTab } from "./lib/inbox";
+import { shouldRedirectКомпанияlessRouteToOnboarding } from "./lib/onboarding-route";
 
 function boardRoutes() {
   return (
     <>
       <Route index element={<Navigate to="dashboard" replace />} />
-      <Route path="dashboard" element={<Dashboard />} />
-      <Route path="dashboard/live" element={<DashboardLive />} />
+      <Route path="dashboard" element={<Панель управления />} />
+      <Route path="dashboard/live" element={<Панель управленияLive />} />
       <Route path="onboarding" element={<OnboardingRoutePage />} />
-      <Route path="companies" element={<Companies />} />
-      <Route path="company/settings" element={<CompanySettings />} />
-      <Route path="company/settings/environments" element={<CompanyEnvironments />} />
-      <Route path="company/settings/access" element={<CompanyAccess />} />
-      <Route path="company/settings/invites" element={<CompanyInvites />} />
-      <Route path="company/export/*" element={<CompanyExport />} />
-      <Route path="company/import" element={<CompanyImport />} />
-      <Route path="company/settings/secrets" element={<Secrets />} />
-      <Route path="skills/*" element={<CompanySkills />} />
-      <Route path="settings" element={<LegacySettingsRedirect />} />
-      <Route path="settings/*" element={<LegacySettingsRedirect />} />
+      <Route path="companies" element={<Компании />} />
+      <Route path="company/settings" element={<КомпанияНастройки />} />
+      <Route path="company/settings/environments" element={<КомпанияОкружения />} />
+      <Route path="company/settings/access" element={<КомпанияДоступ />} />
+      <Route path="company/settings/invites" element={<КомпанияInvites />} />
+      <Route path="company/export/*" element={<КомпанияЭкспорт />} />
+      <Route path="company/import" element={<КомпанияИмпорт />} />
+      <Route path="company/settings/secrets" element={<Секреты />} />
+      <Route path="skills/*" element={<КомпанияНавыки />} />
+      <Route path="settings" element={<LegacyНастройкиRedirect />} />
+      <Route path="settings/*" element={<LegacyНастройкиRedirect />} />
       <Route path="plugins/:pluginId" element={<PluginPage />} />
-      <Route path="org" element={<OrgChart />} />
+      <Route path="org" element={<ОргструктураChart />} />
       <Route path="agents" element={<Navigate to="/agents/all" replace />} />
-      <Route path="agents/all" element={<Agents />} />
-      <Route path="agents/active" element={<Agents />} />
-      <Route path="agents/paused" element={<Agents />} />
-      <Route path="agents/error" element={<Agents />} />
-      <Route path="agents/new" element={<NewAgent />} />
-      <Route path="agents/:agentId" element={<AgentDetail />} />
-      <Route path="agents/:agentId/:tab" element={<AgentDetail />} />
-      <Route path="agents/:agentId/runs/:runId" element={<AgentDetail />} />
-      <Route path="projects" element={<Projects />} />
+      <Route path="agents/all" element={<Агенты />} />
+      <Route path="agents/active" element={<Агенты />} />
+      <Route path="agents/paused" element={<Агенты />} />
+      <Route path="agents/error" element={<Агенты />} />
+      <Route path="agents/new" element={<NewАгент />} />
+      <Route path="agents/:agentId" element={<АгентDetail />} />
+      <Route path="agents/:agentId/:tab" element={<АгентDetail />} />
+      <Route path="agents/:agentId/runs/:runId" element={<АгентDetail />} />
+      <Route path="projects" element={<Проекты />} />
       <Route path="projects/:projectId" element={<ProjectDetail />} />
       <Route path="projects/:projectId/overview" element={<ProjectDetail />} />
       <Route path="projects/:projectId/issues" element={<ProjectDetail />} />
       <Route path="projects/:projectId/issues/:filter" element={<ProjectDetail />} />
-      <Route path="projects/:projectId/workspaces/:workspaceId" element={<ProjectWorkspaceDetail />} />
+      <Route path="projects/:projectId/workspaces/:workspaceId" element={<ProjectРабочая областьDetail />} />
       <Route path="projects/:projectId/workspaces" element={<ProjectDetail />} />
       <Route path="projects/:projectId/configuration" element={<ProjectDetail />} />
       <Route path="projects/:projectId/budget" element={<ProjectDetail />} />
-      <Route path="workspaces" element={<Workspaces />} />
-      <Route path="issues" element={<Issues />} />
-      <Route path="search" element={<Search />} />
+      <Route path="workspaces" element={<Рабочие области />} />
+      <Route path="issues" element={<Задачи />} />
+      <Route path="search" element={<Поиск />} />
       <Route path="issues/all" element={<Navigate to="/issues" replace />} />
       <Route path="issues/active" element={<Navigate to="/issues" replace />} />
       <Route path="issues/backlog" element={<Navigate to="/issues" replace />} />
       <Route path="issues/done" element={<Navigate to="/issues" replace />} />
       <Route path="issues/recent" element={<Navigate to="/issues" replace />} />
-      <Route path="issues/:issueId" element={<IssueDetail />} />
+      <Route path="issues/:issueId" element={<ЗадачаDetail />} />
       {import.meta.env.DEV ? (
-        <Route path="tests/perf/long-thread" element={<IssueChatLongThreadPerf />} />
+        <Route path="tests/perf/long-thread" element={<ЗадачаChatLongThreadPerf />} />
       ) : null}
-      <Route path="routines" element={<Routines />} />
-      <Route path="routines/:routineId" element={<RoutineDetail />} />
-      <Route path="execution-workspaces/:workspaceId" element={<ExecutionWorkspaceDetail />} />
-      <Route path="execution-workspaces/:workspaceId/services" element={<ExecutionWorkspaceDetail />} />
-      <Route path="execution-workspaces/:workspaceId/configuration" element={<ExecutionWorkspaceDetail />} />
-      <Route path="execution-workspaces/:workspaceId/runtime-logs" element={<ExecutionWorkspaceDetail />} />
-      <Route path="execution-workspaces/:workspaceId/issues" element={<ExecutionWorkspaceDetail />} />
-      <Route path="execution-workspaces/:workspaceId/routines" element={<ExecutionWorkspaceDetail />} />
-      <Route path="goals" element={<Goals />} />
-      <Route path="goals/:goalId" element={<GoalDetail />} />
+      <Route path="routines" element={<Процедуры />} />
+      <Route path="routines/:routineId" element={<ПроцедураDetail />} />
+      <Route path="execution-workspaces/:workspaceId" element={<ExecutionРабочая областьDetail />} />
+      <Route path="execution-workspaces/:workspaceId/services" element={<ExecutionРабочая областьDetail />} />
+      <Route path="execution-workspaces/:workspaceId/configuration" element={<ExecutionРабочая областьDetail />} />
+      <Route path="execution-workspaces/:workspaceId/runtime-logs" element={<ExecutionРабочая областьDetail />} />
+      <Route path="execution-workspaces/:workspaceId/issues" element={<ExecutionРабочая областьDetail />} />
+      <Route path="execution-workspaces/:workspaceId/routines" element={<ExecutionРабочая областьDetail />} />
+      <Route path="goals" element={<Цели />} />
+      <Route path="goals/:goalId" element={<ЦельDetail />} />
       <Route path="approvals" element={<Navigate to="/approvals/pending" replace />} />
-      <Route path="approvals/pending" element={<Approvals />} />
-      <Route path="approvals/all" element={<Approvals />} />
-      <Route path="approvals/:approvalId" element={<ApprovalDetail />} />
-      <Route path="costs" element={<Costs />} />
-      <Route path="activity" element={<Activity />} />
-      <Route path="inbox" element={<InboxRootRedirect />} />
-      <Route path="inbox/mine" element={<Inbox />} />
-      <Route path="inbox/recent" element={<Inbox />} />
-      <Route path="inbox/unread" element={<Inbox />} />
-      <Route path="inbox/all" element={<Inbox />} />
+      <Route path="approvals/pending" element={<Согласования />} />
+      <Route path="approvals/all" element={<Согласования />} />
+      <Route path="approvals/:approvalId" element={<СогласованиеDetail />} />
+      <Route path="costs" element={<Расходы />} />
+      <Route path="activity" element={<Активность />} />
+      <Route path="inbox" element={<ВходящиеRootRedirect />} />
+      <Route path="inbox/mine" element={<Входящие />} />
+      <Route path="inbox/recent" element={<Входящие />} />
+      <Route path="inbox/unread" element={<Входящие />} />
+      <Route path="inbox/all" element={<Входящие />} />
       <Route path="inbox/requests" element={<JoinRequestQueue />} />
       <Route path="inbox/new" element={<Navigate to="/inbox/mine" replace />} />
-      <Route path="u/:userSlug" element={<UserProfile />} />
+      <Route path="u/:userSlug" element={<UserПрофиль />} />
       <Route path="design-guide" element={<DesignGuide />} />
-      <Route path="instance/settings/adapters" element={<AdapterManager />} />
-      <Route path=":pluginRoutePath/*" element={<PluginPage />} />
-      <Route path="*" element={<NotFoundPage scope="board" />} />
+      <Route path="instance/settings/adapters" element={<АдаптерManager />} />
+      <Route path=":pluginRouteПуть/*" element={<PluginPage />} />
+      <Route path="*" element={<НетtFoundPage scope="board" />} />
     </>
   );
 }
 
-function InboxRootRedirect() {
-  return <Navigate to={`/inbox/${loadLastInboxTab()}`} replace />;
+function ВходящиеRootRedirect() {
+  return <Navigate to={`/inbox/${loadLastВходящиеTab()}`} replace />;
 }
 
-function LegacySettingsRedirect() {
+function LegacyНастройкиRedirect() {
   const location = useLocation();
   return <Navigate to={`/instance/settings/general${location.search}${location.hash}`} replace />;
 }
 
 function OnboardingRoutePage() {
-  const { companies } = useCompany();
+  const { companies } = useКомпания();
   const { openOnboarding } = useDialogActions();
   const { companyPrefix } = useParams<{ companyPrefix?: string }>();
-  const matchedCompany = companyPrefix
+  const matchedКомпания = companyPrefix
     ? companies.find((company) => company.issuePrefix.toUpperCase() === companyPrefix.toUpperCase()) ?? null
     : null;
 
-  const title = matchedCompany
-    ? `Add another agent to ${matchedCompany.name}`
+  const title = matchedКомпания
+    ? `Добавить another agent to ${matchedКомпания.name}`
     : companies.length > 0
-      ? "Create another company"
-      : "Create your first company";
-  const description = matchedCompany
-    ? "Run onboarding again to add an agent and a starter task for this company."
+      ? "Создать another company"
+      : "Создать your first company";
+  const description = matchedКомпания
+    ? "Запустить onboarding again to add an agent and a starter task for this company."
     : companies.length > 0
-      ? "Run onboarding again to create another company and seed its first agent."
+      ? "Запустить onboarding again to create another company and seed its first agent."
       : "Get started by creating a company and your first agent.";
 
   return (
-    <div className="mx-auto max-w-xl py-10">
-      <div className="rounded-lg border border-border bg-card p-6">
-        <h1 className="text-xl font-semibold">{title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-        <div className="mt-4">
+    <div classИмя="mx-auto max-w-xl py-10">
+      <div classИмя="rounded-lg border border-border bg-card p-6">
+        <h1 classИмя="text-xl font-semibold">{title}</h1>
+        <p classИмя="mt-2 text-sm text-muted-foreground">{description}</p>
+        <div classИмя="mt-4">
           <Button
             onClick={() =>
-              matchedCompany
-                ? openOnboarding({ initialStep: 2, companyId: matchedCompany.id })
+              matchedКомпания
+                ? openOnboarding({ initialStep: 2, companyId: matchedКомпания.id })
                 : openOnboarding()
             }
           >
-            {matchedCompany ? "Add Agent" : "Start Onboarding"}
+            {matchedКомпания ? "Добавить агента" : "Начать Onboarding"}
           </Button>
         </div>
       </div>
@@ -189,71 +189,71 @@ function OnboardingRoutePage() {
   );
 }
 
-function CompanyRootRedirect() {
-  const { companies, selectedCompany, loading } = useCompany();
+function КомпанияRootRedirect() {
+  const { companies, selectedКомпания, loading } = useКомпания();
   const location = useLocation();
 
   if (loading) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
+    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Загрузка...</div>;
   }
 
-  const targetCompany = selectedCompany ?? companies[0] ?? null;
-  if (!targetCompany) {
+  const targetКомпания = selectedКомпания ?? companies[0] ?? null;
+  if (!targetКомпания) {
     if (
-      shouldRedirectCompanylessRouteToOnboarding({
+      shouldRedirectКомпанияlessRouteToOnboarding({
         pathname: location.pathname,
-        hasCompanies: false,
+        hasКомпании: false,
       })
     ) {
       return <Navigate to="/onboarding" replace />;
     }
-    return <NoCompaniesStartPage />;
+    return <НетКомпанииНачатьPage />;
   }
 
-  return <Navigate to={`/${targetCompany.issuePrefix}/dashboard`} replace />;
+  return <Navigate to={`/${targetКомпания.issuePrefix}/dashboard`} replace />;
 }
 
-function UnprefixedBoardRedirect() {
+function UnprefixedСоветRedirect() {
   const location = useLocation();
-  const { companies, selectedCompany, loading } = useCompany();
+  const { companies, selectedКомпания, loading } = useКомпания();
 
   if (loading) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
+    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Загрузка...</div>;
   }
 
-  const targetCompany = selectedCompany ?? companies[0] ?? null;
-  if (!targetCompany) {
+  const targetКомпания = selectedКомпания ?? companies[0] ?? null;
+  if (!targetКомпания) {
     if (
-      shouldRedirectCompanylessRouteToOnboarding({
+      shouldRedirectКомпанияlessRouteToOnboarding({
         pathname: location.pathname,
-        hasCompanies: false,
+        hasКомпании: false,
       })
     ) {
       return <Navigate to="/onboarding" replace />;
     }
-    return <NoCompaniesStartPage />;
+    return <НетКомпанииНачатьPage />;
   }
 
   return (
     <Navigate
-      to={`/${targetCompany.issuePrefix}${location.pathname}${location.search}${location.hash}`}
+      to={`/${targetКомпания.issuePrefix}${location.pathname}${location.search}${location.hash}`}
       replace
     />
   );
 }
 
-function NoCompaniesStartPage() {
+function НетКомпанииНачатьPage() {
   const { openOnboarding } = useDialogActions();
 
   return (
-    <div className="mx-auto max-w-xl py-10">
-      <div className="rounded-lg border border-border bg-card p-6">
-        <h1 className="text-xl font-semibold">Create your first company</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+    <div classИмя="mx-auto max-w-xl py-10">
+      <div classИмя="rounded-lg border border-border bg-card p-6">
+        <h1 classИмя="text-xl font-semibold">Создать your first company</h1>
+        <p classИмя="mt-2 text-sm text-muted-foreground">
           Get started by creating a company.
         </p>
-        <div className="mt-4">
-          <Button onClick={() => openOnboarding()}>New Company</Button>
+        <div classИмя="mt-4">
+          <Button onClick={() => openOnboarding()}>New Компания</Button>
         </div>
       </div>
     </div>
@@ -265,59 +265,59 @@ export function App() {
     <>
       <Routes>
         <Route path="auth" element={<AuthPage />} />
-        <Route path="board-claim/:token" element={<BoardClaimPage />} />
+        <Route path="board-claim/:token" element={<СоветClaimPage />} />
         <Route path="cli-auth/:id" element={<CliAuthPage />} />
         <Route path="invite/:token" element={<InviteLandingPage />} />
-        <Route path="tests/perf/long-thread" element={<IssueChatLongThreadPerf />} />
+        <Route path="tests/perf/long-thread" element={<ЗадачаChatLongThreadPerf />} />
 
-        <Route element={<CloudAccessGate />}>
-          <Route index element={<CompanyRootRedirect />} />
+        <Route element={<CloudДоступGate />}>
+          <Route index element={<КомпанияRootRedirect />} />
           <Route path="onboarding" element={<OnboardingRoutePage />} />
           <Route path="instance" element={<Navigate to="/instance/settings/general" replace />} />
           <Route path="instance/settings" element={<Layout />}>
             <Route index element={<Navigate to="general" replace />} />
-            <Route path="profile" element={<ProfileSettings />} />
-            <Route path="general" element={<InstanceGeneralSettings />} />
-            <Route path="access" element={<InstanceAccess />} />
-            <Route path="heartbeats" element={<InstanceSettings />} />
-            <Route path="experimental" element={<InstanceExperimentalSettings />} />
+            <Route path="profile" element={<ПрофильНастройки />} />
+            <Route path="general" element={<InstanceОбщиеНастройки />} />
+            <Route path="access" element={<InstanceДоступ />} />
+            <Route path="heartbeats" element={<InstanceНастройки />} />
+            <Route path="experimental" element={<InstanceExperimentalНастройки />} />
             <Route path="plugins" element={<PluginManager />} />
-            <Route path="plugins/:pluginId" element={<PluginSettings />} />
-            <Route path="adapters" element={<AdapterManager />} />
+            <Route path="plugins/:pluginId" element={<PluginНастройки />} />
+            <Route path="adapters" element={<АдаптерManager />} />
           </Route>
-          <Route path="companies" element={<UnprefixedBoardRedirect />} />
-          <Route path="issues" element={<UnprefixedBoardRedirect />} />
-          <Route path="issues/:issueId" element={<UnprefixedBoardRedirect />} />
-          <Route path="routines" element={<UnprefixedBoardRedirect />} />
-          <Route path="routines/:routineId" element={<UnprefixedBoardRedirect />} />
-          <Route path="u/:userSlug" element={<UnprefixedBoardRedirect />} />
-          <Route path="skills/*" element={<UnprefixedBoardRedirect />} />
-          <Route path="settings" element={<LegacySettingsRedirect />} />
-          <Route path="settings/*" element={<LegacySettingsRedirect />} />
-          <Route path="agents" element={<UnprefixedBoardRedirect />} />
-          <Route path="agents/new" element={<UnprefixedBoardRedirect />} />
-          <Route path="agents/:agentId" element={<UnprefixedBoardRedirect />} />
-          <Route path="agents/:agentId/:tab" element={<UnprefixedBoardRedirect />} />
-          <Route path="agents/:agentId/runs/:runId" element={<UnprefixedBoardRedirect />} />
-          <Route path="projects" element={<UnprefixedBoardRedirect />} />
-          <Route path="projects/:projectId" element={<UnprefixedBoardRedirect />} />
-          <Route path="projects/:projectId/overview" element={<UnprefixedBoardRedirect />} />
-          <Route path="projects/:projectId/issues" element={<UnprefixedBoardRedirect />} />
-          <Route path="projects/:projectId/issues/:filter" element={<UnprefixedBoardRedirect />} />
-          <Route path="projects/:projectId/workspaces" element={<UnprefixedBoardRedirect />} />
-          <Route path="projects/:projectId/workspaces/:workspaceId" element={<UnprefixedBoardRedirect />} />
-          <Route path="projects/:projectId/configuration" element={<UnprefixedBoardRedirect />} />
-          <Route path="workspaces" element={<UnprefixedBoardRedirect />} />
-          <Route path="execution-workspaces/:workspaceId" element={<UnprefixedBoardRedirect />} />
-          <Route path="execution-workspaces/:workspaceId/services" element={<UnprefixedBoardRedirect />} />
-          <Route path="execution-workspaces/:workspaceId/configuration" element={<UnprefixedBoardRedirect />} />
-          <Route path="execution-workspaces/:workspaceId/runtime-logs" element={<UnprefixedBoardRedirect />} />
-          <Route path="execution-workspaces/:workspaceId/issues" element={<UnprefixedBoardRedirect />} />
-          <Route path="execution-workspaces/:workspaceId/routines" element={<UnprefixedBoardRedirect />} />
+          <Route path="companies" element={<UnprefixedСоветRedirect />} />
+          <Route path="issues" element={<UnprefixedСоветRedirect />} />
+          <Route path="issues/:issueId" element={<UnprefixedСоветRedirect />} />
+          <Route path="routines" element={<UnprefixedСоветRedirect />} />
+          <Route path="routines/:routineId" element={<UnprefixedСоветRedirect />} />
+          <Route path="u/:userSlug" element={<UnprefixedСоветRedirect />} />
+          <Route path="skills/*" element={<UnprefixedСоветRedirect />} />
+          <Route path="settings" element={<LegacyНастройкиRedirect />} />
+          <Route path="settings/*" element={<LegacyНастройкиRedirect />} />
+          <Route path="agents" element={<UnprefixedСоветRedirect />} />
+          <Route path="agents/new" element={<UnprefixedСоветRedirect />} />
+          <Route path="agents/:agentId" element={<UnprefixedСоветRedirect />} />
+          <Route path="agents/:agentId/:tab" element={<UnprefixedСоветRedirect />} />
+          <Route path="agents/:agentId/runs/:runId" element={<UnprefixedСоветRedirect />} />
+          <Route path="projects" element={<UnprefixedСоветRedirect />} />
+          <Route path="projects/:projectId" element={<UnprefixedСоветRedirect />} />
+          <Route path="projects/:projectId/overview" element={<UnprefixedСоветRedirect />} />
+          <Route path="projects/:projectId/issues" element={<UnprefixedСоветRedirect />} />
+          <Route path="projects/:projectId/issues/:filter" element={<UnprefixedСоветRedirect />} />
+          <Route path="projects/:projectId/workspaces" element={<UnprefixedСоветRedirect />} />
+          <Route path="projects/:projectId/workspaces/:workspaceId" element={<UnprefixedСоветRedirect />} />
+          <Route path="projects/:projectId/configuration" element={<UnprefixedСоветRedirect />} />
+          <Route path="workspaces" element={<UnprefixedСоветRedirect />} />
+          <Route path="execution-workspaces/:workspaceId" element={<UnprefixedСоветRedirect />} />
+          <Route path="execution-workspaces/:workspaceId/services" element={<UnprefixedСоветRedirect />} />
+          <Route path="execution-workspaces/:workspaceId/configuration" element={<UnprefixedСоветRedirect />} />
+          <Route path="execution-workspaces/:workspaceId/runtime-logs" element={<UnprefixedСоветRedirect />} />
+          <Route path="execution-workspaces/:workspaceId/issues" element={<UnprefixedСоветRedirect />} />
+          <Route path="execution-workspaces/:workspaceId/routines" element={<UnprefixedСоветRedirect />} />
           <Route path=":companyPrefix" element={<Layout />}>
             {boardRoutes()}
           </Route>
-          <Route path="*" element={<NotFoundPage scope="global" />} />
+          <Route path="*" element={<НетtFoundPage scope="global" />} />
         </Route>
       </Routes>
       <OnboardingWizard />

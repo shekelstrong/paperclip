@@ -1,24 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AGENT_ADAPTER_TYPES } from "@paperclipai/shared";
-import type { AgentAdapterType, JoinRequest } from "@paperclipai/shared";
+import type { АгентАдаптерТип, JoinRequest } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
-import { CompanyPatternIcon } from "@/components/CompanyPatternIcon";
-import { useCompany } from "@/context/CompanyContext";
+import { КомпанияPatternIcon } from "@/components/КомпанияPatternIcon";
+import { useКомпания } from "@/context/КомпанияContext";
 import { Link, useNavigate, useParams } from "@/lib/router";
 import { accessApi } from "../api/access";
 import { authApi } from "../api/auth";
 import { companiesApi } from "../api/companies";
 import { healthApi } from "../api/health";
-import { getAdapterLabel } from "../adapters/adapter-display-registry";
-import { clearPendingInviteToken, rememberPendingInviteToken } from "../lib/invite-memory";
-import { queryKeys } from "../lib/queryKeys";
+import { getАдаптерLabel } from "../adapters/adapter-display-registry";
+import { clearОжиданиеInviteТокен, rememberОжиданиеInviteТокен } from "../lib/invite-memory";
+import { queryКлючs } from "../lib/queryКлючs";
 import { formatDate } from "../lib/utils";
 
 type AuthMode = "sign_in" | "sign_up";
 type AuthFeedback = { tone: "error" | "info"; message: string };
 
-const joinAdapterOptions: AgentAdapterType[] = [...AGENT_ADAPTER_TYPES];
+const joinАдаптерOptions: АгентАдаптерТип[] = [...AGENT_ADAPTER_TYPES];
 const ENABLED_INVITE_ADAPTERS = new Set([
   "claude_local",
   "codex_local",
@@ -37,25 +37,25 @@ function readNestedString(value: unknown, path: string[]): string | null {
   return typeof current === "string" && current.trim().length > 0 ? current : null;
 }
 
-const fieldClassName =
+const fieldClassИмя =
   "w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-500";
-const panelClassName = "border border-zinc-800 bg-zinc-950/95 p-6";
-const modeButtonBaseClassName =
+const panelClassИмя = "border border-zinc-800 bg-zinc-950/95 p-6";
+const modeButtonBaseClassИмя =
   "flex-1 border px-3 py-2 text-sm transition-colors";
 
-function formatHumanRole(role: string | null | undefined) {
+function formatЧеловекRole(role: string | null | undefined) {
   if (!role) return null;
   return role.charAt(0).toUpperCase() + role.slice(1);
 }
 
-function getAuthErrorCode(error: unknown) {
+function getAuthОшибкаCode(error: unknown) {
   if (!error || typeof error !== "object") return null;
   const code = (error as { code?: unknown }).code;
   return typeof code === "string" && code.trim().length > 0 ? code : null;
 }
 
-function getAuthErrorMessage(error: unknown) {
-  if (!(error instanceof Error)) return null;
+function getAuthОшибкаMessage(error: unknown) {
+  if (!(error instanceof Ошибка)) return null;
   const message = error.message.trim();
   return message.length > 0 ? message : null;
 }
@@ -65,14 +65,14 @@ function mapInviteAuthFeedback(
   authMode: AuthMode,
   email: string,
 ): AuthFeedback {
-  const code = getAuthErrorCode(error);
-  const message = getAuthErrorMessage(error);
+  const code = getAuthОшибкаCode(error);
+  const message = getAuthОшибкаMessage(error);
   const emailLabel = email.trim().length > 0 ? email.trim() : "that email";
 
   if (code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
     return {
       tone: "info",
-      message: `An account already exists for ${emailLabel}. Sign in below to continue with this invite.`,
+      message: `An account already exists for ${emailLabel}. Войти below to continue with this invite.`,
     };
   }
 
@@ -84,7 +84,7 @@ function mapInviteAuthFeedback(
     };
   }
 
-  if (authMode === "sign_in" && message === "Request failed: 401") {
+  if (authMode === "sign_in" && message === "Запрос не удался: 401") {
     return {
       tone: "error",
       message:
@@ -92,7 +92,7 @@ function mapInviteAuthFeedback(
     };
   }
 
-  if (authMode === "sign_up" && message === "Request failed: 422") {
+  if (authMode === "sign_up" && message === "Запрос не удался: 422") {
     return {
       tone: "info",
       message: `An account may already exist for ${emailLabel}. Try signing in instead.`,
@@ -105,106 +105,106 @@ function mapInviteAuthFeedback(
   };
 }
 
-function isBootstrapAcceptancePayload(payload: unknown) {
+function isBootstrapПринятьancePayload(payload: unknown) {
   return Boolean(
     payload &&
       typeof payload === "object" &&
-      "bootstrapAccepted" in (payload as Record<string, unknown>),
+      "bootstrapПринятьed" in (payload as Record<string, unknown>),
   );
 }
 
-function isApprovedHumanJoinPayload(payload: unknown, showsAgentForm: boolean) {
-  if (!payload || typeof payload !== "object" || showsAgentForm) return false;
+function isОдобритьdЧеловекJoinPayload(payload: unknown, showsАгентForm: boolean) {
+  if (!payload || typeof payload !== "object" || showsАгентForm) return false;
   const status = (payload as { status?: unknown }).status;
   return status === "approved";
 }
 
-type AwaitingJoinApprovalPanelProps = {
-  companyDisplayName: string;
+type AwaitingJoinСогласованиеPanelProps = {
+  companyDisplayИмя: string;
   companyLogoUrl: string | null;
   companyBrandColor: string | null;
-  invitedByUserName: string | null;
-  claimSecret?: string | null;
-  claimApiKeyPath?: string | null;
+  invitedByUserИмя: string | null;
+  claimСекрет?: string | null;
+  claimApiКлючПуть?: string | null;
   onboardingTextUrl?: string | null;
 };
 
-function InviteCompanyLogo({
-  companyDisplayName,
+function InviteКомпанияLogo({
+  companyDisplayИмя,
   companyLogoUrl,
   companyBrandColor,
-  className,
+  classИмя,
 }: {
-  companyDisplayName: string;
+  companyDisplayИмя: string;
   companyLogoUrl: string | null;
   companyBrandColor: string | null;
-  className?: string;
+  classИмя?: string;
 }) {
   return (
-    <CompanyPatternIcon
-      companyName={companyDisplayName}
+    <КомпанияPatternIcon
+      companyИмя={companyDisplayИмя}
       logoUrl={companyLogoUrl}
       brandColor={companyBrandColor}
       logoFit="contain"
-      className={className}
+      classИмя={classИмя}
     />
   );
 }
 
-function AwaitingJoinApprovalPanel({
-  companyDisplayName,
+function AwaitingJoinСогласованиеPanel({
+  companyDisplayИмя,
   companyLogoUrl,
   companyBrandColor,
-  invitedByUserName,
-  claimSecret = null,
-  claimApiKeyPath = null,
+  invitedByUserИмя,
+  claimСекрет = null,
+  claimApiКлючПуть = null,
   onboardingTextUrl = null,
-}: AwaitingJoinApprovalPanelProps) {
+}: AwaitingJoinСогласованиеPanelProps) {
   const approvalUrl = `${window.location.origin}/company/settings/access`;
-  const approverLabel = invitedByUserName ?? "A company admin";
+  const approverLabel = invitedByUserИмя ?? "A company admin";
 
   return (
-    <div className="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
-      <div className="mx-auto max-w-md border border-zinc-800 bg-zinc-950 p-6" data-testid="invite-pending-approval">
-        <div className="flex items-center gap-3">
-          <InviteCompanyLogo
-            companyDisplayName={companyDisplayName}
+    <div classИмя="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
+      <div classИмя="mx-auto max-w-md border border-zinc-800 bg-zinc-950 p-6" data-testid="invite-pending-approval">
+        <div classИмя="flex items-center gap-3">
+          <InviteКомпанияLogo
+            companyDisplayИмя={companyDisplayИмя}
             companyLogoUrl={companyLogoUrl}
             companyBrandColor={companyBrandColor}
-            className="h-12 w-12 border border-zinc-800 rounded-none"
+            classИмя="h-12 w-12 border border-zinc-800 rounded-none"
           />
-          <h1 className="text-lg font-semibold">Request to join {companyDisplayName}</h1>
+          <h1 classИмя="text-lg font-semibold">Request to join {companyDisplayИмя}</h1>
         </div>
-        <div className="mt-4 space-y-3">
-          <p className="text-sm text-zinc-400">
+        <div classИмя="mt-4 space-y-3">
+          <p classИмя="text-sm text-zinc-400">
             Your request is still awaiting approval. {approverLabel} must approve your request to join.
           </p>
-          <div className="border border-zinc-800 p-3">
-            <p className="text-xs text-zinc-500 mb-1">Approval page</p>
+          <div classИмя="border border-zinc-800 p-3">
+            <p classИмя="text-xs text-zinc-500 mb-1">Согласование page</p>
             <a
               href={approvalUrl}
-              className="text-sm text-zinc-200 underline underline-offset-2 hover:text-zinc-100"
+              classИмя="text-sm text-zinc-200 underline underline-offset-2 hover:text-zinc-100"
             >
-              Company Settings → Access
+              Компания Настройки → Доступ
             </a>
           </div>
-          <p className="text-sm text-zinc-400">
-            Ask them to visit <a href={approvalUrl} className="text-zinc-200 underline underline-offset-2 hover:text-zinc-100">Company Settings → Access</a> to approve your request.
+          <p classИмя="text-sm text-zinc-400">
+            Ask them to visit <a href={approvalUrl} classИмя="text-zinc-200 underline underline-offset-2 hover:text-zinc-100">Компания Настройки → Доступ</a> to approve your request.
           </p>
-          <p className="text-xs text-zinc-500">
-            Refresh this page after you've been approved — you'll be redirected automatically.
+          <p classИмя="text-xs text-zinc-500">
+            Обновить this page after you've been approved — you'll be redirected automatically.
           </p>
         </div>
-        {claimSecret && claimApiKeyPath ? (
-          <div className="mt-4 space-y-1 border border-zinc-800 p-3 text-xs text-zinc-400">
-            <div className="text-zinc-200">Claim secret</div>
-            <div className="font-mono break-all">{claimSecret}</div>
-            <div className="font-mono break-all">POST {claimApiKeyPath}</div>
+        {claimСекрет && claimApiКлючПуть ? (
+          <div classИмя="mt-4 space-y-1 border border-zinc-800 p-3 text-xs text-zinc-400">
+            <div classИмя="text-zinc-200">Claim secret</div>
+            <div classИмя="font-mono break-all">{claimСекрет}</div>
+            <div classИмя="font-mono break-all">POST {claimApiКлючПуть}</div>
           </div>
         ) : null}
         {onboardingTextUrl ? (
-          <div className="mt-4 text-xs text-zinc-400">
-            Onboarding: <span className="font-mono break-all">{onboardingTextUrl}</span>
+          <div classИмя="mt-4 text-xs text-zinc-400">
+            Onboarding: <span classИмя="font-mono break-all">{onboardingTextUrl}</span>
           </div>
         ) : null}
       </div>
@@ -215,51 +215,51 @@ function AwaitingJoinApprovalPanel({
 export function InviteLandingPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { setSelectedCompanyId } = useCompany();
+  const { setSelectedКомпанияId } = useКомпания();
   const params = useParams();
   const token = (params.token ?? "").trim();
   const [authMode, setAuthMode] = useState<AuthMode>("sign_up");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setИмя] = useState("");
+  const [email, setПочта] = useState("");
   const [password, setPassword] = useState("");
-  const [agentName, setAgentName] = useState("");
-  const [adapterType, setAdapterType] = useState<AgentAdapterType>("claude_local");
+  const [agentИмя, setАгентИмя] = useState("");
+  const [adapterТип, setАдаптерТип] = useState<АгентАдаптерТип>("claude_local");
   const [capabilities, setCapabilities] = useState("");
   const [result, setResult] = useState<{ kind: "bootstrap" | "join"; payload: unknown } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setОшибка] = useState<string | null>(null);
   const [authFeedback, setAuthFeedback] = useState<AuthFeedback | null>(null);
-  const [autoAcceptStarted, setAutoAcceptStarted] = useState(false);
+  const [autoПринятьЗапущен, setАвтоПринятьЗапущен] = useState(false);
 
   const healthQuery = useQuery({
-    queryKey: queryKeys.health,
+    queryКлюч: queryКлючs.health,
     queryFn: () => healthApi.get(),
     retry: false,
   });
   const sessionQuery = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
     retry: false,
   });
   const inviteQuery = useQuery({
-    queryKey: queryKeys.access.invite(token),
+    queryКлюч: queryКлючs.access.invite(token),
     queryFn: () => accessApi.getInvite(token),
     enabled: token.length > 0,
     retry: false,
   });
 
   const companiesQuery = useQuery({
-    queryKey: queryKeys.companies.all,
+    queryКлюч: queryКлючs.companies.all,
     queryFn: () => companiesApi.list(),
     enabled: !!sessionQuery.data && !!inviteQuery.data?.companyId,
     retry: false,
   });
 
   useEffect(() => {
-    if (token) rememberPendingInviteToken(token);
+    if (token) rememberОжиданиеInviteТокен(token);
   }, [token]);
 
   useEffect(() => {
-    setAutoAcceptStarted(false);
+    setАвтоПринятьЗапущен(false);
   }, [token]);
 
   useEffect(() => {
@@ -268,7 +268,7 @@ export function InviteLandingPage() {
       (c) => c.id === inviteQuery.data!.companyId
     );
     if (isMember) {
-      clearPendingInviteToken(token);
+      clearОжиданиеInviteТокен(token);
       navigate("/", { replace: true });
     }
   }, [companiesQuery.data, inviteQuery.data, token, navigate]);
@@ -277,31 +277,31 @@ export function InviteLandingPage() {
   const isCheckingExistingMembership =
     Boolean(sessionQuery.data) &&
     Boolean(invite?.companyId) &&
-    companiesQuery.isLoading;
+    companiesQuery.isЗагрузка;
   const isCurrentMember =
     Boolean(invite?.companyId) &&
     Boolean(
       companiesQuery.data?.some((company) => company.id === invite?.companyId),
     );
-  const companyName = invite?.companyName?.trim() || null;
-  const companyDisplayName = companyName || "this Paperclip company";
+  const companyИмя = invite?.companyИмя?.trim() || null;
+  const companyDisplayИмя = companyИмя || "this Paperclip company";
   const companyLogoUrl = invite?.companyLogoUrl?.trim() || null;
   const companyBrandColor = invite?.companyBrandColor?.trim() || null;
-  const invitedByUserName = invite?.invitedByUserName?.trim() || null;
+  const invitedByUserИмя = invite?.invitedByUserИмя?.trim() || null;
   const inviteMessage = invite?.inviteMessage?.trim() || null;
-  const requestedHumanRole = formatHumanRole(invite?.humanRole);
-  const inviteJoinRequestStatus = invite?.joinRequestStatus ?? null;
-  const inviteJoinRequestType = invite?.joinRequestType ?? null;
-  const requiresHumanAccount =
+  const requestedЧеловекRole = formatЧеловекRole(invite?.humanRole);
+  const inviteJoinRequestСтатус = invite?.joinRequestСтатус ?? null;
+  const inviteJoinRequestТип = invite?.joinRequestТип ?? null;
+  const requiresЧеловекАккаунт =
     healthQuery.data?.deploymentMode === "authenticated" &&
     !sessionQuery.data &&
-    invite?.allowedJoinTypes !== "agent";
-  const showsAgentForm = invite?.inviteType !== "bootstrap_ceo" && invite?.allowedJoinTypes === "agent";
-  const shouldAutoAcceptHumanInvite =
+    invite?.allowedJoinТипs !== "agent";
+  const showsАгентForm = invite?.inviteТип !== "bootstrap_ceo" && invite?.allowedJoinТипs === "agent";
+  const shouldАвтоПринятьЧеловекInvite =
     Boolean(sessionQuery.data) &&
-    !showsAgentForm &&
-    invite?.inviteType !== "bootstrap_ceo" &&
-    !inviteJoinRequestStatus &&
+    !showsАгентForm &&
+    invite?.inviteТип !== "bootstrap_ceo" &&
+    !inviteJoinRequestСтатус &&
     !isCheckingExistingMembership &&
     !isCurrentMember &&
     !result &&
@@ -311,99 +311,99 @@ export function InviteLandingPage() {
     sessionQuery.data?.user.email?.trim() ||
     "this account";
 
-  const authCanSubmit =
+  const authCanОтправить =
     email.trim().length > 0 &&
     password.trim().length > 0 &&
     (authMode === "sign_in" || (name.trim().length > 0 && password.trim().length >= 8));
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      if (!invite) throw new Error("Invite not found");
+      if (!invite) throw new Ошибка("Invite not found");
       if (isCheckingExistingMembership) {
-        throw new Error("Checking your company access. Try again in a moment.");
+        throw new Ошибка("Checking your company access. Попробовать снова in a moment.");
       }
       if (isCurrentMember) {
-        throw new Error("This account already belongs to the company.");
+        throw new Ошибка("This account already belongs to the company.");
       }
-      if (invite.inviteType === "bootstrap_ceo" || invite.allowedJoinTypes !== "agent") {
-        return accessApi.acceptInvite(token, { requestType: "human" });
+      if (invite.inviteТип === "bootstrap_ceo" || invite.allowedJoinТипs !== "agent") {
+        return accessApi.acceptInvite(token, { requestТип: "human" });
       }
       return accessApi.acceptInvite(token, {
-        requestType: "agent",
-        agentName: agentName.trim(),
-        adapterType,
+        requestТип: "agent",
+        agentИмя: agentИмя.trim(),
+        adapterТип,
         capabilities: capabilities.trim() || null,
       });
     },
-    onSuccess: async (payload) => {
-      setError(null);
-      clearPendingInviteToken(token);
-      const asBootstrap = isBootstrapAcceptancePayload(payload);
+    onУспешно: async (payload) => {
+      setОшибка(null);
+      clearОжиданиеInviteТокен(token);
+      const asBootstrap = isBootstrapПринятьancePayload(payload);
       setResult({ kind: asBootstrap ? "bootstrap" : "join", payload });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.session });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
-      if (invite?.companyId && isApprovedHumanJoinPayload(payload, showsAgentForm)) {
-        setSelectedCompanyId(invite.companyId, { source: "manual" });
+      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.auth.session });
+      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
+      if (invite?.companyId && isОдобритьdЧеловекJoinPayload(payload, showsАгентForm)) {
+        setSelectedКомпанияId(invite.companyId, { source: "manual" });
         navigate("/", { replace: true });
       }
     },
-    onError: (err) => {
-      setError(err instanceof Error ? err.message : "Failed to accept invite");
+    onОшибка: (err) => {
+      setОшибка(err instanceof Ошибка ? err.message : "Ошибка to accept invite");
     },
   });
 
   useEffect(() => {
-    if (!shouldAutoAcceptHumanInvite || autoAcceptStarted || acceptMutation.isPending) return;
-    setAutoAcceptStarted(true);
-    setError(null);
+    if (!shouldАвтоПринятьЧеловекInvite || autoПринятьЗапущен || acceptMutation.isОжидание) return;
+    setАвтоПринятьЗапущен(true);
+    setОшибка(null);
     acceptMutation.mutate();
-  }, [acceptMutation, autoAcceptStarted, shouldAutoAcceptHumanInvite]);
+  }, [acceptMutation, autoПринятьЗапущен, shouldАвтоПринятьЧеловекInvite]);
 
   const authMutation = useMutation({
     mutationFn: async () => {
       if (authMode === "sign_in") {
-        await authApi.signInEmail({ email: email.trim(), password });
+        await authApi.signInПочта({ email: email.trim(), password });
         return;
       }
-      await authApi.signUpEmail({
+      await authApi.signUpПочта({
         name: name.trim(),
         email: email.trim(),
         password,
       });
     },
-    onSuccess: async () => {
+    onУспешно: async () => {
       setAuthFeedback(null);
-      rememberPendingInviteToken(token);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.session });
+      rememberОжиданиеInviteТокен(token);
+      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.auth.session });
       const companies = await queryClient.fetchQuery({
-        queryKey: queryKeys.companies.all,
+        queryКлюч: queryКлючs.companies.all,
         queryFn: () => companiesApi.list(),
         retry: false,
       });
 
       if (invite?.companyId && companies.some((company) => company.id === invite.companyId)) {
-        clearPendingInviteToken(token);
-        setSelectedCompanyId(invite.companyId, { source: "manual" });
+        clearОжиданиеInviteТокен(token);
+        setSelectedКомпанияId(invite.companyId, { source: "manual" });
         navigate("/", { replace: true });
         return;
       }
 
-      if (!invite || invite.inviteType !== "bootstrap_ceo") {
+      if (!invite || invite.inviteТип !== "bootstrap_ceo") {
         return;
       }
 
       try {
         const payload = await acceptMutation.mutateAsync();
-        if (isBootstrapAcceptancePayload(payload)) {
+        if (isBootstrapПринятьancePayload(payload)) {
           navigate("/", { replace: true });
         }
       } catch {
         return;
       }
     },
-    onError: (err) => {
+    onОшибка: (err) => {
       const nextFeedback = mapInviteAuthFeedback(err, authMode, email);
-      if (getAuthErrorCode(err) === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
+      if (getAuthОшибкаCode(err) === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
         setAuthMode("sign_in");
         setPassword("");
       }
@@ -412,30 +412,30 @@ export function InviteLandingPage() {
   });
 
   const joinButtonLabel = useMemo(() => {
-    if (!invite) return "Continue";
-    if (invite.inviteType === "bootstrap_ceo") return "Accept invite";
-    if (showsAgentForm) return "Submit request";
-    return sessionQuery.data ? "Accept invite" : "Continue";
-  }, [invite, sessionQuery.data, showsAgentForm]);
+    if (!invite) return "Продолжить";
+    if (invite.inviteТип === "bootstrap_ceo") return "Принять invite";
+    if (showsАгентForm) return "Отправить request";
+    return sessionQuery.data ? "Принять invite" : "Продолжить";
+  }, [invite, sessionQuery.data, showsАгентForm]);
 
   if (!token) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-destructive">Invalid invite token.</div>;
+    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-destructive">Invalid invite token.</div>;
   }
 
-  if (inviteQuery.isLoading || healthQuery.isLoading || sessionQuery.isLoading) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading invite...</div>;
+  if (inviteQuery.isЗагрузка || healthQuery.isЗагрузка || sessionQuery.isЗагрузка) {
+    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Загрузка invite...</div>;
   }
 
   if (isCheckingExistingMembership) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Checking your access...</div>;
+    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Checking your access...</div>;
   }
 
   if (inviteQuery.error || !invite) {
     return (
-      <div className="mx-auto max-w-xl py-10">
-        <div className="border border-border bg-card p-6" data-testid="invite-error">
-          <h1 className="text-lg font-semibold">Invite not available</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+      <div classИмя="mx-auto max-w-xl py-10">
+        <div classИмя="border border-border bg-card p-6" data-testid="invite-error">
+          <h1 classИмя="text-lg font-semibold">Invite not available</h1>
+          <p classИмя="mt-2 text-sm text-muted-foreground">
             This invite may be expired, revoked, or already used.
           </p>
         </div>
@@ -444,31 +444,31 @@ export function InviteLandingPage() {
   }
 
   if (
-    inviteJoinRequestStatus === "approved" &&
-    inviteJoinRequestType === "human" &&
+    inviteJoinRequestСтатус === "approved" &&
+    inviteJoinRequestТип === "human" &&
     isCurrentMember
   ) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Opening company...</div>;
+    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Opening company...</div>;
   }
 
-  if (inviteJoinRequestStatus === "pending_approval") {
+  if (inviteJoinRequestСтатус === "pending_approval") {
     return (
-      <AwaitingJoinApprovalPanel
-        companyDisplayName={companyDisplayName}
+      <AwaitingJoinСогласованиеPanel
+        companyDisplayИмя={companyDisplayИмя}
         companyLogoUrl={companyLogoUrl}
         companyBrandColor={companyBrandColor}
-        invitedByUserName={invitedByUserName}
+        invitedByUserИмя={invitedByUserИмя}
       />
     );
   }
 
-  if (inviteJoinRequestStatus) {
+  if (inviteJoinRequestСтатус) {
     return (
-      <div className="mx-auto max-w-xl py-10">
-        <div className="border border-border bg-card p-6" data-testid="invite-error">
-          <h1 className="text-lg font-semibold">Invite not available</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {inviteJoinRequestStatus === "rejected"
+      <div classИмя="mx-auto max-w-xl py-10">
+        <div classИмя="border border-border bg-card p-6" data-testid="invite-error">
+          <h1 classИмя="text-lg font-semibold">Invite not available</h1>
+          <p classИмя="mt-2 text-sm text-muted-foreground">
+            {inviteJoinRequestСтатус === "rejected"
               ? "This join request was not approved."
               : "This invite has already been used."}
           </p>
@@ -479,11 +479,11 @@ export function InviteLandingPage() {
 
   if (result?.kind === "bootstrap") {
     return (
-      <div className="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
-        <div className="mx-auto max-w-md border border-zinc-800 bg-zinc-950 p-6">
-          <h1 className="text-lg font-semibold">Bootstrap complete</h1>
-          <div className="mt-4">
-            <Button asChild className="rounded-none">
+      <div classИмя="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
+        <div classИмя="mx-auto max-w-md border border-zinc-800 bg-zinc-950 p-6">
+          <h1 classИмя="text-lg font-semibold">Bootstrap complete</h1>
+          <div classИмя="mt-4">
+            <Button asChild classИмя="rounded-none">
               <Link to="/">Open board</Link>
             </Button>
           </div>
@@ -494,43 +494,43 @@ export function InviteLandingPage() {
 
   if (result?.kind === "join") {
     const payload = result.payload as JoinRequest & {
-      claimSecret?: string;
-      claimApiKeyPath?: string;
+      claimСекрет?: string;
+      claimApiКлючПуть?: string;
       onboarding?: Record<string, unknown>;
     };
-    const claimSecret = typeof payload.claimSecret === "string" ? payload.claimSecret : null;
-    const claimApiKeyPath = typeof payload.claimApiKeyPath === "string" ? payload.claimApiKeyPath : null;
+    const claimСекрет = typeof payload.claimСекрет === "string" ? payload.claimСекрет : null;
+    const claimApiКлючПуть = typeof payload.claimApiКлючПуть === "string" ? payload.claimApiКлючПуть : null;
     const onboardingTextUrl = readNestedString(payload.onboarding, ["textInstructions", "url"]);
-    const joinedNow = !showsAgentForm && payload.status === "approved";
+    const joinedСейчас = !showsАгентForm && payload.status === "approved";
 
     return (
-      joinedNow ? (
-        <div className="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
-          <div className="mx-auto max-w-md border border-zinc-800 bg-zinc-950 p-6">
-            <div className="flex items-center gap-3">
-              <InviteCompanyLogo
-                companyDisplayName={companyDisplayName}
+      joinedСейчас ? (
+        <div classИмя="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
+          <div classИмя="mx-auto max-w-md border border-zinc-800 bg-zinc-950 p-6">
+            <div classИмя="flex items-center gap-3">
+              <InviteКомпанияLogo
+                companyDisplayИмя={companyDisplayИмя}
                 companyLogoUrl={companyLogoUrl}
                 companyBrandColor={companyBrandColor}
-                className="h-12 w-12 border border-zinc-800 rounded-none"
+                classИмя="h-12 w-12 border border-zinc-800 rounded-none"
               />
-              <h1 className="text-lg font-semibold">You joined the company</h1>
+              <h1 classИмя="text-lg font-semibold">You joined the company</h1>
             </div>
-            <div className="mt-4">
-              <Button asChild className="w-full rounded-none">
+            <div classИмя="mt-4">
+              <Button asChild classИмя="w-full rounded-none">
                 <Link to="/">Open board</Link>
               </Button>
             </div>
           </div>
         </div>
       ) : (
-        <AwaitingJoinApprovalPanel
-          companyDisplayName={companyDisplayName}
+        <AwaitingJoinСогласованиеPanel
+          companyDisplayИмя={companyDisplayИмя}
           companyLogoUrl={companyLogoUrl}
           companyBrandColor={companyBrandColor}
-          invitedByUserName={invitedByUserName}
-          claimSecret={claimSecret}
-          claimApiKeyPath={claimApiKeyPath}
+          invitedByUserИмя={invitedByUserИмя}
+          claimСекрет={claimСекрет}
+          claimApiКлючПуть={claimApiКлючПуть}
           onboardingTextUrl={onboardingTextUrl}
         />
       )
@@ -538,135 +538,135 @@ export function InviteLandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
-      <div className="mx-auto max-w-5xl">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-          <section className={`${panelClassName} space-y-6`}>
-            <div className="flex items-start gap-4">
-              <InviteCompanyLogo
-                companyDisplayName={companyDisplayName}
+    <div classИмя="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
+      <div classИмя="mx-auto max-w-5xl">
+        <div classИмя="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+          <section classИмя={`${panelClassИмя} space-y-6`}>
+            <div classИмя="flex items-start gap-4">
+              <InviteКомпанияLogo
+                companyDisplayИмя={companyDisplayИмя}
                 companyLogoUrl={companyLogoUrl}
                 companyBrandColor={companyBrandColor}
-                className="h-16 w-16 rounded-none border border-zinc-800"
+                classИмя="h-16 w-16 rounded-none border border-zinc-800"
               />
-              <div className="min-w-0">
-                <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+              <div classИмя="min-w-0">
+                <p classИмя="text-xs uppercase tracking-[0.24em] text-zinc-500">
                   You&apos;ve been invited to join Paperclip
                 </p>
-                <h1 className="mt-2 text-2xl font-semibold">
-                  {invite.inviteType === "bootstrap_ceo" ? "Set up Paperclip" : `Join ${companyDisplayName}`}
+                <h1 classИмя="mt-2 text-2xl font-semibold">
+                  {invite.inviteТип === "bootstrap_ceo" ? "Set up Paperclip" : `Join ${companyDisplayИмя}`}
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-300">
-                  {showsAgentForm
+                <p classИмя="mt-2 max-w-2xl text-sm leading-6 text-zinc-300">
+                  {showsАгентForm
                     ? "Review the invite details, then submit the agent information below to start the join request."
-                    : requiresHumanAccount
-                      ? "Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email."
+                    : requiresЧеловекАккаунт
+                      ? "Создайте аккаунт Paperclip first. If you already have one, switch to sign in and continue the invite with the same email."
                       : "Your account is ready. Review the invite details, then accept it to continue."}
                 </p>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="border border-zinc-800 p-3">
-                <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Company</div>
-                <div className="mt-1 text-sm text-zinc-100">{companyDisplayName}</div>
+            <div classИмя="grid gap-3 sm:grid-cols-2">
+              <div classИмя="border border-zinc-800 p-3">
+                <div classИмя="text-xs uppercase tracking-[0.2em] text-zinc-500">Компания</div>
+                <div classИмя="mt-1 text-sm text-zinc-100">{companyDisplayИмя}</div>
               </div>
-              <div className="border border-zinc-800 p-3">
-                <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Invited by</div>
-                <div className="mt-1 text-sm text-zinc-100">{invitedByUserName ?? "Paperclip board"}</div>
+              <div classИмя="border border-zinc-800 p-3">
+                <div classИмя="text-xs uppercase tracking-[0.2em] text-zinc-500">Invited by</div>
+                <div classИмя="mt-1 text-sm text-zinc-100">{invitedByUserИмя ?? "Paperclip board"}</div>
               </div>
-              <div className="border border-zinc-800 p-3">
-                <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Requested access</div>
-                <div className="mt-1 text-sm text-zinc-100">
-                  {showsAgentForm ? "Agent join request" : requestedHumanRole ?? "Company access"}
+              <div classИмя="border border-zinc-800 p-3">
+                <div classИмя="text-xs uppercase tracking-[0.2em] text-zinc-500">Requested access</div>
+                <div classИмя="mt-1 text-sm text-zinc-100">
+                  {showsАгентForm ? "Заявка агента" : requestedЧеловекRole ?? "Компания access"}
                 </div>
               </div>
-              <div className="border border-zinc-800 p-3">
-                <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Invite expires</div>
-                <div className="mt-1 text-sm text-zinc-100">{formatDate(invite.expiresAt)}</div>
+              <div classИмя="border border-zinc-800 p-3">
+                <div classИмя="text-xs uppercase tracking-[0.2em] text-zinc-500">Invite expires</div>
+                <div classИмя="mt-1 text-sm text-zinc-100">{formatDate(invite.expiresAt)}</div>
               </div>
             </div>
 
             {inviteMessage ? (
-              <div className="border border-amber-500/40 bg-amber-500/10 p-4">
-                <div className="text-xs uppercase tracking-[0.2em] text-amber-200/80">Message from inviter</div>
-                <p className="mt-2 text-sm leading-6 text-amber-50">{inviteMessage}</p>
+              <div classИмя="border border-amber-500/40 bg-amber-500/10 p-4">
+                <div classИмя="text-xs uppercase tracking-[0.2em] text-amber-200/80">Message from inviter</div>
+                <p classИмя="mt-2 text-sm leading-6 text-amber-50">{inviteMessage}</p>
               </div>
             ) : null}
 
             {sessionQuery.data ? (
-              <div className="border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-50">
-                Signed in as <span className="font-medium">{sessionLabel}</span>.
+              <div classИмя="border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-50">
+                Выполнен вход as <span classИмя="font-medium">{sessionLabel}</span>.
               </div>
             ) : null}
           </section>
 
-          <section className={`${panelClassName} h-fit`}>
-            {showsAgentForm ? (
-              <div className="space-y-4">
+          <section classИмя={`${panelClassИмя} h-fit`}>
+            {showsАгентForm ? (
+              <div classИмя="space-y-4">
                 <div>
-                  <h2 className="text-lg font-semibold">Submit agent details</h2>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    This invite will create an approval request for a new agent in {companyDisplayName}.
+                  <h2 classИмя="text-lg font-semibold">Отправить agent details</h2>
+                  <p classИмя="mt-1 text-sm text-zinc-400">
+                    This invite will create an approval request for a new agent in {companyDisplayИмя}.
                   </p>
                 </div>
-                <label className="block text-sm">
-                  <span className="mb-1 block text-zinc-400">Agent name</span>
+                <label classИмя="block text-sm">
+                  <span classИмя="mb-1 block text-zinc-400">Агент name</span>
                   <input
-                    className={fieldClassName}
-                    value={agentName}
-                    onChange={(event) => setAgentName(event.target.value)}
+                    classИмя={fieldClassИмя}
+                    value={agentИмя}
+                    onChange={(event) => setАгентИмя(event.target.value)}
                   />
                 </label>
-                <label className="block text-sm">
-                  <span className="mb-1 block text-zinc-400">Adapter type</span>
+                <label classИмя="block text-sm">
+                  <span classИмя="mb-1 block text-zinc-400">Адаптер type</span>
                   <select
-                    className={fieldClassName}
-                    value={adapterType}
-                    onChange={(event) => setAdapterType(event.target.value as AgentAdapterType)}
+                    classИмя={fieldClassИмя}
+                    value={adapterТип}
+                    onChange={(event) => setАдаптерТип(event.target.value as АгентАдаптерТип)}
                   >
-                    {joinAdapterOptions.map((type) => (
+                    {joinАдаптерOptions.map((type) => (
                       <option key={type} value={type} disabled={!ENABLED_INVITE_ADAPTERS.has(type)}>
-                        {getAdapterLabel(type)}{!ENABLED_INVITE_ADAPTERS.has(type) ? " (Coming soon)" : ""}
+                        {getАдаптерLabel(type)}{!ENABLED_INVITE_ADAPTERS.has(type) ? " (Скоро)" : ""}
                       </option>
                     ))}
                   </select>
                 </label>
-                <label className="block text-sm">
-                  <span className="mb-1 block text-zinc-400">Capabilities</span>
+                <label classИмя="block text-sm">
+                  <span classИмя="mb-1 block text-zinc-400">Capabilities</span>
                   <textarea
-                    className={fieldClassName}
+                    classИмя={fieldClassИмя}
                     rows={4}
                     value={capabilities}
                     onChange={(event) => setCapabilities(event.target.value)}
                   />
                 </label>
-                {error ? <p className="text-xs text-red-400">{error}</p> : null}
+                {error ? <p classИмя="text-xs text-red-400">{error}</p> : null}
                 <Button
-                  className="w-full rounded-none"
-                  disabled={acceptMutation.isPending || agentName.trim().length === 0}
+                  classИмя="w-full rounded-none"
+                  disabled={acceptMutation.isОжидание || agentИмя.trim().length === 0}
                   onClick={() => acceptMutation.mutate()}
                 >
-                  {acceptMutation.isPending ? "Working..." : joinButtonLabel}
+                  {acceptMutation.isОжидание ? "Работаing..." : joinButtonLabel}
                 </Button>
               </div>
-            ) : requiresHumanAccount ? (
-              <div className="space-y-5">
+            ) : requiresЧеловекАккаунт ? (
+              <div classИмя="space-y-5">
                 <div>
-                  <h2 className="text-lg font-semibold">
-                    {authMode === "sign_up" ? "Create your account" : "Sign in to continue"}
+                  <h2 classИмя="text-lg font-semibold">
+                    {authMode === "sign_up" ? "Создайте аккаунт" : "Войдите чтобы продолжить"}
                   </h2>
-                  <p className="mt-1 text-sm text-zinc-400">
+                  <p classИмя="mt-1 text-sm text-zinc-400">
                     {authMode === "sign_up"
-                      ? `Start with a Paperclip account. After that, you'll come right back here to accept the invite for ${companyDisplayName}.`
+                      ? `Начать with a Paperclip account. After that, you'll come right back here to accept the invite for ${companyDisplayИмя}.`
                       : "Use the Paperclip account that already matches this invite. If you do not have one yet, switch back to create account."}
                   </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div classИмя="flex gap-2">
                   <button
                     type="button"
-                    className={`${modeButtonBaseClassName} ${
+                    classИмя={`${modeButtonBaseClassИмя} ${
                       authMode === "sign_up"
                         ? "border-zinc-100 bg-zinc-100 text-zinc-950"
                         : "border-zinc-800 text-zinc-300 hover:border-zinc-600"
@@ -676,11 +676,11 @@ export function InviteLandingPage() {
                       setAuthMode("sign_up");
                     }}
                   >
-                    Create account
+                    Создать account
                   </button>
                   <button
                     type="button"
-                    className={`${modeButtonBaseClassName} ${
+                    classИмя={`${modeButtonBaseClassИмя} ${
                       authMode === "sign_in"
                         ? "border-zinc-100 bg-zinc-100 text-zinc-950"
                         : "border-zinc-800 text-zinc-300 hover:border-zinc-600"
@@ -695,14 +695,14 @@ export function InviteLandingPage() {
                 </div>
 
                 <form
-                  className="space-y-4"
+                  classИмя="space-y-4"
                   method="post"
                   action={authMode === "sign_up" ? "/api/auth/sign-up/email" : "/api/auth/sign-in/email"}
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    if (authMutation.isPending) return;
-                    if (!authCanSubmit) {
-                      setAuthFeedback({ tone: "error", message: "Please fill in all required fields." });
+                  onОтправить={(event) => {
+                    event.preventПо умолчанию();
+                    if (authMutation.isОжидание) return;
+                    if (!authCanОтправить) {
+                      setAuthFeedback({ tone: "error", message: "Заполните все обязательные поля." });
                       return;
                     }
                     authMutation.mutate();
@@ -710,14 +710,14 @@ export function InviteLandingPage() {
                   data-testid="invite-inline-auth"
                 >
                   {authMode === "sign_up" ? (
-                    <label className="block text-sm">
-                      <span className="mb-1 block text-zinc-400">Name</span>
+                    <label classИмя="block text-sm">
+                      <span classИмя="mb-1 block text-zinc-400">Имя</span>
                       <input
                         name="name"
-                        className={fieldClassName}
+                        classИмя={fieldClassИмя}
                         value={name}
                         onChange={(event) => {
-                          setName(event.target.value);
+                          setИмя(event.target.value);
                           setAuthFeedback(null);
                         }}
                         autoComplete="name"
@@ -725,27 +725,27 @@ export function InviteLandingPage() {
                       />
                     </label>
                   ) : null}
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-zinc-400">Email</span>
+                  <label classИмя="block text-sm">
+                    <span classИмя="mb-1 block text-zinc-400">Почта</span>
                     <input
                       name="email"
                       type="email"
-                      className={fieldClassName}
+                      classИмя={fieldClassИмя}
                       value={email}
                       onChange={(event) => {
-                        setEmail(event.target.value);
+                        setПочта(event.target.value);
                         setAuthFeedback(null);
                       }}
                       autoComplete="email"
                       autoFocus={authMode === "sign_in"}
                     />
                   </label>
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-zinc-400">Password</span>
+                  <label classИмя="block text-sm">
+                    <span classИмя="mb-1 block text-zinc-400">Password</span>
                     <input
                       name="password"
                       type="password"
-                      className={fieldClassName}
+                      classИмя={fieldClassИмя}
                       value={password}
                       onChange={(event) => {
                         setPassword(event.target.value);
@@ -756,7 +756,7 @@ export function InviteLandingPage() {
                   </label>
                   {authFeedback ? (
                     <p
-                      className={`text-xs ${
+                      classИмя={`text-xs ${
                         authFeedback.tone === "info" ? "text-amber-300" : "text-red-400"
                       }`}
                     >
@@ -765,56 +765,56 @@ export function InviteLandingPage() {
                   ) : null}
                   <Button
                     type="submit"
-                    className="w-full rounded-none"
-                    disabled={authMutation.isPending}
-                    aria-disabled={!authCanSubmit || authMutation.isPending}
+                    classИмя="w-full rounded-none"
+                    disabled={authMutation.isОжидание}
+                    aria-disabled={!authCanОтправить || authMutation.isОжидание}
                   >
-                    {authMutation.isPending
-                      ? "Working..."
+                    {authMutation.isОжидание
+                      ? "Работаing..."
                       : authMode === "sign_in"
-                        ? "Sign in and continue"
-                        : "Create account and continue"}
+                        ? "Войти и продолжить"
+                        : "Создать account and continue"}
                   </Button>
                 </form>
 
-                <p className="text-xs leading-5 text-zinc-500">
+                <p classИмя="text-xs leading-5 text-zinc-500">
                   {authMode === "sign_up"
                     ? "Already signed up before? Use the existing-account option instead so the invite lands on the right Paperclip user."
-                    : "No account yet? Switch back to create account so you can accept the invite with a new login."}
+                    : "Нет account yet? Switch back to create account so you can accept the invite with a new login."}
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div classИмя="space-y-4">
                 <div>
-                  <h2 className="text-lg font-semibold">
-                    {shouldAutoAcceptHumanInvite
-                      ? "Submitting join request"
-                      : invite.inviteType === "bootstrap_ceo"
-                        ? "Accept bootstrap invite"
-                        : "Accept company invite"}
+                  <h2 classИмя="text-lg font-semibold">
+                    {shouldАвтоПринятьЧеловекInvite
+                      ? "Отправитьting join request"
+                      : invite.inviteТип === "bootstrap_ceo"
+                        ? "Принять bootstrap invite"
+                        : "Принять company invite"}
                   </h2>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    {shouldAutoAcceptHumanInvite
-                      ? `Submitting your join request for ${companyDisplayName}.`
+                  <p classИмя="mt-1 text-sm text-zinc-400">
+                    {shouldАвтоПринятьЧеловекInvite
+                      ? `Отправитьting your join request for ${companyDisplayИмя}.`
                       : isCurrentMember
-                      ? `This account already belongs to ${companyDisplayName}.`
+                      ? `This account already belongs to ${companyDisplayИмя}.`
                       : `This will ${
-                          invite.inviteType === "bootstrap_ceo" ? "finish setting up Paperclip" : `submit or complete your join request for ${companyDisplayName}`
+                          invite.inviteТип === "bootstrap_ceo" ? "finish setting up Paperclip" : `submit or complete your join request for ${companyDisplayИмя}`
                         }.`}
                   </p>
                 </div>
-                {error ? <p className="text-xs text-red-400">{error}</p> : null}
-                {shouldAutoAcceptHumanInvite ? (
-                  <div className="text-sm text-zinc-400">
-                    {acceptMutation.isPending ? "Submitting request..." : "Finishing sign-in..."}
+                {error ? <p classИмя="text-xs text-red-400">{error}</p> : null}
+                {shouldАвтоПринятьЧеловекInvite ? (
+                  <div classИмя="text-sm text-zinc-400">
+                    {acceptMutation.isОжидание ? "Отправитьting request..." : "Finishing sign-in..."}
                   </div>
                 ) : (
                   <Button
-                    className="w-full rounded-none"
-                    disabled={acceptMutation.isPending || isCurrentMember}
+                    classИмя="w-full rounded-none"
+                    disabled={acceptMutation.isОжидание || isCurrentMember}
                     onClick={() => acceptMutation.mutate()}
                   >
-                    {acceptMutation.isPending ? "Working..." : joinButtonLabel}
+                    {acceptMutation.isОжидание ? "Работаing..." : joinButtonLabel}
                   </Button>
                 )}
               </div>

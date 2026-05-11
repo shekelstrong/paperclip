@@ -1,27 +1,27 @@
 import { useEffect, useMemo, useRef } from "react";
 import {
-  useExternalStoreRuntime,
+  useExternalStoreЗапуститьtime,
   type ThreadMessage,
   type AppendMessage,
-  type ExternalStoreAdapter,
+  type ExternalStoreАдаптер,
 } from "@assistant-ui/react";
 
-export interface PaperclipIssueRuntimeReassignment {
-  assigneeAgentId: string | null;
+export interface PaperclipЗадачаЗапуститьtimeReassignment {
+  assigneeАгентId: string | null;
   assigneeUserId: string | null;
 }
 
-export interface PaperclipIssueRuntimeSendOptions {
+export interface PaperclipЗадачаЗапуститьtimeОтправитьOptions {
   body: string;
   reopen?: boolean;
-  reassignment?: PaperclipIssueRuntimeReassignment;
+  reassignment?: PaperclipЗадачаЗапуститьtimeReassignment;
 }
 
-interface UsePaperclipIssueRuntimeOptions {
+interface UsePaperclipЗадачаЗапуститьtimeOptions {
   messages: readonly ThreadMessage[];
-  isRunning: boolean;
-  onSend: (options: PaperclipIssueRuntimeSendOptions) => Promise<void>;
-  onCancel?: (() => Promise<void>) | undefined;
+  isВыполняется: boolean;
+  onОтправить: (options: PaperclipЗадачаЗапуститьtimeОтправитьOptions) => Promise<void>;
+  onОтмена?: (() => Promise<void>) | undefined;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -37,26 +37,26 @@ function readTextContent(message: AppendMessage) {
     .trim();
 }
 
-export function usePaperclipIssueRuntime({
+export function usePaperclipЗадачаЗапуститьtime({
   messages,
-  isRunning,
-  onSend,
-  onCancel,
-}: UsePaperclipIssueRuntimeOptions) {
-  const onSendRef = useRef(onSend);
-  const onCancelRef = useRef(onCancel);
+  isВыполняется,
+  onОтправить,
+  onОтмена,
+}: UsePaperclipЗадачаЗапуститьtimeOptions) {
+  const onОтправитьRef = useRef(onОтправить);
+  const onОтменаRef = useRef(onОтмена);
 
   useEffect(() => {
-    onSendRef.current = onSend;
-  }, [onSend]);
+    onОтправитьRef.current = onОтправить;
+  }, [onОтправить]);
 
   useEffect(() => {
-    onCancelRef.current = onCancel;
-  }, [onCancel]);
+    onОтменаRef.current = onОтмена;
+  }, [onОтмена]);
 
-  const adapter = useMemo<ExternalStoreAdapter<ThreadMessage>>(() => ({
+  const adapter = useMemo<ExternalStoreАдаптер<ThreadMessage>>(() => ({
     messages,
-    isRunning,
+    isВыполняется,
     onNew: async (message) => {
       const body = readTextContent(message);
       if (!body) return;
@@ -65,27 +65,27 @@ export function usePaperclipIssueRuntime({
       const reassignmentRecord = asRecord(custom?.reassignment);
       const reassignment =
         reassignmentRecord &&
-        ("assigneeAgentId" in reassignmentRecord || "assigneeUserId" in reassignmentRecord)
+        ("assigneeАгентId" in reassignmentRecord || "assigneeUserId" in reassignmentRecord)
           ? {
-              assigneeAgentId:
-                typeof reassignmentRecord.assigneeAgentId === "string" ? reassignmentRecord.assigneeAgentId : null,
+              assigneeАгентId:
+                typeof reassignmentRecord.assigneeАгентId === "string" ? reassignmentRecord.assigneeАгентId : null,
               assigneeUserId:
                 typeof reassignmentRecord.assigneeUserId === "string" ? reassignmentRecord.assigneeUserId : null,
             }
           : undefined;
 
-      await onSendRef.current({
+      await onОтправитьRef.current({
         body,
         reopen: custom?.reopen === true ? true : undefined,
         reassignment,
       });
     },
-    ...(onCancel ? {
-      onCancel: async () => {
-        await onCancelRef.current?.();
+    ...(onОтмена ? {
+      onОтмена: async () => {
+        await onОтменаRef.current?.();
       },
     } : {}),
-  }), [messages, isRunning, !!onCancel]);
+  }), [messages, isВыполняется, !!onОтмена]);
 
-  return useExternalStoreRuntime(adapter);
+  return useExternalStoreЗапуститьtime(adapter);
 }

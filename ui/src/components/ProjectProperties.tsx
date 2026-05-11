@@ -2,46 +2,46 @@ import { useState } from "react";
 import { Link } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Project } from "@paperclipai/shared";
-import { StatusBadge } from "./StatusBadge";
+import { СтатусBadge } from "./СтатусBadge";
 import { cn, formatDate } from "../lib/utils";
 import { environmentsApi } from "../api/environments";
 import { goalsApi } from "../api/goals";
-import { instanceSettingsApi } from "../api/instanceSettings";
+import { instanceНастройкиApi } from "../api/instanceНастройки";
 import { projectsApi } from "../api/projects";
 import { secretsApi } from "../api/secrets";
-import { useCompany } from "../context/CompanyContext";
-import { queryKeys } from "../lib/queryKeys";
-import { statusBadge, statusBadgeDefault } from "../lib/status-colors";
+import { useКомпания } from "../context/КомпанияContext";
+import { queryКлючs } from "../lib/queryКлючs";
+import { statusBadge, statusBadgeПо умолчанию } from "../lib/status-colors";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertCircle, Archive, ArchiveRestore, Check, ExternalLink, Github, Loader2, Plus, Trash2, X } from "lucide-react";
-import { ChoosePathButton } from "./PathInstructionsModal";
+import { AlertCircle, Архивировать, АрхивироватьRestore, Check, ExternalLink, Github, Loader2, Plus, Trash2, X } from "lucide-react";
+import { ChooseПутьButton } from "./ПутьInstructionsModal";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
-import { DraftInput } from "./agent-config-primitives";
-import { InlineEditor } from "./InlineEditor";
-import { EnvVarEditor } from "./EnvVarEditor";
+import { ЧерновикInput } from "./agent-config-primitives";
+import { InlineИзменитьor } from "./InlineИзменитьor";
+import { EnvVarИзменитьor } from "./EnvVarИзменитьor";
 
 const PROJECT_STATUSES = [
-  { value: "backlog", label: "Backlog" },
+  { value: "backlog", label: "Назадlog" },
   { value: "planned", label: "Planned" },
   { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "completed", label: "Завершён" },
+  { value: "cancelled", label: "Отменён" },
 ];
 
 interface ProjectPropertiesProps {
   project: Project;
-  onUpdate?: (data: Record<string, unknown>) => void;
-  onFieldUpdate?: (field: ProjectConfigFieldKey, data: Record<string, unknown>) => void;
-  getFieldSaveState?: (field: ProjectConfigFieldKey) => ProjectFieldSaveState;
-  onArchive?: (archived: boolean) => void;
-  archivePending?: boolean;
+  onОбновить?: (data: Record<string, unknown>) => void;
+  onFieldОбновить?: (field: ProjectConfigFieldКлюч, data: Record<string, unknown>) => void;
+  getFieldСохранитьState?: (field: ProjectConfigFieldКлюч) => ProjectFieldСохранитьState;
+  onАрхивировать?: (archived: boolean) => void;
+  archiveОжидание?: boolean;
 }
 
-export type ProjectFieldSaveState = "idle" | "saving" | "saved" | "error";
-export type ProjectConfigFieldKey =
+export type ProjectFieldСохранитьState = "idle" | "saving" | "saved" | "error";
+export type ProjectConfigFieldКлюч =
   | "name"
   | "description"
   | "status"
@@ -56,28 +56,28 @@ export type ProjectConfigFieldKey =
   | "execution_workspace_provision_command"
   | "execution_workspace_teardown_command";
 
-function SaveIndicator({ state }: { state: ProjectFieldSaveState }) {
+function СохранитьIndicator({ state }: { state: ProjectFieldСохранитьState }) {
   if (state === "saving") {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-        <Loader2 className="h-3 w-3 animate-spin" />
+      <span classИмя="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+        <Loader2 classИмя="h-3 w-3 animate-spin" />
         Saving
       </span>
     );
   }
   if (state === "saved") {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-green-600 dark:text-green-400">
-        <Check className="h-3 w-3" />
-        Saved
+      <span classИмя="inline-flex items-center gap-1 text-[11px] text-green-600 dark:text-green-400">
+        <Check classИмя="h-3 w-3" />
+        Сохранитьd
       </span>
     );
   }
   if (state === "error") {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-destructive">
-        <AlertCircle className="h-3 w-3" />
-        Failed
+      <span classИмя="inline-flex items-center gap-1 text-[11px] text-destructive">
+        <AlertCircle classИмя="h-3 w-3" />
+        Ошибка
       </span>
     );
   }
@@ -89,12 +89,12 @@ function FieldLabel({
   state,
 }: {
   label: string;
-  state: ProjectFieldSaveState;
+  state: ProjectFieldСохранитьState;
 }) {
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <SaveIndicator state={state} />
+    <div classИмя="flex items-center gap-1.5">
+      <span classИмя="text-xs text-muted-foreground">{label}</span>
+      <СохранитьIndicator state={state} />
     </div>
   );
 }
@@ -102,33 +102,33 @@ function FieldLabel({
 function PropertyRow({
   label,
   children,
-  alignStart = false,
-  valueClassName = "",
+  alignНачать = false,
+  valueClassИмя = "",
 }: {
-  label: React.ReactNode;
-  children: React.ReactNode;
-  alignStart?: boolean;
-  valueClassName?: string;
+  label: React.ReactНетde;
+  children: React.ReactНетde;
+  alignНачать?: boolean;
+  valueClassИмя?: string;
 }) {
   return (
-    <div className={cn("flex gap-3 py-1.5 items-start")}>
-      <div className="shrink-0 w-20 mt-0.5">{label}</div>
-      <div className={cn("min-w-0 flex-1", alignStart ? "pt-0.5" : "flex items-center gap-1.5 flex-wrap", valueClassName)}>
+    <div classИмя={cn("flex gap-3 py-1.5 items-start")}>
+      <div classИмя="shrink-0 w-20 mt-0.5">{label}</div>
+      <div classИмя={cn("min-w-0 flex-1", alignНачать ? "pt-0.5" : "flex items-center gap-1.5 flex-wrap", valueClassИмя)}>
         {children}
       </div>
     </div>
   );
 }
 
-function ProjectStatusPicker({ status, onChange }: { status: string; onChange: (status: string) => void }) {
+function ProjectСтатусPicker({ status, onChange }: { status: string; onChange: (status: string) => void }) {
   const [open, setOpen] = useState(false);
-  const colorClass = statusBadge[status] ?? statusBadgeDefault;
+  const colorClass = statusBadge[status] ?? statusBadgeПо умолчанию;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
-          className={cn(
+          classИмя={cn(
             "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer hover:opacity-80 transition-opacity",
             colorClass,
           )}
@@ -136,13 +136,13 @@ function ProjectStatusPicker({ status, onChange }: { status: string; onChange: (
           {status.replace("_", " ")}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-40 p-1" align="start">
+      <PopoverContent classИмя="w-40 p-1" align="start">
         {PROJECT_STATUSES.map((s) => (
           <Button
             key={s.value}
             variant="ghost"
             size="sm"
-            className={cn("w-full justify-start gap-2 text-xs", s.value === status && "bg-accent")}
+            classИмя={cn("w-full justify-start gap-2 text-xs", s.value === status && "bg-accent")}
             onClick={() => {
               onChange(s.value);
               setOpen(false);
@@ -156,64 +156,64 @@ function ProjectStatusPicker({ status, onChange }: { status: string; onChange: (
   );
 }
 
-function ArchiveDangerZone({
+function АрхивироватьDangerZone({
   project,
-  onArchive,
-  archivePending,
+  onАрхивировать,
+  archiveОжидание,
 }: {
   project: Project;
-  onArchive: (archived: boolean) => void;
-  archivePending?: boolean;
+  onАрхивировать: (archived: boolean) => void;
+  archiveОжидание?: boolean;
 }) {
-  const [confirming, setConfirming] = useState(false);
-  const isArchive = !project.archivedAt;
-  const action = isArchive ? "Archive" : "Unarchive";
+  const [confirming, setПодтвердитьing] = useState(false);
+  const isАрхивировать = !project.archivedAt;
+  const action = isАрхивировать ? "Архивировать" : "Разархивировать";
 
   return (
-    <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
-      <p className="text-sm text-muted-foreground">
-        {isArchive
-          ? "Archive this project to hide it from the sidebar and project selectors."
-          : "Unarchive this project to restore it in the sidebar and project selectors."}
+    <div classИмя="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
+      <p classИмя="text-sm text-muted-foreground">
+        {isАрхивировать
+          ? "Архивировать this project to hide it from the sidebar and project selectors."
+          : "Разархивировать this project to restore it in the sidebar and project selectors."}
       </p>
-      {archivePending ? (
+      {archiveОжидание ? (
         <Button size="sm" variant="destructive" disabled>
-          <Loader2 className="h-3 w-3 animate-spin mr-1" />
-          {isArchive ? "Archiving..." : "Unarchiving..."}
+          <Loader2 classИмя="h-3 w-3 animate-spin mr-1" />
+          {isАрхивировать ? "Archiving..." : "Unarchiving..."}
         </Button>
       ) : confirming ? (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-destructive font-medium">
+        <div classИмя="flex items-center gap-2">
+          <span classИмя="text-sm text-destructive font-medium">
             {action} &ldquo;{project.name}&rdquo;?
           </span>
           <Button
             size="sm"
             variant="destructive"
             onClick={() => {
-              setConfirming(false);
-              onArchive(isArchive);
+              setПодтвердитьing(false);
+              onАрхивировать(isАрхивировать);
             }}
           >
-            Confirm
+            Подтвердить
           </Button>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setConfirming(false)}
+            onClick={() => setПодтвердитьing(false)}
           >
-            Cancel
+            Отмена
           </Button>
         </div>
       ) : (
         <Button
           size="sm"
           variant="destructive"
-          onClick={() => setConfirming(true)}
+          onClick={() => setПодтвердитьing(true)}
         >
-          {isArchive ? (
-            <><Archive className="h-3 w-3 mr-1" />{action} project</>
+          {isАрхивировать ? (
+            <><Архивировать classИмя="h-3 w-3 mr-1" />{action} project</>
           ) : (
-            <><ArchiveRestore className="h-3 w-3 mr-1" />{action} project</>
+            <><АрхивироватьRestore classИмя="h-3 w-3 mr-1" />{action} project</>
           )}
         </Button>
       )}
@@ -221,88 +221,88 @@ function ArchiveDangerZone({
   );
 }
 
-export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSaveState, onArchive, archivePending }: ProjectPropertiesProps) {
-  const { selectedCompanyId } = useCompany();
+export function ProjectProperties({ project, onОбновить, onFieldОбновить, getFieldСохранитьState, onАрхивировать, archiveОжидание }: ProjectPropertiesProps) {
+  const { selectedКомпанияId } = useКомпания();
   const queryClient = useQueryClient();
-  const [goalOpen, setGoalOpen] = useState(false);
-  const [executionWorkspaceAdvancedOpen, setExecutionWorkspaceAdvancedOpen] = useState(false);
-  const [workspaceMode, setWorkspaceMode] = useState<"local" | "repo" | null>(null);
-  const [workspaceCwd, setWorkspaceCwd] = useState("");
-  const [workspaceRepoUrl, setWorkspaceRepoUrl] = useState("");
-  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+  const [goalOpen, setЦельOpen] = useState(false);
+  const [executionРабочая областьДополнительноOpen, setExecutionРабочая областьДополнительноOpen] = useState(false);
+  const [workspaceMode, setРабочая областьMode] = useState<"local" | "repo" | null>(null);
+  const [workspaceCwd, setРабочая областьCwd] = useState("");
+  const [workspaceРепозиторийUrl, setРабочая областьРепозиторийUrl] = useState("");
+  const [workspaceОшибка, setРабочая областьОшибка] = useState<string | null>(null);
 
-  const commitField = (field: ProjectConfigFieldKey, data: Record<string, unknown>) => {
-    if (onFieldUpdate) {
-      onFieldUpdate(field, data);
+  const commitField = (field: ProjectConfigFieldКлюч, data: Record<string, unknown>) => {
+    if (onFieldОбновить) {
+      onFieldОбновить(field, data);
       return;
     }
-    onUpdate?.(data);
+    onОбновить?.(data);
   };
-  const fieldState = (field: ProjectConfigFieldKey): ProjectFieldSaveState => getFieldSaveState?.(field) ?? "idle";
+  const fieldState = (field: ProjectConfigFieldКлюч): ProjectFieldСохранитьState => getFieldСохранитьState?.(field) ?? "idle";
 
-  const { data: allGoals } = useQuery({
-    queryKey: queryKeys.goals.list(selectedCompanyId!),
-    queryFn: () => goalsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+  const { data: allЦели } = useQuery({
+    queryКлюч: queryКлючs.goals.list(selectedКомпанияId!),
+    queryFn: () => goalsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
-  const { data: experimentalSettings } = useQuery({
-    queryKey: queryKeys.instance.experimentalSettings,
-    queryFn: () => instanceSettingsApi.getExperimental(),
+  const { data: experimentalНастройки } = useQuery({
+    queryКлюч: queryКлючs.instance.experimentalНастройки,
+    queryFn: () => instanceНастройкиApi.getExperimental(),
     retry: false,
   });
-  const environmentsEnabled = experimentalSettings?.enableEnvironments === true;
-  const { data: availableSecrets = [] } = useQuery({
-    queryKey: selectedCompanyId ? queryKeys.secrets.list(selectedCompanyId) : ["secrets", "none"],
-    queryFn: () => secretsApi.list(selectedCompanyId!),
-    enabled: Boolean(selectedCompanyId),
+  const environmentsВключитьd = experimentalНастройки?.enableОкружения === true;
+  const { data: availableСекреты = [] } = useQuery({
+    queryКлюч: selectedКомпанияId ? queryКлючs.secrets.list(selectedКомпанияId) : ["secrets", "none"],
+    queryFn: () => secretsApi.list(selectedКомпанияId!),
+    enabled: Boolean(selectedКомпанияId),
   });
-  const createSecret = useMutation({
+  const createСекрет = useMutation({
     mutationFn: (input: { name: string; value: string }) => {
-      if (!selectedCompanyId) throw new Error("Select a company to create secrets");
-      return secretsApi.create(selectedCompanyId, input);
+      if (!selectedКомпанияId) throw new Ошибка("Select a company to create secrets");
+      return secretsApi.create(selectedКомпанияId, input);
     },
-    onSuccess: () => {
-      if (!selectedCompanyId) return;
-      queryClient.invalidateQueries({ queryKey: queryKeys.secrets.list(selectedCompanyId) });
+    onУспешно: () => {
+      if (!selectedКомпанияId) return;
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.secrets.list(selectedКомпанияId) });
     },
   });
   const { data: environments } = useQuery({
-    queryKey: queryKeys.environments.list(selectedCompanyId!),
-    queryFn: () => environmentsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId && environmentsEnabled,
+    queryКлюч: queryКлючs.environments.list(selectedКомпанияId!),
+    queryFn: () => environmentsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId && environmentsВключитьd,
   });
 
-  const linkedGoalIds = project.goalIds.length > 0
+  const linkedЦельIds = project.goalIds.length > 0
     ? project.goalIds
     : project.goalId
       ? [project.goalId]
       : [];
 
-  const linkedGoals = project.goals.length > 0
+  const linkedЦели = project.goals.length > 0
     ? project.goals
-    : linkedGoalIds.map((id) => ({
+    : linkedЦельIds.map((id) => ({
         id,
-        title: allGoals?.find((g) => g.id === id)?.title ?? id.slice(0, 8),
+        title: allЦели?.find((g) => g.id === id)?.title ?? id.slice(0, 8),
       }));
 
-  const availableGoals = (allGoals ?? []).filter((g) => !linkedGoalIds.includes(g.id));
+  const availableЦели = (allЦели ?? []).filter((g) => !linkedЦельIds.includes(g.id));
   const workspaces = project.workspaces ?? [];
   const codebase = project.codebase;
-  const primaryCodebaseWorkspace = project.primaryWorkspace ?? null;
-  const hasAdditionalLegacyWorkspaces = workspaces.some((workspace) => workspace.id !== primaryCodebaseWorkspace?.id);
-  const executionWorkspacePolicy = project.executionWorkspacePolicy ?? null;
-  const executionWorkspacesEnabled = executionWorkspacePolicy?.enabled === true;
-  const isolatedWorkspacesEnabled = experimentalSettings?.enableIsolatedWorkspaces === true;
-  const executionWorkspaceDefaultMode =
-    executionWorkspacePolicy?.defaultMode === "isolated_workspace" ? "isolated_workspace" : "shared_workspace";
-  const executionWorkspaceEnvironmentId = executionWorkspacePolicy?.environmentId ?? "";
-  const executionWorkspaceStrategy = executionWorkspacePolicy?.workspaceStrategy ?? {
+  const primaryCodebaseРабочая область = project.primaryРабочая область ?? null;
+  const hasДобавитьitionalLegacyРабочие области = workspaces.some((workspace) => workspace.id !== primaryCodebaseРабочая область?.id);
+  const executionРабочая областьPolicy = project.executionРабочая областьPolicy ?? null;
+  const executionРабочие областиВключитьd = executionРабочая областьPolicy?.enabled === true;
+  const isolatedРабочие областиВключитьd = experimentalНастройки?.enableIsolatedРабочие области === true;
+  const executionРабочая областьПо умолчаниюMode =
+    executionРабочая областьPolicy?.defaultMode === "isolated_workspace" ? "isolated_workspace" : "shared_workspace";
+  const executionРабочая областьОкружениеId = executionРабочая областьPolicy?.environmentId ?? "";
+  const executionРабочая областьStrategy = executionРабочая областьPolicy?.workspaceStrategy ?? {
     type: "git_worktree",
     baseRef: "",
     branchTemplate: "",
-    worktreeParentDir: "",
+    worktreeРодительDir: "",
   };
-  const runSelectableEnvironments = (environments ?? []).filter((environment) => {
+  const runSelectableОкружения = (environments ?? []).filter((environment) => {
     if (environment.driver === "local" || environment.driver === "ssh") return true;
     if (environment.driver !== "sandbox") return false;
     const provider = typeof environment.config?.provider === "string" ? environment.config.provider : null;
@@ -310,75 +310,75 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
   });
 
   const invalidateProject = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(project.id) });
-    if (project.urlKey !== project.id) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(project.urlKey) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.detail(project.id) });
+    if (project.urlКлюч !== project.id) {
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.detail(project.urlКлюч) });
     }
-    if (selectedCompanyId) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(selectedCompanyId) });
+    if (selectedКомпанияId) {
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.list(selectedКомпанияId) });
     }
   };
 
-  const createWorkspace = useMutation({
-    mutationFn: (data: Record<string, unknown>) => projectsApi.createWorkspace(project.id, data),
-    onSuccess: () => {
-      setWorkspaceCwd("");
-      setWorkspaceRepoUrl("");
-      setWorkspaceMode(null);
-      setWorkspaceError(null);
+  const createРабочая область = useMutation({
+    mutationFn: (data: Record<string, unknown>) => projectsApi.createРабочая область(project.id, data),
+    onУспешно: () => {
+      setРабочая областьCwd("");
+      setРабочая областьРепозиторийUrl("");
+      setРабочая областьMode(null);
+      setРабочая областьОшибка(null);
       invalidateProject();
     },
   });
 
-  const removeWorkspace = useMutation({
-    mutationFn: (workspaceId: string) => projectsApi.removeWorkspace(project.id, workspaceId),
-    onSuccess: () => {
-      setWorkspaceCwd("");
-      setWorkspaceRepoUrl("");
-      setWorkspaceMode(null);
-      setWorkspaceError(null);
+  const removeРабочая область = useMutation({
+    mutationFn: (workspaceId: string) => projectsApi.removeРабочая область(project.id, workspaceId),
+    onУспешно: () => {
+      setРабочая областьCwd("");
+      setРабочая областьРепозиторийUrl("");
+      setРабочая областьMode(null);
+      setРабочая областьОшибка(null);
       invalidateProject();
     },
   });
-  const updateWorkspace = useMutation({
+  const updateРабочая область = useMutation({
     mutationFn: ({ workspaceId, data }: { workspaceId: string; data: Record<string, unknown> }) =>
-      projectsApi.updateWorkspace(project.id, workspaceId, data),
-    onSuccess: () => {
-      setWorkspaceCwd("");
-      setWorkspaceRepoUrl("");
-      setWorkspaceMode(null);
-      setWorkspaceError(null);
+      projectsApi.updateРабочая область(project.id, workspaceId, data),
+    onУспешно: () => {
+      setРабочая областьCwd("");
+      setРабочая областьРепозиторийUrl("");
+      setРабочая областьMode(null);
+      setРабочая областьОшибка(null);
       invalidateProject();
     },
   });
 
-  const removeGoal = (goalId: string) => {
-    if (!onUpdate && !onFieldUpdate) return;
-    commitField("goals", { goalIds: linkedGoalIds.filter((id) => id !== goalId) });
+  const removeЦель = (goalId: string) => {
+    if (!onОбновить && !onFieldОбновить) return;
+    commitField("goals", { goalIds: linkedЦельIds.filter((id) => id !== goalId) });
   };
 
-  const addGoal = (goalId: string) => {
-    if ((!onUpdate && !onFieldUpdate) || linkedGoalIds.includes(goalId)) return;
-    commitField("goals", { goalIds: [...linkedGoalIds, goalId] });
-    setGoalOpen(false);
+  const addЦель = (goalId: string) => {
+    if ((!onОбновить && !onFieldОбновить) || linkedЦельIds.includes(goalId)) return;
+    commitField("goals", { goalIds: [...linkedЦельIds, goalId] });
+    setЦельOpen(false);
   };
 
-  const updateExecutionWorkspacePolicy = (patch: Record<string, unknown>) => {
-    if (!onUpdate && !onFieldUpdate) return;
+  const updateExecutionРабочая областьPolicy = (patch: Record<string, unknown>) => {
+    if (!onОбновить && !onFieldОбновить) return;
     return {
-      executionWorkspacePolicy: {
-        enabled: executionWorkspacesEnabled,
-        defaultMode: executionWorkspaceDefaultMode,
-        allowIssueOverride: executionWorkspacePolicy?.allowIssueOverride ?? true,
-        ...executionWorkspacePolicy,
+      executionРабочая областьPolicy: {
+        enabled: executionРабочие областиВключитьd,
+        defaultMode: executionРабочая областьПо умолчаниюMode,
+        allowЗадачаOverride: executionРабочая областьPolicy?.allowЗадачаOverride ?? true,
+        ...executionРабочая областьPolicy,
         ...patch,
       },
     };
   };
 
-  const isAbsolutePath = (value: string) => value.startsWith("/") || /^[A-Za-z]:[\\/]/.test(value);
+  const isAbsoluteПуть = (value: string) => value.startsWith("/") || /^[A-Za-z]:[\\/]/.test(value);
 
-  const looksLikeRepoUrl = (value: string) => {
+  const looksLikeРепозиторийUrl = (value: string) => {
     try {
       const parsed = new URL(value);
       if (parsed.protocol !== "https:") return false;
@@ -399,7 +399,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
     }
   };
 
-  const formatRepoUrl = (value: string) => {
+  const formatРепозиторийUrl = (value: string) => {
     try {
       const parsed = new URL(value);
       const segments = parsed.pathname.split("/").filter(Boolean);
@@ -413,18 +413,18 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
     }
   };
 
-  const deriveSourceType = (cwd: string | null, repoUrl: string | null) => {
+  const deriveSourceТип = (cwd: string | null, repoUrl: string | null) => {
     if (repoUrl) return "git_repo";
     if (cwd) return "local_path";
     return undefined;
   };
 
   const persistCodebase = (patch: { cwd?: string | null; repoUrl?: string | null }) => {
-    const nextCwd = patch.cwd !== undefined ? patch.cwd : codebase.localFolder;
-    const nextRepoUrl = patch.repoUrl !== undefined ? patch.repoUrl : codebase.repoUrl;
-    if (!nextCwd && !nextRepoUrl) {
-      if (primaryCodebaseWorkspace) {
-        removeWorkspace.mutate(primaryCodebaseWorkspace.id);
+    const nextCwd = patch.cwd !== undefined ? patch.cwd : codebase.localПапка;
+    const nextРепозиторийUrl = patch.repoUrl !== undefined ? patch.repoUrl : codebase.repoUrl;
+    if (!nextCwd && !nextРепозиторийUrl) {
+      if (primaryCodebaseРабочая область) {
+        removeРабочая область.mutate(primaryCodebaseРабочая область.id);
       }
       return;
     }
@@ -432,70 +432,70 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
     const data: Record<string, unknown> = {
       ...(patch.cwd !== undefined ? { cwd: patch.cwd } : {}),
       ...(patch.repoUrl !== undefined ? { repoUrl: patch.repoUrl } : {}),
-      ...(deriveSourceType(nextCwd, nextRepoUrl) ? { sourceType: deriveSourceType(nextCwd, nextRepoUrl) } : {}),
+      ...(deriveSourceТип(nextCwd, nextРепозиторийUrl) ? { sourceТип: deriveSourceТип(nextCwd, nextРепозиторийUrl) } : {}),
       isPrimary: true,
     };
 
-    if (primaryCodebaseWorkspace) {
-      updateWorkspace.mutate({ workspaceId: primaryCodebaseWorkspace.id, data });
+    if (primaryCodebaseРабочая область) {
+      updateРабочая область.mutate({ workspaceId: primaryCodebaseРабочая область.id, data });
       return;
     }
 
-    createWorkspace.mutate(data);
+    createРабочая область.mutate(data);
   };
 
-  const submitLocalWorkspace = () => {
+  const submitLocalРабочая область = () => {
     const cwd = workspaceCwd.trim();
     if (!cwd) {
-      setWorkspaceError(null);
+      setРабочая областьОшибка(null);
       persistCodebase({ cwd: null });
       return;
     }
-    if (!isAbsolutePath(cwd)) {
-      setWorkspaceError("Local folder must be a full absolute path.");
+    if (!isAbsoluteПуть(cwd)) {
+      setРабочая областьОшибка("Локальная папка must be a full absolute path.");
       return;
     }
-    setWorkspaceError(null);
+    setРабочая областьОшибка(null);
     persistCodebase({ cwd });
   };
 
-  const submitRepoWorkspace = () => {
-    const repoUrl = workspaceRepoUrl.trim();
+  const submitРепозиторийРабочая область = () => {
+    const repoUrl = workspaceРепозиторийUrl.trim();
     if (!repoUrl) {
-      setWorkspaceError(null);
+      setРабочая областьОшибка(null);
       persistCodebase({ repoUrl: null });
       return;
     }
-    if (!looksLikeRepoUrl(repoUrl)) {
-      setWorkspaceError("Repo must use a valid GitHub or GitHub Enterprise repo URL.");
+    if (!looksLikeРепозиторийUrl(repoUrl)) {
+      setРабочая областьОшибка("Репозиторий must use a valid GitHub or GitHub Enterprise repo URL.");
       return;
     }
-    setWorkspaceError(null);
+    setРабочая областьОшибка(null);
     persistCodebase({ repoUrl });
   };
 
-  const clearLocalWorkspace = () => {
+  const clearLocalРабочая область = () => {
     const confirmed = window.confirm(
       codebase.repoUrl
-        ? "Clear local folder from this workspace?"
-        : "Delete this workspace local folder?",
+        ? "Очистить папку from this workspace?"
+        : "Удалить this workspace local folder?",
     );
     if (!confirmed) return;
     persistCodebase({ cwd: null });
   };
 
-  const clearRepoWorkspace = () => {
-    const hasLocalFolder = Boolean(codebase.localFolder);
+  const clearРепозиторийРабочая область = () => {
+    const hasLocalПапка = Boolean(codebase.localПапка);
     const confirmed = window.confirm(
-      hasLocalFolder
-        ? "Clear repo from this workspace?"
-        : "Delete this workspace repo?",
+      hasLocalПапка
+        ? "Очистить репозиторий from this workspace?"
+        : "Удалить this workspace repo?",
     );
     if (!confirmed) return;
-    if (primaryCodebaseWorkspace && hasLocalFolder) {
-      updateWorkspace.mutate({
-        workspaceId: primaryCodebaseWorkspace.id,
-        data: { repoUrl: null, repoRef: null, defaultRef: null, sourceType: deriveSourceType(codebase.localFolder, null) },
+    if (primaryCodebaseРабочая область && hasLocalПапка) {
+      updateРабочая область.mutate({
+        workspaceId: primaryCodebaseРабочая область.id,
+        data: { repoUrl: null, repoRef: null, defaultRef: null, sourceТип: deriveSourceТип(codebase.localПапка, null) },
       });
       return;
     }
@@ -504,109 +504,109 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
 
   return (
     <div>
-      <div className="space-y-1 pb-4">
-        <PropertyRow label={<FieldLabel label="Name" state={fieldState("name")} />}>
-          {onUpdate || onFieldUpdate ? (
-            <DraftInput
+      <div classИмя="space-y-1 pb-4">
+        <PropertyRow label={<FieldLabel label="Имя" state={fieldState("name")} />}>
+          {onОбновить || onFieldОбновить ? (
+            <ЧерновикInput
               value={project.name}
               onCommit={(name) => commitField("name", { name })}
               immediate
-              className="w-full rounded border border-border bg-transparent px-2 py-1 text-sm outline-none"
+              classИмя="w-full rounded border border-border bg-transparent px-2 py-1 text-sm outline-none"
               placeholder="Project name"
             />
           ) : (
-            <span className="text-sm">{project.name}</span>
+            <span classИмя="text-sm">{project.name}</span>
           )}
         </PropertyRow>
         <PropertyRow
-          label={<FieldLabel label="Description" state={fieldState("description")} />}
-          alignStart
-          valueClassName="space-y-0.5"
+          label={<FieldLabel label="Описание" state={fieldState("description")} />}
+          alignНачать
+          valueClassИмя="space-y-0.5"
         >
-          {onUpdate || onFieldUpdate ? (
-            <InlineEditor
+          {onОбновить || onFieldОбновить ? (
+            <InlineИзменитьor
               value={project.description ?? ""}
-              onSave={(description) => commitField("description", { description })}
+              onСохранить={(description) => commitField("description", { description })}
               nullable
               as="p"
-              className="text-sm text-muted-foreground"
-              placeholder="Add a description..."
+              classИмя="text-sm text-muted-foreground"
+              placeholder="Добавить a description..."
               multiline
             />
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {project.description?.trim() || "No description"}
+            <p classИмя="text-sm text-muted-foreground">
+              {project.description?.trim() || "Нет описания"}
             </p>
           )}
         </PropertyRow>
-        <PropertyRow label={<FieldLabel label="Status" state={fieldState("status")} />}>
-          {onUpdate || onFieldUpdate ? (
-            <ProjectStatusPicker
+        <PropertyRow label={<FieldLabel label="Статус" state={fieldState("status")} />}>
+          {onОбновить || onFieldОбновить ? (
+            <ProjectСтатусPicker
               status={project.status}
               onChange={(status) => commitField("status", { status })}
             />
           ) : (
-            <StatusBadge status={project.status} />
+            <СтатусBadge status={project.status} />
           )}
         </PropertyRow>
-        {project.leadAgentId && (
+        {project.leadАгентId && (
           <PropertyRow label="Lead">
-            <span className="text-sm font-mono">{project.leadAgentId.slice(0, 8)}</span>
+            <span classИмя="text-sm font-mono">{project.leadАгентId.slice(0, 8)}</span>
           </PropertyRow>
         )}
         <PropertyRow
-          label={<FieldLabel label="Goals" state={fieldState("goals")} />}
-          alignStart
-          valueClassName="space-y-2"
+          label={<FieldLabel label="Цели" state={fieldState("goals")} />}
+          alignНачать
+          valueClassИмя="space-y-2"
         >
-          {linkedGoals.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {linkedGoals.map((goal) => (
+          {linkedЦели.length > 0 && (
+            <div classИмя="flex flex-wrap gap-1.5">
+              {linkedЦели.map((goal) => (
                 <span
                   key={goal.id}
-                  className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs"
+                  classИмя="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs"
                 >
-                  <Link to={`/goals/${goal.id}`} className="hover:underline break-words min-w-0">
+                  <Link to={`/goals/${goal.id}`} classИмя="hover:underline break-words min-w-0">
                     {goal.title}
                   </Link>
-                  {(onUpdate || onFieldUpdate) && (
+                  {(onОбновить || onFieldОбновить) && (
                     <button
-                      className="text-muted-foreground hover:text-foreground"
+                      classИмя="text-muted-foreground hover:text-foreground"
                       type="button"
-                      onClick={() => removeGoal(goal.id)}
-                      aria-label={`Remove goal ${goal.title}`}
+                      onClick={() => removeЦель(goal.id)}
+                      aria-label={`Удалить goal ${goal.title}`}
                     >
-                      <X className="h-3 w-3" />
+                      <X classИмя="h-3 w-3" />
                     </button>
                   )}
                 </span>
               ))}
             </div>
           )}
-          {(onUpdate || onFieldUpdate) && (
-            <Popover open={goalOpen} onOpenChange={setGoalOpen}>
+          {(onОбновить || onFieldОбновить) && (
+            <Popover open={goalOpen} onOpenChange={setЦельOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   size="xs"
-                  className={cn("h-6 w-fit px-2", linkedGoals.length > 0 && "ml-1")}
-                  disabled={availableGoals.length === 0}
+                  classИмя={cn("h-6 w-fit px-2", linkedЦели.length > 0 && "ml-1")}
+                  disabled={availableЦели.length === 0}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Goal
+                  <Plus classИмя="h-3 w-3 mr-1" />
+                  Цель
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-56 p-1" align="start">
-                {availableGoals.length === 0 ? (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    All goals linked.
+              <PopoverContent classИмя="w-56 p-1" align="start">
+                {availableЦели.length === 0 ? (
+                  <div classИмя="px-2 py-1.5 text-xs text-muted-foreground">
+                    Все goals linked.
                   </div>
                 ) : (
-                  availableGoals.map((goal) => (
+                  availableЦели.map((goal) => (
                     <button
                       key={goal.id}
-                      className="flex items-center w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
-                      onClick={() => addGoal(goal.id)}
+                      classИмя="flex items-center w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50"
+                      onClick={() => addЦель(goal.id)}
                     >
                       {goal.title}
                     </button>
@@ -618,89 +618,89 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
         </PropertyRow>
         <PropertyRow
           label={<FieldLabel label="Env" state={fieldState("env")} />}
-          alignStart
-          valueClassName="space-y-2"
+          alignНачать
+          valueClassИмя="space-y-2"
         >
-          <div className="space-y-2">
-            <EnvVarEditor
+          <div classИмя="space-y-2">
+            <EnvVarИзменитьor
               value={project.env ?? {}}
-              secrets={availableSecrets}
-              onCreateSecret={async (name, value) => {
-                const created = await createSecret.mutateAsync({ name, value });
+              secrets={availableСекреты}
+              onСоздатьСекрет={async (name, value) => {
+                const created = await createСекрет.mutateAsync({ name, value });
                 return created;
               }}
               onChange={(env) => commitField("env", { env: env ?? null })}
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p classИмя="text-[11px] text-muted-foreground">
               Applied to all runs for issues in this project. Project values override agent env on key conflicts.
             </p>
           </div>
         </PropertyRow>
-        <PropertyRow label={<FieldLabel label="Created" state="idle" />}>
-          <span className="text-sm">{formatDate(project.createdAt)}</span>
+        <PropertyRow label={<FieldLabel label="Создано" state="idle" />}>
+          <span classИмя="text-sm">{formatDate(project.createdAt)}</span>
         </PropertyRow>
-        <PropertyRow label={<FieldLabel label="Updated" state="idle" />}>
-          <span className="text-sm">{formatDate(project.updatedAt)}</span>
+        <PropertyRow label={<FieldLabel label="Обновлено" state="idle" />}>
+          <span classИмя="text-sm">{formatDate(project.updatedAt)}</span>
         </PropertyRow>
         {project.targetDate && (
-          <PropertyRow label={<FieldLabel label="Target Date" state="idle" />}>
-            <span className="text-sm">{formatDate(project.targetDate)}</span>
+          <PropertyRow label={<FieldLabel label="Цель Date" state="idle" />}>
+            <span classИмя="text-sm">{formatDate(project.targetDate)}</span>
           </PropertyRow>
         )}
       </div>
 
-      <Separator className="my-4" />
+      <Separator classИмя="my-4" />
 
-      <div className="space-y-1 py-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <div classИмя="space-y-1 py-4">
+        <div classИмя="space-y-2">
+          <div classИмя="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span>Codebase</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border text-[10px] text-muted-foreground hover:text-foreground"
+                  classИмя="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border text-[10px] text-muted-foreground hover:text-foreground"
                   aria-label="Codebase help"
                 >
                   ?
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                Repo identifies the source of truth. Local folder is the default place agents write code.
+                Репозиторий identifies the source of truth. Локальная папка is the default place agents write code.
               </TooltipContent>
             </Tooltip>
           </div>
-          <div className="space-y-2 rounded-md border border-border/70 p-3">
-            <div className="space-y-1">
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Repo</div>
+          <div classИмя="space-y-2 rounded-md border border-border/70 p-3">
+            <div classИмя="space-y-1">
+              <div classИмя="text-[11px] uppercase tracking-wide text-muted-foreground">Репозиторий</div>
               {codebase.repoUrl ? (
-                <div className="flex items-center justify-between gap-2">
+                <div classИмя="flex items-center justify-between gap-2">
                   {isSafeExternalUrl(codebase.repoUrl) ? (
                     <a
                       href={codebase.repoUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground hover:underline"
+                      classИмя="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground hover:underline"
                     >
-                      <Github className="h-3 w-3 shrink-0" />
-                      <span className="break-all min-w-0">{formatRepoUrl(codebase.repoUrl)}</span>
-                      <ExternalLink className="h-3 w-3 shrink-0" />
+                      <Github classИмя="h-3 w-3 shrink-0" />
+                      <span classИмя="break-all min-w-0">{formatРепозиторийUrl(codebase.repoUrl)}</span>
+                      <ExternalLink classИмя="h-3 w-3 shrink-0" />
                     </a>
                   ) : (
-                    <div className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                      <Github className="h-3 w-3 shrink-0" />
-                      <span className="break-all min-w-0">{codebase.repoUrl}</span>
+                    <div classИмя="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                      <Github classИмя="h-3 w-3 shrink-0" />
+                      <span classИмя="break-all min-w-0">{codebase.repoUrl}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-1">
+                  <div classИмя="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="xs"
-                      className="h-6 px-2"
+                      classИмя="h-6 px-2"
                       onClick={() => {
-                        setWorkspaceMode("repo");
-                        setWorkspaceRepoUrl(codebase.repoUrl ?? "");
-                        setWorkspaceError(null);
+                        setРабочая областьMode("repo");
+                        setРабочая областьРепозиторийUrl(codebase.repoUrl ?? "");
+                        setРабочая областьОшибка(null);
                       }}
                     >
                       Change repo
@@ -708,24 +708,24 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      onClick={clearRepoWorkspace}
-                      aria-label="Clear repo"
+                      onClick={clearРепозиторийРабочая область}
+                      aria-label="Очистить репозиторий"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 classИмя="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs text-muted-foreground">Not set.</div>
+                <div classИмя="flex items-center justify-between gap-2">
+                  <div classИмя="text-xs text-muted-foreground">Не задано.</div>
                   <Button
                     variant="outline"
                     size="xs"
-                    className="h-6 px-2"
+                    classИмя="h-6 px-2"
                     onClick={() => {
-                      setWorkspaceMode("repo");
-                      setWorkspaceRepoUrl(codebase.repoUrl ?? "");
-                      setWorkspaceError(null);
+                      setРабочая областьMode("repo");
+                      setРабочая областьРепозиторийUrl(codebase.repoUrl ?? "");
+                      setРабочая областьОшибка(null);
                     }}
                   >
                     Set repo
@@ -734,62 +734,62 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
               )}
             </div>
 
-            <div className="space-y-1">
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Local folder</div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 space-y-1">
-                  <div className="min-w-0 break-all font-mono text-xs text-muted-foreground">
-                    {codebase.effectiveLocalFolder}
+            <div classИмя="space-y-1">
+              <div classИмя="text-[11px] uppercase tracking-wide text-muted-foreground">Локальная папка</div>
+              <div classИмя="flex items-center justify-between gap-2">
+                <div classИмя="min-w-0 space-y-1">
+                  <div classИмя="min-w-0 break-all font-mono text-xs text-muted-foreground">
+                    {codebase.effectiveLocalПапка}
                   </div>
                   {codebase.origin === "managed_checkout" && (
-                    <div className="text-[11px] text-muted-foreground">Paperclip-managed folder.</div>
+                    <div classИмя="text-[11px] text-muted-foreground">Paperclip-managed folder.</div>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
+                <div classИмя="flex items-center gap-1">
                   <Button
                     variant="outline"
                     size="xs"
-                    className="h-6 px-2"
+                    classИмя="h-6 px-2"
                     onClick={() => {
-                      setWorkspaceMode("local");
-                      setWorkspaceCwd(codebase.localFolder ?? "");
-                      setWorkspaceError(null);
+                      setРабочая областьMode("local");
+                      setРабочая областьCwd(codebase.localПапка ?? "");
+                      setРабочая областьОшибка(null);
                     }}
                   >
-                    {codebase.localFolder ? "Change local folder" : "Set local folder"}
+                    {codebase.localПапка ? "Сменить папку" : "Задать папку"}
                   </Button>
-                  {codebase.localFolder ? (
+                  {codebase.localПапка ? (
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      onClick={clearLocalWorkspace}
-                      aria-label="Clear local folder"
+                      onClick={clearLocalРабочая область}
+                      aria-label="Очистить папку"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 classИмя="h-3 w-3" />
                     </Button>
                   ) : null}
                 </div>
               </div>
             </div>
 
-            {hasAdditionalLegacyWorkspaces && (
-              <div className="text-[11px] text-muted-foreground">
-                Additional legacy workspace records exist on this project. Paperclip is using the primary workspace as the codebase view.
+            {hasДобавитьitionalLegacyРабочие области && (
+              <div classИмя="text-[11px] text-muted-foreground">
+                Добавитьitional legacy workspace records exist on this project. Paperclip is using the primary workspace as the codebase view.
               </div>
             )}
 
-            {primaryCodebaseWorkspace?.runtimeServices && primaryCodebaseWorkspace.runtimeServices.length > 0 ? (
-              <div className="space-y-1">
-                {primaryCodebaseWorkspace.runtimeServices.map((service) => (
+            {primaryCodebaseРабочая область?.runtimeServices && primaryCodebaseРабочая область.runtimeServices.length > 0 ? (
+              <div classИмя="space-y-1">
+                {primaryCodebaseРабочая область.runtimeServices.map((service) => (
                   <div
                     key={service.id}
-                    className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-2 py-1"
+                    classИмя="flex items-center justify-between gap-2 rounded-md border border-border/60 px-2 py-1"
                   >
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-medium">{service.serviceName}</span>
+                    <div classИмя="min-w-0 space-y-0.5">
+                      <div classИмя="flex items-center gap-2">
+                        <span classИмя="text-[11px] font-medium">{service.serviceИмя}</span>
                         <span
-                          className={cn(
+                          classИмя={cn(
                             "rounded-full px-1.5 py-0.5 text-[10px] uppercase tracking-wide",
                             service.status === "running"
                               ? "bg-green-500/15 text-green-700 dark:text-green-300"
@@ -801,22 +801,22 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
                           {service.status}
                         </span>
                       </div>
-                      <div className="text-[11px] text-muted-foreground">
+                      <div classИмя="text-[11px] text-muted-foreground">
                         {service.url ? (
                           <a
                             href={service.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="hover:text-foreground hover:underline"
+                            classИмя="hover:text-foreground hover:underline"
                           >
                             {service.url}
                           </a>
                         ) : (
-                          service.command ?? "No URL"
+                          service.command ?? "Нет URL"
                         )}
                       </div>
                     </div>
-                    <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                    <div classИмя="text-[10px] text-muted-foreground whitespace-nowrap">
                       {service.lifecycle}
                     </div>
                   </div>
@@ -825,100 +825,100 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
             ) : null}
           </div>
           {workspaceMode === "local" && (
-            <div className="space-y-1.5 rounded-md border border-border p-2">
-              <div className="flex items-center gap-2">
+            <div classИмя="space-y-1.5 rounded-md border border-border p-2">
+              <div classИмя="flex items-center gap-2">
                 <input
-                  className="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
+                  classИмя="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
                   value={workspaceCwd}
-                  onChange={(e) => setWorkspaceCwd(e.target.value)}
+                  onChange={(e) => setРабочая областьCwd(e.target.value)}
                   placeholder="/absolute/path/to/workspace"
                 />
-                <ChoosePathButton />
+                <ChooseПутьButton />
               </div>
-              <div className="flex items-center gap-2">
+              <div classИмя="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="xs"
-                  className="h-6 px-2"
-                  disabled={(!workspaceCwd.trim() && !primaryCodebaseWorkspace) || createWorkspace.isPending || updateWorkspace.isPending}
-                  onClick={submitLocalWorkspace}
+                  classИмя="h-6 px-2"
+                  disabled={(!workspaceCwd.trim() && !primaryCodebaseРабочая область) || createРабочая область.isОжидание || updateРабочая область.isОжидание}
+                  onClick={submitLocalРабочая область}
                 >
-                  Save
+                  Сохранить
                 </Button>
                 <Button
                   variant="ghost"
                   size="xs"
-                  className="h-6 px-2"
+                  classИмя="h-6 px-2"
                   onClick={() => {
-                    setWorkspaceMode(null);
-                    setWorkspaceCwd("");
-                    setWorkspaceError(null);
+                    setРабочая областьMode(null);
+                    setРабочая областьCwd("");
+                    setРабочая областьОшибка(null);
                   }}
                 >
-                  Cancel
+                  Отмена
                 </Button>
               </div>
             </div>
           )}
           {workspaceMode === "repo" && (
-            <div className="space-y-1.5 rounded-md border border-border p-2">
+            <div classИмя="space-y-1.5 rounded-md border border-border p-2">
               <input
-                className="w-full rounded border border-border bg-transparent px-2 py-1 text-xs outline-none"
-                value={workspaceRepoUrl}
-                onChange={(e) => setWorkspaceRepoUrl(e.target.value)}
+                classИмя="w-full rounded border border-border bg-transparent px-2 py-1 text-xs outline-none"
+                value={workspaceРепозиторийUrl}
+                onChange={(e) => setРабочая областьРепозиторийUrl(e.target.value)}
                 placeholder="https://github.com/org/repo"
               />
-              <div className="flex items-center gap-2">
+              <div classИмя="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="xs"
-                  className="h-6 px-2"
-                  disabled={(!workspaceRepoUrl.trim() && !primaryCodebaseWorkspace) || createWorkspace.isPending || updateWorkspace.isPending}
-                  onClick={submitRepoWorkspace}
+                  classИмя="h-6 px-2"
+                  disabled={(!workspaceРепозиторийUrl.trim() && !primaryCodebaseРабочая область) || createРабочая область.isОжидание || updateРабочая область.isОжидание}
+                  onClick={submitРепозиторийРабочая область}
                 >
-                  Save
+                  Сохранить
                 </Button>
                 <Button
                   variant="ghost"
                   size="xs"
-                  className="h-6 px-2"
+                  classИмя="h-6 px-2"
                   onClick={() => {
-                    setWorkspaceMode(null);
-                    setWorkspaceRepoUrl("");
-                    setWorkspaceError(null);
+                    setРабочая областьMode(null);
+                    setРабочая областьРепозиторийUrl("");
+                    setРабочая областьОшибка(null);
                   }}
                 >
-                  Cancel
+                  Отмена
                 </Button>
               </div>
             </div>
           )}
-          {workspaceError && (
-            <p className="text-xs text-destructive">{workspaceError}</p>
+          {workspaceОшибка && (
+            <p classИмя="text-xs text-destructive">{workspaceОшибка}</p>
           )}
-          {createWorkspace.isError && (
-            <p className="text-xs text-destructive">Failed to save workspace.</p>
+          {createРабочая область.isОшибка && (
+            <p classИмя="text-xs text-destructive">Ошибка to save workspace.</p>
           )}
-          {removeWorkspace.isError && (
-            <p className="text-xs text-destructive">Failed to delete workspace.</p>
+          {removeРабочая область.isОшибка && (
+            <p classИмя="text-xs text-destructive">Ошибка to delete workspace.</p>
           )}
-          {updateWorkspace.isError && (
-            <p className="text-xs text-destructive">Failed to update workspace.</p>
+          {updateРабочая область.isОшибка && (
+            <p classИмя="text-xs text-destructive">Ошибка to update workspace.</p>
           )}
         </div>
 
-        {isolatedWorkspacesEnabled ? (
+        {isolatedРабочие областиВключитьd ? (
           <>
-            <Separator className="my-4" />
+            <Separator classИмя="my-4" />
 
-            <div className="py-1.5 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span>Execution Workspaces</span>
+            <div classИмя="py-1.5 space-y-2">
+              <div classИмя="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span>Execution Рабочие области</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
                       type="button"
-                      className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border text-[10px] text-muted-foreground hover:text-foreground"
+                      classИмя="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border text-[10px] text-muted-foreground hover:text-foreground"
                       aria-label="Execution workspaces help"
                     >
                       ?
@@ -929,53 +929,53 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <span>Enable isolated issue checkouts</span>
-                      <SaveIndicator state={fieldState("execution_workspace_enabled")} />
+              <div classИмя="space-y-3">
+                <div classИмя="flex items-center justify-between gap-3">
+                  <div classИмя="space-y-0.5">
+                    <div classИмя="flex items-center gap-2 text-sm font-medium">
+                      <span>Включить isolated issue checkouts</span>
+                      <СохранитьIndicator state={fieldState("execution_workspace_enabled")} />
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div classИмя="text-xs text-muted-foreground">
                       Let issues choose between the project's primary checkout and an isolated execution workspace.
                     </div>
                   </div>
-                  {onUpdate || onFieldUpdate ? (
+                  {onОбновить || onFieldОбновить ? (
                     <ToggleSwitch
-                      checked={executionWorkspacesEnabled}
+                      checked={executionРабочие областиВключитьd}
                       onCheckedChange={() =>
                         commitField(
                           "execution_workspace_enabled",
-                          updateExecutionWorkspacePolicy({ enabled: !executionWorkspacesEnabled })!,
+                          updateExecutionРабочая областьPolicy({ enabled: !executionРабочие областиВключитьd })!,
                         )}
                     />
                   ) : (
-                    <span className="text-xs text-muted-foreground">
-                      {executionWorkspacesEnabled ? "Enabled" : "Disabled"}
+                    <span classИмя="text-xs text-muted-foreground">
+                      {executionРабочие областиВключитьd ? "Включитьd" : "Отключитьd"}
                     </span>
                   )}
                 </div>
 
-                {executionWorkspacesEnabled ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2 text-sm">
-                          <span>New issues default to isolated checkout</span>
-                          <SaveIndicator state={fieldState("execution_workspace_default_mode")} />
+                {executionРабочие областиВключитьd ? (
+                  <div classИмя="space-y-3">
+                    <div classИмя="flex items-center justify-between gap-3">
+                      <div classИмя="space-y-0.5">
+                        <div classИмя="flex items-center gap-2 text-sm">
+                          <span>Новая задачаs default to isolated checkout</span>
+                          <СохранитьIndicator state={fieldState("execution_workspace_default_mode")} />
                         </div>
-                        <div className="text-[11px] text-muted-foreground">
+                        <div classИмя="text-[11px] text-muted-foreground">
                           If disabled, new issues stay on the project's primary checkout unless someone opts in.
                         </div>
                       </div>
                       <ToggleSwitch
-                        checked={executionWorkspaceDefaultMode === "isolated_workspace"}
+                        checked={executionРабочая областьПо умолчаниюMode === "isolated_workspace"}
                         onCheckedChange={() =>
                           commitField(
                             "execution_workspace_default_mode",
-                            updateExecutionWorkspacePolicy({
+                            updateExecutionРабочая областьPolicy({
                               defaultMode:
-                                executionWorkspaceDefaultMode === "isolated_workspace"
+                                executionРабочая областьПо умолчаниюMode === "isolated_workspace"
                                   ? "shared_workspace"
                                   : "isolated_workspace",
                             })!,
@@ -983,44 +983,44 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
                       />
                     </div>
 
-                    <div className="border-t border-border/60 pt-2">
+                    <div classИмя="border-t border-border/60 pt-2">
                       <button
                         type="button"
-                        className="flex w-full items-center gap-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                        onClick={() => setExecutionWorkspaceAdvancedOpen((open) => !open)}
+                        classИмя="flex w-full items-center gap-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        onClick={() => setExecutionРабочая областьДополнительноOpen((open) => !open)}
                       >
-                        {executionWorkspaceAdvancedOpen
+                        {executionРабочая областьДополнительноOpen
                           ? "Hide advanced checkout settings"
                           : "Show advanced checkout settings"}
                       </button>
                     </div>
 
-                    {executionWorkspaceAdvancedOpen ? (
-                      <div className="space-y-3">
-                        <div className="text-xs text-muted-foreground">
-                          Host-managed implementation: <span className="text-foreground">Git worktree</span>
+                    {executionРабочая областьДополнительноOpen ? (
+                      <div classИмя="space-y-3">
+                        <div classИмя="text-xs text-muted-foreground">
+                          Хост-managed implementation: <span classИмя="text-foreground">Git worktree</span>
                         </div>
-                        {environmentsEnabled ? (
+                        {environmentsВключитьd ? (
                           <div>
-                            <div className="mb-1 flex items-center gap-1.5">
-                              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>Environment</span>
-                                <SaveIndicator state={fieldState("execution_workspace_environment")} />
+                            <div classИмя="mb-1 flex items-center gap-1.5">
+                              <label classИмя="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>Окружение</span>
+                                <СохранитьIndicator state={fieldState("execution_workspace_environment")} />
                               </label>
                             </div>
                             <select
-                              className="w-full rounded border border-border bg-transparent px-2 py-1 text-xs outline-none"
-                              value={executionWorkspaceEnvironmentId}
+                              classИмя="w-full rounded border border-border bg-transparent px-2 py-1 text-xs outline-none"
+                              value={executionРабочая областьОкружениеId}
                               onChange={(e) =>
                                 commitField(
                                   "execution_workspace_environment",
-                                  updateExecutionWorkspacePolicy({
+                                  updateExecutionРабочая областьPolicy({
                                     environmentId: e.target.value || null,
                                   })!,
                                 )}
                             >
-                              <option value="">No environment</option>
-                              {runSelectableEnvironments.map((environment) => (
+                              <option value="">Нет environment</option>
+                              {runSelectableОкружения.map((environment) => (
                                 <option key={environment.id} value={environment.id}>
                                   {environment.name} · {environment.driver}
                                 </option>
@@ -1029,126 +1029,126 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
                           </div>
                         ) : null}
                         <div>
-                          <div className="mb-1 flex items-center gap-1.5">
-                            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div classИмя="mb-1 flex items-center gap-1.5">
+                            <label classИмя="flex items-center gap-2 text-xs text-muted-foreground">
                               <span>Base ref</span>
-                              <SaveIndicator state={fieldState("execution_workspace_base_ref")} />
+                              <СохранитьIndicator state={fieldState("execution_workspace_base_ref")} />
                             </label>
                           </div>
-                          <DraftInput
-                            value={executionWorkspaceStrategy.baseRef ?? ""}
+                          <ЧерновикInput
+                            value={executionРабочая областьStrategy.baseRef ?? ""}
                             onCommit={(value) =>
                               commitField("execution_workspace_base_ref", {
-                                ...updateExecutionWorkspacePolicy({
+                                ...updateExecutionРабочая областьPolicy({
                                   workspaceStrategy: {
-                                    ...executionWorkspaceStrategy,
+                                    ...executionРабочая областьStrategy,
                                     type: "git_worktree",
                                     baseRef: value || null,
                                   },
                                 })!,
                               })}
                             immediate
-                            className="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
+                            classИмя="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
                             placeholder="origin/main"
                           />
                         </div>
                         <div>
-                          <div className="mb-1 flex items-center gap-1.5">
-                            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>Branch template</span>
-                              <SaveIndicator state={fieldState("execution_workspace_branch_template")} />
+                          <div classИмя="mb-1 flex items-center gap-1.5">
+                            <label classИмя="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>Ветка template</span>
+                              <СохранитьIndicator state={fieldState("execution_workspace_branch_template")} />
                             </label>
                           </div>
-                          <DraftInput
-                            value={executionWorkspaceStrategy.branchTemplate ?? ""}
+                          <ЧерновикInput
+                            value={executionРабочая областьStrategy.branchTemplate ?? ""}
                             onCommit={(value) =>
                               commitField("execution_workspace_branch_template", {
-                                ...updateExecutionWorkspacePolicy({
+                                ...updateExecutionРабочая областьPolicy({
                                   workspaceStrategy: {
-                                    ...executionWorkspaceStrategy,
+                                    ...executionРабочая областьStrategy,
                                     type: "git_worktree",
                                     branchTemplate: value || null,
                                   },
                                 })!,
                               })}
                             immediate
-                            className="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
+                            classИмя="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
                             placeholder="{{issue.identifier}}-{{slug}}"
                           />
                         </div>
                         <div>
-                          <div className="mb-1 flex items-center gap-1.5">
-                            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>Worktree parent dir</span>
-                              <SaveIndicator state={fieldState("execution_workspace_worktree_parent_dir")} />
+                          <div classИмя="mb-1 flex items-center gap-1.5">
+                            <label classИмя="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>Работаtree parent dir</span>
+                              <СохранитьIndicator state={fieldState("execution_workspace_worktree_parent_dir")} />
                             </label>
                           </div>
-                          <DraftInput
-                            value={executionWorkspaceStrategy.worktreeParentDir ?? ""}
+                          <ЧерновикInput
+                            value={executionРабочая областьStrategy.worktreeРодительDir ?? ""}
                             onCommit={(value) =>
                               commitField("execution_workspace_worktree_parent_dir", {
-                                ...updateExecutionWorkspacePolicy({
+                                ...updateExecutionРабочая областьPolicy({
                                   workspaceStrategy: {
-                                    ...executionWorkspaceStrategy,
+                                    ...executionРабочая областьStrategy,
                                     type: "git_worktree",
-                                    worktreeParentDir: value || null,
+                                    worktreeРодительDir: value || null,
                                   },
                                 })!,
                               })}
                             immediate
-                            className="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
+                            classИмя="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
                             placeholder=".paperclip/worktrees"
                           />
                         </div>
                         <div>
-                          <div className="mb-1 flex items-center gap-1.5">
-                            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div classИмя="mb-1 flex items-center gap-1.5">
+                            <label classИмя="flex items-center gap-2 text-xs text-muted-foreground">
                               <span>Provision command</span>
-                              <SaveIndicator state={fieldState("execution_workspace_provision_command")} />
+                              <СохранитьIndicator state={fieldState("execution_workspace_provision_command")} />
                             </label>
                           </div>
-                          <DraftInput
-                            value={executionWorkspaceStrategy.provisionCommand ?? ""}
+                          <ЧерновикInput
+                            value={executionРабочая областьStrategy.provisionКоманда ?? ""}
                             onCommit={(value) =>
                               commitField("execution_workspace_provision_command", {
-                                ...updateExecutionWorkspacePolicy({
+                                ...updateExecutionРабочая областьPolicy({
                                   workspaceStrategy: {
-                                    ...executionWorkspaceStrategy,
+                                    ...executionРабочая областьStrategy,
                                     type: "git_worktree",
-                                    provisionCommand: value || null,
+                                    provisionКоманда: value || null,
                                   },
                                 })!,
                               })}
                             immediate
-                            className="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
+                            classИмя="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
                             placeholder="bash ./scripts/provision-worktree.sh"
                           />
                         </div>
                         <div>
-                          <div className="mb-1 flex items-center gap-1.5">
-                            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div classИмя="mb-1 flex items-center gap-1.5">
+                            <label classИмя="flex items-center gap-2 text-xs text-muted-foreground">
                               <span>Teardown command</span>
-                              <SaveIndicator state={fieldState("execution_workspace_teardown_command")} />
+                              <СохранитьIndicator state={fieldState("execution_workspace_teardown_command")} />
                             </label>
                           </div>
-                          <DraftInput
-                            value={executionWorkspaceStrategy.teardownCommand ?? ""}
+                          <ЧерновикInput
+                            value={executionРабочая областьStrategy.teardownКоманда ?? ""}
                             onCommit={(value) =>
                               commitField("execution_workspace_teardown_command", {
-                                ...updateExecutionWorkspacePolicy({
+                                ...updateExecutionРабочая областьPolicy({
                                   workspaceStrategy: {
-                                    ...executionWorkspaceStrategy,
+                                    ...executionРабочая областьStrategy,
                                     type: "git_worktree",
-                                    teardownCommand: value || null,
+                                    teardownКоманда: value || null,
                                   },
                                 })!,
                               })}
                             immediate
-                            className="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
+                            classИмя="w-full rounded border border-border bg-transparent px-2 py-1 text-xs font-mono outline-none"
                             placeholder="bash ./scripts/teardown-worktree.sh"
                           />
                         </div>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p classИмя="text-[11px] text-muted-foreground">
                           Provision runs inside the derived worktree before agent execution. Teardown is stored here for
                           future cleanup flows.
                         </p>
@@ -1163,17 +1163,17 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
 
       </div>
 
-      {onArchive && (
+      {onАрхивировать && (
         <>
-          <Separator className="my-4" />
-          <div className="space-y-4 py-4">
-            <div className="text-xs font-medium text-destructive uppercase tracking-wide">
+          <Separator classИмя="my-4" />
+          <div classИмя="space-y-4 py-4">
+            <div classИмя="text-xs font-medium text-destructive uppercase tracking-wide">
               Danger Zone
             </div>
-            <ArchiveDangerZone
+            <АрхивироватьDangerZone
               project={project}
-              onArchive={onArchive}
-              archivePending={archivePending}
+              onАрхивировать={onАрхивировать}
+              archiveОжидание={archiveОжидание}
             />
           </div>
         </>

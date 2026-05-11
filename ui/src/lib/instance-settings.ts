@@ -1,10 +1,10 @@
 export const DEFAULT_INSTANCE_SETTINGS_PATH = "/instance/settings/general";
 
-export function normalizeRememberedInstanceSettingsPath(rawPath: string | null): string {
-  if (!rawPath) return DEFAULT_INSTANCE_SETTINGS_PATH;
+export function normalizeRememberedInstanceНастройкиПуть(rawПуть: string | null): string {
+  if (!rawПуть) return DEFAULT_INSTANCE_SETTINGS_PATH;
 
-  const match = rawPath.match(/^([^?#]*)(\?[^#]*)?(#.*)?$/);
-  const pathname = match?.[1] ?? rawPath;
+  const match = rawПуть.match(/^([^?#]*)(\?[^#]*)?(#.*)?$/);
+  const pathname = match?.[1] ?? rawПуть;
   const search = match?.[2] ?? "";
   const hash = match?.[3] ?? "";
 

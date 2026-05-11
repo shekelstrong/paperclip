@@ -1,12 +1,12 @@
 /**
  * @fileoverview Frontend API client for the Paperclip plugin system.
  *
- * All functions in `pluginsApi` map 1:1 to REST endpoints on
+ * Все functions in `pluginsApi` map 1:1 to REST endpoints on
  * `server/src/routes/plugins.ts`. Call sites should consume these functions
  * through React Query hooks (`useQuery` / `useMutation`) and reference cache
- * keys from `queryKeys.plugins.*`.
+ * keys from `queryКлючs.plugins.*`.
  *
- * @see ui/src/lib/queryKeys.ts for cache key definitions.
+ * @see ui/src/lib/queryКлючs.ts for cache key definitions.
  * @see server/src/routes/plugins.ts for endpoint implementation details.
  */
 
@@ -14,15 +14,15 @@ import type {
   PluginLauncherDeclaration,
   PluginLauncherRenderContextSnapshot,
   PluginUiSlotDeclaration,
-  PluginLocalFolderDeclaration,
+  PluginLocalПапкаDeclaration,
   PluginRecord,
   PluginConfig,
-  PluginStatus,
+  PluginСтатус,
 } from "@paperclipai/shared";
 import { api } from "./client";
 
 /**
- * Normalized UI contribution record returned by `GET /api/plugins/ui-contributions`.
+ * Нетrmalized UI contribution record returned by `GET /api/plugins/ui-contributions`.
  *
  * Only populated for plugins in `ready` state that declare at least one UI slot
  * or launcher. The `slots` array is sourced from `manifest.ui.slots`. The
@@ -31,8 +31,8 @@ import { api } from "./client";
  */
 export type PluginUiContribution = {
   pluginId: string;
-  pluginKey: string;
-  displayName: string;
+  pluginКлюч: string;
+  displayИмя: string;
   version: string;
   updatedAt?: string;
   /**
@@ -61,17 +61,17 @@ export interface PluginHealthCheckResult {
   checks: Array<{
     name: string;
     passed: boolean;
-    /** Human-readable description of a failure, if any. */
+    /** Человек-readable description of a failure, if any. */
     message?: string;
   }>;
   /** The most recent error message if the plugin is in `error` state. */
-  lastError?: string;
+  lastОшибка?: string;
 }
 
 /**
- * Worker diagnostics returned as part of the dashboard response.
+ * Работаer diagnostics returned as part of the dashboard response.
  */
-export interface PluginWorkerDiagnostics {
+export interface PluginРаботаerDiagnostics {
   status: string;
   pid: number | null;
   uptime: number | null;
@@ -79,16 +79,16 @@ export interface PluginWorkerDiagnostics {
   totalCrashes: number;
   pendingRequests: number;
   lastCrashAt: number | null;
-  nextRestartAt: number | null;
+  nextПерезапуститьAt: number | null;
 }
 
 /**
  * A recent job run entry returned in the dashboard response.
  */
-export interface PluginDashboardJobRun {
+export interface PluginПанель управленияJobЗапустить {
   id: string;
   jobId: string;
-  jobKey?: string;
+  jobКлюч?: string;
   trigger: string;
   status: string;
   durationMs: number | null;
@@ -101,9 +101,9 @@ export interface PluginDashboardJobRun {
 /**
  * A recent webhook delivery entry returned in the dashboard response.
  */
-export interface PluginDashboardWebhookDelivery {
+export interface PluginПанель управленияWebhookDelivery {
   id: string;
-  webhookKey: string;
+  webhookКлюч: string;
   status: string;
   durationMs: number | null;
   error: string | null;
@@ -118,14 +118,14 @@ export interface PluginDashboardWebhookDelivery {
  * Contains worker diagnostics, recent job runs, recent webhook deliveries,
  * and the current health check result — all in a single response.
  */
-export interface PluginDashboardData {
+export interface PluginПанель управленияData {
   pluginId: string;
-  /** Worker process diagnostics, or null if no worker is registered. */
-  worker: PluginWorkerDiagnostics | null;
+  /** Работаer process diagnostics, or null if no worker is registered. */
+  worker: PluginРаботаerDiagnostics | null;
   /** Recent job execution history (newest first, max 10). */
-  recentJobRuns: PluginDashboardJobRun[];
+  recentJobЗапуститьs: PluginПанель управленияJobЗапустить[];
   /** Recent inbound webhook deliveries (newest first, max 10). */
-  recentWebhookDeliveries: PluginDashboardWebhookDelivery[];
+  recentWebhookDeliveries: PluginПанель управленияWebhookDelivery[];
   /** Current health check results. */
   health: PluginHealthCheckResult;
   /** ISO 8601 timestamp when the dashboard data was generated. */
@@ -133,15 +133,15 @@ export interface PluginDashboardData {
 }
 
 export interface AvailablePluginExample {
-  packageName: string;
-  pluginKey: string;
-  displayName: string;
+  packageИмя: string;
+  pluginКлюч: string;
+  displayИмя: string;
   description: string;
-  localPath: string;
+  localПуть: string;
   tag: "example";
 }
 
-export interface PluginLocalFolderProblem {
+export interface PluginLocalПапкаProblem {
   code:
     | "not_configured"
     | "not_absolute"
@@ -158,48 +158,48 @@ export interface PluginLocalFolderProblem {
   path?: string;
 }
 
-export interface PluginLocalFolderStatus {
-  folderKey: string;
+export interface PluginLocalПапкаСтатус {
+  folderКлюч: string;
   configured: boolean;
   path: string | null;
-  realPath: string | null;
+  realПуть: string | null;
   access: "read" | "readWrite";
   readable: boolean;
   writable: boolean;
   requiredDirectories: string[];
-  requiredFiles: string[];
+  requiredФайлы: string[];
   missingDirectories: string[];
-  missingFiles: string[];
+  missingФайлы: string[];
   healthy: boolean;
-  problems: PluginLocalFolderProblem[];
+  problems: PluginLocalПапкаProblem[];
   checkedAt: string;
 }
 
-export interface PluginLocalFoldersResponse {
+export interface PluginLocalПапкаsResponse {
   pluginId: string;
   companyId: string;
-  declarations: PluginLocalFolderDeclaration[];
-  folders: PluginLocalFolderStatus[];
+  declarations: PluginLocalПапкаDeclaration[];
+  folders: PluginLocalПапкаСтатус[];
 }
 
-export interface PluginLocalFolderSaveInput {
+export interface PluginLocalПапкаСохранитьInput {
   path: string;
   access?: "read" | "readWrite";
   requiredDirectories?: string[];
-  requiredFiles?: string[];
+  requiredФайлы?: string[];
 }
 
 /**
  * Plugin management API client.
  *
- * All methods are thin wrappers around the `api` base client. They return
+ * Все methods are thin wrappers around the `api` base client. They return
  * promises that resolve to typed JSON responses or throw on HTTP errors.
  *
  * @example
  * ```tsx
  * // In a component:
  * const { data: plugins } = useQuery({
- *   queryKey: queryKeys.plugins.all,
+ *   queryКлюч: queryКлючs.plugins.all,
  *   queryFn: () => pluginsApi.list(),
  * });
  * ```
@@ -208,10 +208,10 @@ export const pluginsApi = {
   /**
    * List all installed plugins, optionally filtered by lifecycle status.
    *
-   * @param status - Optional filter; must be a valid `PluginStatus` value.
+   * @param status - Опционально filter; must be a valid `PluginСтатус` value.
    *   Invalid values are rejected by the server with HTTP 400.
    */
-  list: (status?: PluginStatus) =>
+  list: (status?: PluginСтатус) =>
     api.get<PluginRecord[]>(`/plugins${status ? `?status=${status}` : ""}`),
 
   /**
@@ -234,12 +234,12 @@ export const pluginsApi = {
    * On success, the plugin is registered in the database and transitioned to
    * `ready` state. The response is the newly created `PluginRecord`.
    *
-   * @param params.packageName - npm package name (e.g. `@paperclip/plugin-linear`)
-   *   or a filesystem path when `isLocalPath` is `true`.
-   * @param params.version - Target npm version tag/range (optional; defaults to latest).
-   * @param params.isLocalPath - Set to `true` when `packageName` is a local path.
+   * @param params.packageИмя - npm package name (e.g. `@paperclip/plugin-linear`)
+   *   or a filesystem path when `isLocalПуть` is `true`.
+   * @param params.version - Цель npm version tag/range (optional; defaults to latest).
+   * @param params.isLocalПуть - Set to `true` when `packageИмя` is a local path.
    */
-  install: (params: { packageName: string; version?: string; isLocalPath?: boolean }) =>
+  install: (params: { packageИмя: string; version?: string; isLocalПуть?: boolean }) =>
     api.post<PluginRecord>("/plugins/install", params),
 
   /**
@@ -254,7 +254,7 @@ export const pluginsApi = {
 
   /**
    * Transition a plugin from `error` state back to `ready`.
-   * No-ops if the plugin is already enabled.
+   * Нет-ops if the plugin is already enabled.
    *
    * @param pluginId - UUID of the plugin to enable.
    */
@@ -262,21 +262,21 @@ export const pluginsApi = {
     api.post<{ ok: boolean }>(`/plugins/${pluginId}/enable`, {}),
 
   /**
-   * Disable a plugin (transition to `error` state with an operator sentinel).
+   * Отключить a plugin (transition to `error` state with an operator sentinel).
    * The plugin's worker is stopped; it will not process events until re-enabled.
    *
    * @param pluginId - UUID of the plugin to disable.
-   * @param reason - Optional human-readable reason stored in `lastError`.
+   * @param reason - Опционально human-readable reason stored in `lastОшибка`.
    */
   disable: (pluginId: string, reason?: string) =>
     api.post<{ ok: boolean }>(`/plugins/${pluginId}/disable`, reason ? { reason } : {}),
 
   /**
-   * Run health diagnostics for a plugin.
+   * Запустить health diagnostics for a plugin.
    *
    * Only meaningful for plugins in `ready` state. Returns the result of all
    * registered health checks. Called on a 30-second polling interval by
-   * {@link PluginSettings}.
+   * {@link PluginНастройки}.
    *
    * @param pluginId - UUID of the plugin to health-check.
    */
@@ -288,21 +288,21 @@ export const pluginsApi = {
    *
    * Returns worker diagnostics, recent job runs, recent webhook deliveries,
    * and the current health check result in a single request. Used by the
-   * {@link PluginSettings} page to render the runtime dashboard section.
+   * {@link PluginНастройки} page to render the runtime dashboard section.
    *
    * @param pluginId - UUID of the plugin.
    */
   dashboard: (pluginId: string) =>
-    api.get<PluginDashboardData>(`/plugins/${pluginId}/dashboard`),
+    api.get<PluginПанель управленияData>(`/plugins/${pluginId}/dashboard`),
 
   /**
    * Fetch recent log entries for a plugin.
    *
    * @param pluginId - UUID of the plugin.
-   * @param options - Optional filters: limit, level, since.
+   * @param options - Опционально filters: limit, level, since.
    */
   logs: (pluginId: string, options?: { limit?: number; level?: string; since?: string }) => {
-    const params = new URLSearchParams();
+    const params = new URLПоискParams();
     if (options?.limit) params.set("limit", String(options.limit));
     if (options?.level) params.set("level", options.level);
     if (options?.since) params.set("since", options.since);
@@ -319,7 +319,7 @@ export const pluginsApi = {
    * transitioned to `upgrade_pending` state awaiting operator approval.
    *
    * @param pluginId - UUID of the plugin to upgrade.
-   * @param version - Target version (optional; defaults to latest published).
+   * @param version - Цель version (optional; defaults to latest published).
    */
   upgrade: (pluginId: string, version?: string) =>
     api.post<{ ok: boolean }>(`/plugins/${pluginId}/upgrade`, version ? { version } : {}),
@@ -360,13 +360,13 @@ export const pluginsApi = {
     api.get<PluginConfig | null>(`/plugins/${pluginId}/config`),
 
   /**
-   * Save (create or update) the configuration for a plugin.
+   * Сохранить (create or update) the configuration for a plugin.
    *
    * The server validates `configJson` against the plugin's `instanceConfigSchema`
    * and returns the persisted `PluginConfig` record on success.
    *
    * @param pluginId - UUID of the plugin.
-   * @param configJson - Configuration values matching the plugin's `instanceConfigSchema`.
+   * @param configJson - Конфигурация values matching the plugin's `instanceConfigSchema`.
    */
   saveConfig: (pluginId: string, configJson: Record<string, unknown>) =>
     api.post<PluginConfig>(`/plugins/${pluginId}/config`, { configJson }),
@@ -381,7 +381,7 @@ export const pluginsApi = {
    * Only available when the plugin declares a `validateConfig` RPC handler.
    *
    * @param pluginId - UUID of the plugin.
-   * @param configJson - Configuration values to validate.
+   * @param configJson - Конфигурация values to validate.
    */
   testConfig: (pluginId: string, configJson: Record<string, unknown>) =>
     api.post<{ valid: boolean; message?: string }>(`/plugins/${pluginId}/config/test`, { configJson }),
@@ -389,42 +389,42 @@ export const pluginsApi = {
   /**
    * List manifest-declared and stored company-scoped local folders for a plugin.
    */
-  listLocalFolders: (pluginId: string, companyId: string) =>
-    api.get<PluginLocalFoldersResponse>(`/plugins/${pluginId}/companies/${companyId}/local-folders`),
+  listLocalПапкаs: (pluginId: string, companyId: string) =>
+    api.get<PluginLocalПапкаsResponse>(`/plugins/${pluginId}/companies/${companyId}/local-folders`),
 
   /**
    * Inspect a configured local folder without changing persisted settings.
    */
-  localFolderStatus: (pluginId: string, companyId: string, folderKey: string) =>
-    api.get<PluginLocalFolderStatus>(
-      `/plugins/${pluginId}/companies/${companyId}/local-folders/${encodeURIComponent(folderKey)}/status`,
+  localПапкаСтатус: (pluginId: string, companyId: string, folderКлюч: string) =>
+    api.get<PluginLocalПапкаСтатус>(
+      `/plugins/${pluginId}/companies/${companyId}/local-folders/${encodeURIComponent(folderКлюч)}/status`,
     ),
 
   /**
    * Validate a candidate local folder path without saving it.
    */
-  validateLocalFolder: (
+  validateLocalПапка: (
     pluginId: string,
     companyId: string,
-    folderKey: string,
-    input: PluginLocalFolderSaveInput,
+    folderКлюч: string,
+    input: PluginLocalПапкаСохранитьInput,
   ) =>
-    api.post<PluginLocalFolderStatus>(
-      `/plugins/${pluginId}/companies/${companyId}/local-folders/${encodeURIComponent(folderKey)}/validate`,
+    api.post<PluginLocalПапкаСтатус>(
+      `/plugins/${pluginId}/companies/${companyId}/local-folders/${encodeURIComponent(folderКлюч)}/validate`,
       input,
     ),
 
   /**
    * Persist a company-scoped local folder path and return its inspected status.
    */
-  configureLocalFolder: (
+  configureLocalПапка: (
     pluginId: string,
     companyId: string,
-    folderKey: string,
-    input: PluginLocalFolderSaveInput,
+    folderКлюч: string,
+    input: PluginLocalПапкаСохранитьInput,
   ) =>
-    api.put<PluginLocalFolderStatus>(
-      `/plugins/${pluginId}/companies/${companyId}/local-folders/${encodeURIComponent(folderKey)}`,
+    api.put<PluginLocalПапкаСтатус>(
+      `/plugins/${pluginId}/companies/${companyId}/local-folders/${encodeURIComponent(folderКлюч)}`,
       input,
     ),
 
@@ -439,37 +439,37 @@ export const pluginsApi = {
    * runtime calls this method and maps the response into `PluginDataResult<T>`.
    *
    * On success, the response is `{ data: T }`.
-   * On failure, the response body is a `PluginBridgeError`-shaped object
+   * On failure, the response body is a `PluginBridgeОшибка`-shaped object
    * with `code`, `message`, and optional `details`.
    *
    * @param pluginId - UUID of the plugin whose worker should handle the request
    * @param key - Plugin-defined data key (e.g. `"sync-health"`)
-   * @param params - Optional query parameters forwarded to the worker handler
-   * @param companyId - Optional company scope used for board/company access checks.
-   * @param renderEnvironment - Optional launcher/page snapshot forwarded for
+   * @param params - Опционально query parameters forwarded to the worker handler
+   * @param companyId - Опционально company scope used for board/company access checks.
+   * @param renderОкружение - Опционально launcher/page snapshot forwarded for
    *   launcher-backed UI so workers can distinguish modal, drawer, popover, and
    *   page execution.
    *
-   * Error responses:
+   * Ошибка responses:
    * - `401`/`403` when auth or company access checks fail
    * - `404` when the plugin or handler key does not exist
    * - `409` when the plugin is not in a callable runtime state
-   * - `5xx` with a `PluginBridgeError`-shaped body when the worker throws
+   * - `5xx` with a `PluginBridgeОшибка`-shaped body when the worker throws
    *
    * @see PLUGIN_SPEC.md §13.8 — `getData`
-   * @see PLUGIN_SPEC.md §19.7 — Error Propagation Through The Bridge
+   * @see PLUGIN_SPEC.md §19.7 — Ошибка Propagation Through The Bridge
    */
   bridgeGetData: (
     pluginId: string,
     key: string,
     params?: Record<string, unknown>,
     companyId?: string | null,
-    renderEnvironment?: PluginLauncherRenderContextSnapshot | null,
+    renderОкружение?: PluginLauncherRenderContextSnapshot | null,
   ) =>
     api.post<{ data: unknown }>(`/plugins/${pluginId}/data/${encodeURIComponent(key)}`, {
       companyId: companyId ?? undefined,
       params,
-      renderEnvironment: renderEnvironment ?? undefined,
+      renderОкружение: renderОкружение ?? undefined,
     }),
 
   /**
@@ -479,36 +479,36 @@ export const pluginsApi = {
    * calls this method when the action function is invoked.
    *
    * On success, the response is `{ data: T }`.
-   * On failure, the response body is a `PluginBridgeError`-shaped object
+   * On failure, the response body is a `PluginBridgeОшибка`-shaped object
    * with `code`, `message`, and optional `details`.
    *
    * @param pluginId - UUID of the plugin whose worker should handle the request
    * @param key - Plugin-defined action key (e.g. `"resync"`)
-   * @param params - Optional parameters forwarded to the worker handler
-   * @param companyId - Optional company scope used for board/company access checks.
-   * @param renderEnvironment - Optional launcher/page snapshot forwarded for
+   * @param params - Опционально parameters forwarded to the worker handler
+   * @param companyId - Опционально company scope used for board/company access checks.
+   * @param renderОкружение - Опционально launcher/page snapshot forwarded for
    *   launcher-backed UI so workers can distinguish modal, drawer, popover, and
    *   page execution.
    *
-   * Error responses:
+   * Ошибка responses:
    * - `401`/`403` when auth or company access checks fail
    * - `404` when the plugin or handler key does not exist
    * - `409` when the plugin is not in a callable runtime state
-   * - `5xx` with a `PluginBridgeError`-shaped body when the worker throws
+   * - `5xx` with a `PluginBridgeОшибка`-shaped body when the worker throws
    *
    * @see PLUGIN_SPEC.md §13.9 — `performAction`
-   * @see PLUGIN_SPEC.md §19.7 — Error Propagation Through The Bridge
+   * @see PLUGIN_SPEC.md §19.7 — Ошибка Propagation Through The Bridge
    */
   bridgePerformAction: (
     pluginId: string,
     key: string,
     params?: Record<string, unknown>,
     companyId?: string | null,
-    renderEnvironment?: PluginLauncherRenderContextSnapshot | null,
+    renderОкружение?: PluginLauncherRenderContextSnapshot | null,
   ) =>
     api.post<{ data: unknown }>(`/plugins/${pluginId}/actions/${encodeURIComponent(key)}`, {
       companyId: companyId ?? undefined,
       params,
-      renderEnvironment: renderEnvironment ?? undefined,
+      renderОкружение: renderОкружение ?? undefined,
     }),
 };

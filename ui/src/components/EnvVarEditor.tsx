@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { CompanySecret, EnvBinding, SecretVersionSelector } from "@paperclipai/shared";
+import type { КомпанияСекрет, EnvBinding, СекретВерсияSelector } from "@paperclipai/shared";
 import { AlertCircle, X } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -9,13 +9,13 @@ const inputClass =
 type Row = {
   key: string;
   source: "plain" | "secret";
-  plainValue: string;
+  plainЗначение: string;
   secretId: string;
-  version: SecretVersionSelector;
+  version: СекретВерсияSelector;
 };
 
 function emptyRow(): Row {
-  return { key: "", source: "plain", plainValue: "", secretId: "", version: "latest" };
+  return { key: "", source: "plain", plainЗначение: "", secretId: "", version: "latest" };
 }
 
 function toRows(rec: Record<string, EnvBinding> | null | undefined): Row[] {
@@ -24,7 +24,7 @@ function toRows(rec: Record<string, EnvBinding> | null | undefined): Row[] {
   }
   const entries = Object.entries(rec).map(([key, binding]) => {
     if (typeof binding === "string") {
-      return { key, source: "plain" as const, plainValue: binding, secretId: "", version: "latest" as const };
+      return { key, source: "plain" as const, plainЗначение: binding, secretId: "", version: "latest" as const };
     }
     if (
       typeof binding === "object" &&
@@ -33,13 +33,13 @@ function toRows(rec: Record<string, EnvBinding> | null | undefined): Row[] {
       (binding as { type?: unknown }).type === "secret_ref"
     ) {
       const record = binding as { secretId?: unknown; version?: unknown };
-      const version: SecretVersionSelector = typeof record.version === "number"
+      const version: СекретВерсияSelector = typeof record.version === "number"
         ? record.version
         : "latest";
       return {
         key,
         source: "secret" as const,
-        plainValue: "",
+        plainЗначение: "",
         secretId: typeof record.secretId === "string" ? record.secretId : "",
         version,
       };
@@ -54,29 +54,29 @@ function toRows(rec: Record<string, EnvBinding> | null | undefined): Row[] {
       return {
         key,
         source: "plain" as const,
-        plainValue: typeof record.value === "string" ? record.value : "",
+        plainЗначение: typeof record.value === "string" ? record.value : "",
         secretId: "",
         version: "latest" as const,
       };
     }
-    return { key, source: "plain" as const, plainValue: "", secretId: "", version: "latest" as const };
+    return { key, source: "plain" as const, plainЗначение: "", secretId: "", version: "latest" as const };
   });
   return [...entries, emptyRow()];
 }
 
-export function EnvVarEditor({
+export function EnvVarИзменитьor({
   value,
   secrets,
-  onCreateSecret,
+  onСоздатьСекрет,
   onChange,
 }: {
   value: Record<string, EnvBinding>;
-  secrets: CompanySecret[];
-  onCreateSecret: (name: string, value: string) => Promise<CompanySecret>;
+  secrets: КомпанияСекрет[];
+  onСоздатьСекрет: (name: string, value: string) => Promise<КомпанияСекрет>;
   onChange: (env: Record<string, EnvBinding> | undefined) => void;
 }) {
   const [rows, setRows] = useState<Row[]>(() => toRows(value));
-  const [sealError, setSealError] = useState<string | null>(null);
+  const [sealОшибка, setSealОшибка] = useState<string | null>(null);
   const valueRef = useRef(value);
   const emittingRef = useRef(false);
 
@@ -101,10 +101,10 @@ export function EnvVarEditor({
         if (row.secretId) {
           rec[key] = { type: "secret_ref", secretId: row.secretId, version: row.version };
         } else {
-          rec[key] = { type: "plain", value: row.plainValue };
+          rec[key] = { type: "plain", value: row.plainЗначение };
         }
       } else {
-        rec[key] = { type: "plain", value: row.plainValue };
+        rec[key] = { type: "plain", value: row.plainЗначение };
       }
     }
     emittingRef.current = true;
@@ -117,7 +117,7 @@ export function EnvVarEditor({
     );
     if (
       withPatch[withPatch.length - 1].key ||
-      withPatch[withPatch.length - 1].plainValue ||
+      withPatch[withPatch.length - 1].plainЗначение ||
       withPatch[withPatch.length - 1].secretId
     ) {
       withPatch.push(emptyRow());
@@ -131,7 +131,7 @@ export function EnvVarEditor({
     if (
       next.length === 0 ||
       next[next.length - 1].key ||
-      next[next.length - 1].plainValue ||
+      next[next.length - 1].plainЗначение ||
       next[next.length - 1].secretId
     ) {
       next.push(emptyRow());
@@ -140,10 +140,10 @@ export function EnvVarEditor({
     emit(next);
   }
 
-  function defaultSecretName(key: string) {
+  function defaultСекретИмя(key: string) {
     return key
       .trim()
-      .toLowerCase()
+      .toНизкийerCase()
       .replace(/[^a-z0-9_]+/g, "_")
       .replace(/^_+|_+$/g, "")
       .slice(0, 64);
@@ -153,40 +153,40 @@ export function EnvVarEditor({
     const row = rows[index];
     if (!row) return;
     const key = row.key.trim();
-    const plain = row.plainValue;
+    const plain = row.plainЗначение;
     if (!key || plain.length === 0) return;
 
-    const suggested = defaultSecretName(key) || "secret";
-    const name = window.prompt("Secret name", suggested)?.trim();
+    const suggested = defaultСекретИмя(key) || "secret";
+    const name = window.prompt("Название секрета", suggested)?.trim();
     if (!name) return;
 
     try {
-      setSealError(null);
-      const created = await onCreateSecret(name, plain);
+      setSealОшибка(null);
+      const created = await onСоздатьСекрет(name, plain);
       updateRow(index, { source: "secret", secretId: created.id });
     } catch (error) {
-      setSealError(error instanceof Error ? error.message : "Failed to create secret");
+      setSealОшибка(error instanceof Ошибка ? error.message : "Ошибка to create secret");
     }
   }
 
   return (
-    <div className="space-y-1.5">
+    <div classИмя="space-y-1.5">
       {rows.map((row, index) => {
         const isTrailing =
           index === rows.length - 1 &&
           !row.key &&
-          !row.plainValue &&
+          !row.plainЗначение &&
           !row.secretId;
         return (
-          <div key={index} className="flex items-center gap-1.5">
+          <div key={index} classИмя="flex items-center gap-1.5">
             <input
-              className={cn(inputClass, "flex-[2]")}
+              classИмя={cn(inputClass, "flex-[2]")}
               placeholder="KEY"
               value={row.key}
               onChange={(event) => updateRow(index, { key: event.target.value })}
             />
             <select
-              className={cn(inputClass, "flex-[1] bg-background")}
+              classИмя={cn(inputClass, "flex-[1] bg-background")}
               value={row.source}
               onChange={(event) =>
                 updateRow(index, {
@@ -196,12 +196,12 @@ export function EnvVarEditor({
               }
             >
               <option value="plain">Plain</option>
-              <option value="secret">Secret</option>
+              <option value="secret">Секрет</option>
             </select>
             {row.source === "secret" ? (
               <>
                 <select
-                  className={cn(inputClass, "flex-[3] bg-background", row.secretId && !secrets.some((s) => s.id === row.secretId) && "border-destructive text-destructive")}
+                  classИмя={cn(inputClass, "flex-[3] bg-background", row.secretId && !secrets.some((s) => s.id === row.secretId) && "border-destructive text-destructive")}
                   value={row.secretId}
                   onChange={(event) => updateRow(index, { secretId: event.target.value })}
                 >
@@ -217,21 +217,21 @@ export function EnvVarEditor({
                   ))}
                 </select>
                 <select
-                  className={cn(inputClass, "flex-[1] bg-background")}
+                  classИмя={cn(inputClass, "flex-[1] bg-background")}
                   value={row.version === "latest" ? "latest" : String(row.version)}
                   onChange={(event) => {
                     const raw = event.target.value;
                     updateRow(index, { version: raw === "latest" ? "latest" : Number.parseInt(raw, 10) });
                   }}
                   disabled={!row.secretId}
-                  aria-label="Version"
+                  aria-label="Версия"
                 >
                   <option value="latest">latest</option>
                   {(() => {
                     const selected = secrets.find((s) => s.id === row.secretId);
                     if (!selected) return null;
-                    return Array.from({ length: Math.max(0, selected.latestVersion) }, (_, idx) => {
-                      const version = selected.latestVersion - idx;
+                    return Array.from({ length: Math.max(0, selected.latestВерсия) }, (_, idx) => {
+                      const version = selected.latestВерсия - idx;
                       if (version <= 0) return null;
                       return (
                         <option key={version} value={version}>
@@ -243,10 +243,10 @@ export function EnvVarEditor({
                 </select>
                 <button
                   type="button"
-                  className="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent/50 transition-colors shrink-0"
+                  classИмя="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent/50 transition-colors shrink-0"
                   onClick={() => sealRow(index)}
-                  disabled={!row.key.trim() || !row.plainValue}
-                  title="Create secret from current plain value"
+                  disabled={!row.key.trim() || !row.plainЗначение}
+                  title="Создать секрет from current plain value"
                 >
                   New
                 </button>
@@ -254,16 +254,16 @@ export function EnvVarEditor({
             ) : (
               <>
                 <input
-                  className={cn(inputClass, "flex-[3]")}
+                  classИмя={cn(inputClass, "flex-[3]")}
                   placeholder="value"
-                  value={row.plainValue}
-                  onChange={(event) => updateRow(index, { plainValue: event.target.value })}
+                  value={row.plainЗначение}
+                  onChange={(event) => updateRow(index, { plainЗначение: event.target.value })}
                 />
                 <button
                   type="button"
-                  className="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent/50 transition-colors shrink-0"
+                  classИмя="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent/50 transition-colors shrink-0"
                   onClick={() => sealRow(index)}
-                  disabled={!row.key.trim() || !row.plainValue}
+                  disabled={!row.key.trim() || !row.plainЗначение}
                   title="Store value as secret and replace with reference"
                 >
                   Seal
@@ -273,18 +273,18 @@ export function EnvVarEditor({
             {!isTrailing ? (
               <button
                 type="button"
-                className="shrink-0 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                classИмя="shrink-0 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                 onClick={() => removeRow(index)}
               >
-                <X className="h-3.5 w-3.5" />
+                <X classИмя="h-3.5 w-3.5" />
               </button>
             ) : (
-              <div className="w-[26px] shrink-0" />
+              <div classИмя="w-[26px] shrink-0" />
             )}
           </div>
         );
       })}
-      {sealError && <p className="text-[11px] text-destructive">{sealError}</p>}
+      {sealОшибка && <p classИмя="text-[11px] text-destructive">{sealОшибка}</p>}
       {(() => {
         const issues: { key: string; reason: string }[] = [];
         for (const row of rows) {
@@ -298,24 +298,24 @@ export function EnvVarEditor({
         }
         if (!issues.length) return null;
         return (
-          <p className="text-[11px] text-amber-700 dark:text-amber-400 inline-flex items-start gap-1">
-            <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+          <p classИмя="text-[11px] text-amber-700 dark:text-amber-400 inline-flex items-start gap-1">
+            <AlertCircle classИмя="h-3 w-3 mt-0.5 shrink-0" />
             <span>
               {issues.length} secret binding{issues.length === 1 ? "" : "s"} need attention:{" "}
               {issues.map((issue, idx) => (
-                <span key={idx} className="font-mono">
+                <span key={idx} classИмя="font-mono">
                   {issue.key}
-                  <span className="text-muted-foreground"> ({issue.reason})</span>
+                  <span classИмя="text-muted-foreground"> ({issue.reason})</span>
                   {idx < issues.length - 1 ? ", " : ""}
                 </span>
               ))}
-              . Runs will fail until you remap or re-enable.
+              . Запуститьs will fail until you remap or re-enable.
             </span>
           </p>
         );
       })()}
-      <p className="text-[11px] text-muted-foreground/60">
-        Set KEY to the env var name the process expects, for example GH_TOKEN. Choose Secret to resolve a stored
+      <p classИмя="text-[11px] text-muted-foreground/60">
+        Set KEY to the env var name the process expects, for example GH_TOKEN. Choose Секрет to resolve a stored
         value at run start. PAPERCLIP_* variables are injected automatically.
       </p>
     </div>

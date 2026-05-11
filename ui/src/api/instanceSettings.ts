@@ -1,38 +1,38 @@
 import type {
-  InstanceExperimentalSettings,
-  InstanceGeneralSettings,
-  IssueGraphLivenessAutoRecoveryPreview,
-  PatchInstanceGeneralSettings,
-  PatchInstanceExperimentalSettings,
+  InstanceExperimentalНастройки,
+  InstanceОбщиеНастройки,
+  ЗадачаGraphLivenessАвтоRecoveryПредпросмотр,
+  PatchInstanceОбщиеНастройки,
+  PatchInstanceExperimentalНастройки,
 } from "@paperclipai/shared";
 import { api } from "./client";
 
-export const instanceSettingsApi = {
-  getGeneral: () =>
-    api.get<InstanceGeneralSettings>("/instance/settings/general"),
-  updateGeneral: (patch: PatchInstanceGeneralSettings) =>
-    api.patch<InstanceGeneralSettings>("/instance/settings/general", patch),
+export const instanceНастройкиApi = {
+  getОбщие: () =>
+    api.get<InstanceОбщиеНастройки>("/instance/settings/general"),
+  updateОбщие: (patch: PatchInstanceОбщиеНастройки) =>
+    api.patch<InstanceОбщиеНастройки>("/instance/settings/general", patch),
   getExperimental: () =>
-    api.get<InstanceExperimentalSettings>("/instance/settings/experimental"),
-  updateExperimental: (patch: PatchInstanceExperimentalSettings) =>
-    api.patch<InstanceExperimentalSettings>("/instance/settings/experimental", patch),
-  previewIssueGraphLivenessAutoRecovery: (input: { lookbackHours?: number }) =>
-    api.post<IssueGraphLivenessAutoRecoveryPreview>(
+    api.get<InstanceExperimentalНастройки>("/instance/settings/experimental"),
+  updateExperimental: (patch: PatchInstanceExperimentalНастройки) =>
+    api.patch<InstanceExperimentalНастройки>("/instance/settings/experimental", patch),
+  previewЗадачаGraphLivenessАвтоRecovery: (input: { lookbackHours?: number }) =>
+    api.post<ЗадачаGraphLivenessАвтоRecoveryПредпросмотр>(
       "/instance/settings/experimental/issue-graph-liveness-auto-recovery/preview",
       input,
     ),
-  runIssueGraphLivenessAutoRecovery: (input: { lookbackHours?: number }) =>
+  runЗадачаGraphLivenessАвтоRecovery: (input: { lookbackHours?: number }) =>
     api.post<{
       findings: number;
-      autoRecoveryEnabled: boolean;
+      autoRecoveryВключитьd: boolean;
       lookbackHours: number;
       cutoff: string;
-      escalationsCreated: number;
+      escalationsСоздано: number;
       existingEscalations: number;
       skipped: number;
-      skippedAutoRecoveryDisabled: number;
+      skippedАвтоRecoveryОтключитьd: number;
       skippedOutsideLookback: number;
-      escalationIssueIds: string[];
+      escalationЗадачаIds: string[];
     }>(
       "/instance/settings/experimental/issue-graph-liveness-auto-recovery/run",
       input,

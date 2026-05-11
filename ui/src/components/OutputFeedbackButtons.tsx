@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import type { FeedbackDataSharingPreference, FeedbackVoteValue } from "@paperclipai/shared";
+import type { FeedbackDataSharingPreference, FeedbackVoteЗначение } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogОписание,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogНазвание,
 } from "@/components/ui/dialog";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { cn } from "../lib/utils";
@@ -22,24 +22,24 @@ export function OutputFeedbackButtons({
   rightSlot,
   inline = false,
 }: {
-  activeVote?: FeedbackVoteValue | null;
+  activeVote?: FeedbackVoteЗначение | null;
   disabled?: boolean;
   sharingPreference?: FeedbackDataSharingPreference;
   termsUrl?: string | null;
-  onVote: (vote: FeedbackVoteValue, options?: { allowSharing?: boolean; reason?: string }) => Promise<void>;
-  rightSlot?: React.ReactNode;
+  onVote: (vote: FeedbackVoteЗначение, options?: { allowSharing?: boolean; reason?: string }) => Promise<void>;
+  rightSlot?: React.ReactНетde;
   inline?: boolean;
 }) {
-  const [pendingVote, setPendingVote] = useState<{
-    vote: FeedbackVoteValue;
+  const [pendingVote, setОжиданиеVote] = useState<{
+    vote: FeedbackVoteЗначение;
     reason?: string;
     keepReasonPromptOpen?: boolean;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [downvoteReason, setDownvoteReason] = useState("");
   const [collectingDownvoteReason, setCollectingDownvoteReason] = useState(false);
-  const [downvoteAllowSharing, setDownvoteAllowSharing] = useState<boolean | undefined>(undefined);
-  const [optimisticVote, setOptimisticVote] = useState<FeedbackVoteValue | null>(null);
+  const [downvoteВсеowSharing, setDownvoteВсеowSharing] = useState<boolean | undefined>(undefined);
+  const [optimisticVote, setOptimisticVote] = useState<FeedbackVoteЗначение | null>(null);
   const visibleVote = optimisticVote ?? activeVote ?? null;
 
   useEffect(() => {
@@ -49,18 +49,18 @@ export function OutputFeedbackButtons({
   }, [activeVote, optimisticVote]);
 
   async function submitVote(
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     options?: { allowSharing?: boolean; reason?: string },
     behavior?: { keepReasonPromptOpen?: boolean },
   ) {
     setIsSaving(true);
     try {
       await onVote(vote, options);
-      setPendingVote(null);
+      setОжиданиеVote(null);
       if (!behavior?.keepReasonPromptOpen) {
         setCollectingDownvoteReason(false);
         setDownvoteReason("");
-        setDownvoteAllowSharing(undefined);
+        setDownvoteВсеowSharing(undefined);
       }
     } catch (error) {
       setOptimisticVote(null);
@@ -71,12 +71,12 @@ export function OutputFeedbackButtons({
   }
 
   function beginVote(
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     reason?: string,
     behavior?: { keepReasonPromptOpen?: boolean },
   ) {
     if (sharingPreference === "prompt") {
-      setPendingVote({
+      setОжиданиеVote({
         vote,
         ...(reason ? { reason } : {}),
         ...(behavior?.keepReasonPromptOpen ? { keepReasonPromptOpen: true } : {}),
@@ -85,7 +85,7 @@ export function OutputFeedbackButtons({
     }
     const allowSharing = sharingPreference === "allowed";
     if (vote === "down") {
-      setDownvoteAllowSharing(allowSharing);
+      setDownvoteВсеowSharing(allowSharing);
     }
     void submitVote(
       vote,
@@ -97,12 +97,12 @@ export function OutputFeedbackButtons({
     );
   }
 
-  function handleVote(vote: FeedbackVoteValue) {
+  function handleVote(vote: FeedbackVoteЗначение) {
     setOptimisticVote(vote);
     if (vote === "down") {
       setCollectingDownvoteReason(true);
       setDownvoteReason("");
-      setDownvoteAllowSharing(undefined);
+      setDownvoteВсеowSharing(undefined);
       void beginVote("down", undefined, { keepReasonPromptOpen: true });
       return;
     }
@@ -111,7 +111,7 @@ export function OutputFeedbackButtons({
 
   return (
     <>
-      <div className={cn(
+      <div classИмя={cn(
         "flex items-center gap-2",
         inline ? "justify-end" : "mt-3 border-t border-border/60 pt-3",
       )}>
@@ -120,10 +120,10 @@ export function OutputFeedbackButtons({
           size="sm"
           variant="outline"
           disabled={disabled || isSaving}
-          className={cn(visibleVote === "up" && "border-green-600/50 bg-green-500/10 text-green-700")}
+          classИмя={cn(visibleVote === "up" && "border-green-600/50 bg-green-500/10 text-green-700")}
           onClick={() => handleVote("up")}
         >
-          <ThumbsUp className="mr-1.5 h-3.5 w-3.5" />
+          <ThumbsUp classИмя="mr-1.5 h-3.5 w-3.5" />
           Helpful
         </Button>
         <Button
@@ -131,25 +131,25 @@ export function OutputFeedbackButtons({
           size="sm"
           variant="outline"
           disabled={disabled || isSaving}
-          className={cn(visibleVote === "down" && "border-amber-600/50 bg-amber-500/10 text-amber-800")}
+          classИмя={cn(visibleVote === "down" && "border-amber-600/50 bg-amber-500/10 text-amber-800")}
           onClick={() => handleVote("down")}
         >
-          <ThumbsDown className="mr-1.5 h-3.5 w-3.5" />
+          <ThumbsDown classИмя="mr-1.5 h-3.5 w-3.5" />
           Needs work
         </Button>
-        {rightSlot ? <div className="ml-auto">{rightSlot}</div> : null}
+        {rightSlot ? <div classИмя="ml-auto">{rightSlot}</div> : null}
       </div>
       {collectingDownvoteReason ? (
-        <div className="mt-2 rounded-md border border-border/60 bg-accent/20 p-3">
-          <div className="mb-2 text-sm font-medium">What could have been better?</div>
+        <div classИмя="mt-2 rounded-md border border-border/60 bg-accent/20 p-3">
+          <div classИмя="mb-2 text-sm font-medium">What could have been better?</div>
           <Textarea
             value={downvoteReason}
             onChange={(event) => setDownvoteReason(event.target.value)}
-            placeholder="Add a short note"
-            className="min-h-20 resize-y bg-background"
+            placeholder="Добавить a short note"
+            classИмя="min-h-20 resize-y bg-background"
             disabled={disabled || isSaving}
           />
-          <div className="mt-3 flex items-center justify-end gap-2">
+          <div classИмя="mt-3 flex items-center justify-end gap-2">
             <Button
               type="button"
               size="sm"
@@ -158,10 +158,10 @@ export function OutputFeedbackButtons({
               onClick={() => {
                 setCollectingDownvoteReason(false);
                 setDownvoteReason("");
-                setDownvoteAllowSharing(undefined);
+                setDownvoteВсеowSharing(undefined);
               }}
             >
-              Dismiss
+              Закрыть
             </Button>
             <Button
               type="button"
@@ -169,12 +169,12 @@ export function OutputFeedbackButtons({
               disabled={disabled || isSaving || !downvoteReason.trim()}
               onClick={() => {
                 void submitVote("down", {
-                  ...(downvoteAllowSharing ? { allowSharing: true } : {}),
+                  ...(downvoteВсеowSharing ? { allowSharing: true } : {}),
                   reason: downvoteReason,
                 });
               }}
             >
-              {isSaving ? "Saving..." : "Save note"}
+              {isSaving ? "Saving..." : "Сохранить note"}
             </Button>
           </div>
         </div>
@@ -184,38 +184,38 @@ export function OutputFeedbackButtons({
         open={Boolean(pendingVote)}
         onOpenChange={(open) => {
           if (!open && !isSaving) {
-            setPendingVote(null);
+            setОжиданиеVote(null);
             setOptimisticVote(null);
           }
         }}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save your feedback sharing preference</DialogTitle>
-            <DialogDescription>
+            <DialogНазвание>Сохранить your feedback sharing preference</DialogНазвание>
+            <DialogОписание>
               Choose whether voted AI outputs can be shared with Paperclip Labs. This
               answer becomes the default for future thumbs up and thumbs down votes.
-            </DialogDescription>
+            </DialogОписание>
           </DialogHeader>
-          <div className="space-y-3 text-sm text-muted-foreground">
+          <div classИмя="space-y-3 text-sm text-muted-foreground">
             <p>
               This vote is always saved locally.
             </p>
             <p>
-              Choose <span className="font-medium text-foreground">Always allow</span> to share
+              Choose <span classИмя="font-medium text-foreground">Always allow</span> to share
               this vote and future voted AI outputs. Choose{" "}
-              <span className="font-medium text-foreground">Don't allow</span> to keep this vote
+              <span classИмя="font-medium text-foreground">Don't allow</span> to keep this vote
               and future votes local.
             </p>
             <p>
-              You can change this later in Instance Settings &gt; General.
+              You can change this later in Instance Настройки &gt; Общие.
             </p>
             {termsUrl ? (
               <a
                 href={termsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex text-sm text-foreground underline underline-offset-4"
+                classИмя="inline-flex text-sm text-foreground underline underline-offset-4"
               >
                 Read our terms of service
               </a>
@@ -229,7 +229,7 @@ export function OutputFeedbackButtons({
               onClick={() => {
                 if (!pendingVote) return;
                 if (pendingVote.vote === "down") {
-                  setDownvoteAllowSharing(false);
+                  setDownvoteВсеowSharing(false);
                 }
                 void submitVote(
                   pendingVote.vote,
@@ -246,7 +246,7 @@ export function OutputFeedbackButtons({
               onClick={() => {
                 if (!pendingVote) return;
                 if (pendingVote.vote === "down") {
-                  setDownvoteAllowSharing(true);
+                  setDownvoteВсеowSharing(true);
                 }
                 void submitVote(
                   pendingVote.vote,

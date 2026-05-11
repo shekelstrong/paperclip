@@ -4,9 +4,9 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
+  type КлючboardEvent,
   type PointerEvent,
-  type ReactNode,
+  type ReactНетde,
 } from "react";
 import { cn } from "@/lib/utils";
 
@@ -19,11 +19,11 @@ function clampSidebarWidth(width: number, min: number, max: number) {
   return Math.min(max, Math.max(min, width));
 }
 
-function readStoredSidebarWidth(storageKey: string, fallback: number, min: number, max: number) {
+function readStoredSidebarWidth(storageКлюч: string, fallback: number, min: number, max: number) {
   if (typeof window === "undefined") return fallback;
 
   try {
-    const stored = window.localStorage.getItem(storageKey);
+    const stored = window.localStorage.getItem(storageКлюч);
     if (!stored) return fallback;
     const parsed = Number.parseInt(stored, 10);
     if (!Number.isFinite(parsed)) return fallback;
@@ -33,22 +33,22 @@ function readStoredSidebarWidth(storageKey: string, fallback: number, min: numbe
   }
 }
 
-function writeStoredSidebarWidth(storageKey: string, width: number, min: number, max: number) {
+function writeStoredSidebarWidth(storageКлюч: string, width: number, min: number, max: number) {
   if (typeof window === "undefined") return;
 
   try {
-    window.localStorage.setItem(storageKey, String(clampSidebarWidth(width, min, max)));
+    window.localStorage.setItem(storageКлюч, String(clampSidebarWidth(width, min, max)));
   } catch {
     // Storage can be unavailable in private contexts; resizing should still work.
   }
 }
 
 type ResizableSidebarPaneProps = {
-  children: ReactNode;
+  children: ReactНетde;
   open: boolean;
   resizable?: boolean;
-  storageKey?: string;
-  className?: string;
+  storageКлюч?: string;
+  classИмя?: string;
   /** Which side of the viewport this pane sits on. Determines handle position and drag direction. */
   side?: "left" | "right";
   defaultWidth?: number;
@@ -57,7 +57,7 @@ type ResizableSidebarPaneProps = {
   /** Below this viewport width, clamp the pane to compactMaxWidth. */
   compactBelowViewport?: number;
   compactMaxWidth?: number;
-  /** Optional CSS custom property name to expose the live pane width on :root (e.g. "--properties-panel-width"). */
+  /** Опционально CSS custom property name to expose the live pane width on :root (e.g. "--properties-panel-width"). */
   widthVariable?: string;
 };
 
@@ -70,8 +70,8 @@ export function ResizableSidebarPane({
   children,
   open,
   resizable = false,
-  storageKey = "paperclip.sidebar.width",
-  className,
+  storageКлюч = "paperclip.sidebar.width",
+  classИмя,
   side = "left",
   defaultWidth = DEFAULT_SIDEBAR_WIDTH,
   minWidth = MIN_SIDEBAR_WIDTH,
@@ -81,18 +81,18 @@ export function ResizableSidebarPane({
   widthVariable,
 }: ResizableSidebarPaneProps) {
   const [viewportWidth, setViewportWidth] = useState(readViewportWidth);
-  const compactModeActive =
+  const compactModeАктивен =
     compactBelowViewport !== undefined
     && compactMaxWidth !== undefined
     && viewportWidth < compactBelowViewport;
   const effectiveMaxWidth =
-    compactModeActive
+    compactModeАктивен
       ? Math.max(minWidth, Math.min(maxWidth, compactMaxWidth))
       : maxWidth;
   const canResizeAtCurrentViewport = effectiveMaxWidth > minWidth;
   const fallbackWidth = clampSidebarWidth(defaultWidth, minWidth, effectiveMaxWidth);
   const [width, setWidth] = useState(() =>
-    readStoredSidebarWidth(storageKey, fallbackWidth, minWidth, effectiveMaxWidth),
+    readStoredSidebarWidth(storageКлюч, fallbackWidth, minWidth, effectiveMaxWidth),
   );
   const [isResizing, setIsResizing] = useState(false);
   const widthRef = useRef(width);
@@ -107,10 +107,10 @@ export function ResizableSidebarPane({
   }, []);
 
   useEffect(() => {
-    const storedWidth = readStoredSidebarWidth(storageKey, fallbackWidth, minWidth, effectiveMaxWidth);
+    const storedWidth = readStoredSidebarWidth(storageКлюч, fallbackWidth, minWidth, effectiveMaxWidth);
     widthRef.current = storedWidth;
     setWidth(storedWidth);
-  }, [storageKey, fallbackWidth, minWidth, effectiveMaxWidth]);
+  }, [storageКлюч, fallbackWidth, minWidth, effectiveMaxWidth]);
 
   const visibleWidth = open ? width : 0;
   const paneStyle = useMemo(
@@ -132,19 +132,19 @@ export function ResizableSidebarPane({
       const clamped = clampSidebarWidth(nextWidth, minWidth, effectiveMaxWidth);
       widthRef.current = clamped;
       setWidth(clamped);
-      if (!compactModeActive) {
-        writeStoredSidebarWidth(storageKey, clamped, minWidth, maxWidth);
+      if (!compactModeАктивен) {
+        writeStoredSidebarWidth(storageКлюч, clamped, minWidth, maxWidth);
       }
     },
-    [storageKey, minWidth, maxWidth, effectiveMaxWidth, compactModeActive],
+    [storageКлюч, minWidth, maxWidth, effectiveMaxWidth, compactModeАктивен],
   );
 
   const handlePointerDown = useCallback(
     (event: PointerEvent<HTMLDivElement>) => {
       if (!open || !resizable) return;
 
-      event.preventDefault();
-      event.currentTarget.setPointerCapture(event.pointerId);
+      event.preventПо умолчанию();
+      event.currentЦель.setPointerCapture(event.pointerId);
       dragState.current = { startX: event.clientX, startWidth: widthRef.current };
       setIsResizing(true);
     },
@@ -171,30 +171,30 @@ export function ResizableSidebarPane({
 
     dragState.current = null;
     setIsResizing(false);
-    if (!compactModeActive) {
-      writeStoredSidebarWidth(storageKey, widthRef.current, minWidth, maxWidth);
+    if (!compactModeАктивен) {
+      writeStoredSidebarWidth(storageКлюч, widthRef.current, minWidth, maxWidth);
     }
-  }, [storageKey, minWidth, maxWidth, compactModeActive]);
+  }, [storageКлюч, minWidth, maxWidth, compactModeАктивен]);
 
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>) => {
+  const handleКлючDown = useCallback(
+    (event: КлючboardEvent<HTMLDivElement>) => {
       if (!open || !resizable || !canResizeAtCurrentViewport) return;
 
       // Match drag semantics: on a right-side pane, ArrowLeft grows the pane.
-      const growKey = side === "right" ? "ArrowLeft" : "ArrowRight";
-      const shrinkKey = side === "right" ? "ArrowRight" : "ArrowLeft";
+      const growКлюч = side === "right" ? "ArrowLeft" : "ArrowRight";
+      const shrinkКлюч = side === "right" ? "ArrowRight" : "ArrowLeft";
 
-      if (event.key === growKey) {
-        event.preventDefault();
+      if (event.key === growКлюч) {
+        event.preventПо умолчанию();
         commitWidth(width + SIDEBAR_WIDTH_STEP);
-      } else if (event.key === shrinkKey) {
-        event.preventDefault();
+      } else if (event.key === shrinkКлюч) {
+        event.preventПо умолчанию();
         commitWidth(width - SIDEBAR_WIDTH_STEP);
       } else if (event.key === "Home") {
-        event.preventDefault();
+        event.preventПо умолчанию();
         commitWidth(minWidth);
       } else if (event.key === "End") {
-        event.preventDefault();
+        event.preventПо умолчанию();
         commitWidth(effectiveMaxWidth);
       }
     },
@@ -203,10 +203,10 @@ export function ResizableSidebarPane({
 
   return (
     <div
-      className={cn(
+      classИмя={cn(
         "relative overflow-hidden",
         !isResizing && "transition-[width] duration-100 ease-out",
-        className,
+        classИмя,
       )}
       style={paneStyle}
     >
@@ -220,7 +220,7 @@ export function ResizableSidebarPane({
           aria-valuemax={effectiveMaxWidth}
           aria-valuenow={width}
           tabIndex={0}
-          className={cn(
+          classИмя={cn(
             "absolute inset-y-0 z-20 w-3 cursor-col-resize touch-none outline-none",
             side === "right" ? "left-0" : "right-0",
             "before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-transparent before:transition-colors",
@@ -230,9 +230,9 @@ export function ResizableSidebarPane({
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endResize}
-          onPointerCancel={endResize}
+          onPointerОтмена={endResize}
           onLostPointerCapture={endResize}
-          onKeyDown={handleKeyDown}
+          onКлючDown={handleКлючDown}
         />
       ) : null}
     </div>

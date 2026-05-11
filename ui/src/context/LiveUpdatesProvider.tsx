@@ -1,18 +1,18 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactНетde } from "react";
 import { useQuery, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
-import type { Agent, Issue, IssueComment, LiveEvent } from "@paperclipai/shared";
-import type { RunForIssue } from "../api/activity";
-import type { ActiveRunForIssue, LiveRunForIssue } from "../api/heartbeats";
-import type { CompanyUserDirectoryResponse } from "../api/access";
+import type { Агент, Задача, ЗадачаComment, LiveEvent } from "@paperclipai/shared";
+import type { ЗапуститьForЗадача } from "../api/activity";
+import type { АктивенЗапуститьForЗадача, LiveЗапуститьForЗадача } from "../api/heartbeats";
+import type { КомпанияUserDirectoryResponse } from "../api/access";
 import { issuesApi } from "../api/issues";
 import { authApi } from "../api/auth";
-import { useCompany } from "./CompanyContext";
+import { useКомпания } from "./КомпанияContext";
 import type { ToastInput } from "./ToastContext";
 import { useToastActions } from "./ToastContext";
-import { upsertIssueCommentInPages } from "../lib/optimistic-issue-comments";
-import { clearIssueExecutionRun, removeLiveRunById } from "../lib/optimistic-issue-runs";
-import { queryKeys } from "../lib/queryKeys";
-import { toCompanyRelativePath } from "../lib/company-routes";
+import { upsertЗадачаCommentInPages } from "../lib/optimistic-issue-comments";
+import { clearЗадачаExecutionЗапустить, removeLiveЗапуститьById } from "../lib/optimistic-issue-runs";
+import { queryКлючs } from "../lib/queryКлючs";
+import { toКомпанияRelativeПуть } from "../lib/company-routes";
 import { useLocation } from "../lib/router";
 
 const TOAST_COOLDOWN_WINDOW_MS = 10_000;
@@ -22,12 +22,12 @@ const SOCKET_CONNECTING = 0;
 const SOCKET_OPEN = 1;
 const TERMINAL_RUN_STATUSES = new Set(["succeeded", "failed", "cancelled", "timed_out"]);
 
-type LiveUpdatesSocketLike = {
+type LiveОбновитьsSocketLike = {
   readyState: number;
   onopen: ((this: WebSocket, ev: Event) => unknown) | null;
   onmessage: ((this: WebSocket, ev: MessageEvent) => unknown) | null;
   onerror: ((this: WebSocket, ev: Event) => unknown) | null;
-  onclose: ((this: WebSocket, ev: CloseEvent) => unknown) | null;
+  onclose: ((this: WebSocket, ev: ЗакрытьEvent) => unknown) | null;
   close: (code?: number, reason?: string) => void;
 };
 
@@ -44,24 +44,24 @@ function shortId(value: string) {
   return value.slice(0, 8);
 }
 
-function resolveAgentName(
+function resolveАгентИмя(
   queryClient: QueryClient,
   companyId: string,
   agentId: string,
 ): string | null {
-  const agents = queryClient.getQueryData<Agent[]>(queryKeys.agents.list(companyId));
+  const agents = queryClient.getQueryData<Агент[]>(queryКлючs.agents.list(companyId));
   if (!agents) return null;
   const agent = agents.find((a) => a.id === agentId);
   return agent?.name ?? null;
 }
 
-function resolveUserName(
+function resolveUserИмя(
   queryClient: QueryClient,
   companyId: string,
   userId: string,
 ): string | null {
-  const directory = queryClient.getQueryData<CompanyUserDirectoryResponse>(
-    queryKeys.access.companyUserDirectory(companyId),
+  const directory = queryClient.getQueryData<КомпанияUserDirectoryResponse>(
+    queryКлючs.access.companyUserDirectory(companyId),
   );
   if (!directory) return null;
   const entry = directory.users.find((u) => u.principalId === userId);
@@ -76,20 +76,20 @@ function truncate(text: string, max: number): string {
 function resolveActorLabel(
   queryClient: QueryClient,
   companyId: string,
-  actorType: string | null,
+  actorТип: string | null,
   actorId: string | null,
 ): string {
-  if (actorType === "agent" && actorId) {
-    return resolveAgentName(queryClient, companyId, actorId) ?? `Agent ${shortId(actorId)}`;
+  if (actorТип === "agent" && actorId) {
+    return resolveАгентИмя(queryClient, companyId, actorId) ?? `Агент ${shortId(actorId)}`;
   }
-  if (actorType === "system") return "System";
-  if (actorType === "user" && actorId) {
-    return resolveUserName(queryClient, companyId, actorId) ?? "Board";
+  if (actorТип === "system") return "System";
+  if (actorТип === "user" && actorId) {
+    return resolveUserИмя(queryClient, companyId, actorId) ?? "Совет";
   }
   return "Someone";
 }
 
-interface IssueToastContext {
+interface ЗадачаToastContext {
   ref: string;
   title: string | null;
   label: string;
@@ -100,72 +100,72 @@ interface VisibleRouteOptions {
   isForegrounded?: boolean;
 }
 
-interface VisibleIssueRouteContext {
-  routeIssueRef: string;
+interface VisibleЗадачаRouteContext {
+  routeЗадачаRef: string;
   issueRefs: Set<string>;
-  assigneeAgentId: string | null;
+  assigneeАгентId: string | null;
   runIds: Set<string>;
 }
 
-function resolveIssueQueryRefs(
+function resolveЗадачаQueryRefs(
   queryClient: QueryClient,
   companyId: string,
   issueId: string,
   details: Record<string, unknown> | null,
 ): string[] {
   const refs = new Set<string>([issueId]);
-  const detailIssue = queryClient.getQueryData<Issue>(queryKeys.issues.detail(issueId));
-  const listIssues = queryClient.getQueryData<Issue[]>(queryKeys.issues.list(companyId));
+  const detailЗадача = queryClient.getQueryData<Задача>(queryКлючs.issues.detail(issueId));
+  const listЗадачи = queryClient.getQueryData<Задача[]>(queryКлючs.issues.list(companyId));
   const detailsIdentifier =
     readString(details?.identifier) ??
     readString(details?.issueIdentifier);
 
   if (detailsIdentifier) refs.add(detailsIdentifier);
 
-  if (detailIssue?.id) refs.add(detailIssue.id);
-  if (detailIssue?.identifier) refs.add(detailIssue.identifier);
+  if (detailЗадача?.id) refs.add(detailЗадача.id);
+  if (detailЗадача?.identifier) refs.add(detailЗадача.identifier);
 
-  const listIssue = listIssues?.find((issue) => {
+  const listЗадача = listЗадачи?.find((issue) => {
     if (issue.id === issueId) return true;
     if (issue.identifier && issue.identifier === issueId) return true;
     if (detailsIdentifier && issue.identifier === detailsIdentifier) return true;
     return false;
   });
-  if (listIssue?.id) refs.add(listIssue.id);
-  if (listIssue?.identifier) refs.add(listIssue.identifier);
+  if (listЗадача?.id) refs.add(listЗадача.id);
+  if (listЗадача?.identifier) refs.add(listЗадача.identifier);
 
   return Array.from(refs);
 }
 
-function resolveIssueToastContext(
+function resolveЗадачаToastContext(
   queryClient: QueryClient,
   companyId: string,
   issueId: string,
   details: Record<string, unknown> | null,
-): IssueToastContext {
-  const issueRefs = resolveIssueQueryRefs(queryClient, companyId, issueId, details);
-  const detailIssue = issueRefs
-    .map((ref) => queryClient.getQueryData<Issue>(queryKeys.issues.detail(ref)))
-    .find((issue): issue is Issue => !!issue);
-  const listIssue = queryClient
-    .getQueryData<Issue[]>(queryKeys.issues.list(companyId))
+): ЗадачаToastContext {
+  const issueRefs = resolveЗадачаQueryRefs(queryClient, companyId, issueId, details);
+  const detailЗадача = issueRefs
+    .map((ref) => queryClient.getQueryData<Задача>(queryКлючs.issues.detail(ref)))
+    .find((issue): issue is Задача => !!issue);
+  const listЗадача = queryClient
+    .getQueryData<Задача[]>(queryКлючs.issues.list(companyId))
     ?.find((issue) => issueRefs.some((ref) => issue.id === ref || issue.identifier === ref));
-  const cachedIssue = detailIssue ?? listIssue ?? null;
+  const cachedЗадача = detailЗадача ?? listЗадача ?? null;
   const ref =
     readString(details?.identifier) ??
     readString(details?.issueIdentifier) ??
-    cachedIssue?.identifier ??
-    `Issue ${shortId(issueId)}`;
+    cachedЗадача?.identifier ??
+    `Задача ${shortId(issueId)}`;
   const title =
     readString(details?.title) ??
-    readString(details?.issueTitle) ??
-    cachedIssue?.title ??
+    readString(details?.issueНазвание) ??
+    cachedЗадача?.title ??
     null;
   return {
     ref,
     title,
     label: title ? `${ref} - ${truncate(title, 72)}` : ref,
-    href: `/issues/${cachedIssue?.identifier ?? issueId}`,
+    href: `/issues/${cachedЗадача?.identifier ?? issueId}`,
   };
 }
 
@@ -176,46 +176,46 @@ function isPageForegrounded(): boolean {
   return true;
 }
 
-function resolveVisibleIssueRouteContext(
+function resolveVisibleЗадачаRouteContext(
   queryClient: QueryClient,
   pathname: string,
   options?: VisibleRouteOptions,
-): VisibleIssueRouteContext | null {
+): VisibleЗадачаRouteContext | null {
   const isForegrounded = options?.isForegrounded ?? isPageForegrounded();
   if (!isForegrounded) return null;
 
-  const relativePath = toCompanyRelativePath(pathname);
-  const segments = relativePath.split("/").filter(Boolean);
+  const relativeПуть = toКомпанияRelativeПуть(pathname);
+  const segments = relativeПуть.split("/").filter(Boolean);
   if (segments[0] !== "issues" || !segments[1]) return null;
 
   const issueRef = decodeURIComponent(segments[1]);
-  const issue = queryClient.getQueryData<Issue>(queryKeys.issues.detail(issueRef)) ?? null;
+  const issue = queryClient.getQueryData<Задача>(queryКлючs.issues.detail(issueRef)) ?? null;
   const issueRefs = new Set<string>([issueRef]);
   if (issue?.id) issueRefs.add(issue.id);
   if (issue?.identifier) issueRefs.add(issue.identifier);
 
   const runIds = new Set<string>();
-  const activeRun = queryClient.getQueryData<ActiveRunForIssue | null>(queryKeys.issues.activeRun(issueRef));
-  const liveRuns = queryClient.getQueryData<LiveRunForIssue[]>(queryKeys.issues.liveRuns(issueRef)) ?? [];
-  const linkedRuns = queryClient.getQueryData<RunForIssue[]>(queryKeys.issues.runs(issueRef)) ?? [];
+  const activeЗапустить = queryClient.getQueryData<АктивенЗапуститьForЗадача | null>(queryКлючs.issues.activeЗапустить(issueRef));
+  const liveЗапуститьs = queryClient.getQueryData<LiveЗапуститьForЗадача[]>(queryКлючs.issues.liveЗапуститьs(issueRef)) ?? [];
+  const linkedЗапуститьs = queryClient.getQueryData<ЗапуститьForЗадача[]>(queryКлючs.issues.runs(issueRef)) ?? [];
 
-  if (activeRun?.id) runIds.add(activeRun.id);
-  for (const run of liveRuns) {
+  if (activeЗапустить?.id) runIds.add(activeЗапустить.id);
+  for (const run of liveЗапуститьs) {
     if (run.id) runIds.add(run.id);
   }
-  for (const run of linkedRuns) {
+  for (const run of linkedЗапуститьs) {
     if (run.runId) runIds.add(run.runId);
   }
 
   return {
-    routeIssueRef: issueRef,
+    routeЗадачаRef: issueRef,
     issueRefs,
-    assigneeAgentId: issue?.assigneeAgentId ?? null,
+    assigneeАгентId: issue?.assigneeАгентId ?? null,
     runIds,
   };
 }
 
-function buildIssueRefsForPayload(entityId: string, details: Record<string, unknown> | null): Set<string> {
+function buildЗадачаRefsForPayload(entityId: string, details: Record<string, unknown> | null): Set<string> {
   const refs = new Set<string>([entityId]);
   const identifier = readString(details?.identifier) ?? readString(details?.issueIdentifier);
   if (identifier) refs.add(identifier);
@@ -229,163 +229,163 @@ function overlaps(a: Set<string>, b: Set<string>): boolean {
   return false;
 }
 
-function shouldSuppressActivityToastForVisibleIssue(
+function shouldSuppressАктивностьToastForVisibleЗадача(
   queryClient: QueryClient,
   pathname: string,
   payload: Record<string, unknown>,
   options?: VisibleRouteOptions,
 ): boolean {
-  const entityType = readString(payload.entityType);
+  const entityТип = readString(payload.entityТип);
   const entityId = readString(payload.entityId);
-  if (entityType !== "issue" || !entityId) return false;
+  if (entityТип !== "issue" || !entityId) return false;
 
-  const context = resolveVisibleIssueRouteContext(queryClient, pathname, options);
+  const context = resolveVisibleЗадачаRouteContext(queryClient, pathname, options);
   if (!context) return false;
 
-  return overlaps(context.issueRefs, buildIssueRefsForPayload(entityId, readRecord(payload.details)));
+  return overlaps(context.issueRefs, buildЗадачаRefsForPayload(entityId, readRecord(payload.details)));
 }
 
-function shouldSuppressRunStatusToastForVisibleIssue(
+function shouldSuppressЗапуститьСтатусToastForVisibleЗадача(
   queryClient: QueryClient,
   pathname: string,
   payload: Record<string, unknown>,
   options?: VisibleRouteOptions,
 ): boolean {
-  const context = resolveVisibleIssueRouteContext(queryClient, pathname, options);
+  const context = resolveVisibleЗадачаRouteContext(queryClient, pathname, options);
   if (!context) return false;
 
   const runId = readString(payload.runId);
   if (runId && context.runIds.has(runId)) return true;
 
   const agentId = readString(payload.agentId);
-  return !!agentId && !!context.assigneeAgentId && agentId === context.assigneeAgentId;
+  return !!agentId && !!context.assigneeАгентId && agentId === context.assigneeАгентId;
 }
 
-function invalidateVisibleIssueRunQueries(
+function invalidateVisibleЗадачаЗапуститьQueries(
   queryClient: QueryClient,
   pathname: string,
   payload: Record<string, unknown>,
   options?: VisibleRouteOptions,
 ): boolean {
-  const context = resolveVisibleIssueRouteContext(queryClient, pathname, options);
+  const context = resolveVisibleЗадачаRouteContext(queryClient, pathname, options);
   if (!context) return false;
 
   const runId = readString(payload.runId);
   const agentId = readString(payload.agentId);
-  const matchesVisibleIssue =
+  const matchesVisibleЗадача =
     (runId !== null && context.runIds.has(runId)) ||
-    (!!agentId && !!context.assigneeAgentId && agentId === context.assigneeAgentId);
-  if (!matchesVisibleIssue) return false;
+    (!!agentId && !!context.assigneeАгентId && agentId === context.assigneeАгентId);
+  if (!matchesVisibleЗадача) return false;
 
   const status = readString(payload.status);
   if (runId && status && TERMINAL_RUN_STATUSES.has(status)) {
     for (const issueRef of context.issueRefs) {
       queryClient.setQueryData(
-        queryKeys.issues.liveRuns(issueRef),
-        (current: LiveRunForIssue[] | undefined) => removeLiveRunById(current, runId),
+        queryКлючs.issues.liveЗапуститьs(issueRef),
+        (current: LiveЗапуститьForЗадача[] | undefined) => removeLiveЗапуститьById(current, runId),
       );
       queryClient.setQueryData(
-        queryKeys.issues.activeRun(issueRef),
-        (current: ActiveRunForIssue | null | undefined) => (current?.id === runId ? null : current),
+        queryКлючs.issues.activeЗапустить(issueRef),
+        (current: АктивенЗапуститьForЗадача | null | undefined) => (current?.id === runId ? null : current),
       );
       queryClient.setQueryData(
-        queryKeys.issues.detail(issueRef),
-        (current: Issue | undefined) => clearIssueExecutionRun(current, runId),
+        queryКлючs.issues.detail(issueRef),
+        (current: Задача | undefined) => clearЗадачаExecutionЗапустить(current, runId),
       );
     }
   }
 
   for (const issueRef of context.issueRefs) {
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueRef) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(issueRef) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.runs(issueRef) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.liveRuns(issueRef) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.activeRun(issueRef) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(issueRef) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activity(issueRef) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.runs(issueRef) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.liveЗапуститьs(issueRef) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activeЗапустить(issueRef) });
   }
   return true;
 }
 
-function shouldSuppressAgentStatusToastForVisibleIssue(
+function shouldSuppressАгентСтатусToastForVisibleЗадача(
   queryClient: QueryClient,
   pathname: string,
   payload: Record<string, unknown>,
   options?: VisibleRouteOptions,
 ): boolean {
-  const context = resolveVisibleIssueRouteContext(queryClient, pathname, options);
-  if (!context?.assigneeAgentId) return false;
+  const context = resolveVisibleЗадачаRouteContext(queryClient, pathname, options);
+  if (!context?.assigneeАгентId) return false;
 
   const agentId = readString(payload.agentId);
-  return !!agentId && agentId === context.assigneeAgentId;
+  return !!agentId && agentId === context.assigneeАгентId;
 }
 
-function shouldDeferIssueRefetchForVisibleAgentActivity(
+function shouldDeferЗадачаRefetchForVisibleАгентАктивность(
   queryClient: QueryClient,
   pathname: string,
   payload: Record<string, unknown>,
   options?: VisibleRouteOptions,
 ): boolean {
-  const entityType = readString(payload.entityType);
+  const entityТип = readString(payload.entityТип);
   const entityId = readString(payload.entityId);
-  const actorType = readString(payload.actorType);
+  const actorТип = readString(payload.actorТип);
   const action = readString(payload.action);
   const details = readRecord(payload.details);
 
-  if (entityType !== "issue" || !entityId) return false;
-  if (actorType !== "agent" && actorType !== "system") return false;
+  if (entityТип !== "issue" || !entityId) return false;
+  if (actorТип !== "agent" && actorТип !== "system") return false;
   if (action !== "issue.updated") return false;
   if (readString(details?.source) === "comment") return false;
 
-  const context = resolveVisibleIssueRouteContext(queryClient, pathname, options);
+  const context = resolveVisibleЗадачаRouteContext(queryClient, pathname, options);
   if (!context) return false;
 
-  return overlaps(context.issueRefs, buildIssueRefsForPayload(entityId, details));
+  return overlaps(context.issueRefs, buildЗадачаRefsForPayload(entityId, details));
 }
 
-function shouldDeferVisibleIssueCommentActivity(
+function shouldDeferVisibleЗадачаCommentАктивность(
   queryClient: QueryClient,
   pathname: string,
   payload: Record<string, unknown>,
   options?: VisibleRouteOptions,
 ): boolean {
-  const entityType = readString(payload.entityType);
+  const entityТип = readString(payload.entityТип);
   const entityId = readString(payload.entityId);
   const action = readString(payload.action);
   const details = readRecord(payload.details);
 
-  if (entityType !== "issue" || !entityId) return false;
+  if (entityТип !== "issue" || !entityId) return false;
   if (action !== "issue.comment_added") return false;
 
-  const context = resolveVisibleIssueRouteContext(queryClient, pathname, options);
+  const context = resolveVisibleЗадачаRouteContext(queryClient, pathname, options);
   if (!context) return false;
 
-  return overlaps(context.issueRefs, buildIssueRefsForPayload(entityId, details));
+  return overlaps(context.issueRefs, buildЗадачаRefsForPayload(entityId, details));
 }
 
-async function hydrateVisibleIssueComment(
+async function hydrateVisibleЗадачаComment(
   queryClient: QueryClient,
   pathname: string,
   payload: Record<string, unknown>,
   options?: VisibleRouteOptions,
 ) {
-  const entityType = readString(payload.entityType);
+  const entityТип = readString(payload.entityТип);
   const action = readString(payload.action);
   const details = readRecord(payload.details);
   const commentId = readString(details?.commentId);
 
-  if (entityType !== "issue" || action !== "issue.comment_added" || !commentId) return false;
+  if (entityТип !== "issue" || action !== "issue.comment_added" || !commentId) return false;
 
-  const context = resolveVisibleIssueRouteContext(queryClient, pathname, options);
+  const context = resolveVisibleЗадачаRouteContext(queryClient, pathname, options);
   if (!context) return false;
 
   const entityId = readString(payload.entityId);
-  if (!entityId || !overlaps(context.issueRefs, buildIssueRefsForPayload(entityId, details))) {
+  if (!entityId || !overlaps(context.issueRefs, buildЗадачаRefsForPayload(entityId, details))) {
     return false;
   }
 
   try {
-    const comment = await issuesApi.getComment(context.routeIssueRef, commentId);
-    queryClient.setQueryData<InfiniteData<IssueComment[], string | null> | undefined>(
-      queryKeys.issues.comments(context.routeIssueRef),
+    const comment = await issuesApi.getComment(context.routeЗадачаRef, commentId);
+    queryClient.setQueryData<InfiniteData<ЗадачаComment[], string | null> | undefined>(
+      queryКлючs.issues.comments(context.routeЗадачаRef),
       (current) => {
         if (!current) {
           return {
@@ -396,13 +396,13 @@ async function hydrateVisibleIssueComment(
 
         return {
           ...current,
-          pages: upsertIssueCommentInPages(current.pages, comment),
+          pages: upsertЗадачаCommentInPages(current.pages, comment),
         };
       },
     );
     return true;
   } catch {
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(context.routeIssueRef) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.comments(context.routeЗадачаRef) });
     return false;
   }
 }
@@ -411,14 +411,14 @@ const ISSUE_TOAST_ACTIONS = new Set(["issue.created", "issue.updated", "issue.co
 const AGENT_TOAST_STATUSES = new Set(["error"]);
 const RUN_TOAST_STATUSES = new Set(["failed", "timed_out", "cancelled"]);
 
-function describeIssueUpdate(details: Record<string, unknown> | null): string | null {
+function describeЗадачаОбновить(details: Record<string, unknown> | null): string | null {
   if (!details) return null;
   const changes: string[] = [];
   if (typeof details.status === "string") changes.push(`status -> ${details.status.replace(/_/g, " ")}`);
   if (typeof details.priority === "string") changes.push(`priority -> ${details.priority}`);
-  if (typeof details.assigneeAgentId === "string" || typeof details.assigneeUserId === "string") {
+  if (typeof details.assigneeАгентId === "string" || typeof details.assigneeUserId === "string") {
     changes.push("reassigned");
-  } else if (details.assigneeAgentId === null || details.assigneeUserId === null) {
+  } else if (details.assigneeАгентId === null || details.assigneeUserId === null) {
     changes.push("unassigned");
   }
   if (details.reopened === true) {
@@ -431,29 +431,29 @@ function describeIssueUpdate(details: Record<string, unknown> | null): string | 
   return null;
 }
 
-function buildActivityToast(
+function buildАктивностьToast(
   queryClient: QueryClient,
   companyId: string,
   payload: Record<string, unknown>,
   currentActor: { userId: string | null; agentId: string | null },
 ): ToastInput | null {
-  const entityType = readString(payload.entityType);
+  const entityТип = readString(payload.entityТип);
   const entityId = readString(payload.entityId);
   const action = readString(payload.action);
   const details = readRecord(payload.details);
   const actorId = readString(payload.actorId);
-  const actorType = readString(payload.actorType);
+  const actorТип = readString(payload.actorТип);
 
-  if (entityType !== "issue" || !entityId || !action || !ISSUE_TOAST_ACTIONS.has(action)) {
+  if (entityТип !== "issue" || !entityId || !action || !ISSUE_TOAST_ACTIONS.has(action)) {
     return null;
   }
 
-  const issue = resolveIssueToastContext(queryClient, companyId, entityId, details);
-  const actor = resolveActorLabel(queryClient, companyId, actorType, actorId);
-  const isSelfActivity =
-    (actorType === "user" && !!currentActor.userId && actorId === currentActor.userId) ||
-    (actorType === "agent" && !!currentActor.agentId && actorId === currentActor.agentId);
-  if (isSelfActivity) return null;
+  const issue = resolveЗадачаToastContext(queryClient, companyId, entityId, details);
+  const actor = resolveActorLabel(queryClient, companyId, actorТип, actorId);
+  const isSelfАктивность =
+    (actorТип === "user" && !!currentActor.userId && actorId === currentActor.userId) ||
+    (actorТип === "agent" && !!currentActor.agentId && actorId === currentActor.agentId);
+  if (isSelfАктивность) return null;
 
   if (action === "issue.created") {
     return {
@@ -461,7 +461,7 @@ function buildActivityToast(
       body: issue.title ? truncate(issue.title, 96) : undefined,
       tone: "success",
       action: { label: `View ${issue.ref}`, href: issue.href },
-      dedupeKey: `activity:${action}:${entityId}`,
+      dedupeКлюч: `activity:${action}:${entityId}`,
     };
   }
 
@@ -470,7 +470,7 @@ function buildActivityToast(
       // Comment-driven updates emit a paired comment event; show one combined toast on the comment event.
       return null;
     }
-    const changeDesc = describeIssueUpdate(details);
+    const changeDesc = describeЗадачаОбновить(details);
     const body = changeDesc
       ? issue.title
         ? `${truncate(issue.title, 64)} - ${changeDesc}`
@@ -483,7 +483,7 @@ function buildActivityToast(
       body: truncate(body, 100),
       tone: "info",
       action: { label: `View ${issue.ref}`, href: issue.href },
-      dedupeKey: `activity:${action}:${entityId}`,
+      dedupeКлюч: `activity:${action}:${entityId}`,
     };
   }
 
@@ -516,34 +516,34 @@ function buildActivityToast(
     body: body ? truncate(body, 96) : undefined,
     tone: "info",
     action: { label: `View ${issue.ref}`, href: issue.href },
-    dedupeKey: `activity:${action}:${entityId}:${commentId ?? "na"}`,
+    dedupeКлюч: `activity:${action}:${entityId}:${commentId ?? "na"}`,
   };
 }
 
 function buildJoinRequestToast(
   payload: Record<string, unknown>,
 ): ToastInput | null {
-  const entityType = readString(payload.entityType);
+  const entityТип = readString(payload.entityТип);
   const action = readString(payload.action);
   const entityId = readString(payload.entityId);
   const details = readRecord(payload.details);
 
-  if (entityType !== "join_request" || !action || !entityId) return null;
+  if (entityТип !== "join_request" || !action || !entityId) return null;
   if (action !== "join.requested" && action !== "join.request_replayed") return null;
 
-  const requestType = readString(details?.requestType);
-  const label = requestType === "agent" ? "Agent" : "Someone";
+  const requestТип = readString(details?.requestТип);
+  const label = requestТип === "agent" ? "Агент" : "Someone";
 
   return {
     title: `${label} wants to join`,
     body: "A new join request is waiting for approval.",
     tone: "info",
-    action: { label: "View inbox", href: "/inbox/mine" },
-    dedupeKey: `join-request:${entityId}`,
+    action: { label: "Просмотр входящих", href: "/inbox/mine" },
+    dedupeКлюч: `join-request:${entityId}`,
   };
 }
 
-function buildAgentStatusToast(
+function buildАгентСтатусToast(
   payload: Record<string, unknown>,
   nameOf: (id: string) => string | null,
   queryClient: QueryClient,
@@ -554,13 +554,13 @@ function buildAgentStatusToast(
   if (!agentId || !status || !AGENT_TOAST_STATUSES.has(status)) return null;
 
   const tone = status === "error" ? "error" : "info";
-  const name = nameOf(agentId) ?? `Agent ${shortId(agentId)}`;
+  const name = nameOf(agentId) ?? `Агент ${shortId(agentId)}`;
   const title =
     status === "running"
       ? `${name} started`
       : `${name} errored`;
 
-  const agents = queryClient.getQueryData<Agent[]>(queryKeys.agents.list(companyId));
+  const agents = queryClient.getQueryData<Агент[]>(queryКлючs.agents.list(companyId));
   const agent = agents?.find((a) => a.id === agentId);
   const body = agent?.title ?? undefined;
 
@@ -568,12 +568,12 @@ function buildAgentStatusToast(
     title,
     body,
     tone,
-    action: { label: "View agent", href: `/agents/${agentId}` },
-    dedupeKey: `agent-status:${agentId}:${status}`,
+    action: { label: "Просмотр агента", href: `/agents/${agentId}` },
+    dedupeКлюч: `agent-status:${agentId}:${status}`,
   };
 }
 
-function buildRunStatusToast(
+function buildЗапуститьСтатусToast(
   payload: Record<string, unknown>,
   nameOf: (id: string) => string | null,
 ): ToastInput | null {
@@ -584,7 +584,7 @@ function buildRunStatusToast(
 
   const error = readString(payload.error);
   const triggerDetail = readString(payload.triggerDetail);
-  const name = nameOf(agentId) ?? `Agent ${shortId(agentId)}`;
+  const name = nameOf(agentId) ?? `Агент ${shortId(agentId)}`;
   const tone = status === "succeeded" ? "success" : status === "cancelled" ? "warn" : "error";
   const statusLabel =
     status === "succeeded" ? "succeeded"
@@ -605,142 +605,142 @@ function buildRunStatusToast(
     body,
     tone,
     ttlMs: status === "succeeded" ? 5000 : 7000,
-    action: { label: "View run", href: `/agents/${agentId}/runs/${runId}` },
-    dedupeKey: `run-status:${runId}:${status}`,
+    action: { label: "Просмотр запуска", href: `/agents/${agentId}/runs/${runId}` },
+    dedupeКлюч: `run-status:${runId}:${status}`,
   };
 }
 
 function invalidateHeartbeatQueries(
-  queryClient: ReturnType<typeof useQueryClient>,
+  queryClient: ReturnТип<typeof useQueryClient>,
   companyId: string,
   payload: Record<string, unknown>,
 ) {
-  queryClient.invalidateQueries({ queryKey: queryKeys.liveRuns(companyId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(companyId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(companyId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(companyId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.costs(companyId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(companyId) });
+  queryClient.invalidateQueries({ queryКлюч: queryКлючs.liveЗапуститьs(companyId) });
+  queryClient.invalidateQueries({ queryКлюч: queryКлючs.heartbeats(companyId) });
+  queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.list(companyId) });
+  queryClient.invalidateQueries({ queryКлюч: queryКлючs.dashboard(companyId) });
+  queryClient.invalidateQueries({ queryКлюч: queryКлючs.costs(companyId) });
+  queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(companyId) });
 
   const agentId = readString(payload.agentId);
   if (agentId) {
-    queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agentId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(companyId, agentId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.detail(agentId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.heartbeats(companyId, agentId) });
   }
 }
 
-function invalidateActivityQueries(
-  queryClient: ReturnType<typeof useQueryClient>,
+function invalidateАктивностьQueries(
+  queryClient: ReturnТип<typeof useQueryClient>,
   companyId: string,
   payload: Record<string, unknown>,
   currentActor: { userId: string | null; agentId: string | null },
   options?: { pathname?: string; isForegrounded?: boolean },
 ) {
-  queryClient.invalidateQueries({ queryKey: queryKeys.activity(companyId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(companyId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(companyId) });
+  queryClient.invalidateQueries({ queryКлюч: queryКлючs.activity(companyId) });
+  queryClient.invalidateQueries({ queryКлюч: queryКлючs.dashboard(companyId) });
+  queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(companyId) });
 
-  const entityType = readString(payload.entityType);
+  const entityТип = readString(payload.entityТип);
   const entityId = readString(payload.entityId);
   const action = readString(payload.action);
-  const actorType = readString(payload.actorType);
+  const actorТип = readString(payload.actorТип);
   const actorId = readString(payload.actorId);
 
-  if (entityType === "issue") {
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(companyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.listMineByMe(companyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(companyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.listUnreadTouchedByMe(companyId) });
+  if (entityТип === "issue") {
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(companyId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listMineByMe(companyId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listTouchedByMe(companyId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listUnreadTouchedByMe(companyId) });
     if (entityId) {
       const details = readRecord(payload.details);
-      const selfCommentActivity =
+      const selfCommentАктивность =
         ((action === "issue.comment_added") ||
           (action === "issue.updated" && readString(details?.source) === "comment")) &&
-        ((actorType === "user" && !!currentActor.userId && actorId === currentActor.userId) ||
-          (actorType === "agent" && !!currentActor.agentId && actorId === currentActor.agentId));
-      const visibleIssueAgentActivity =
+        ((actorТип === "user" && !!currentActor.userId && actorId === currentActor.userId) ||
+          (actorТип === "agent" && !!currentActor.agentId && actorId === currentActor.agentId));
+      const visibleЗадачаАгентАктивность =
         !!options?.pathname &&
-        shouldDeferIssueRefetchForVisibleAgentActivity(
+        shouldDeferЗадачаRefetchForVisibleАгентАктивность(
           queryClient,
           options.pathname,
           payload,
           { isForegrounded: options.isForegrounded },
         );
-      const visibleIssueCommentActivity =
+      const visibleЗадачаCommentАктивность =
         !!options?.pathname &&
-        shouldDeferVisibleIssueCommentActivity(
+        shouldDeferVisibleЗадачаCommentАктивность(
           queryClient,
           options.pathname,
           payload,
           { isForegrounded: options.isForegrounded },
         );
-      const issueRefs = resolveIssueQueryRefs(queryClient, companyId, entityId, details);
+      const issueRefs = resolveЗадачаQueryRefs(queryClient, companyId, entityId, details);
       for (const ref of issueRefs) {
         const invalidationOptions =
-          (selfCommentActivity || visibleIssueAgentActivity || visibleIssueCommentActivity)
-            ? { refetchType: "inactive" as const }
+          (selfCommentАктивность || visibleЗадачаАгентАктивность || visibleЗадачаCommentАктивность)
+            ? { refetchТип: "inactive" as const }
             : undefined;
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(ref), ...invalidationOptions });
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.activity(ref), ...invalidationOptions });
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(ref), ...invalidationOptions });
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activity(ref), ...invalidationOptions });
         if (action === "issue.comment_added") {
-          queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(ref), ...invalidationOptions });
+          queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.comments(ref), ...invalidationOptions });
         }
         if (action?.startsWith("issue.thread_interaction_")) {
-          queryClient.invalidateQueries({ queryKey: queryKeys.issues.interactions(ref), ...invalidationOptions });
+          queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.interactions(ref), ...invalidationOptions });
         }
       }
     }
     return;
   }
 
-  if (entityType === "agent") {
-    queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(companyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.org(companyId) });
+  if (entityТип === "agent") {
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.list(companyId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.org(companyId) });
     if (entityId) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(entityId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(companyId, entityId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.detail(entityId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.heartbeats(companyId, entityId) });
     }
     return;
   }
 
-  if (entityType === "project") {
-    queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(companyId) });
-    if (entityId) queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(entityId) });
+  if (entityТип === "project") {
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.list(companyId) });
+    if (entityId) queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.detail(entityId) });
     return;
   }
 
-  if (entityType === "goal") {
-    queryClient.invalidateQueries({ queryKey: queryKeys.goals.list(companyId) });
-    if (entityId) queryClient.invalidateQueries({ queryKey: queryKeys.goals.detail(entityId) });
+  if (entityТип === "goal") {
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.goals.list(companyId) });
+    if (entityId) queryClient.invalidateQueries({ queryКлюч: queryКлючs.goals.detail(entityId) });
     return;
   }
 
-  if (entityType === "approval") {
-    queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list(companyId) });
+  if (entityТип === "approval") {
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.list(companyId) });
     return;
   }
 
-  if (entityType === "join_request") {
-    queryClient.invalidateQueries({ queryKey: queryKeys.access.joinRequests(companyId) });
+  if (entityТип === "join_request") {
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.access.joinRequests(companyId) });
     return;
   }
 
-  if (entityType === "cost_event") {
-    queryClient.invalidateQueries({ queryKey: queryKeys.costs(companyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.usageByProvider(companyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.usageWindowSpend(companyId) });
+  if (entityТип === "cost_event") {
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.costs(companyId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.usageByПровайдер(companyId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.usageWindowSpend(companyId) });
     // usageQuotaWindows is intentionally excluded: quota windows come from external provider
     // apis on a 5-minute poll and do not change in response to cost events logged by agents
     return;
   }
 
-  if (entityType === "routine" || entityType === "routine_trigger" || entityType === "routine_run") {
-    queryClient.invalidateQueries({ queryKey: ["routines"] });
+  if (entityТип === "routine" || entityТип === "routine_trigger" || entityТип === "routine_run") {
+    queryClient.invalidateQueries({ queryКлюч: ["routines"] });
     return;
   }
 
-  if (entityType === "company") {
-    queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+  if (entityТип === "company") {
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
   }
 }
 
@@ -781,29 +781,29 @@ function gatedPushToast(
 
 function handleLiveEvent(
   queryClient: QueryClient,
-  expectedCompanyId: string,
+  expectedКомпанияId: string,
   pathname: string,
   event: LiveEvent,
   pushToast: (toast: ToastInput) => string | null,
   gate: ToastGate,
   currentActor: { userId: string | null; agentId: string | null },
 ) {
-  if (event.companyId !== expectedCompanyId) return;
+  if (event.companyId !== expectedКомпанияId) return;
 
-  const nameOf = (id: string) => resolveAgentName(queryClient, expectedCompanyId, id);
+  const nameOf = (id: string) => resolveАгентИмя(queryClient, expectedКомпанияId, id);
   const payload = event.payload ?? {};
   if (event.type === "heartbeat.run.log") {
     return;
   }
 
   if (event.type === "heartbeat.run.queued" || event.type === "heartbeat.run.status") {
-    invalidateHeartbeatQueries(queryClient, expectedCompanyId, payload);
-    invalidateVisibleIssueRunQueries(queryClient, pathname, payload);
+    invalidateHeartbeatQueries(queryClient, expectedКомпанияId, payload);
+    invalidateVisibleЗадачаЗапуститьQueries(queryClient, pathname, payload);
     if (event.type === "heartbeat.run.status") {
-      const toast = buildRunStatusToast(payload, nameOf);
+      const toast = buildЗапуститьСтатусToast(payload, nameOf);
       if (
         toast &&
-        !shouldSuppressRunStatusToastForVisibleIssue(queryClient, pathname, payload)
+        !shouldSuppressЗапуститьСтатусToastForVisibleЗадача(queryClient, pathname, payload)
       ) {
         gatedPushToast(gate, pushToast, "run-status", toast);
       }
@@ -816,15 +816,15 @@ function handleLiveEvent(
   }
 
   if (event.type === "agent.status") {
-    queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(expectedCompanyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(expectedCompanyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.org(expectedCompanyId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.list(expectedКомпанияId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.dashboard(expectedКомпанияId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.org(expectedКомпанияId) });
     const agentId = readString(payload.agentId);
-    if (agentId) queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agentId) });
-    const toast = buildAgentStatusToast(payload, nameOf, queryClient, expectedCompanyId);
+    if (agentId) queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.detail(agentId) });
+    const toast = buildАгентСтатусToast(payload, nameOf, queryClient, expectedКомпанияId);
     if (
       toast &&
-      !shouldSuppressAgentStatusToastForVisibleIssue(queryClient, pathname, payload)
+      !shouldSuppressАгентСтатусToastForVisibleЗадача(queryClient, pathname, payload)
     ) {
       gatedPushToast(gate, pushToast, "agent-status", toast);
     }
@@ -832,40 +832,40 @@ function handleLiveEvent(
   }
 
   if (event.type === "activity.logged") {
-    invalidateActivityQueries(queryClient, expectedCompanyId, payload, currentActor, { pathname });
-    if (shouldDeferVisibleIssueCommentActivity(queryClient, pathname, payload)) {
-      void hydrateVisibleIssueComment(queryClient, pathname, payload);
+    invalidateАктивностьQueries(queryClient, expectedКомпанияId, payload, currentActor, { pathname });
+    if (shouldDeferVisibleЗадачаCommentАктивность(queryClient, pathname, payload)) {
+      void hydrateVisibleЗадачаComment(queryClient, pathname, payload);
     }
     const action = readString(payload.action);
     const toast =
-      buildActivityToast(queryClient, expectedCompanyId, payload, currentActor) ??
+      buildАктивностьToast(queryClient, expectedКомпанияId, payload, currentActor) ??
       buildJoinRequestToast(payload);
     if (
       toast &&
-      !shouldSuppressActivityToastForVisibleIssue(queryClient, pathname, payload)
+      !shouldSuppressАктивностьToastForVisibleЗадача(queryClient, pathname, payload)
     ) {
       gatedPushToast(gate, pushToast, `activity:${action ?? "unknown"}`, toast);
     }
   }
 }
 
-function resolveLiveCompanyId(
-  selectedCompanyId: string | null,
-  selectedCompanyLiveId: string | null,
+function resolveLiveКомпанияId(
+  selectedКомпанияId: string | null,
+  selectedКомпанияLiveId: string | null,
 ): string | null {
-  return selectedCompanyId && selectedCompanyId === selectedCompanyLiveId
-    ? selectedCompanyId
+  return selectedКомпанияId && selectedКомпанияId === selectedКомпанияLiveId
+    ? selectedКомпанияId
     : null;
 }
 
-function resetSocketHandlers(target: LiveUpdatesSocketLike) {
+function resetSocketHandlers(target: LiveОбновитьsSocketLike) {
   target.onopen = null;
   target.onmessage = null;
   target.onerror = null;
   target.onclose = null;
 }
 
-function closeSocketQuietly(target: LiveUpdatesSocketLike | null, reason: string) {
+function closeSocketQuietly(target: LiveОбновитьsSocketLike | null, reason: string) {
   if (!target) return;
 
   if (target.readyState === SOCKET_CONNECTING) {
@@ -888,37 +888,37 @@ function closeSocketQuietly(target: LiveUpdatesSocketLike | null, reason: string
   }
 }
 
-export const __liveUpdatesTestUtils = {
-  buildAgentStatusToast,
-  buildRunStatusToast,
+export const __liveОбновитьsПроверитьUtils = {
+  buildАгентСтатусToast,
+  buildЗапуститьСтатусToast,
   closeSocketQuietly,
-  hydrateVisibleIssueComment,
-  invalidateActivityQueries,
-  invalidateVisibleIssueRunQueries,
-  resolveLiveCompanyId,
-  shouldDeferIssueRefetchForVisibleAgentActivity,
-  shouldDeferVisibleIssueCommentActivity,
-  shouldSuppressActivityToastForVisibleIssue,
-  shouldSuppressRunStatusToastForVisibleIssue,
-  shouldSuppressAgentStatusToastForVisibleIssue,
+  hydrateVisibleЗадачаComment,
+  invalidateАктивностьQueries,
+  invalidateVisibleЗадачаЗапуститьQueries,
+  resolveLiveКомпанияId,
+  shouldDeferЗадачаRefetchForVisibleАгентАктивность,
+  shouldDeferVisibleЗадачаCommentАктивность,
+  shouldSuppressАктивностьToastForVisibleЗадача,
+  shouldSuppressЗапуститьСтатусToastForVisibleЗадача,
+  shouldSuppressАгентСтатусToastForVisibleЗадача,
 };
 
-export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
-  const { selectedCompanyId, selectedCompany } = useCompany();
+export function LiveОбновитьsПровайдер({ children }: { children: ReactНетde }) {
+  const { selectedКомпанияId, selectedКомпания } = useКомпания();
   const queryClient = useQueryClient();
   const { pushToast } = useToastActions();
   const location = useLocation();
   const gateRef = useRef<ToastGate>({ cooldownHits: new Map(), suppressUntil: 0 });
   const pathnameRef = useRef(location.pathname);
-  const { data: session, status: sessionStatus } = useQuery({
-    queryKey: queryKeys.auth.session,
+  const { data: session, status: sessionСтатус } = useQuery({
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
     retry: false,
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
-  const socketAuthKey = session?.session?.id ?? currentUserId ?? "signed_out";
-  const liveCompanyId = resolveLiveCompanyId(selectedCompanyId, selectedCompany?.id ?? null);
-  const canConnectSocket = sessionStatus === "success" && session !== null && liveCompanyId !== null;
+  const socketAuthКлюч = session?.session?.id ?? currentUserId ?? "signed_out";
+  const liveКомпанияId = resolveLiveКомпанияId(selectedКомпанияId, selectedКомпания?.id ?? null);
+  const canConnectSocket = sessionСтатус === "success" && session !== null && liveКомпанияId !== null;
   const currentActorRef = useRef<{ userId: string | null; agentId: string | null }>({
     userId: currentUserId,
     agentId: null,
@@ -936,7 +936,7 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
   }, [currentUserId]);
 
   useEffect(() => {
-    if (!canConnectSocket || !liveCompanyId) return;
+    if (!canConnectSocket || !liveКомпанияId) return;
 
     let closed = false;
     let reconnectAttempt = 0;
@@ -963,7 +963,7 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
     const connect = () => {
       if (closed) return;
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const url = `${protocol}://${window.location.host}/api/companies/${encodeURIComponent(liveCompanyId)}/events/ws`;
+      const url = `${protocol}://${window.location.host}/api/companies/${encodeURIComponent(liveКомпанияId)}/events/ws`;
       const nextSocket = new WebSocket(url);
       socket = nextSocket;
 
@@ -984,7 +984,7 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
 
         try {
           const parsed = JSON.parse(raw) as LiveEvent;
-          handleLiveEvent(queryClient, liveCompanyId, pathnameRef.current, parsed, pushToast, gateRef.current, {
+          handleLiveEvent(queryClient, liveКомпанияId, pathnameRef.current, parsed, pushToast, gateRef.current, {
             userId: currentActorRef.current.userId,
             agentId: currentActorRef.current.agentId,
           });
@@ -1019,7 +1019,7 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
       socket = null;
       closeSocketQuietly(activeSocket, "provider_unmount");
     };
-  }, [queryClient, liveCompanyId, pushToast, canConnectSocket, socketAuthKey]);
+  }, [queryClient, liveКомпанияId, pushToast, canConnectSocket, socketAuthКлюч]);
 
   return <>{children}</>;
 }

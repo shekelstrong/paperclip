@@ -1,14 +1,14 @@
-import type { ActivityEvent } from "@paperclipai/shared";
+import type { АктивностьEvent } from "@paperclipai/shared";
 
-export interface IssueTimelineAssignee {
+export interface ЗадачаTimelineИсполнитель {
   agentId: string | null;
   userId: string | null;
 }
 
-export interface IssueTimelineEvent {
+export interface ЗадачаTimelineEvent {
   id: string;
   createdAt: Date | string;
-  actorType: ActivityEvent["actorType"];
+  actorТип: АктивностьEvent["actorТип"];
   actorId: string;
   runId?: string | null;
   statusChange?: {
@@ -16,27 +16,27 @@ export interface IssueTimelineEvent {
     to: string | null;
   };
   assigneeChange?: {
-    from: IssueTimelineAssignee;
-    to: IssueTimelineAssignee;
+    from: ЗадачаTimelineИсполнитель;
+    to: ЗадачаTimelineИсполнитель;
   };
   workspaceChange?: {
-    from: IssueTimelineWorkspace;
-    to: IssueTimelineWorkspace;
+    from: ЗадачаTimelineРабочая область;
+    to: ЗадачаTimelineРабочая область;
   };
   commentId?: string | null;
   followUpRequested?: boolean;
 }
 
-export interface IssueTimelineWorkspace {
+export interface ЗадачаTimelineРабочая область {
   label: string | null;
-  projectWorkspaceId: string | null;
-  executionWorkspaceId: string | null;
+  projectРабочая областьId: string | null;
+  executionРабочая областьId: string | null;
   mode: string | null;
 }
 
-export function formatTimelineWorkspaceLabel(workspace: IssueTimelineWorkspace) {
-  const fallbackId = workspace.executionWorkspaceId ?? workspace.projectWorkspaceId;
-  return workspace.label ?? (fallbackId ? fallbackId.slice(0, 8) : "None");
+export function formatTimelineРабочая областьLabel(workspace: ЗадачаTimelineРабочая область) {
+  const fallbackId = workspace.executionРабочая областьId ?? workspace.projectРабочая областьId;
+  return workspace.label ?? (fallbackId ? fallbackId.slice(0, 8) : "Нет");
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -56,34 +56,34 @@ function toTimestamp(value: Date | string) {
   return new Date(value).getTime();
 }
 
-function sameAssignee(left: IssueTimelineAssignee, right: IssueTimelineAssignee) {
+function sameИсполнитель(left: ЗадачаTimelineИсполнитель, right: ЗадачаTimelineИсполнитель) {
   return left.agentId === right.agentId && left.userId === right.userId;
 }
 
-function sameWorkspace(left: IssueTimelineWorkspace, right: IssueTimelineWorkspace) {
-  return left.projectWorkspaceId === right.projectWorkspaceId
-    && left.executionWorkspaceId === right.executionWorkspaceId
+function sameРабочая область(left: ЗадачаTimelineРабочая область, right: ЗадачаTimelineРабочая область) {
+  return left.projectРабочая областьId === right.projectРабочая областьId
+    && left.executionРабочая областьId === right.executionРабочая областьId
     && left.mode === right.mode
     && left.label === right.label;
 }
 
-function workspaceFromRecord(value: unknown): IssueTimelineWorkspace | null {
+function workspaceFromRecord(value: unknown): ЗадачаTimelineРабочая область | null {
   const record = asRecord(value);
   if (!record) return null;
   return {
     label: nullableString(record.label),
-    projectWorkspaceId: nullableString(record.projectWorkspaceId),
-    executionWorkspaceId: nullableString(record.executionWorkspaceId),
+    projectРабочая областьId: nullableString(record.projectРабочая областьId),
+    executionРабочая областьId: nullableString(record.executionРабочая областьId),
     mode: nullableString(record.mode),
   };
 }
 
-function workspaceChangeFromDetails(details: Record<string, unknown>) {
+function workspaceChangeFromДетали(details: Record<string, unknown>) {
   const change = asRecord(details.workspaceChange);
   if (!change) return null;
   const from = workspaceFromRecord(change.from);
   const to = workspaceFromRecord(change.to);
-  if (!from || !to || sameWorkspace(from, to)) return null;
+  if (!from || !to || sameРабочая область(from, to)) return null;
   return { from, to };
 }
 
@@ -95,8 +95,8 @@ function sortTimelineEvents<T extends { createdAt: Date | string; id: string }>(
   });
 }
 
-export function extractIssueTimelineEvents(activity: ActivityEvent[] | null | undefined): IssueTimelineEvent[] {
-  const events: IssueTimelineEvent[] = [];
+export function extractЗадачаTimelineEvents(activity: АктивностьEvent[] | null | undefined): ЗадачаTimelineEvent[] {
+  const events: ЗадачаTimelineEvent[] = [];
 
   for (const event of activity ?? []) {
     const details = asRecord(event.details);
@@ -109,7 +109,7 @@ export function extractIssueTimelineEvents(activity: ActivityEvent[] | null | un
       events.push({
         id: event.id,
         createdAt: event.createdAt,
-        actorType: event.actorType,
+        actorТип: event.actorТип,
         actorId: event.actorId,
         runId: event.runId ?? null,
         commentId,
@@ -121,10 +121,10 @@ export function extractIssueTimelineEvents(activity: ActivityEvent[] | null | un
     if (event.action !== "issue.updated") continue;
 
     const previous = asRecord(details._previous);
-    const timelineEvent: IssueTimelineEvent = {
+    const timelineEvent: ЗадачаTimelineEvent = {
       id: event.id,
       createdAt: event.createdAt,
-      actorType: event.actorType,
+      actorТип: event.actorТип,
       actorId: event.actorId,
       runId: event.runId ?? null,
     };
@@ -141,29 +141,29 @@ export function extractIssueTimelineEvents(activity: ActivityEvent[] | null | un
       }
     }
 
-    if (hasOwn(details, "assigneeAgentId") || hasOwn(details, "assigneeUserId")) {
-      const previousAssignee: IssueTimelineAssignee = {
-        agentId: nullableString(previous?.assigneeAgentId),
+    if (hasOwn(details, "assigneeАгентId") || hasOwn(details, "assigneeUserId")) {
+      const previousИсполнитель: ЗадачаTimelineИсполнитель = {
+        agentId: nullableString(previous?.assigneeАгентId),
         userId: nullableString(previous?.assigneeUserId),
       };
-      const nextAssignee: IssueTimelineAssignee = {
-        agentId: hasOwn(details, "assigneeAgentId")
-          ? nullableString(details.assigneeAgentId)
-          : previousAssignee.agentId,
+      const nextИсполнитель: ЗадачаTimelineИсполнитель = {
+        agentId: hasOwn(details, "assigneeАгентId")
+          ? nullableString(details.assigneeАгентId)
+          : previousИсполнитель.agentId,
         userId: hasOwn(details, "assigneeUserId")
           ? nullableString(details.assigneeUserId)
-          : previousAssignee.userId,
+          : previousИсполнитель.userId,
       };
 
-      if (!sameAssignee(previousAssignee, nextAssignee)) {
+      if (!sameИсполнитель(previousИсполнитель, nextИсполнитель)) {
         timelineEvent.assigneeChange = {
-          from: previousAssignee,
-          to: nextAssignee,
+          from: previousИсполнитель,
+          to: nextИсполнитель,
         };
       }
     }
 
-    const workspaceChange = workspaceChangeFromDetails(details);
+    const workspaceChange = workspaceChangeFromДетали(details);
     if (workspaceChange) {
       timelineEvent.workspaceChange = workspaceChange;
     }

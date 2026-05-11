@@ -68,7 +68,7 @@ export function AsciiArtAnimation() {
     const preEl: HTMLPreElement = preRef.current;
     const motionMedia = window.matchMedia("(prefers-reduced-motion: reduce)");
     let isVisible = document.visibilityState !== "hidden";
-    let loopActive = false;
+    let loopАктивен = false;
     let lastRenderAt = 0;
     let tick = 0;
     let cols = 0;
@@ -206,7 +206,7 @@ export function AsciiArtAnimation() {
     }
 
     function step(time: number) {
-      if (!loopActive) return;
+      if (!loopАктивен) return;
       frameRef.current = requestAnimationFrame(step);
       if (time - lastRenderAt < FRAME_INTERVAL_MS || cols <= 0 || rows <= 0) return;
 
@@ -277,8 +277,8 @@ export function AsciiArtAnimation() {
     function syncLoop() {
       const canRender = cols > 0 && rows > 0;
       if (motionMedia.matches) {
-        if (loopActive) {
-          loopActive = false;
+        if (loopАктивен) {
+          loopАктивен = false;
           if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
           frameRef.current = null;
         }
@@ -287,16 +287,16 @@ export function AsciiArtAnimation() {
       }
 
       if (!isVisible || !canRender) {
-        if (loopActive) {
-          loopActive = false;
+        if (loopАктивен) {
+          loopАктивен = false;
           if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
           frameRef.current = null;
         }
         return;
       }
 
-      if (!loopActive) {
-        loopActive = true;
+      if (!loopАктивен) {
+        loopАктивен = true;
         lastRenderAt = 0;
         frameRef.current = requestAnimationFrame(step);
       }
@@ -329,7 +329,7 @@ export function AsciiArtAnimation() {
     syncLoop();
 
     return () => {
-      loopActive = false;
+      loopАктивен = false;
       if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
@@ -340,7 +340,7 @@ export function AsciiArtAnimation() {
   return (
     <pre
       ref={preRef}
-      className="w-full h-full m-0 p-0 overflow-hidden text-muted-foreground/60 select-none leading-none"
+      classИмя="w-full h-full m-0 p-0 overflow-hidden text-muted-foreground/60 select-none leading-none"
       style={{ fontSize: "11px", fontFamily: "monospace" }}
       aria-hidden="true"
     />

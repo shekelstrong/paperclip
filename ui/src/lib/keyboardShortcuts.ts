@@ -11,21 +11,21 @@ export const KEYBOARD_SHORTCUT_TEXT_INPUT_SELECTOR = [
 const PAGE_SEARCH_SHORTCUT_SELECTOR = "[data-page-search-target='true']";
 const MODIFIER_ONLY_KEYS = new Set(["Shift", "Meta", "Control", "Alt"]);
 
-export type InboxQuickArchiveKeyAction = "ignore" | "archive" | "disarm";
-export type InboxUndoArchiveKeyAction = "ignore" | "undo_archive";
-export type IssueDetailGoKeyAction = "ignore" | "arm" | "navigate_inbox" | "focus_comment" | "disarm";
+export type ВходящиеQuickАрхивироватьКлючAction = "ignore" | "archive" | "disarm";
+export type ВходящиеUndoАрхивироватьКлючAction = "ignore" | "undo_archive";
+export type ЗадачаDetailGoКлючAction = "ignore" | "arm" | "navigate_inbox" | "focus_comment" | "disarm";
 
-export function isKeyboardShortcutTextInputTarget(target: EventTarget | null): boolean {
+export function isКлючboardShortcutTextInputЦель(target: EventЦель | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
-  if (target.isContentEditable) return true;
+  if (target.isContentИзменитьable) return true;
   return !!target.closest(KEYBOARD_SHORTCUT_TEXT_INPUT_SELECTOR);
 }
 
-export function hasBlockingShortcutDialog(root: ParentNode = document): boolean {
+export function hasBlockingShortcutDialog(root: РодительНетde = document): boolean {
   return !!root.querySelector("[role='dialog'][aria-modal='true']");
 }
 
-function isVisibleShortcutTarget(element: HTMLElement): boolean {
+function isVisibleShortcutЦель(element: HTMLElement): boolean {
   if (!element.isConnected) return false;
   if ("disabled" in element && typeof element.disabled === "boolean" && element.disabled) return false;
   if (element.closest("[hidden], [aria-hidden='true'], [inert]")) return false;
@@ -37,13 +37,13 @@ function isVisibleShortcutTarget(element: HTMLElement): boolean {
   return element.getClientRects().length > 0 || element === document.activeElement;
 }
 
-export function findPageSearchShortcutTarget(root: ParentNode = document): HTMLElement | null {
-  const candidates = Array.from(root.querySelectorAll<HTMLElement>(PAGE_SEARCH_SHORTCUT_SELECTOR));
-  return candidates.find((candidate) => isVisibleShortcutTarget(candidate)) ?? null;
+export function findPageПоискShortcutЦель(root: РодительНетde = document): HTMLElement | null {
+  const candidates = Array.from(root.querySelectorВсе<HTMLElement>(PAGE_SEARCH_SHORTCUT_SELECTOR));
+  return candidates.find((candidate) => isVisibleShortcutЦель(candidate)) ?? null;
 }
 
-export function focusPageSearchShortcutTarget(root: ParentNode = document): boolean {
-  const target = findPageSearchShortcutTarget(root);
+export function focusPageПоискShortcutЦель(root: РодительНетde = document): boolean {
+  const target = findPageПоискShortcutЦель(root);
   if (!target) return false;
 
   target.focus();
@@ -53,7 +53,7 @@ export function focusPageSearchShortcutTarget(root: ParentNode = document): bool
   return true;
 }
 
-export function shouldBlurPageSearchOnEnter({
+export function shouldBlurPageПоискOnEnter({
   key,
   isComposing,
 }: {
@@ -63,105 +63,105 @@ export function shouldBlurPageSearchOnEnter({
   return key === "Enter" && !isComposing;
 }
 
-export function shouldBlurPageSearchOnEscape({
+export function shouldBlurPageПоискOnEscape({
   key,
   isComposing,
-  currentValue,
+  currentЗначение,
 }: {
   key: string;
   isComposing: boolean;
-  currentValue: string;
+  currentЗначение: string;
 }): boolean {
-  return key === "Escape" && !isComposing && currentValue.length === 0;
+  return key === "Escape" && !isComposing && currentЗначение.length === 0;
 }
 
-export function isModifierOnlyKey(key: string): boolean {
+export function isModifierOnlyКлюч(key: string): boolean {
   return MODIFIER_ONLY_KEYS.has(key);
 }
 
-export function resolveInboxQuickArchiveKeyAction({
+export function resolveВходящиеQuickАрхивироватьКлючAction({
   armed,
   defaultPrevented,
   key,
-  metaKey,
-  ctrlKey,
-  altKey,
+  metaКлюч,
+  ctrlКлюч,
+  altКлюч,
   target,
   hasOpenDialog,
 }: {
   armed: boolean;
   defaultPrevented: boolean;
   key: string;
-  metaKey: boolean;
-  ctrlKey: boolean;
-  altKey: boolean;
-  target: EventTarget | null;
+  metaКлюч: boolean;
+  ctrlКлюч: boolean;
+  altКлюч: boolean;
+  target: EventЦель | null;
   hasOpenDialog: boolean;
-}): InboxQuickArchiveKeyAction {
+}): ВходящиеQuickАрхивироватьКлючAction {
   if (!armed) return "ignore";
   if (defaultPrevented) return "ignore";
-  if (metaKey || ctrlKey || altKey || isModifierOnlyKey(key)) return "ignore";
-  if (hasOpenDialog || isKeyboardShortcutTextInputTarget(target)) return "ignore";
-  if (key.toLowerCase() === "y") return "archive";
+  if (metaКлюч || ctrlКлюч || altКлюч || isModifierOnlyКлюч(key)) return "ignore";
+  if (hasOpenDialog || isКлючboardShortcutTextInputЦель(target)) return "ignore";
+  if (key.toНизкийerCase() === "y") return "archive";
   return "ignore";
 }
 
-export function resolveInboxUndoArchiveKeyAction({
-  hasUndoableArchive,
+export function resolveВходящиеUndoАрхивироватьКлючAction({
+  hasUndoableАрхивировать,
   defaultPrevented,
   key,
-  metaKey,
-  ctrlKey,
-  altKey,
+  metaКлюч,
+  ctrlКлюч,
+  altКлюч,
   target,
   hasOpenDialog,
 }: {
-  hasUndoableArchive: boolean;
+  hasUndoableАрхивировать: boolean;
   defaultPrevented: boolean;
   key: string;
-  metaKey: boolean;
-  ctrlKey: boolean;
-  altKey: boolean;
-  target: EventTarget | null;
+  metaКлюч: boolean;
+  ctrlКлюч: boolean;
+  altКлюч: boolean;
+  target: EventЦель | null;
   hasOpenDialog: boolean;
-}): InboxUndoArchiveKeyAction {
-  if (!hasUndoableArchive) return "ignore";
+}): ВходящиеUndoАрхивироватьКлючAction {
+  if (!hasUndoableАрхивировать) return "ignore";
   if (defaultPrevented) return "ignore";
-  if (metaKey || ctrlKey || altKey || isModifierOnlyKey(key)) return "ignore";
-  if (hasOpenDialog || isKeyboardShortcutTextInputTarget(target)) return "ignore";
+  if (metaКлюч || ctrlКлюч || altКлюч || isModifierOnlyКлюч(key)) return "ignore";
+  if (hasOpenDialog || isКлючboardShortcutTextInputЦель(target)) return "ignore";
   if (key === "u") return "undo_archive";
   return "ignore";
 }
 
-export function resolveIssueDetailGoKeyAction({
+export function resolveЗадачаDetailGoКлючAction({
   armed,
   defaultPrevented,
   key,
-  metaKey,
-  ctrlKey,
-  altKey,
+  metaКлюч,
+  ctrlКлюч,
+  altКлюч,
   target,
   hasOpenDialog,
 }: {
   armed: boolean;
   defaultPrevented: boolean;
   key: string;
-  metaKey: boolean;
-  ctrlKey: boolean;
-  altKey: boolean;
-  target: EventTarget | null;
+  metaКлюч: boolean;
+  ctrlКлюч: boolean;
+  altКлюч: boolean;
+  target: EventЦель | null;
   hasOpenDialog: boolean;
-}): IssueDetailGoKeyAction {
+}): ЗадачаDetailGoКлючAction {
   if (defaultPrevented) return armed ? "disarm" : "ignore";
-  if (metaKey || ctrlKey || altKey || isModifierOnlyKey(key)) return "ignore";
-  if (hasOpenDialog || isKeyboardShortcutTextInputTarget(target)) {
+  if (metaКлюч || ctrlКлюч || altКлюч || isModifierOnlyКлюч(key)) return "ignore";
+  if (hasOpenDialog || isКлючboardShortcutTextInputЦель(target)) {
     return armed ? "disarm" : "ignore";
   }
 
-  const normalizedKey = key.toLowerCase();
-  if (!armed) return normalizedKey === "g" ? "arm" : "ignore";
-  if (normalizedKey === "i") return "navigate_inbox";
-  if (normalizedKey === "c") return "focus_comment";
-  if (normalizedKey === "g") return "arm";
+  const normalizedКлюч = key.toНизкийerCase();
+  if (!armed) return normalizedКлюч === "g" ? "arm" : "ignore";
+  if (normalizedКлюч === "i") return "navigate_inbox";
+  if (normalizedКлюч === "c") return "focus_comment";
+  if (normalizedКлюч === "g") return "arm";
   return "disarm";
 }

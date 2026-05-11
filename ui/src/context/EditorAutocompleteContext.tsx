@@ -1,11 +1,11 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactНетde } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { buildSkillMentionHref } from "@paperclipai/shared";
-import { companySkillsApi } from "../api/companySkills";
-import { useCompany } from "./CompanyContext";
-import { queryKeys } from "../lib/queryKeys";
+import { buildНавыкMentionHref } from "@paperclipai/shared";
+import { companyНавыкиApi } from "../api/companyНавыки";
+import { useКомпания } from "./КомпанияContext";
+import { queryКлючs } from "../lib/queryКлючs";
 
-export interface SkillCommandOption {
+export interface НавыкКомандаOption {
   id: string;
   kind: "skill";
   skillId: string;
@@ -17,26 +17,26 @@ export interface SkillCommandOption {
   aliases: string[];
 }
 
-interface EditorAutocompleteContextValue {
-  slashCommands: SkillCommandOption[];
+interface ИзменитьorАвтоcompleteContextЗначение {
+  slashКоманды: НавыкКомандаOption[];
 }
 
-const EditorAutocompleteContext = createContext<EditorAutocompleteContextValue>({
-  slashCommands: [],
+const ИзменитьorАвтоcompleteContext = createContext<ИзменитьorАвтоcompleteContextЗначение>({
+  slashКоманды: [],
 });
 
-export function EditorAutocompleteProvider({ children }: { children: ReactNode }) {
-  const { selectedCompanyId } = useCompany();
-  const { data: companySkills = [] } = useQuery({
-    queryKey: selectedCompanyId
-      ? queryKeys.companySkills.list(selectedCompanyId)
+export function ИзменитьorАвтоcompleteПровайдер({ children }: { children: ReactНетde }) {
+  const { selectedКомпанияId } = useКомпания();
+  const { data: companyНавыки = [] } = useQuery({
+    queryКлюч: selectedКомпанияId
+      ? queryКлючs.companyНавыки.list(selectedКомпанияId)
       : ["company-skills", "__none__"],
-    queryFn: () => companySkillsApi.list(selectedCompanyId!),
-    enabled: Boolean(selectedCompanyId),
+    queryFn: () => companyНавыкиApi.list(selectedКомпанияId!),
+    enabled: Boolean(selectedКомпанияId),
   });
 
-  const value = useMemo<EditorAutocompleteContextValue>(() => ({
-    slashCommands: companySkills.map((skill) => ({
+  const value = useMemo<ИзменитьorАвтоcompleteContextЗначение>(() => ({
+    slashКоманды: companyНавыки.map((skill) => ({
       id: `skill:${skill.id}`,
       kind: "skill",
       skillId: skill.id,
@@ -44,18 +44,18 @@ export function EditorAutocompleteProvider({ children }: { children: ReactNode }
       name: skill.name,
       slug: skill.slug,
       description: skill.description ?? null,
-      href: buildSkillMentionHref(skill.id, skill.slug),
+      href: buildНавыкMentionHref(skill.id, skill.slug),
       aliases: [skill.slug, skill.name, skill.key],
     })),
-  }), [companySkills]);
+  }), [companyНавыки]);
 
   return (
-    <EditorAutocompleteContext.Provider value={value}>
+    <ИзменитьorАвтоcompleteContext.Провайдер value={value}>
       {children}
-    </EditorAutocompleteContext.Provider>
+    </ИзменитьorАвтоcompleteContext.Провайдер>
   );
 }
 
-export function useEditorAutocomplete() {
-  return useContext(EditorAutocompleteContext);
+export function useИзменитьorАвтоcomplete() {
+  return useContext(ИзменитьorАвтоcompleteContext);
 }

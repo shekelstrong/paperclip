@@ -1,35 +1,35 @@
 import {
-  LinkNode,
+  LinkНетde,
   type LinkAttributes,
-  type SerializedLinkNode,
+  type SerializedLinkНетde,
 } from "@lexical/link";
 
 const CUSTOM_MENTION_URL_RE = /^(agent|project|skill):\/\//;
 
-export class MentionAwareLinkNode extends LinkNode {
-  static getType(): string {
+export class MentionAwareLinkНетde extends LinkНетde {
+  static getТип(): string {
     return "mention-aware-link";
   }
 
-  static clone(node: MentionAwareLinkNode): MentionAwareLinkNode {
-    return new MentionAwareLinkNode(
+  static clone(node: MentionAwareLinkНетde): MentionAwareLinkНетde {
+    return new MentionAwareLinkНетde(
       node.getURL(),
       {
         rel: node.getRel(),
-        target: node.getTarget(),
-        title: node.getTitle(),
+        target: node.getЦель(),
+        title: node.getНазвание(),
       },
-      node.getKey(),
+      node.getКлюч(),
     );
   }
 
-  static importJSON(serializedNode: SerializedLinkNode): MentionAwareLinkNode {
-    return new MentionAwareLinkNode(
-      serializedNode.url ?? "",
+  static importJSON(serializedНетde: SerializedLinkНетde): MentionAwareLinkНетde {
+    return new MentionAwareLinkНетde(
+      serializedНетde.url ?? "",
       {
-        rel: serializedNode.rel ?? null,
-        target: serializedNode.target ?? null,
-        title: serializedNode.title ?? null,
+        rel: serializedНетde.rel ?? null,
+        target: serializedНетde.target ?? null,
+        title: serializedНетde.title ?? null,
       },
     );
   }
@@ -44,24 +44,24 @@ export class MentionAwareLinkNode extends LinkNode {
   }
 }
 
-type MentionAwareLinkSource = Pick<LinkNode, "getURL" | "getRel" | "getTarget" | "getTitle">;
+type MentionAwareLinkSource = Pick<LinkНетde, "getURL" | "getRel" | "getЦель" | "getНазвание">;
 
-export function getMentionAwareLinkNodeInit(node: MentionAwareLinkSource) {
+export function getMentionAwareLinkНетdeInit(node: MentionAwareLinkSource) {
   return {
     url: node.getURL(),
     attributes: {
       rel: node.getRel(),
-      target: node.getTarget(),
-      title: node.getTitle(),
+      target: node.getЦель(),
+      title: node.getНазвание(),
     },
   };
 }
 
-export const mentionAwareLinkNodeReplacement = {
-  replace: LinkNode,
-  with: (node: LinkNode) => {
-    const { url, attributes } = getMentionAwareLinkNodeInit(node);
-    return new MentionAwareLinkNode(url, attributes);
+export const mentionAwareLinkНетdeReplacement = {
+  replace: LinkНетde,
+  with: (node: LinkНетde) => {
+    const { url, attributes } = getMentionAwareLinkНетdeInit(node);
+    return new MentionAwareLinkНетde(url, attributes);
   },
-  withKlass: MentionAwareLinkNode,
+  withKlass: MentionAwareLinkНетde,
 } as const;

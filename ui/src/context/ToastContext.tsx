@@ -6,7 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
+  type ReactНетde,
 } from "react";
 
 export type ToastTone = "info" | "success" | "warn" | "error";
@@ -18,7 +18,7 @@ export interface ToastAction {
 
 export interface ToastInput {
   id?: string;
-  dedupeKey?: string;
+  dedupeКлюч?: string;
   title: string;
   body?: string;
   tone?: ToastTone;
@@ -36,13 +36,13 @@ export interface ToastItem {
   createdAt: number;
 }
 
-interface ToastActionsContextValue {
+interface ToastActionsContextЗначение {
   pushToast: (input: ToastInput) => string | null;
   dismissToast: (id: string) => void;
   clearToasts: () => void;
 }
 
-interface ToastContextValue extends ToastActionsContextValue {
+interface ToastContextЗначение extends ToastActionsContextЗначение {
   toasts: ToastItem[];
 }
 
@@ -59,7 +59,7 @@ const DEDUPE_WINDOW_MS = 3500;
 const DEDUPE_MAX_AGE_MS = 20000;
 
 const ToastStateContext = createContext<ToastItem[] | null>(null);
-const ToastActionsContext = createContext<ToastActionsContextValue | null>(null);
+const ToastActionsContext = createContext<ToastActionsContextЗначение | null>(null);
 
 function normalizeTtl(value: number | undefined, tone: ToastTone) {
   const fallback = DEFAULT_TTL_BY_TONE[tone];
@@ -71,7 +71,7 @@ function generateToastId() {
   return `toast_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+export function ToastПровайдер({ children }: { children: ReactНетde }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const timersRef = useRef(new Map<string, number>());
   const dedupeRef = useRef(new Map<string, number>());
@@ -105,8 +105,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       const now = Date.now();
       const tone = input.tone ?? "info";
       const ttlMs = normalizeTtl(input.ttlMs, tone);
-      const dedupeKey =
-        input.dedupeKey ?? input.id ?? `${tone}|${input.title}|${input.body ?? ""}|${input.action?.href ?? ""}`;
+      const dedupeКлюч =
+        input.dedupeКлюч ?? input.id ?? `${tone}|${input.title}|${input.body ?? ""}|${input.action?.href ?? ""}`;
 
       for (const [key, ts] of dedupeRef.current.entries()) {
         if (now - ts > DEDUPE_MAX_AGE_MS) {
@@ -114,11 +114,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const lastSeen = dedupeRef.current.get(dedupeKey);
+      const lastSeen = dedupeRef.current.get(dedupeКлюч);
       if (lastSeen && now - lastSeen < DEDUPE_WINDOW_MS) {
         return null;
       }
-      dedupeRef.current.set(dedupeKey, now);
+      dedupeRef.current.set(dedupeКлюч, now);
 
       const id = input.id ?? generateToastId();
       clearTimer(id);
@@ -154,7 +154,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     timersRef.current.clear();
   }, []);
 
-  const actions = useMemo<ToastActionsContextValue>(
+  const actions = useMemo<ToastActionsContextЗначение>(
     () => ({
       pushToast,
       dismissToast,
@@ -164,16 +164,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ToastActionsContext.Provider value={actions}>
-      <ToastStateContext.Provider value={toasts}>{children}</ToastStateContext.Provider>
-    </ToastActionsContext.Provider>
+    <ToastActionsContext.Провайдер value={actions}>
+      <ToastStateContext.Провайдер value={toasts}>{children}</ToastStateContext.Провайдер>
+    </ToastActionsContext.Провайдер>
   );
 }
 
 export function useToastState() {
   const context = useContext(ToastStateContext);
   if (!context) {
-    throw new Error("useToastState must be used within a ToastProvider");
+    throw new Ошибка("useToastState must be used within a ToastПровайдер");
   }
   return context;
 }
@@ -181,17 +181,17 @@ export function useToastState() {
 export function useToastActions() {
   const context = useContext(ToastActionsContext);
   if (!context) {
-    throw new Error("useToastActions must be used within a ToastProvider");
+    throw new Ошибка("useToastActions must be used within a ToastПровайдер");
   }
   return context;
 }
 
-export function useOptionalToastActions() {
+export function useОпциональноToastActions() {
   return useContext(ToastActionsContext);
 }
 
 export function useToast() {
   const toasts = useToastState();
   const actions = useToastActions();
-  return useMemo<ToastContextValue>(() => ({ toasts, ...actions }), [toasts, actions]);
+  return useMemo<ToastContextЗначение>(() => ({ toasts, ...actions }), [toasts, actions]);
 }

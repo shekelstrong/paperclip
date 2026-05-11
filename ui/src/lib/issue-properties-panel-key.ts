@@ -1,34 +1,34 @@
-import type { Issue } from "@paperclipai/shared";
+import type { Задача } from "@paperclipai/shared";
 
-type IssuePropertiesPanelKeyIssue = Pick<
-  Issue,
+type ЗадачаPropertiesPanelКлючЗадача = Pick<
+  Задача,
   | "id"
   | "status"
   | "priority"
-  | "assigneeAgentId"
+  | "assigneeАгентId"
   | "assigneeUserId"
   | "projectId"
-  | "projectWorkspaceId"
+  | "projectРабочая областьId"
   | "parentId"
   | "createdByUserId"
   | "hiddenAt"
   | "labelIds"
   | "executionPolicy"
   | "executionState"
-  | "executionWorkspaceId"
-  | "executionWorkspacePreference"
-  | "executionWorkspaceSettings"
-  | "currentExecutionWorkspace"
+  | "executionРабочая областьId"
+  | "executionРабочая областьPreference"
+  | "executionРабочая областьНастройки"
+  | "currentExecutionРабочая область"
   | "blocks"
   | "blockedBy"
   | "ancestors"
 >;
 
-type IssuePropertiesPanelKeyChild = Pick<Issue, "id" | "updatedAt" | "identifier" | "title">;
+type ЗадачаPropertiesPanelКлючChild = Pick<Задача, "id" | "updatedAt" | "identifier" | "title">;
 
-export function buildIssuePropertiesPanelKey(
-  issue: IssuePropertiesPanelKeyIssue | null | undefined,
-  childIssues: readonly IssuePropertiesPanelKeyChild[],
+export function buildЗадачаPropertiesPanelКлюч(
+  issue: ЗадачаPropertiesPanelКлючЗадача | null | undefined,
+  childЗадачи: readonly ЗадачаPropertiesPanelКлючChild[],
 ) {
   if (!issue) return "";
 
@@ -36,26 +36,26 @@ export function buildIssuePropertiesPanelKey(
     id: issue.id,
     status: issue.status,
     priority: issue.priority,
-    assigneeAgentId: issue.assigneeAgentId,
+    assigneeАгентId: issue.assigneeАгентId,
     assigneeUserId: issue.assigneeUserId,
     projectId: issue.projectId,
-    projectWorkspaceId: issue.projectWorkspaceId,
+    projectРабочая областьId: issue.projectРабочая областьId,
     parentId: issue.parentId,
     createdByUserId: issue.createdByUserId,
     hiddenAt: issue.hiddenAt,
     labelIds: issue.labelIds ?? [],
-    executionWorkspaceId: issue.executionWorkspaceId,
-    executionWorkspacePreference: issue.executionWorkspacePreference,
-    executionWorkspaceSettings: issue.executionWorkspaceSettings ?? null,
-    currentExecutionWorkspace: issue.currentExecutionWorkspace
+    executionРабочая областьId: issue.executionРабочая областьId,
+    executionРабочая областьPreference: issue.executionРабочая областьPreference,
+    executionРабочая областьНастройки: issue.executionРабочая областьНастройки ?? null,
+    currentExecutionРабочая область: issue.currentExecutionРабочая область
       ? {
-          id: issue.currentExecutionWorkspace.id,
-          mode: issue.currentExecutionWorkspace.mode,
-          status: issue.currentExecutionWorkspace.status,
-          projectWorkspaceId: issue.currentExecutionWorkspace.projectWorkspaceId,
-          branchName: issue.currentExecutionWorkspace.branchName,
-          cwd: issue.currentExecutionWorkspace.cwd,
-          runtimeServices: (issue.currentExecutionWorkspace.runtimeServices ?? []).map((service) => ({
+          id: issue.currentExecutionРабочая область.id,
+          mode: issue.currentExecutionРабочая область.mode,
+          status: issue.currentExecutionРабочая область.status,
+          projectРабочая областьId: issue.currentExecutionРабочая область.projectРабочая областьId,
+          branchИмя: issue.currentExecutionРабочая область.branchИмя,
+          cwd: issue.currentExecutionРабочая область.cwd,
+          runtimeServices: (issue.currentExecutionРабочая область.runtimeServices ?? []).map((service) => ({
             id: service.id,
             status: service.status,
             url: service.url,
@@ -66,9 +66,9 @@ export function buildIssuePropertiesPanelKey(
     executionState: issue.executionState
       ? {
           status: issue.executionState.status,
-          currentStageType: issue.executionState.currentStageType,
+          currentStageТип: issue.executionState.currentStageТип,
           currentParticipant: issue.executionState.currentParticipant,
-          returnAssignee: issue.executionState.returnAssignee,
+          returnИсполнитель: issue.executionState.returnИсполнитель,
         }
       : null,
     blocks: (issue.blocks ?? []).map((relation) => ({
@@ -90,7 +90,7 @@ export function buildIssuePropertiesPanelKey(
           title: issue.ancestors[0].title,
         }
       : null,
-    childIssues: childIssues.map((child) => ({
+    childЗадачи: childЗадачи.map((child) => ({
       id: child.id,
       updatedAt: String(child.updatedAt),
       identifier: child.identifier ?? null,

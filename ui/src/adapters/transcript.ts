@@ -1,7 +1,7 @@
-import { redactHomePathUserSegments, redactTranscriptEntryPaths } from "@paperclipai/adapter-utils";
+import { redactHomeПутьUserSegments, redactTranscriptEntryПутьs } from "@paperclipai/adapter-utils";
 import type { TranscriptEntry, StdoutLineParser, TranscriptParserSource } from "./types";
 
-export type RunLogChunk = { ts: string; stream: "stdout" | "stderr" | "system"; chunk: string };
+export type ЗапуститьLogChunk = { ts: string; stream: "stdout" | "stderr" | "system"; chunk: string };
 type TranscriptBuildOptions = { censorUsernameInLogs?: boolean };
 type RedactionOptions = { enabled: boolean };
 
@@ -39,8 +39,8 @@ function truncateTranscriptLine(line: string, maxLength = 160) {
   return `${line.slice(0, maxLength - 3)}...`;
 }
 
-function formatTranscriptParserError(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
+function formatTranscriptParserОшибка(error: unknown) {
+  if (error instanceof Ошибка && error.message) return error.message;
   if (typeof error === "string" && error) return error;
   try {
     return JSON.stringify(error);
@@ -49,27 +49,27 @@ function formatTranscriptParserError(error: unknown) {
   }
 }
 
-function createTranscriptParseErrorEntry(
+function createTranscriptParseОшибкаEntry(
   line: string,
   ts: string,
   error: unknown,
   redactionOptions: RedactionOptions,
 ): TranscriptEntry {
-  const errorText = formatTranscriptParserError(error) || "unknown parser error";
+  const errorText = formatTranscriptParserОшибка(error) || "unknown parser error";
   const preview = truncateTranscriptLine(line);
   return {
     kind: "result",
     ts,
-    text: redactHomePathUserSegments(
+    text: redactHomeПутьUserSegments(
       `Chat transcript error: ${errorText}. Falling back for line: ${preview}`,
       redactionOptions,
     ),
-    inputTokens: 0,
-    outputTokens: 0,
-    cachedTokens: 0,
+    inputТокенs: 0,
+    outputТокенs: 0,
+    cachedТокенs: 0,
     costUsd: 0,
     subtype: "transcript_parse_error",
-    isError: true,
+    isОшибка: true,
     errors: [],
   };
 }
@@ -86,16 +86,16 @@ function appendParsedTranscriptLine(args: {
   try {
     appendTranscriptEntries(
       entries,
-      parseLine(line, ts).map((entry) => redactTranscriptEntryPaths(entry, redactionOptions)),
+      parseLine(line, ts).map((entry) => redactTranscriptEntryПутьs(entry, redactionOptions)),
     );
   } catch (error) {
     reset?.();
-    appendTranscriptEntry(entries, createTranscriptParseErrorEntry(line, ts, error, redactionOptions));
+    appendTranscriptEntry(entries, createTranscriptParseОшибкаEntry(line, ts, error, redactionOptions));
   }
 }
 
 export function buildTranscript(
-  chunks: RunLogChunk[],
+  chunks: ЗапуститьLogChunk[],
   parserSource: StdoutLineParser | TranscriptParserSource,
   opts?: TranscriptBuildOptions,
 ): TranscriptEntry[] {
@@ -106,11 +106,11 @@ export function buildTranscript(
 
   for (const chunk of chunks) {
     if (chunk.stream === "stderr") {
-      entries.push({ kind: "stderr", ts: chunk.ts, text: redactHomePathUserSegments(chunk.chunk, redactionOptions) });
+      entries.push({ kind: "stderr", ts: chunk.ts, text: redactHomeПутьUserSegments(chunk.chunk, redactionOptions) });
       continue;
     }
     if (chunk.stream === "system") {
-      entries.push({ kind: "system", ts: chunk.ts, text: redactHomePathUserSegments(chunk.chunk, redactionOptions) });
+      entries.push({ kind: "system", ts: chunk.ts, text: redactHomeПутьUserSegments(chunk.chunk, redactionOptions) });
       continue;
     }
 

@@ -2,13 +2,13 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogОписание,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogНазвание,
 } from "@/components/ui/dialog";
 
-interface ConfirmDialogProps {
+interface ПодтвердитьDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -16,27 +16,27 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
-  onConfirm: () => void;
+  onПодтвердить: () => void;
   busy?: boolean;
 }
 
-export function ConfirmDialog({
+export function ПодтвердитьDialog({
   open,
   onOpenChange,
   title,
   description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel = "Подтвердить",
+  cancelLabel = "Отмена",
   destructive,
-  onConfirm,
+  onПодтвердить,
   busy,
-}: ConfirmDialogProps) {
+}: ПодтвердитьDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent classИмя="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          <DialogНазвание>{title}</DialogНазвание>
+          {description && <DialogОписание>{description}</DialogОписание>}
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={busy}>
@@ -45,10 +45,10 @@ export function ConfirmDialog({
           <Button
             variant={destructive ? "destructive" : "default"}
             size="sm"
-            onClick={onConfirm}
+            onClick={onПодтвердить}
             disabled={busy}
           >
-            {busy ? "Working…" : confirmLabel}
+            {busy ? "Работаing…" : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

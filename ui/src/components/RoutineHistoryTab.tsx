@@ -1,28 +1,28 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { History as HistoryIcon, RotateCcw } from "lucide-react";
+import { История as ИсторияIcon, RotateCcw } from "lucide-react";
 import type {
-  Routine,
-  RoutineRevision,
-  RoutineRevisionSnapshotTriggerV1,
-  RoutineVariable,
+  Процедура,
+  ПроцедураRevision,
+  ПроцедураRevisionSnapshotTriggerV1,
+  ПроцедураVariable,
 } from "@paperclipai/shared";
 import {
   routinesApi,
-  type RestoreRoutineRevisionResponse,
+  type RestoreПроцедураRevisionResponse,
 } from "../api/routines";
-import { ApiError } from "../api/client";
-import { queryKeys } from "../lib/queryKeys";
+import { ApiОшибка } from "../api/client";
+import { queryКлючs } from "../lib/queryКлючs";
 import { relativeTime } from "../lib/utils";
 import { useToastActions } from "../context/ToastContext";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogОписание,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogНазвание,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./EmptyState";
 import { MarkdownBody } from "./MarkdownBody";
 
-type AgentLookup = Map<string, { id: string; name: string }>;
+type АгентLookup = Map<string, { id: string; name: string }>;
 type ProjectLookup = Map<string, { id: string; name: string }>;
 
 type DirtyFieldDescriptor = {
@@ -39,26 +39,26 @@ type DirtyFieldDescriptor = {
 };
 
 type Props = {
-  routine: Routine;
-  isEditDirty: boolean;
+  routine: Процедура;
+  isИзменитьDirty: boolean;
   dirtyFields: DirtyFieldDescriptor[];
-  onDiscardEdits: () => void;
-  onSaveEdits: () => void;
-  agents: AgentLookup;
+  onDiscardИзменитьs: () => void;
+  onСохранитьИзменитьs: () => void;
+  agents: АгентLookup;
   projects: ProjectLookup;
-  onRestoreSecretMaterials: (response: RestoreRoutineRevisionResponse) => void;
-  onRestored?: (response: RestoreRoutineRevisionResponse) => void;
+  onRestoreСекретMaterials: (response: RestoreПроцедураRevisionResponse) => void;
+  onRestored?: (response: RestoreПроцедураRevisionResponse) => void;
 };
 
-export function RoutineHistoryTab({
+export function ПроцедураИсторияTab({
   routine,
-  isEditDirty,
+  isИзменитьDirty,
   dirtyFields,
-  onDiscardEdits,
-  onSaveEdits,
+  onDiscardИзменитьs,
+  onСохранитьИзменитьs,
   agents,
   projects,
-  onRestoreSecretMaterials,
+  onRestoreСекретMaterials,
   onRestored,
 }: Props) {
   const queryClient = useQueryClient();
@@ -66,13 +66,13 @@ export function RoutineHistoryTab({
   const [selectedRevisionId, setSelectedRevisionId] = useState<string | null>(null);
   const [snapshotOpen, setSnapshotOpen] = useState(false);
   const [compareOn, setCompareOn] = useState(false);
-  const [highlightedRevisionId, setHighlightedRevisionId] = useState<string | null>(null);
+  const [highlightedRevisionId, setВысокийlightedRevisionId] = useState<string | null>(null);
   const [showOlder, setShowOlder] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmOpen, setПодтвердитьOpen] = useState(false);
   const [restoreSummary, setRestoreSummary] = useState("");
 
   const revisionsQuery = useQuery({
-    queryKey: queryKeys.routines.revisions(routine.id),
+    queryКлюч: queryКлючs.routines.revisions(routine.id),
     queryFn: () => routinesApi.listRevisions(routine.id),
   });
 
@@ -101,7 +101,7 @@ export function RoutineHistoryTab({
       routinesApi.restoreRevision(routine.id, input.revisionId, {
         changeSummary: input.changeSummary.trim() || null,
       }),
-    onSuccess: async (data) => {
+    onУспешно: async (data) => {
       const restoredFromNumber = data.restoredFromRevisionNumber;
       const newNumber = data.revision.revisionNumber;
       pushToast({
@@ -111,51 +111,51 @@ export function RoutineHistoryTab({
           : "Trigger enabled state was restored from the snapshot.",
         tone: "success",
       });
-      onRestoreSecretMaterials(data);
+      onRestoreСекретMaterials(data);
       onRestored?.(data);
-      setConfirmOpen(false);
+      setПодтвердитьOpen(false);
       setSnapshotOpen(false);
       setCompareOn(false);
       setRestoreSummary("");
       setSelectedRevisionId(data.revision.id);
-      setHighlightedRevisionId(data.revision.id);
+      setВысокийlightedRevisionId(data.revision.id);
       window.setTimeout(() => {
-        setHighlightedRevisionId((current) =>
+        setВысокийlightedRevisionId((current) =>
           current === data.revision.id ? null : current,
         );
       }, 3000);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(routine.id) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.routines.runs(routine.id) }),
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(routine.id) }),
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.runs(routine.id) }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.routines.activity(routine.companyId, routine.id),
+          queryКлюч: queryКлючs.routines.activity(routine.companyId, routine.id),
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(routine.companyId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.routines.revisions(routine.id) }),
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.list(routine.companyId) }),
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.revisions(routine.id) }),
       ]);
     },
-    onError: (error) => {
+    onОшибка: (error) => {
       pushToast({
-        title: "Failed to restore revision",
-        body: error instanceof Error ? error.message : "Paperclip could not restore the revision.",
+        title: "Ошибка to restore revision",
+        body: error instanceof Ошибка ? error.message : "Paperclip could not restore the revision.",
         tone: "error",
       });
     },
   });
 
   const handleSelectRevision = (revisionId: string) => {
-    if (isEditDirty) return;
+    if (isИзменитьDirty) return;
     setSelectedRevisionId(revisionId);
     setCompareOn(false);
     setSnapshotOpen(true);
   };
 
-  const openRestoreConfirm = () => {
+  const openRestoreПодтвердить = () => {
     if (!selectedRevision || !isHistoricalSelected) return;
     setRestoreSummary("");
     setSnapshotOpen(false);
     setCompareOn(false);
-    setConfirmOpen(true);
+    setПодтвердитьOpen(true);
   };
 
   const confirmRestore = () => {
@@ -166,32 +166,32 @@ export function RoutineHistoryTab({
     });
   };
 
-  if (revisionsQuery.isLoading) {
+  if (revisionsQuery.isЗагрузка) {
     return (
-      <div className="grid gap-5">
-        <div className="space-y-2">
+      <div classИмя="grid gap-5">
+        <div classИмя="space-y-2">
           {Array.from({ length: 5 }).map((_, idx) => (
-            <Skeleton key={idx} className="h-10 w-full" />
+            <Skeleton key={idx} classИмя="h-10 w-full" />
           ))}
         </div>
-        <Skeleton className="h-32 w-full" />
+        <Skeleton classИмя="h-32 w-full" />
       </div>
     );
   }
 
   if (revisionsQuery.error) {
     return (
-      <div className="rounded-md border border-l-2 border-l-destructive border-border p-4 space-y-3">
+      <div classИмя="rounded-md border border-l-2 border-l-destructive border-border p-4 space-y-3">
         <div>
-          <p className="text-sm font-medium">Could not load revisions</p>
-          <p className="text-xs text-muted-foreground">
-            {revisionsQuery.error instanceof Error
+          <p classИмя="text-sm font-medium">Could not load revisions</p>
+          <p classИмя="text-xs text-muted-foreground">
+            {revisionsQuery.error instanceof Ошибка
               ? revisionsQuery.error.message
-              : "Unknown error loading revisions."}
+              : "Неизвестно error loading revisions."}
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={() => revisionsQuery.refetch()}>
-          Retry
+          Повторить
         </Button>
       </div>
     );
@@ -200,18 +200,18 @@ export function RoutineHistoryTab({
   const onlyBootstrapRevision = revisions.length <= 1;
 
   return (
-    <div className="grid gap-5">
-      {isEditDirty && (
+    <div classИмя="grid gap-5">
+      {isИзменитьDirty && (
         <ConflictBanner
           dirtyFields={dirtyFields}
-          onDiscard={onDiscardEdits}
-          onSave={onSaveEdits}
+          onDiscard={onDiscardИзменитьs}
+          onСохранить={onСохранитьИзменитьs}
         />
       )}
-      {!isEditDirty && onlyBootstrapRevision ? (
-        <div className="space-y-2">
-          <EmptyState icon={HistoryIcon} message="No edits yet" />
-          <p className="text-center text-xs text-muted-foreground">
+      {!isИзменитьDirty && onlyBootstrapRevision ? (
+        <div classИмя="space-y-2">
+          <EmptyState icon={ИсторияIcon} message="Нет edits yet" />
+          <p classИмя="text-center text-xs text-muted-foreground">
             Revision 1 is the only history this routine has. Saving an edit creates the first
             additional revision.
           </p>
@@ -222,7 +222,7 @@ export function RoutineHistoryTab({
           latestRevisionId={routine.latestRevisionId}
           selectedRevisionId={selectedRevisionId}
           highlightedRevisionId={highlightedRevisionId}
-          isEditDirty={isEditDirty}
+          isИзменитьDirty={isИзменитьDirty}
           totalRevisions={sortedRevisions.length}
           onSelect={handleSelectRevision}
           onShowOlder={() => setShowOlder(true)}
@@ -244,23 +244,23 @@ export function RoutineHistoryTab({
           onCompareToggle={setCompareOn}
           agents={agents}
           projects={projects}
-          onRestore={openRestoreConfirm}
-          restorePending={restoreMutation.isPending}
+          onRestore={openRestoreПодтвердить}
+          restoreОжидание={restoreMutation.isОжидание}
           highlighted={highlightedRevisionId === selectedRevision.id}
         />
       )}
 
       {selectedRevision && currentRevision && (
-        <RestoreConfirmDialog
+        <RestoreПодтвердитьDialog
           open={confirmOpen}
-          onOpenChange={setConfirmOpen}
+          onOpenChange={setПодтвердитьOpen}
           target={selectedRevision}
           currentRevisionNumber={currentRevision.revisionNumber}
           changeSummary={restoreSummary}
           onChangeSummaryChange={setRestoreSummary}
-          onConfirm={confirmRestore}
-          pending={restoreMutation.isPending}
-          recreatedWebhookLabels={collectWebhookTriggerDifferences(
+          onПодтвердить={confirmRestore}
+          pending={restoreMutation.isОжидание}
+          recreatedWebhookЯрлыки={collectWebhookTriggerDifferences(
             selectedRevision,
             currentRevision,
           )}
@@ -281,37 +281,37 @@ function RevisionSnapshotDialog({
   agents,
   projects,
   onRestore,
-  restorePending,
+  restoreОжидание,
   highlighted,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  revision: RoutineRevision;
-  currentRevision: RoutineRevision | null;
+  revision: ПроцедураRevision;
+  currentRevision: ПроцедураRevision | null;
   isHistorical: boolean;
   compareOn: boolean;
   onCompareToggle: (next: boolean) => void;
-  agents: AgentLookup;
+  agents: АгентLookup;
   projects: ProjectLookup;
   onRestore: () => void;
-  restorePending: boolean;
+  restoreОжидание: boolean;
   highlighted: boolean;
 }) {
   const showCompare = compareOn && !!currentRevision && isHistorical;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={`${
+        classИмя={`${
           showCompare ? "!max-w-[95%]" : "!max-w-[90%]"
         } w-full max-h-[85vh] overflow-hidden flex flex-col`}
       >
         <DialogHeader>
-          <div className="flex flex-wrap items-center justify-between gap-3 pr-8">
-            <DialogTitle>
+          <div classИмя="flex flex-wrap items-center justify-between gap-3 pr-8">
+            <DialogНазвание>
               {isHistorical
                 ? `Viewing revision ${revision.revisionNumber} (read-only)`
                 : `Revision ${revision.revisionNumber} (current)`}
-            </DialogTitle>
+            </DialogНазвание>
             {isHistorical && currentRevision && (
               <Button
                 variant="outline"
@@ -323,21 +323,21 @@ function RevisionSnapshotDialog({
             )}
           </div>
           {isHistorical && currentRevision && (
-            <DialogDescription>
+            <DialogОписание>
               Restoring this revision creates a new revision {currentRevision.revisionNumber + 1}{" "}
-              with the same content. History stays append-only.
-            </DialogDescription>
+              with the same content. История stays append-only.
+            </DialogОписание>
           )}
         </DialogHeader>
-        <div className="overflow-auto flex-1">
+        <div classИмя="overflow-auto flex-1">
           {showCompare && currentRevision ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3 min-w-0">
+            <div classИмя="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div classИмя="space-y-3 min-w-0">
                 <ColumnLabel
                   tone="amber"
                   title={`rev ${revision.revisionNumber} (selected)`}
                 />
-                <RevisionPreview
+                <RevisionПредпросмотр
                   revision={revision}
                   currentRevision={currentRevision}
                   agents={agents}
@@ -345,12 +345,12 @@ function RevisionSnapshotDialog({
                   highlighted={highlighted}
                 />
               </div>
-              <div className="space-y-3 min-w-0">
+              <div classИмя="space-y-3 min-w-0">
                 <ColumnLabel
                   tone="emerald"
                   title={`rev ${currentRevision.revisionNumber} (current)`}
                 />
-                <RevisionPreview
+                <RevisionПредпросмотр
                   revision={currentRevision}
                   currentRevision={revision}
                   agents={agents}
@@ -360,7 +360,7 @@ function RevisionSnapshotDialog({
               </div>
             </div>
           ) : (
-            <RevisionPreview
+            <RevisionПредпросмотр
               revision={revision}
               currentRevision={currentRevision}
               agents={agents}
@@ -369,13 +369,13 @@ function RevisionSnapshotDialog({
             />
           )}
         </div>
-        <DialogFooter className="justify-between sm:justify-between">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={restorePending}>
-            Close
+        <DialogFooter classИмя="justify-between sm:justify-between">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={restoreОжидание}>
+            Закрыть
           </Button>
           {isHistorical && (
-            <Button onClick={onRestore} disabled={restorePending}>
-              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+            <Button onClick={onRestore} disabled={restoreОжидание}>
+              <RotateCcw classИмя="mr-1.5 h-3.5 w-3.5" />
               Restore as new revision
             </Button>
           )}
@@ -388,7 +388,7 @@ function RevisionSnapshotDialog({
 function DiffPill({ kind }: { kind: "differs" | "only-here" }) {
   const label = kind === "differs" ? "differs" : "only here";
   return (
-    <span className="ml-1 rounded-full border border-amber-400 bg-amber-300 px-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-amber-950">
+    <span classИмя="ml-1 rounded-full border border-amber-400 bg-amber-300 px-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-amber-950">
       {label}
     </span>
   );
@@ -401,7 +401,7 @@ function ColumnLabel({ tone, title }: { tone: "amber" | "emerald"; title: string
       : "border-emerald-400 bg-emerald-300 text-emerald-950";
   return (
     <div
-      className={`rounded-md border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] ${cls}`}
+      classИмя={`rounded-md border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] ${cls}`}
     >
       {title}
     </div>
@@ -412,40 +412,40 @@ function ColumnLabel({ tone, title }: { tone: "amber" | "emerald"; title: string
 function ConflictBanner({
   dirtyFields,
   onDiscard,
-  onSave,
+  onСохранить,
 }: {
   dirtyFields: DirtyFieldDescriptor[];
   onDiscard: () => void;
-  onSave: () => void;
+  onСохранить: () => void;
 }) {
   const labels = dirtyFields.length > 0
     ? dirtyFields.map((field) => field.label)
     : ["the routine"];
   const fieldsText = formatDirtyFieldList(labels);
   return (
-    <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
-      <div className="flex flex-col gap-3">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-amber-200">Unsaved routine edits</p>
-          <p className="text-xs text-muted-foreground">
-            You changed {fieldsText} but haven&apos;t saved yet. Save or discard before previewing or
+    <div classИмя="rounded-md border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+      <div classИмя="flex flex-col gap-3">
+        <div classИмя="space-y-1">
+          <p classИмя="text-sm font-medium text-amber-200">Unsaved routine edits</p>
+          <p classИмя="text-xs text-muted-foreground">
+            You changed {fieldsText} but haven&apos;t saved yet. Сохранить or discard before previewing or
             restoring an older revision.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div classИмя="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={onDiscard}>
             Discard changes
           </Button>
-          <Button size="sm" onClick={onSave}>
-            Save and continue
+          <Button size="sm" onClick={onСохранить}>
+            Сохранить and continue
           </Button>
         </div>
       </div>
       {dirtyFields.length > 0 && (
-        <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
+        <ul classИмя="mt-3 space-y-1 text-xs text-muted-foreground">
           {dirtyFields.map((field) => (
-            <li key={field.key} className="flex items-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-amber-400" />
+            <li key={field.key} classИмя="flex items-center gap-2">
+              <span classИмя="h-1 w-1 rounded-full bg-amber-400" />
               {field.label}
             </li>
           ))}
@@ -460,69 +460,69 @@ function RevisionList({
   latestRevisionId,
   selectedRevisionId,
   highlightedRevisionId,
-  isEditDirty,
+  isИзменитьDirty,
   totalRevisions,
   onSelect,
   onShowOlder,
   showOlder,
 }: {
-  revisions: RoutineRevision[];
+  revisions: ПроцедураRevision[];
   latestRevisionId: string | null;
   selectedRevisionId: string | null;
   highlightedRevisionId: string | null;
-  isEditDirty: boolean;
+  isИзменитьDirty: boolean;
   totalRevisions: number;
   onSelect: (revisionId: string) => void;
   onShowOlder: () => void;
   showOlder: boolean;
 }) {
   return (
-    <aside className="space-y-1">
-      <header className="flex items-center justify-between pb-2">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+    <aside classИмя="space-y-1">
+      <header classИмя="flex items-center justify-between pb-2">
+        <p classИмя="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
           Revisions
         </p>
-        <span className="text-[11px] text-muted-foreground">{totalRevisions} total</span>
+        <span classИмя="text-[11px] text-muted-foreground">{totalRevisions} total</span>
       </header>
       {revisions.map((revision) => {
         const isSelected = revision.id === selectedRevisionId;
         const isCurrent = revision.id === latestRevisionId;
         const isHistorical = !isCurrent;
-        const isHighlighted = revision.id === highlightedRevisionId;
-        const blockedByEdits = isEditDirty && isHistorical;
+        const isВысокийlighted = revision.id === highlightedRevisionId;
+        const blockedByИзменитьs = isИзменитьDirty && isHistorical;
         const baseClass = "w-full rounded-md border px-3 py-2 text-left transition-colors";
-        const stateClass = isHighlighted
+        const stateClass = isВысокийlighted
           ? "border-emerald-500/40 bg-emerald-500/10"
           : isSelected && isHistorical
           ? "border-amber-500/40 bg-amber-500/10"
           : isSelected
           ? "border-border bg-accent/40"
-          : blockedByEdits
+          : blockedByИзменитьs
           ? "border-amber-500/30 bg-amber-500/5 opacity-70 cursor-not-allowed"
           : "border-border/60 hover:bg-accent/40";
         return (
           <button
             key={revision.id}
             type="button"
-            disabled={blockedByEdits}
+            disabled={blockedByИзменитьs}
             onClick={() => onSelect(revision.id)}
-            className={`${baseClass} ${stateClass}`}
+            classИмя={`${baseClass} ${stateClass}`}
             data-testid={`revision-row-${revision.revisionNumber}`}
           >
-            <div className="flex items-center gap-2 text-sm font-medium">
+            <div classИмя="flex items-center gap-2 text-sm font-medium">
               <span>rev {revision.revisionNumber}</span>
               {isCurrent && (
-                <span className="rounded-full border border-border px-1.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                <span classИмя="rounded-full border border-border px-1.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                   Current
                 </span>
               )}
               {revision.restoredFromRevisionId && (
-                <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 text-[10px] uppercase tracking-[0.12em] text-amber-200">
+                <span classИмя="rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 text-[10px] uppercase tracking-[0.12em] text-amber-200">
                   Restored
                 </span>
               )}
             </div>
-            <div className="text-xs text-muted-foreground truncate">
+            <div classИмя="text-xs text-muted-foreground truncate">
               {relativeTime(revision.createdAt)} • {getActorLabel(revision)}
               {revision.changeSummary ? ` • ${revision.changeSummary}` : ""}
             </div>
@@ -530,7 +530,7 @@ function RevisionList({
         );
       })}
       {totalRevisions > revisions.length && !showOlder && (
-        <Button variant="ghost" size="sm" className="w-full" onClick={onShowOlder}>
+        <Button variant="ghost" size="sm" classИмя="w-full" onClick={onShowOlder}>
           Show {totalRevisions - revisions.length} older…
         </Button>
       )}
@@ -538,25 +538,25 @@ function RevisionList({
   );
 }
 
-function RevisionPreview({
+function RevisionПредпросмотр({
   revision,
   currentRevision,
   agents,
   projects,
   highlighted,
 }: {
-  revision: RoutineRevision;
-  currentRevision: RoutineRevision | null;
-  agents: AgentLookup;
+  revision: ПроцедураRevision;
+  currentRevision: ПроцедураRevision | null;
+  agents: АгентLookup;
   projects: ProjectLookup;
   highlighted: boolean;
 }) {
   const snapshot = revision.snapshot.routine;
   const triggers = revision.snapshot.triggers;
   const currentSnapshot = currentRevision?.snapshot.routine ?? null;
-  const otherTriggers = currentRevision?.snapshot.triggers ?? [];
-  const otherTriggerById = new Map(otherTriggers.map((t) => [t.id, t]));
-  const otherVariableByName = new Map(
+  const otherТриггеры = currentRevision?.snapshot.triggers ?? [];
+  const otherTriggerById = new Map(otherТриггеры.map((t) => [t.id, t]));
+  const otherVariableByИмя = new Map(
     (currentSnapshot?.variables ?? []).map((v) => [v.name, v]),
   );
   const cardWrapper = `rounded-md border transition-colors duration-1000 ${
@@ -569,84 +569,84 @@ function RevisionPreview({
   const fieldRows: Array<{ key: string; label: string; value: string; differs: boolean }> = [
     {
       key: "title",
-      label: "Title",
+      label: "Название",
       value: snapshot.title,
       differs: !!currentSnapshot && currentSnapshot.title !== snapshot.title,
     },
     {
       key: "priority",
-      label: "Priority",
+      label: "Приоритет",
       value: snapshot.priority,
       differs: !!currentSnapshot && currentSnapshot.priority !== snapshot.priority,
     },
     {
       key: "status",
-      label: "Status",
+      label: "Статус",
       value: snapshot.status,
       differs: !!currentSnapshot && currentSnapshot.status !== snapshot.status,
     },
     {
-      key: "assigneeAgentId",
-      label: "Default agent",
-      value: resolveAgentName(snapshot.assigneeAgentId, agents),
-      differs: !!currentSnapshot && currentSnapshot.assigneeAgentId !== snapshot.assigneeAgentId,
+      key: "assigneeАгентId",
+      label: "Агент по умолчанию",
+      value: resolveАгентИмя(snapshot.assigneeАгентId, agents),
+      differs: !!currentSnapshot && currentSnapshot.assigneeАгентId !== snapshot.assigneeАгентId,
     },
     {
       key: "projectId",
       label: "Project",
-      value: resolveProjectName(snapshot.projectId, projects),
+      value: resolveProjectИмя(snapshot.projectId, projects),
       differs: !!currentSnapshot && currentSnapshot.projectId !== snapshot.projectId,
     },
     {
       key: "concurrencyPolicy",
       label: "Concurrency",
-      value: snapshot.concurrencyPolicy.replaceAll("_", " "),
+      value: snapshot.concurrencyPolicy.replaceВсе("_", " "),
       differs: !!currentSnapshot && currentSnapshot.concurrencyPolicy !== snapshot.concurrencyPolicy,
     },
     {
       key: "catchUpPolicy",
       label: "Catch-up",
-      value: snapshot.catchUpPolicy.replaceAll("_", " "),
+      value: snapshot.catchUpPolicy.replaceВсе("_", " "),
       differs: !!currentSnapshot && currentSnapshot.catchUpPolicy !== snapshot.catchUpPolicy,
     },
   ];
 
-  const triggerStatus = (trigger: RoutineRevisionSnapshotTriggerV1): "same" | "differs" | "only-here" => {
+  const triggerСтатус = (trigger: ПроцедураRevisionSnapshotTriggerV1): "same" | "differs" | "only-here" => {
     if (!currentRevision) return "same";
     const other = otherTriggerById.get(trigger.id);
     if (!other) return "only-here";
     return JSON.stringify(other) === JSON.stringify(trigger) ? "same" : "differs";
   };
 
-  const variableStatus = (variable: RoutineVariable): "same" | "differs" | "only-here" => {
+  const variableСтатус = (variable: ПроцедураVariable): "same" | "differs" | "only-here" => {
     if (!currentRevision) return "same";
-    const other = otherVariableByName.get(variable.name);
+    const other = otherVariableByИмя.get(variable.name);
     if (!other) return "only-here";
     return JSON.stringify(other) === JSON.stringify(variable) ? "same" : "differs";
   };
 
   return (
-    <div className="space-y-4">
-      <header className={`${cardWrapper} p-4 space-y-2`}>
-        <div className="space-y-1 min-w-0">
-          <p className="text-sm font-medium">rev {revision.revisionNumber}</p>
-          <p className="text-xs text-muted-foreground truncate">
-            Saved {relativeTime(revision.createdAt)} by {getActorLabel(revision)}
+    <div classИмя="space-y-4">
+      <header classИмя={`${cardWrapper} p-4 space-y-2`}>
+        <div classИмя="space-y-1 min-w-0">
+          <p classИмя="text-sm font-medium">rev {revision.revisionNumber}</p>
+          <p classИмя="text-xs text-muted-foreground truncate">
+            Сохранитьd {relativeTime(revision.createdAt)} by {getActorLabel(revision)}
             {revision.changeSummary ? ` · ${revision.changeSummary}` : ""}
           </p>
         </div>
       </header>
 
-      <div className={`${cardWrapper} p-3`}>
-        <p className="pb-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <div classИмя={`${cardWrapper} p-3`}>
+        <p classИмя="pb-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
           Structured fields
         </p>
-        <div className="grid gap-3 divide-y divide-border">
+        <div classИмя="grid gap-3 divide-y divide-border">
           {fieldRows.map((row) => (
-            <div key={row.key} className="space-y-1 p-2">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{row.label}</p>
-              <p className="text-sm">
-                {row.value || <span className="text-muted-foreground">—</span>}
+            <div key={row.key} classИмя="space-y-1 p-2">
+              <p classИмя="text-[11px] uppercase tracking-wide text-muted-foreground">{row.label}</p>
+              <p classИмя="text-sm">
+                {row.value || <span classИмя="text-muted-foreground">—</span>}
                 {row.differs && <DiffPill kind="differs" />}
               </p>
             </div>
@@ -654,44 +654,44 @@ function RevisionPreview({
         </div>
       </div>
 
-      <div className={`${cardWrapper} p-3 space-y-2`}>
-        <div className="flex items-center gap-2">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Description
+      <div classИмя={`${cardWrapper} p-3 space-y-2`}>
+        <div classИмя="flex items-center gap-2">
+          <p classИмя="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Описание
           </p>
           {descriptionDiffers && <DiffPill kind="differs" />}
         </div>
-        <div className="rounded-md bg-background/40 p-3 text-sm leading-7">
+        <div classИмя="rounded-md bg-background/40 p-3 text-sm leading-7">
           {snapshot.description ? (
             <MarkdownBody>{snapshot.description}</MarkdownBody>
           ) : (
-            <span className="text-muted-foreground">No description</span>
+            <span classИмя="text-muted-foreground">Нет описания</span>
           )}
         </div>
       </div>
 
-      <div className={`${cardWrapper} p-3 space-y-2`}>
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Triggers ({triggers.length})
+      <div classИмя={`${cardWrapper} p-3 space-y-2`}>
+        <p classИмя="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Триггеры ({triggers.length})
         </p>
         {triggers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No triggers in this revision.</p>
+          <p classИмя="text-sm text-muted-foreground">Нет triggers in this revision.</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul classИмя="divide-y divide-border">
             {triggers.map((trigger) => {
-              const status = triggerStatus(trigger);
+              const status = triggerСтатус(trigger);
               return (
-                <li key={trigger.id} className="py-2 flex flex-wrap items-center gap-2 text-sm">
-                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                <li key={trigger.id} classИмя="py-2 flex flex-wrap items-center gap-2 text-sm">
+                  <span classИмя="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                     {trigger.kind}
                   </span>
-                  <span className="font-medium">{trigger.label ?? trigger.kind}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span classИмя="font-medium">{trigger.label ?? trigger.kind}</span>
+                  <span classИмя="text-xs text-muted-foreground">
                     {summarizeTriggerSnapshot(trigger)}
                   </span>
                   {status !== "same" && <DiffPill kind={status} />}
                   <span
-                    className={`ml-auto text-xs ${trigger.enabled ? "text-emerald-400" : "text-muted-foreground"}`}
+                    classИмя={`ml-auto text-xs ${trigger.enabled ? "text-emerald-400" : "text-muted-foreground"}`}
                   >
                     {trigger.enabled ? "enabled" : "disabled"}
                   </span>
@@ -700,25 +700,25 @@ function RevisionPreview({
             })}
           </ul>
         )}
-        <p className="text-xs text-muted-foreground">
+        <p classИмя="text-xs text-muted-foreground">
           Webhook secrets are not stored in revisions. If a restored webhook trigger needs re-creation,
           Paperclip mints fresh secret material at restore time.
         </p>
       </div>
 
       {snapshot.variables.length > 0 && (
-        <div className={`${cardWrapper} p-3 space-y-2`}>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <div classИмя={`${cardWrapper} p-3 space-y-2`}>
+          <p classИмя="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Variables ({snapshot.variables.length})
           </p>
-          <ul className="divide-y divide-border">
+          <ul classИмя="divide-y divide-border">
             {snapshot.variables.map((variable) => {
-              const status = variableStatus(variable);
+              const status = variableСтатус(variable);
               return (
-                <li key={variable.name} className="py-2 flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-mono text-xs">{variable.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    default: {formatVariableDefault(variable)}
+                <li key={variable.name} classИмя="py-2 flex flex-wrap items-center gap-2 text-sm">
+                  <span classИмя="font-mono text-xs">{variable.name}</span>
+                  <span classИмя="text-xs text-muted-foreground">
+                    default: {formatVariableПо умолчанию(variable)}
                   </span>
                   {status !== "same" && <DiffPill kind={status} />}
                 </li>
@@ -731,58 +731,58 @@ function RevisionPreview({
   );
 }
 
-function RestoreConfirmDialog({
+function RestoreПодтвердитьDialog({
   open,
   onOpenChange,
   target,
   currentRevisionNumber,
   changeSummary,
   onChangeSummaryChange,
-  onConfirm,
+  onПодтвердить,
   pending,
-  recreatedWebhookLabels,
+  recreatedWebhookЯрлыки,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  target: RoutineRevision;
+  target: ПроцедураRevision;
   currentRevisionNumber: number;
   changeSummary: string;
   onChangeSummaryChange: (value: string) => void;
-  onConfirm: () => void;
+  onПодтвердить: () => void;
   pending: boolean;
-  recreatedWebhookLabels: string[];
+  recreatedWebhookЯрлыки: string[];
 }) {
   const newRevisionNumber = currentRevisionNumber + 1;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent classИмя="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Restore revision {target.revisionNumber}?</DialogTitle>
-          <DialogDescription>
+          <DialogНазвание>Restore revision {target.revisionNumber}?</DialogНазвание>
+          <DialogОписание>
             This creates a new revision {newRevisionNumber} with the same content as revision{" "}
             {target.revisionNumber}. Revisions {target.revisionNumber}–{currentRevisionNumber} stay
             in history and are not modified.
-          </DialogDescription>
+          </DialogОписание>
         </DialogHeader>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2">
-            <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Routine field values, variables, and schedule cron will revert.
+        <ul classИмя="space-y-2 text-sm">
+          <li classИмя="flex items-start gap-2">
+            <span classИмя="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Процедура field values, variables, and schedule cron will revert.
           </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <li classИмя="flex items-start gap-2">
+            <span classИмя="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
             Previous run history is preserved.
           </li>
-          {recreatedWebhookLabels.map((label) => (
-            <li key={label} className="flex items-start gap-2 text-amber-200">
-              <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
+          {recreatedWebhookЯрлыки.map((label) => (
+            <li key={label} classИмя="flex items-start gap-2 text-amber-200">
+              <span classИмя="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
               The webhook trigger {label} will be recreated with a new URL and secret. Paperclip will
               show the secret once after restore — copy it before closing.
             </li>
           ))}
         </ul>
-        <div className="space-y-1.5">
-          <Label htmlFor="restore-change-summary" className="text-xs">
+        <div classИмя="space-y-1.5">
+          <Label htmlFor="restore-change-summary" classИмя="text-xs">
             Change summary (optional)
           </Label>
           <Input
@@ -794,10 +794,10 @@ function RestoreConfirmDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-            Cancel
+            Отмена
           </Button>
-          <Button onClick={onConfirm} disabled={pending}>
-            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+          <Button onClick={onПодтвердить} disabled={pending}>
+            <RotateCcw classИмя="mr-1.5 h-3.5 w-3.5" />
             {pending ? "Restoring…" : `Restore as revision ${newRevisionNumber}`}
           </Button>
         </DialogFooter>
@@ -807,23 +807,23 @@ function RestoreConfirmDialog({
 }
 
 
-function getActorLabel(revision: RoutineRevision): string {
+function getActorLabel(revision: ПроцедураRevision): string {
   if (revision.createdByUserId) return "board";
-  if (revision.createdByAgentId) return "agent";
+  if (revision.createdByАгентId) return "agent";
   return "system";
 }
 
-function resolveAgentName(agentId: string | null, lookup: AgentLookup) {
-  if (!agentId) return "Unassigned";
+function resolveАгентИмя(agentId: string | null, lookup: АгентLookup) {
+  if (!agentId) return "Не назначен";
   return lookup.get(agentId)?.name ?? agentId;
 }
 
-function resolveProjectName(projectId: string | null, lookup: ProjectLookup) {
-  if (!projectId) return "No project";
+function resolveProjectИмя(projectId: string | null, lookup: ProjectLookup) {
+  if (!projectId) return "Нет project";
   return lookup.get(projectId)?.name ?? projectId;
 }
 
-function summarizeTriggerSnapshot(trigger: RoutineRevisionSnapshotTriggerV1): string {
+function summarizeTriggerSnapshot(trigger: ПроцедураRevisionSnapshotTriggerV1): string {
   if (trigger.kind === "schedule") {
     return [trigger.cronExpression, trigger.timezone].filter(Boolean).join(" · ");
   }
@@ -834,9 +834,9 @@ function summarizeTriggerSnapshot(trigger: RoutineRevisionSnapshotTriggerV1): st
   return "API";
 }
 
-function formatVariableDefault(variable: RoutineVariable): string {
-  if (variable.defaultValue == null) return "—";
-  return String(variable.defaultValue);
+function formatVariableПо умолчанию(variable: ПроцедураVariable): string {
+  if (variable.defaultЗначение == null) return "—";
+  return String(variable.defaultЗначение);
 }
 
 function formatDirtyFieldList(labels: string[]): string {
@@ -847,8 +847,8 @@ function formatDirtyFieldList(labels: string[]): string {
 }
 
 function collectWebhookTriggerDifferences(
-  target: RoutineRevision,
-  current: RoutineRevision,
+  target: ПроцедураRevision,
+  current: ПроцедураRevision,
 ): string[] {
   const currentIds = new Set(current.snapshot.triggers.map((t) => t.id));
   return target.snapshot.triggers
@@ -857,10 +857,10 @@ function collectWebhookTriggerDifferences(
 }
 
 
-export function isUpdateConflictError(error: unknown): error is ApiError {
-  return error instanceof ApiError && error.status === 409;
+export function isОбновитьConflictОшибка(error: unknown): error is ApiОшибка {
+  return error instanceof ApiОшибка && error.status === 409;
 }
 
-export type RoutineHistoryDirtyFieldDescriptor = DirtyFieldDescriptor;
-export type RoutineHistoryAgentLookup = AgentLookup;
-export type RoutineHistoryProjectLookup = ProjectLookup;
+export type ПроцедураИсторияDirtyFieldDescriptor = DirtyFieldDescriptor;
+export type ПроцедураИсторияАгентLookup = АгентLookup;
+export type ПроцедураИсторияProjectLookup = ProjectLookup;

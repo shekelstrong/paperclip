@@ -1,4 +1,4 @@
-import type { KeyboardEvent, ReactNode } from "react";
+import type { КлючboardEvent, ReactНетde } from "react";
 import { useMemo, useRef, useState } from "react";
 import { cn } from "../lib/utils";
 import {
@@ -6,21 +6,21 @@ import {
   ChevronRight,
   FileCode2,
   FileText,
-  Folder,
-  FolderOpen,
+  Папка,
+  ПапкаOpen,
 } from "lucide-react";
-import { statusBadge, statusBadgeDefault } from "../lib/status-colors";
+import { statusBadge, statusBadgeПо умолчанию } from "../lib/status-colors";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
 // -- Tree types --------------------------------------------------------------
 
-export type FileTreeNode = {
+export type FileTreeНетde = {
   name: string;
   path: string;
   kind: "dir" | "file";
-  children: FileTreeNode[];
-  /** Optional per-node metadata (e.g. import action) */
+  children: FileTreeНетde[];
+  /** Опционально per-node metadata (e.g. import action) */
   action?: string | null;
 };
 
@@ -39,13 +39,13 @@ export type FileTreeEmptyState = {
   description?: string;
 };
 
-export type FileTreeErrorState = {
+export type FileTreeОшибкаState = {
   message: string;
   retry?: () => void;
 };
 
-type VisibleFileTreeNode = {
-  node: FileTreeNode;
+type VisibleFileTreeНетde = {
+  node: FileTreeНетde;
   depth: number;
 };
 
@@ -65,25 +65,25 @@ const fileTreeToneClass: Record<FileTreeTone, string | undefined> = {
 export function buildFileTree(
   files: Record<string, unknown>,
   actionMap?: Map<string, string>,
-): FileTreeNode[] {
-  const root: FileTreeNode = { name: "", path: "", kind: "dir", children: [] };
+): FileTreeНетde[] {
+  const root: FileTreeНетde = { name: "", path: "", kind: "dir", children: [] };
 
-  for (const filePath of Object.keys(files)) {
-    const segments = filePath.split("/").filter(Boolean);
+  for (const fileПуть of Object.keys(files)) {
+    const segments = fileПуть.split("/").filter(Boolean);
     let current = root;
-    let currentPath = "";
+    let currentПуть = "";
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
-      currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+      currentПуть = currentПуть ? `${currentПуть}/${segment}` : segment;
       const isLeaf = i === segments.length - 1;
       let next = current.children.find((c) => c.name === segment);
       if (!next) {
         next = {
           name: segment,
-          path: currentPath,
+          path: currentПуть,
           kind: isLeaf ? "file" : "dir",
           children: [],
-          action: isLeaf ? (actionMap?.get(filePath) ?? null) : null,
+          action: isLeaf ? (actionMap?.get(fileПуть) ?? null) : null,
         };
         current.children.push(next);
       }
@@ -91,36 +91,36 @@ export function buildFileTree(
     }
   }
 
-  function sortNode(node: FileTreeNode) {
+  function sortНетde(node: FileTreeНетde) {
     node.children.sort((a, b) => {
-      // Files before directories so PROJECT.md appears above tasks/
+      // Файлы before directories so PROJECT.md appears above tasks/
       if (a.kind !== b.kind) return a.kind === "file" ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
-    node.children.forEach(sortNode);
+    node.children.forEach(sortНетde);
   }
 
-  sortNode(root);
+  sortНетde(root);
   return root.children;
 }
 
-export function countFiles(nodes: FileTreeNode[]): number {
+export function countФайлы(nodes: FileTreeНетde[]): number {
   let count = 0;
   for (const node of nodes) {
     if (node.kind === "file") count++;
-    else count += countFiles(node.children);
+    else count += countФайлы(node.children);
   }
   return count;
 }
 
-export function collectAllPaths(
-  nodes: FileTreeNode[],
+export function collectВсеПутьs(
+  nodes: FileTreeНетde[],
   type: "file" | "dir" | "all" = "all",
 ): Set<string> {
   const paths = new Set<string>();
   for (const node of nodes) {
     if (type === "all" || node.kind === type) paths.add(node.path);
-    for (const p of collectAllPaths(node.children, type)) paths.add(p);
+    for (const p of collectВсеПутьs(node.children, type)) paths.add(p);
   }
   return paths;
 }
@@ -130,33 +130,33 @@ function fileIcon(name: string) {
   return FileText;
 }
 
-function flattenVisibleNodes(
-  nodes: FileTreeNode[],
+function flattenVisibleНетdes(
+  nodes: FileTreeНетde[],
   expandedDirs: Set<string>,
   depth = 0,
-): VisibleFileTreeNode[] {
-  const flattened: VisibleFileTreeNode[] = [];
+): VisibleFileTreeНетde[] {
+  const flattened: VisibleFileTreeНетde[] = [];
   for (const node of nodes) {
     flattened.push({ node, depth });
     if (node.kind === "dir" && expandedDirs.has(node.path)) {
-      flattened.push(...flattenVisibleNodes(node.children, expandedDirs, depth + 1));
+      flattened.push(...flattenVisibleНетdes(node.children, expandedDirs, depth + 1));
     }
   }
   return flattened;
 }
 
-function checkboxState(node: FileTreeNode, checkedFiles: Set<string>) {
+function checkboxState(node: FileTreeНетde, checkedФайлы: Set<string>) {
   if (node.kind === "file") {
     return {
-      allChecked: checkedFiles.has(node.path),
+      allChecked: checkedФайлы.has(node.path),
       someChecked: false,
     };
   }
 
-  const childFiles = collectAllPaths(node.children, "file");
-  const childFilePaths = [...childFiles];
-  const allChecked = childFilePaths.length > 0 && childFilePaths.every((p) => checkedFiles.has(p));
-  const someChecked = childFilePaths.some((p) => checkedFiles.has(p));
+  const childФайлы = collectВсеПутьs(node.children, "file");
+  const childFileПутьs = [...childФайлы];
+  const allChecked = childFileПутьs.length > 0 && childFileПутьs.every((p) => checkedФайлы.has(p));
+  const someChecked = childFileПутьs.some((p) => checkedФайлы.has(p));
   return { allChecked, someChecked: someChecked && !allChecked };
 }
 
@@ -172,23 +172,23 @@ export function parseFrontmatter(content: string): { data: FrontmatterData; body
   const rawYaml = match[1];
   const body = match[2];
 
-  let currentKey: string | null = null;
+  let currentКлюч: string | null = null;
   let currentList: string[] | null = null;
 
   for (const line of rawYaml.split("\n")) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
 
-    if (trimmed.startsWith("- ") && currentKey) {
+    if (trimmed.startsWith("- ") && currentКлюч) {
       if (!currentList) currentList = [];
       currentList.push(trimmed.slice(2).trim().replace(/^["']|["']$/g, ""));
       continue;
     }
 
-    if (currentKey && currentList) {
-      data[currentKey] = currentList;
+    if (currentКлюч && currentList) {
+      data[currentКлюч] = currentList;
       currentList = null;
-      currentKey = null;
+      currentКлюч = null;
     }
 
     const kvMatch = trimmed.match(/^([a-zA-Z_][\w-]*)\s*:\s*(.*)$/);
@@ -196,63 +196,63 @@ export function parseFrontmatter(content: string): { data: FrontmatterData; body
       const key = kvMatch[1];
       const val = kvMatch[2].trim().replace(/^["']|["']$/g, "");
       if (val === "null") {
-        currentKey = null;
+        currentКлюч = null;
         continue;
       }
       if (val) {
         data[key] = val;
-        currentKey = null;
+        currentКлюч = null;
       } else {
-        currentKey = key;
+        currentКлюч = key;
       }
     }
   }
 
-  if (currentKey && currentList) {
-    data[currentKey] = currentList;
+  if (currentКлюч && currentList) {
+    data[currentКлюч] = currentList;
   }
 
   return Object.keys(data).length > 0 ? { data, body } : null;
 }
 
 export const FRONTMATTER_FIELD_LABELS: Record<string, string> = {
-  name: "Name",
-  title: "Title",
+  name: "Имя",
+  title: "Название",
   kind: "Kind",
-  reportsTo: "Reports to",
-  skills: "Skills",
-  status: "Status",
-  description: "Description",
-  priority: "Priority",
-  assignee: "Assignee",
+  reportsTo: "Репозиторийrts to",
+  skills: "Навыки",
+  status: "Статус",
+  description: "Описание",
+  priority: "Приоритет",
+  assignee: "Исполнитель",
   project: "Project",
   recurring: "Recurring",
-  targetDate: "Target date",
+  targetDate: "Дата цели",
 };
 
 // -- File tree component -----------------------------------------------------
 
 export type FileTreeProps = {
-  nodes: FileTreeNode[];
+  nodes: FileTreeНетde[];
   selectedFile: string | null;
   expandedDirs: Set<string>;
-  checkedFiles?: Set<string>;
+  checkedФайлы?: Set<string>;
   onToggleDir: (path: string) => void;
   onSelectFile: (path: string) => void;
   onToggleCheck?: (path: string, kind: "file" | "dir") => void;
   /** Serializable badge metadata keyed by path. This is safe to expose through plugin UI contracts. */
   fileBadges?: Record<string, FileTreeBadge | undefined>;
-  /** Closed row tone metadata keyed by path. This avoids raw host class names in public contracts. */
+  /** Закрытьd row tone metadata keyed by path. This avoids raw host class names in public contracts. */
   fileTones?: Record<string, FileTreeTone | undefined>;
   /** Internal-only escape hatch for current host call sites that need richer row content. */
-  renderFileExtra?: (node: FileTreeNode, checked: boolean) => ReactNode;
+  renderFileExtra?: (node: FileTreeНетde, checked: boolean) => ReactНетde;
   /** @deprecated Use fileTones for public surfaces. Kept for compatibility with host-only callers. */
-  fileRowClassName?: (node: FileTreeNode, checked: boolean) => string | undefined;
+  fileRowClassИмя?: (node: FileTreeНетde, checked: boolean) => string | undefined;
   showCheckboxes?: boolean;
-  /** Allow long file and directory names to wrap instead of forcing horizontal overflow. */
-  wrapLabels?: boolean;
+  /** Всеow long file and directory names to wrap instead of forcing horizontal overflow. */
+  wrapЯрлыки?: boolean;
   loading?: boolean;
-  error?: FileTreeErrorState | null;
+  error?: FileTreeОшибкаState | null;
   empty?: FileTreeEmptyState;
   ariaLabel?: string;
 };
@@ -261,74 +261,74 @@ export function FileTree({
   nodes,
   selectedFile,
   expandedDirs,
-  checkedFiles,
+  checkedФайлы,
   onToggleDir,
   onSelectFile,
   onToggleCheck,
   fileBadges,
   fileTones,
   renderFileExtra,
-  fileRowClassName,
+  fileRowClassИмя,
   showCheckboxes = true,
-  wrapLabels = true,
+  wrapЯрлыки = true,
   loading = false,
   error,
   empty,
-  ariaLabel = "Files",
+  ariaLabel = "Файлы",
 }: FileTreeProps) {
-  const effectiveCheckedFiles = checkedFiles ?? new Set<string>();
-  const visibleNodes = useMemo(
-    () => flattenVisibleNodes(nodes, expandedDirs),
+  const effectiveCheckedФайлы = checkedФайлы ?? new Set<string>();
+  const visibleНетdes = useMemo(
+    () => flattenVisibleНетdes(nodes, expandedDirs),
     [expandedDirs, nodes],
   );
-  const [focusedPath, setFocusedPath] = useState<string | null>(null);
+  const [focusedПуть, setFocusedПуть] = useState<string | null>(null);
   const rowRefs = useRef(new Map<string, HTMLDivElement>());
 
-  function focusPath(path: string) {
-    setFocusedPath(path);
+  function focusПуть(path: string) {
+    setFocusedПуть(path);
     window.requestAnimationFrame(() => {
       rowRefs.current.get(path)?.focus();
     });
   }
 
-  function toggleNode(node: FileTreeNode) {
+  function toggleНетde(node: FileTreeНетde) {
     if (node.kind === "dir") onToggleDir(node.path);
     else onSelectFile(node.path);
   }
 
-  function handleRowKeyDown(event: KeyboardEvent<HTMLDivElement>, index: number, node: FileTreeNode) {
+  function handleRowКлючDown(event: КлючboardEvent<HTMLDivElement>, index: number, node: FileTreeНетde) {
     switch (event.key) {
       case "ArrowDown": {
-        event.preventDefault();
-        const next = visibleNodes[Math.min(index + 1, visibleNodes.length - 1)];
-        if (next) focusPath(next.node.path);
+        event.preventПо умолчанию();
+        const next = visibleНетdes[Math.min(index + 1, visibleНетdes.length - 1)];
+        if (next) focusПуть(next.node.path);
         break;
       }
       case "ArrowUp": {
-        event.preventDefault();
-        const previous = visibleNodes[Math.max(index - 1, 0)];
-        if (previous) focusPath(previous.node.path);
+        event.preventПо умолчанию();
+        const previous = visibleНетdes[Math.max(index - 1, 0)];
+        if (previous) focusПуть(previous.node.path);
         break;
       }
       case "ArrowRight":
         if (node.kind === "dir" && !expandedDirs.has(node.path)) {
-          event.preventDefault();
+          event.preventПо умолчанию();
           onToggleDir(node.path);
         }
         break;
       case "ArrowLeft":
         if (node.kind === "dir" && expandedDirs.has(node.path)) {
-          event.preventDefault();
+          event.preventПо умолчанию();
           onToggleDir(node.path);
         }
         break;
       case "Enter":
-        event.preventDefault();
-        toggleNode(node);
+        event.preventПо умолчанию();
+        toggleНетde(node);
         break;
       case " ":
         if (showCheckboxes && onToggleCheck) {
-          event.preventDefault();
+          event.preventПо умолчанию();
           onToggleCheck(node.path, node.kind);
         }
         break;
@@ -337,11 +337,11 @@ export function FileTree({
 
   if (loading) {
     return (
-      <div aria-busy="true" aria-label={ariaLabel} role="tree" className="py-1">
+      <div aria-busy="true" aria-label={ariaLabel} role="tree" classИмя="py-1">
         {[0, 1, 2, 3].map((row) => (
-          <div key={row} className={cn("flex items-center gap-2 px-4", TREE_ROW_HEIGHT_CLASS)}>
-            <Skeleton className="h-4 w-4 shrink-0 rounded-sm" />
-            <Skeleton className={cn("h-3.5", row === 1 ? "w-3/5" : "w-4/5")} />
+          <div key={row} classИмя={cn("flex items-center gap-2 px-4", TREE_ROW_HEIGHT_CLASS)}>
+            <Skeleton classИмя="h-4 w-4 shrink-0 rounded-sm" />
+            <Skeleton classИмя={cn("h-3.5", row === 1 ? "w-3/5" : "w-4/5")} />
           </div>
         ))}
       </div>
@@ -350,26 +350,26 @@ export function FileTree({
 
   if (error) {
     return (
-      <div aria-label={ariaLabel} role="tree" className="p-3">
+      <div aria-label={ariaLabel} role="tree" classИмя="p-3">
         <div
           role="treeitem"
           aria-level={1}
-          className="flex min-h-9 items-center justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
+          classИмя="flex min-h-9 items-center justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
         >
-          <div className="flex min-w-0 items-center gap-2">
+          <div classИмя="flex min-w-0 items-center gap-2">
             <span
-              className={cn(
+              classИмя={cn(
                 "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap",
-                statusBadge.error ?? statusBadgeDefault,
+                statusBadge.error ?? statusBadgeПо умолчанию,
               )}
             >
               error
             </span>
-            <span className="min-w-0 text-destructive">{error.message}</span>
+            <span classИмя="min-w-0 text-destructive">{error.message}</span>
           </div>
           {error.retry && (
             <Button type="button" size="xs" variant="outline" onClick={error.retry}>
-              Retry
+              Повторить
             </Button>
           )}
         </div>
@@ -379,11 +379,11 @@ export function FileTree({
 
   if (nodes.length === 0) {
     return (
-      <div aria-label={ariaLabel} role="tree" className="p-3">
-        <div className="rounded-md border border-dashed border-border px-4 py-8 text-center">
-          <div className="text-sm font-medium">{empty?.title ?? "No files"}</div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            {empty?.description ?? "Files will appear here when they are available."}
+      <div aria-label={ariaLabel} role="tree" classИмя="p-3">
+        <div classИмя="rounded-md border border-dashed border-border px-4 py-8 text-center">
+          <div classИмя="text-sm font-medium">{empty?.title ?? "Нет files"}</div>
+          <div classИмя="mt-1 text-xs text-muted-foreground">
+            {empty?.description ?? "Файлы will appear here when they are available."}
           </div>
         </div>
       </div>
@@ -392,12 +392,12 @@ export function FileTree({
 
   return (
     <div aria-label={ariaLabel} role="tree">
-      {visibleNodes.map(({ node, depth }, index) => {
+      {visibleНетdes.map(({ node, depth }, index) => {
         const expanded = node.kind === "dir" && expandedDirs.has(node.path);
-        const { allChecked, someChecked } = checkboxState(node, effectiveCheckedFiles);
+        const { allChecked, someChecked } = checkboxState(node, effectiveCheckedФайлы);
         const badge = fileBadges?.[node.path];
         const tone = fileTones?.[node.path] ?? "default";
-        const extraClassName = node.kind === "file" ? fileRowClassName?.(node, allChecked) : undefined;
+        const extraClassИмя = node.kind === "file" ? fileRowClassИмя?.(node, allChecked) : undefined;
         const FileIcon = node.kind === "file" ? fileIcon(node.name) : null;
         const isSelected = node.kind === "file" && node.path === selectedFile;
 
@@ -413,8 +413,8 @@ export function FileTree({
             aria-expanded={node.kind === "dir" ? expanded : undefined}
             aria-selected={node.kind === "file" ? isSelected : undefined}
             aria-checked={showCheckboxes ? (someChecked ? "mixed" : allChecked) : undefined}
-            tabIndex={(focusedPath ?? visibleNodes[0]?.node.path) === node.path ? 0 : -1}
-            className={cn(
+            tabIndex={(focusedПуть ?? visibleНетdes[0]?.node.path) === node.path ? 0 : -1}
+            classИмя={cn(
               node.kind === "dir"
                 ? showCheckboxes
                   ? "group grid w-full grid-cols-[auto_minmax(0,1fr)_2.25rem] items-center gap-x-1 pr-3 text-left text-sm text-muted-foreground hover:bg-accent/30 hover:text-foreground"
@@ -423,19 +423,19 @@ export function FileTree({
               TREE_ROW_HEIGHT_CLASS,
               isSelected && "text-foreground bg-accent/20",
               fileTreeToneClass[tone],
-              extraClassName,
+              extraClassИмя,
               "outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset",
             )}
             style={{
-              paddingInlineStart: `${TREE_BASE_INDENT + depth * TREE_STEP_INDENT - 8}px`,
+              paddingInlineНачать: `${TREE_BASE_INDENT + depth * TREE_STEP_INDENT - 8}px`,
             }}
-            onFocus={() => setFocusedPath(node.path)}
-            onClick={() => toggleNode(node)}
-            onKeyDown={(event) => handleRowKeyDown(event, index, node)}
+            onFocus={() => setFocusedПуть(node.path)}
+            onClick={() => toggleНетde(node)}
+            onКлючDown={(event) => handleRowКлючDown(event, index, node)}
             data-file-tree-path={node.path}
           >
             {showCheckboxes && (
-              <label className="flex items-center pl-2" onClick={(event) => event.stopPropagation()}>
+              <label classИмя="flex items-center pl-2" onClick={(event) => event.stopPropagation()}>
                 <input
                   type="checkbox"
                   checked={allChecked}
@@ -443,31 +443,31 @@ export function FileTree({
                     if (element) element.indeterminate = someChecked;
                   }}
                   onChange={() => onToggleCheck?.(node.path, node.kind)}
-                  className="mr-2 accent-foreground"
+                  classИмя="mr-2 accent-foreground"
                 />
               </label>
             )}
-            <span className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+            <span classИмя="flex min-w-0 flex-1 items-center gap-2 py-1 text-left">
+              <span classИмя="flex h-4 w-4 shrink-0 items-center justify-center">
                 {node.kind === "dir" ? (
                   expanded ? (
-                    <FolderOpen className="h-3.5 w-3.5" />
+                    <ПапкаOpen classИмя="h-3.5 w-3.5" />
                   ) : (
-                    <Folder className="h-3.5 w-3.5" />
+                    <Папка classИмя="h-3.5 w-3.5" />
                   )
                 ) : FileIcon ? (
-                  <FileIcon className="h-3.5 w-3.5" />
+                  <FileIcon classИмя="h-3.5 w-3.5" />
                 ) : null}
               </span>
-              <span className={cn("min-w-0", wrapLabels ? "break-all leading-4" : "truncate")}>
+              <span classИмя={cn("min-w-0", wrapЯрлыки ? "break-all leading-4" : "truncate")}>
                 {node.name}
               </span>
             </span>
             {badge && (
               <span
-                className={cn(
+                classИмя={cn(
                   "ml-3 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-                  statusBadge[badge.status] ?? statusBadgeDefault,
+                  statusBadge[badge.status] ?? statusBadgeПо умолчанию,
                 )}
                 title={badge.tooltip}
               >
@@ -478,7 +478,7 @@ export function FileTree({
             {node.kind === "dir" && (
               <button
                 type="button"
-                className="flex h-9 w-9 items-center justify-center self-center rounded-sm text-muted-foreground opacity-70 transition-[background-color,color,opacity] hover:bg-accent hover:text-foreground group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring/50 max-[480px]:hidden"
+                classИмя="flex h-9 w-9 items-center justify-center self-center rounded-sm text-muted-foreground opacity-70 transition-[background-color,color,opacity] hover:bg-accent hover:text-foreground group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring/50 max-[480px]:hidden"
                 onClick={(event) => {
                   event.stopPropagation();
                   onToggleDir(node.path);
@@ -486,9 +486,9 @@ export function FileTree({
                 aria-label={expanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
               >
                 {expanded ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
+                  <ChevronDown classИмя="h-3.5 w-3.5" />
                 ) : (
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight classИмя="h-3.5 w-3.5" />
                 )}
               </button>
             )}

@@ -1,16 +1,16 @@
-export interface ReusableExecutionWorkspaceLike {
+export interface ReusableExecutionРабочая областьLike {
   id: string;
   name: string;
   cwd: string | null;
   lastUsedAt: Date | string;
 }
 
-function workspaceLastUsedTime(workspace: Pick<ReusableExecutionWorkspaceLike, "lastUsedAt">) {
+function workspaceLastUsedTime(workspace: Pick<ReusableExecutionРабочая областьLike, "lastUsedAt">) {
   const time = new Date(workspace.lastUsedAt).getTime();
   return Number.isFinite(time) ? time : 0;
 }
 
-function compareWorkspaceNames(a: ReusableExecutionWorkspaceLike, b: ReusableExecutionWorkspaceLike) {
+function compareРабочая областьИмяs(a: ReusableExecutionРабочая областьLike, b: ReusableExecutionРабочая областьLike) {
   const nameCompare = a.name.localeCompare(b.name, undefined, {
     numeric: true,
     sensitivity: "base",
@@ -19,20 +19,20 @@ function compareWorkspaceNames(a: ReusableExecutionWorkspaceLike, b: ReusableExe
   return a.id.localeCompare(b.id);
 }
 
-export function orderReusableExecutionWorkspaces<T extends ReusableExecutionWorkspaceLike>(
+export function orderReusableExecutionРабочие области<T extends ReusableExecutionРабочая областьLike>(
   workspaces: readonly T[],
 ): T[] {
-  const deduplicatedByPath = new Map<string, T>();
+  const deduplicatedByПуть = new Map<string, T>();
 
   for (const workspace of workspaces) {
     const key = workspace.cwd ?? workspace.id;
-    const existing = deduplicatedByPath.get(key);
+    const existing = deduplicatedByПуть.get(key);
     if (!existing || workspaceLastUsedTime(workspace) > workspaceLastUsedTime(existing)) {
-      deduplicatedByPath.set(key, workspace);
+      deduplicatedByПуть.set(key, workspace);
     }
   }
 
-  const alphabetized = Array.from(deduplicatedByPath.values()).sort(compareWorkspaceNames);
+  const alphabetized = Array.from(deduplicatedByПуть.values()).sort(compareРабочая областьИмяs);
   if (alphabetized.length <= 1) return alphabetized;
 
   let mostRecentlyUsed = alphabetized[0]!;

@@ -1,33 +1,33 @@
 import type {
-  ExecutionWorkspace,
-  ExecutionWorkspaceSummary,
-  ExecutionWorkspaceCloseReadiness,
-  WorkspaceOperation,
-  WorkspaceRuntimeControlTarget,
+  ExecutionРабочая область,
+  ExecutionРабочая областьSummary,
+  ExecutionРабочая областьЗакрытьReadiness,
+  Рабочая областьOperation,
+  Рабочая областьЗапуститьtimeControlЦель,
 } from "@paperclipai/shared";
 import { api } from "./client";
-import { sanitizeWorkspaceRuntimeControlTarget } from "./workspace-runtime-control";
+import { sanitizeРабочая областьЗапуститьtimeControlЦель } from "./workspace-runtime-control";
 
-export const executionWorkspacesApi = {
+export const executionРабочие областиApi = {
   listSummaries: (
     companyId: string,
     filters?: {
       projectId?: string;
-      projectWorkspaceId?: string;
+      projectРабочая областьId?: string;
       issueId?: string;
       status?: string;
       reuseEligible?: boolean;
     },
   ) => {
-    const params = new URLSearchParams();
+    const params = new URLПоискParams();
     if (filters?.projectId) params.set("projectId", filters.projectId);
-    if (filters?.projectWorkspaceId) params.set("projectWorkspaceId", filters.projectWorkspaceId);
+    if (filters?.projectРабочая областьId) params.set("projectРабочая областьId", filters.projectРабочая областьId);
     if (filters?.issueId) params.set("issueId", filters.issueId);
     if (filters?.status) params.set("status", filters.status);
     if (filters?.reuseEligible) params.set("reuseEligible", "true");
     params.set("summary", "true");
     const qs = params.toString();
-    return api.get<ExecutionWorkspaceSummary[]>(
+    return api.get<ExecutionРабочая областьSummary[]>(
       `/companies/${companyId}/execution-workspaces${qs ? `?${qs}` : ""}`,
     );
   },
@@ -35,43 +35,43 @@ export const executionWorkspacesApi = {
     companyId: string,
     filters?: {
       projectId?: string;
-      projectWorkspaceId?: string;
+      projectРабочая областьId?: string;
       issueId?: string;
       status?: string;
       reuseEligible?: boolean;
     },
   ) => {
-    const params = new URLSearchParams();
+    const params = new URLПоискParams();
     if (filters?.projectId) params.set("projectId", filters.projectId);
-    if (filters?.projectWorkspaceId) params.set("projectWorkspaceId", filters.projectWorkspaceId);
+    if (filters?.projectРабочая областьId) params.set("projectРабочая областьId", filters.projectРабочая областьId);
     if (filters?.issueId) params.set("issueId", filters.issueId);
     if (filters?.status) params.set("status", filters.status);
     if (filters?.reuseEligible) params.set("reuseEligible", "true");
     const qs = params.toString();
-    return api.get<ExecutionWorkspace[]>(`/companies/${companyId}/execution-workspaces${qs ? `?${qs}` : ""}`);
+    return api.get<ExecutionРабочая область[]>(`/companies/${companyId}/execution-workspaces${qs ? `?${qs}` : ""}`);
   },
-  get: (id: string) => api.get<ExecutionWorkspace>(`/execution-workspaces/${id}`),
-  getCloseReadiness: (id: string) =>
-    api.get<ExecutionWorkspaceCloseReadiness>(`/execution-workspaces/${id}/close-readiness`),
-  listWorkspaceOperations: (id: string) =>
-    api.get<WorkspaceOperation[]>(`/execution-workspaces/${id}/workspace-operations`),
-  controlRuntimeServices: (
+  get: (id: string) => api.get<ExecutionРабочая область>(`/execution-workspaces/${id}`),
+  getЗакрытьReadiness: (id: string) =>
+    api.get<ExecutionРабочая областьЗакрытьReadiness>(`/execution-workspaces/${id}/close-readiness`),
+  listРабочая областьOperations: (id: string) =>
+    api.get<Рабочая областьOperation[]>(`/execution-workspaces/${id}/workspace-operations`),
+  controlЗапуститьtimeServices: (
     id: string,
     action: "start" | "stop" | "restart",
-    target: WorkspaceRuntimeControlTarget = {},
+    target: Рабочая областьЗапуститьtimeControlЦель = {},
   ) =>
-    api.post<{ workspace: ExecutionWorkspace; operation: WorkspaceOperation }>(
+    api.post<{ workspace: ExecutionРабочая область; operation: Рабочая областьOperation }>(
       `/execution-workspaces/${id}/runtime-services/${action}`,
-      sanitizeWorkspaceRuntimeControlTarget(target),
+      sanitizeРабочая областьЗапуститьtimeControlЦель(target),
     ),
-  controlRuntimeCommands: (
+  controlЗапуститьtimeКоманды: (
     id: string,
     action: "start" | "stop" | "restart" | "run",
-    target: WorkspaceRuntimeControlTarget = {},
+    target: Рабочая областьЗапуститьtimeControlЦель = {},
   ) =>
-    api.post<{ workspace: ExecutionWorkspace; operation: WorkspaceOperation }>(
+    api.post<{ workspace: ExecutionРабочая область; operation: Рабочая областьOperation }>(
       `/execution-workspaces/${id}/runtime-commands/${action}`,
-      sanitizeWorkspaceRuntimeControlTarget(target),
+      sanitizeРабочая областьЗапуститьtimeControlЦель(target),
     ),
-  update: (id: string, data: Record<string, unknown>) => api.patch<ExecutionWorkspace>(`/execution-workspaces/${id}`, data),
+  update: (id: string, data: Record<string, unknown>) => api.patch<ExecutionРабочая область>(`/execution-workspaces/${id}`, data),
 };

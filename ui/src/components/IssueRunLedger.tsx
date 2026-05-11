@@ -1,52 +1,52 @@
-import { useMemo, useState, type ReactNode } from "react";
-import type { ActivityEvent, Issue, Agent } from "@paperclipai/shared";
+import { useMemo, useState, type ReactНетde } from "react";
+import type { АктивностьEvent, Задача, Агент } from "@paperclipai/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/lib/router";
-import { accessApi, type CurrentBoardAccess } from "../api/access";
-import { activityApi, type RunForIssue, type RunLivenessState } from "../api/activity";
-import { ApiError } from "../api/client";
+import { accessApi, type CurrentСоветДоступ } from "../api/access";
+import { activityApi, type ЗапуститьForЗадача, type ЗапуститьLivenessState } from "../api/activity";
+import { ApiОшибка } from "../api/client";
 import {
   heartbeatsApi,
-  type ActiveRunForIssue,
-  type LiveRunForIssue,
+  type АктивенЗапуститьForЗадача,
+  type LiveЗапуститьForЗадача,
   type WatchdogDecisionInput,
 } from "../api/heartbeats";
 import { useToastActions } from "../context/ToastContext";
 import { cn, relativeTime } from "../lib/utils";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import { keepPreviousDataForSameQueryTail } from "../lib/query-placeholder-data";
-import { describeRunRetryState } from "../lib/runRetryState";
+import { describeЗапуститьПовторитьState } from "../lib/runПовторитьState";
 
-type IssueRunLedgerProps = {
+type ЗадачаЗапуститьLedgerProps = {
   issueId: string;
   companyId: string;
-  issueStatus: Issue["status"];
-  childIssues: Issue[];
-  agentMap: ReadonlyMap<string, Agent>;
-  hasLiveRuns: boolean;
-  activityEvents?: ActivityEvent[];
-  renderActivityEvent?: (event: ActivityEvent) => ReactNode;
+  issueСтатус: Задача["status"];
+  childЗадачи: Задача[];
+  agentMap: ReadonlyMap<string, Агент>;
+  hasLiveЗапуститьs: boolean;
+  activityEvents?: АктивностьEvent[];
+  renderАктивностьEvent?: (event: АктивностьEvent) => ReactНетde;
 };
 
-type IssueRunLedgerContentProps = {
-  runs: RunForIssue[];
-  liveRuns?: LiveRunForIssue[];
-  activeRun?: ActiveRunForIssue | null;
-  issueStatus: Issue["status"];
-  childIssues: Issue[];
-  agentMap: ReadonlyMap<string, Pick<Agent, "name">>;
-  activityEvents?: ActivityEvent[];
-  renderActivityEvent?: (event: ActivityEvent) => ReactNode;
+type ЗадачаЗапуститьLedgerContentProps = {
+  runs: ЗапуститьForЗадача[];
+  liveЗапуститьs?: LiveЗапуститьForЗадача[];
+  activeЗапустить?: АктивенЗапуститьForЗадача | null;
+  issueСтатус: Задача["status"];
+  childЗадачи: Задача[];
+  agentMap: ReadonlyMap<string, Pick<Агент, "name">>;
+  activityEvents?: АктивностьEvent[];
+  renderАктивностьEvent?: (event: АктивностьEvent) => ReactНетde;
   pendingWatchdogDecision?: WatchdogDecisionInput["decision"] | null;
   canRecordWatchdogDecisions?: boolean;
-  watchdogDecisionError?: string | null;
+  watchdogDecisionОшибка?: string | null;
   onWatchdogDecision?: (input: WatchdogDecisionInput) => void;
 };
 
-type LedgerRun = RunForIssue & {
+type LedgerЗапустить = ЗапуститьForЗадача & {
   isLive?: boolean;
-  agentName?: string;
-  outputSilence?: ActiveRunForIssue["outputSilence"];
+  agentИмя?: string;
+  outputSilence?: АктивенЗапуститьForЗадача["outputSilence"];
 };
 
 type LedgerFeedItem =
@@ -54,88 +54,88 @@ type LedgerFeedItem =
       kind: "run";
       id: string;
       timestamp: string;
-      run: LedgerRun;
+      run: LedgerЗапустить;
     }
   | {
       kind: "activity";
       id: string;
       timestamp: string;
-      event: ActivityEvent;
+      event: АктивностьEvent;
     };
 
-type LivenessCopy = {
+type LivenessКопировать = {
   label: string;
   tone: string;
   description: string;
 };
 
-const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
+const LIVENESS_COPY: Record<ЗапуститьLivenessState, LivenessКопировать> = {
   completed: {
-    label: "Completed",
+    label: "Завершён",
     tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    description: "Issue reached a terminal state.",
+    description: "Задача reached a terminal state.",
   },
   advanced: {
-    label: "Advanced",
+    label: "Дополнительно",
     tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
-    description: "Run produced concrete evidence of progress.",
+    description: "Запустить produced concrete evidence of progress.",
   },
   plan_only: {
     label: "Plan only",
     tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-    description: "Run described future work without concrete action evidence.",
+    description: "Запустить described future work without concrete action evidence.",
   },
   empty_response: {
     label: "Empty response",
     tone: "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300",
-    description: "Run finished without useful output.",
+    description: "Запустить finished without useful output.",
   },
   blocked: {
-    label: "Blocked",
+    label: "Заблокирован",
     tone: "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
-    description: "Run or issue declared a blocker.",
+    description: "Запустить or issue declared a blocker.",
   },
   failed: {
-    label: "Failed",
+    label: "Ошибка",
     tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
-    description: "Run ended unsuccessfully.",
+    description: "Запустить ended unsuccessfully.",
   },
   needs_followup: {
     label: "Needs follow-up",
     tone: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
-    description: "Run produced useful output but did not prove concrete progress.",
+    description: "Запустить produced useful output but did not prove concrete progress.",
   },
 };
 
-const PENDING_LIVENESS_COPY: LivenessCopy = {
+const PENDING_LIVENESS_COPY: LivenessКопировать = {
   label: "Checks after finish",
   tone: "border-border bg-background text-muted-foreground",
   description: "Liveness is evaluated after the run finishes.",
 };
 
-const RETRY_PENDING_LIVENESS_COPY: LivenessCopy = {
-  label: "Retry pending",
+const RETRY_PENDING_LIVENESS_COPY: LivenessКопировать = {
+  label: "Повторить pending",
   tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
   description: "Paperclip queued an automatic retry that has not started yet.",
 };
 
-const MISSING_LIVENESS_COPY: LivenessCopy = {
-  label: "No liveness data",
+const MISSING_LIVENESS_COPY: LivenessКопировать = {
+  label: "Нет liveness data",
   tone: "border-border bg-background text-muted-foreground",
   description: "This run has no persisted liveness classification.",
 };
 
-const TERMINAL_CHILD_STATUSES = new Set<Issue["status"]>(["done", "cancelled"]);
+const TERMINAL_CHILD_STATUSES = new Set<Задача["status"]>(["done", "cancelled"]);
 const ACTIVE_RUN_STATUSES = new Set(["queued", "running"]);
 
-type RunOutputSilenceLevel = NonNullable<ActiveRunForIssue["outputSilence"]>["level"];
+type ЗапуститьOutputSilenceLevel = НетnNullable<АктивенЗапуститьForЗадача["outputSilence"]>["level"];
 
-type RunOutputSilenceCopy = {
+type ЗапуститьOutputSilenceКопировать = {
   label: string;
   tone: string;
 };
 
-const RUN_OUTPUT_SILENCE_COPY: Partial<Record<RunOutputSilenceLevel, RunOutputSilenceCopy>> = {
+const RUN_OUTPUT_SILENCE_COPY: Partial<Record<ЗапуститьOutputSilenceLevel, ЗапуститьOutputSilenceКопировать>> = {
   suspicious: {
     label: "Silence watch",
     tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
@@ -159,16 +159,16 @@ function readString(value: unknown) {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
-interface ModelProfileSummary {
+interface МодельПрофильSummary {
   requested: string;
   applied: string | null;
   configSource: string | null;
   fallbackReason: string | null;
 }
 
-function modelProfileForRun(run: RunForIssue): ModelProfileSummary | null {
+function modelПрофильForЗапустить(run: ЗапуститьForЗадача): МодельПрофильSummary | null {
   const result = asRecord(run.resultJson);
-  const profile = asRecord(result?.modelProfile);
+  const profile = asRecord(result?.modelПрофиль);
   if (!profile) return null;
   const requested = readString(profile.requested);
   if (!requested) return null;
@@ -180,7 +180,7 @@ function modelProfileForRun(run: RunForIssue): ModelProfileSummary | null {
   };
 }
 
-function modelProfileBadgeTone(summary: ModelProfileSummary) {
+function modelПрофильBadgeTone(summary: МодельПрофильSummary) {
   if (summary.applied === summary.requested) {
     return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
   }
@@ -190,7 +190,7 @@ function modelProfileBadgeTone(summary: ModelProfileSummary) {
   return "border-border bg-background text-muted-foreground";
 }
 
-function modelProfileTitle(summary: ModelProfileSummary) {
+function modelПрофильНазвание(summary: МодельПрофильSummary) {
   const lines = [`Requested: ${summary.requested}`];
   if (summary.applied) lines.push(`Applied: ${summary.applied}`);
   if (summary.configSource) lines.push(`Source: ${summary.configSource}`);
@@ -222,13 +222,13 @@ function toIsoString(value: string | Date | null | undefined) {
   return value instanceof Date ? value.toISOString() : value;
 }
 
-function liveRunToLedgerRun(run: LiveRunForIssue | ActiveRunForIssue): LedgerRun {
+function liveЗапуститьToLedgerЗапустить(run: LiveЗапуститьForЗадача | АктивенЗапуститьForЗадача): LedgerЗапустить {
   return {
     runId: run.id,
     status: run.status,
     agentId: run.agentId,
-    agentName: run.agentName,
-    adapterType: run.adapterType,
+    agentИмя: run.agentИмя,
+    adapterТип: run.adapterТип,
     startedAt: toIsoString(run.startedAt),
     finishedAt: toIsoString(run.finishedAt),
     createdAt: toIsoString(run.createdAt) ?? new Date().toISOString(),
@@ -240,33 +240,33 @@ function liveRunToLedgerRun(run: LiveRunForIssue | ActiveRunForIssue): LedgerRun
   };
 }
 
-function mergeRuns(
-  runs: RunForIssue[],
-  liveRuns: LiveRunForIssue[] | undefined,
-  activeRun: ActiveRunForIssue | null | undefined,
+function mergeЗапуститьs(
+  runs: ЗапуститьForЗадача[],
+  liveЗапуститьs: LiveЗапуститьForЗадача[] | undefined,
+  activeЗапустить: АктивенЗапуститьForЗадача | null | undefined,
 ) {
-  const byId = new Map<string, LedgerRun>();
+  const byId = new Map<string, LedgerЗапустить>();
   for (const run of runs) byId.set(run.runId, run);
-  for (const run of liveRuns ?? []) {
+  for (const run of liveЗапуститьs ?? []) {
     const existing = byId.get(run.id);
     byId.set(
       run.id,
       existing
-        ? { ...existing, isLive: true, agentName: run.agentName, outputSilence: run.outputSilence }
-        : liveRunToLedgerRun(run),
+        ? { ...existing, isLive: true, agentИмя: run.agentИмя, outputSilence: run.outputSilence }
+        : liveЗапуститьToLedgerЗапустить(run),
     );
   }
-  if (activeRun) {
-    const existing = byId.get(activeRun.id);
+  if (activeЗапустить) {
+    const existing = byId.get(activeЗапустить.id);
     if (existing) {
-      byId.set(activeRun.id, {
+      byId.set(activeЗапустить.id, {
         ...existing,
-        isLive: isActiveRun(existing) || isActiveRun(activeRun),
-        agentName: activeRun.agentName,
-        outputSilence: activeRun.outputSilence,
+        isLive: isАктивенЗапустить(existing) || isАктивенЗапустить(activeЗапустить),
+        agentИмя: activeЗапустить.agentИмя,
+        outputSilence: activeЗапустить.outputSilence,
       });
     } else {
-      byId.set(activeRun.id, liveRunToLedgerRun(activeRun));
+      byId.set(activeЗапустить.id, liveЗапуститьToLedgerЗапустить(activeЗапустить));
     }
   }
 
@@ -282,25 +282,25 @@ function statusLabel(status: string) {
   return status.replace(/_/g, " ");
 }
 
-function isActiveRun(run: Pick<LedgerRun, "status" | "isLive">) {
+function isАктивенЗапустить(run: Pick<LedgerЗапустить, "status" | "isLive">) {
   return run.isLive || ACTIVE_RUN_STATUSES.has(run.status);
 }
 
-function runSummary(run: LedgerRun, agentMap: ReadonlyMap<string, Pick<Agent, "name">>) {
-  const agentName = compactAgentName(run, agentMap);
-  if (run.status === "running") return `Running now by ${agentName}`;
-  if (run.status === "queued") return `Queued for ${agentName}`;
-  if (run.status === "scheduled_retry") return `Automatic retry scheduled for ${agentName}`;
-  return `${statusLabel(run.status)} by ${agentName}`;
+function runSummary(run: LedgerЗапустить, agentMap: ReadonlyMap<string, Pick<Агент, "name">>) {
+  const agentИмя = compactАгентИмя(run, agentMap);
+  if (run.status === "running") return `Выполняется now by ${agentИмя}`;
+  if (run.status === "queued") return `Queued for ${agentИмя}`;
+  if (run.status === "scheduled_retry") return `Автоmatic retry scheduled for ${agentИмя}`;
+  return `${statusLabel(run.status)} by ${agentИмя}`;
 }
 
-function livenessCopyForRun(run: LedgerRun) {
+function livenessКопироватьForЗапустить(run: LedgerЗапустить) {
   if (run.status === "scheduled_retry") return RETRY_PENDING_LIVENESS_COPY;
   if (run.livenessState) return LIVENESS_COPY[run.livenessState];
-  return isActiveRun(run) ? PENDING_LIVENESS_COPY : MISSING_LIVENESS_COPY;
+  return isАктивенЗапустить(run) ? PENDING_LIVENESS_COPY : MISSING_LIVENESS_COPY;
 }
 
-function stopReasonLabel(run: RunForIssue) {
+function stopReasonLabel(run: ЗапуститьForЗадача) {
   const result = asRecord(run.resultJson);
   const stopReason = readString(result?.stopReason);
   const timeoutFired = result?.timeoutFired === true;
@@ -321,45 +321,45 @@ function stopReasonLabel(run: RunForIssue) {
   return timeoutText;
 }
 
-function stopStatusLabel(run: LedgerRun, stopReason: string | null) {
+function stopСтатусLabel(run: LedgerЗапустить, stopReason: string | null) {
   if (stopReason) return stopReason;
-  if (run.status === "scheduled_retry") return "Retry pending";
+  if (run.status === "scheduled_retry") return "Повторить pending";
   if (run.status === "queued") return "Waiting to start";
   if (run.status === "running") return "Still running";
   if (!run.livenessState) return "Unavailable";
-  return "No stop reason";
+  return "Нет stop reason";
 }
 
-function lastUsefulActionLabel(run: LedgerRun) {
+function lastUsefulActionLabel(run: LedgerЗапустить) {
   if (run.status === "scheduled_retry") return "Waiting for next attempt";
   if (run.lastUsefulActionAt) return relativeTime(run.lastUsefulActionAt);
-  if (isActiveRun(run)) return "No action recorded yet";
+  if (isАктивенЗапустить(run)) return "Нет action recorded yet";
   if (run.livenessState === "plan_only" || run.livenessState === "needs_followup") {
-    return "No concrete action";
+    return "Нет concrete action";
   }
-  if (run.livenessState === "empty_response") return "No useful output";
+  if (run.livenessState === "empty_response") return "Нет useful output";
   if (!run.livenessState) return "Unavailable";
-  return "None recorded";
+  return "Не записано";
 }
 
-function continuationLabel(run: LedgerRun) {
+function continuationLabel(run: LedgerЗапустить) {
   if (!run.continuationAttempt || run.continuationAttempt <= 0) return null;
   return `Continuation attempt ${run.continuationAttempt}`;
 }
 
-function hasExhaustedContinuation(run: RunForIssue) {
+function hasExhaustedContinuation(run: ЗапуститьForЗадача) {
   return /continuation attempts exhausted/i.test(run.livenessReason ?? "");
 }
 
-function childIssueSummary(childIssues: Issue[]) {
-  const active = childIssues.filter((issue) => !TERMINAL_CHILD_STATUSES.has(issue.status));
-  const done = childIssues.filter((issue) => issue.status === "done").length;
-  const cancelled = childIssues.filter((issue) => issue.status === "cancelled").length;
-  return { active, done, cancelled, total: childIssues.length };
+function childЗадачаSummary(childЗадачи: Задача[]) {
+  const active = childЗадачи.filter((issue) => !TERMINAL_CHILD_STATUSES.has(issue.status));
+  const done = childЗадачи.filter((issue) => issue.status === "done").length;
+  const cancelled = childЗадачи.filter((issue) => issue.status === "cancelled").length;
+  return { active, done, cancelled, total: childЗадачи.length };
 }
 
-function compactAgentName(run: LedgerRun, agentMap: ReadonlyMap<string, Pick<Agent, "name">>) {
-  return run.agentName ?? agentMap.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
+function compactАгентИмя(run: LedgerЗапустить, agentMap: ReadonlyMap<string, Pick<Агент, "name">>) {
+  return run.agentИмя ?? agentMap.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
 }
 
 function formatSilenceAge(ms: number | null | undefined) {
@@ -373,137 +373,137 @@ function formatSilenceAge(ms: number | null | undefined) {
   return `${hours}h ${minutes}m`;
 }
 
-function canBoardRecordWatchdogDecision(
+function canСоветRecordWatchdogDecision(
   companyId: string,
-  boardAccess: CurrentBoardAccess | undefined,
+  boardДоступ: CurrentСоветДоступ | undefined,
 ) {
-  if (!boardAccess) return false;
-  if (boardAccess.source === "local_implicit" || boardAccess.isInstanceAdmin) return true;
+  if (!boardДоступ) return false;
+  if (boardДоступ.source === "local_implicit" || boardДоступ.isInstanceAdmin) return true;
 
-  const membership = boardAccess.memberships?.find(
+  const membership = boardДоступ.memberships?.find(
     (item) => item.companyId === companyId && item.status === "active",
   );
-  if (!membership) return boardAccess.companyIds.includes(companyId) && !boardAccess.memberships;
+  if (!membership) return boardДоступ.companyIds.includes(companyId) && !boardДоступ.memberships;
   return membership.membershipRole !== "viewer" && membership.membershipRole !== null;
 }
 
-function watchdogDecisionErrorMessage(error: unknown) {
-  if (error instanceof ApiError && error.status === 403) {
+function watchdogDecisionОшибкаMessage(error: unknown) {
+  if (error instanceof ApiОшибка && error.status === 403) {
     return "Only the board or the assigned recovery owner can record watchdog decisions";
   }
-  return error instanceof Error && error.message.trim().length > 0
+  return error instanceof Ошибка && error.message.trim().length > 0
     ? error.message
     : "Paperclip could not record the watchdog decision.";
 }
 
-export function IssueRunLedger({
+export function ЗадачаЗапуститьLedger({
   issueId,
   companyId,
-  issueStatus,
-  childIssues,
+  issueСтатус,
+  childЗадачи,
   agentMap,
-  hasLiveRuns,
+  hasLiveЗапуститьs,
   activityEvents,
-  renderActivityEvent,
-}: IssueRunLedgerProps) {
+  renderАктивностьEvent,
+}: ЗадачаЗапуститьLedgerProps) {
   const queryClient = useQueryClient();
   const { pushToast } = useToastActions();
-  const [watchdogDecisionError, setWatchdogDecisionError] = useState<string | null>(null);
-  const { data: boardAccess } = useQuery({
-    queryKey: queryKeys.access.currentBoardAccess,
-    queryFn: () => accessApi.getCurrentBoardAccess(),
+  const [watchdogDecisionОшибка, setWatchdogDecisionОшибка] = useState<string | null>(null);
+  const { data: boardДоступ } = useQuery({
+    queryКлюч: queryКлючs.access.currentСоветДоступ,
+    queryFn: () => accessApi.getCurrentСоветДоступ(),
     retry: false,
   });
   const { data: runs } = useQuery({
-    queryKey: queryKeys.issues.runs(issueId),
-    queryFn: () => activityApi.runsForIssue(issueId),
-    refetchInterval: hasLiveRuns || issueStatus === "in_progress" ? 5000 : false,
-    placeholderData: keepPreviousDataForSameQueryTail<RunForIssue[]>(issueId),
+    queryКлюч: queryКлючs.issues.runs(issueId),
+    queryFn: () => activityApi.runsForЗадача(issueId),
+    refetchInterval: hasLiveЗапуститьs || issueСтатус === "in_progress" ? 5000 : false,
+    placeholderData: keepPreviousDataForSameQueryTail<ЗапуститьForЗадача[]>(issueId),
   });
-  const { data: liveRuns } = useQuery({
-    queryKey: queryKeys.issues.liveRuns(issueId),
-    queryFn: () => heartbeatsApi.liveRunsForIssue(issueId),
-    enabled: hasLiveRuns,
+  const { data: liveЗапуститьs } = useQuery({
+    queryКлюч: queryКлючs.issues.liveЗапуститьs(issueId),
+    queryFn: () => heartbeatsApi.liveЗапуститьsForЗадача(issueId),
+    enabled: hasLiveЗапуститьs,
     refetchInterval: 3000,
-    placeholderData: keepPreviousDataForSameQueryTail<LiveRunForIssue[]>(issueId),
+    placeholderData: keepPreviousDataForSameQueryTail<LiveЗапуститьForЗадача[]>(issueId),
   });
-  const { data: activeRun = null } = useQuery({
-    queryKey: queryKeys.issues.activeRun(issueId),
-    queryFn: () => heartbeatsApi.activeRunForIssue(issueId),
-    enabled: hasLiveRuns || issueStatus === "in_progress",
-    refetchInterval: hasLiveRuns ? false : 3000,
-    placeholderData: keepPreviousDataForSameQueryTail<ActiveRunForIssue | null>(issueId),
+  const { data: activeЗапустить = null } = useQuery({
+    queryКлюч: queryКлючs.issues.activeЗапустить(issueId),
+    queryFn: () => heartbeatsApi.activeЗапуститьForЗадача(issueId),
+    enabled: hasLiveЗапуститьs || issueСтатус === "in_progress",
+    refetchInterval: hasLiveЗапуститьs ? false : 3000,
+    placeholderData: keepPreviousDataForSameQueryTail<АктивенЗапуститьForЗадача | null>(issueId),
   });
   const watchdogDecision = useMutation({
     mutationFn: (input: WatchdogDecisionInput) => heartbeatsApi.recordWatchdogDecision(input),
     onMutate: () => {
-      setWatchdogDecisionError(null);
+      setWatchdogDecisionОшибка(null);
     },
-    onSuccess: () => {
-      setWatchdogDecisionError(null);
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.activeRun(issueId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.liveRuns(issueId) });
+    onУспешно: () => {
+      setWatchdogDecisionОшибка(null);
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.activeЗапустить(issueId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.liveЗапуститьs(issueId) });
     },
-    onError: (error) => {
-      const message = watchdogDecisionErrorMessage(error);
-      const dedupeSuffix = error instanceof ApiError ? String(error.status) : "error";
-      setWatchdogDecisionError(message);
+    onОшибка: (error) => {
+      const message = watchdogDecisionОшибкаMessage(error);
+      const dedupeSuffix = error instanceof ApiОшибка ? String(error.status) : "error";
+      setWatchdogDecisionОшибка(message);
       pushToast({
         title: "Watchdog decision not recorded",
         body: message,
         tone: "error",
-        dedupeKey: `watchdog-decision:${issueId}:${dedupeSuffix}`,
+        dedupeКлюч: `watchdog-decision:${issueId}:${dedupeSuffix}`,
       });
     },
   });
 
   return (
-    <IssueRunLedgerContent
+    <ЗадачаЗапуститьLedgerContent
       runs={runs ?? []}
-      liveRuns={liveRuns}
-      activeRun={activeRun}
-      issueStatus={issueStatus}
-      childIssues={childIssues}
+      liveЗапуститьs={liveЗапуститьs}
+      activeЗапустить={activeЗапустить}
+      issueСтатус={issueСтатус}
+      childЗадачи={childЗадачи}
       agentMap={agentMap}
       activityEvents={activityEvents}
-      renderActivityEvent={renderActivityEvent}
+      renderАктивностьEvent={renderАктивностьEvent}
       pendingWatchdogDecision={watchdogDecision.variables?.decision ?? null}
-      canRecordWatchdogDecisions={canBoardRecordWatchdogDecision(companyId, boardAccess)}
-      watchdogDecisionError={watchdogDecisionError}
+      canRecordWatchdogDecisions={canСоветRecordWatchdogDecision(companyId, boardДоступ)}
+      watchdogDecisionОшибка={watchdogDecisionОшибка}
       onWatchdogDecision={(input) => watchdogDecision.mutate(input)}
     />
   );
 }
 
-export function IssueRunLedgerContent({
+export function ЗадачаЗапуститьLedgerContent({
   runs,
-  liveRuns,
-  activeRun,
-  issueStatus,
-  childIssues,
+  liveЗапуститьs,
+  activeЗапустить,
+  issueСтатус,
+  childЗадачи,
   agentMap,
   activityEvents,
-  renderActivityEvent,
+  renderАктивностьEvent,
   pendingWatchdogDecision,
   canRecordWatchdogDecisions = true,
-  watchdogDecisionError,
+  watchdogDecisionОшибка,
   onWatchdogDecision,
-}: IssueRunLedgerContentProps) {
-  const ledgerRuns = useMemo(() => mergeRuns(runs, liveRuns, activeRun), [activeRun, liveRuns, runs]);
-  const latestRun = ledgerRuns[0] ?? null;
-  const latestSilentRun = useMemo(
+}: ЗадачаЗапуститьLedgerContentProps) {
+  const ledgerЗапуститьs = useMemo(() => mergeЗапуститьs(runs, liveЗапуститьs, activeЗапустить), [activeЗапустить, liveЗапуститьs, runs]);
+  const latestЗапустить = ledgerЗапуститьs[0] ?? null;
+  const latestSilentЗапустить = useMemo(
     () =>
-      ledgerRuns.find((run) =>
-        isActiveRun(run)
+      ledgerЗапуститьs.find((run) =>
+        isАктивенЗапустить(run)
         && (run.outputSilence?.level === "critical" || run.outputSilence?.level === "suspicious"),
       ) ?? null,
-    [ledgerRuns],
+    [ledgerЗапуститьs],
   );
-  const children = childIssueSummary(childIssues);
-  const canRenderActivityEvents = Boolean(renderActivityEvent);
+  const children = childЗадачаSummary(childЗадачи);
+  const canRenderАктивностьEvents = Boolean(renderАктивностьEvent);
   const feedItems = useMemo<LedgerFeedItem[]>(() => {
     const items: LedgerFeedItem[] = [];
-    for (const run of ledgerRuns) {
+    for (const run of ledgerЗапуститьs) {
       items.push({
         kind: "run",
         id: run.runId,
@@ -511,7 +511,7 @@ export function IssueRunLedgerContent({
         run,
       });
     }
-    if (canRenderActivityEvents) {
+    if (canRenderАктивностьEvents) {
       for (const event of activityEvents ?? []) {
         items.push({
           kind: "activity",
@@ -530,25 +530,25 @@ export function IssueRunLedgerContent({
       if (a.kind !== b.kind) return a.kind === "run" ? -1 : 1;
       return b.id.localeCompare(a.id);
     });
-  }, [activityEvents, canRenderActivityEvents, ledgerRuns]);
+  }, [activityEvents, canRenderАктивностьEvents, ledgerЗапуститьs]);
 
   return (
-    <section className="space-y-3" aria-label="Issue run ledger">
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="text-sm font-medium text-muted-foreground">Run ledger</h3>
-          <p className="text-xs text-muted-foreground">
-            {latestRun
-              ? runSummary(latestRun, agentMap)
-              : issueStatus === "in_progress"
+    <section classИмя="space-y-3" aria-label="Задача run ledger">
+      <div classИмя="flex items-center justify-between gap-2">
+        <div classИмя="min-w-0">
+          <h3 classИмя="text-sm font-medium text-muted-foreground">Запустить ledger</h3>
+          <p classИмя="text-xs text-muted-foreground">
+            {latestЗапустить
+              ? runSummary(latestЗапустить, agentMap)
+              : issueСтатус === "in_progress"
                 ? "Waiting for the first run record."
-                : "No runs linked yet."}
+                : "Нет runs linked yet."}
           </p>
         </div>
-        {latestRun ? (
+        {latestЗапустить ? (
           <Link
-            to={`/agents/${latestRun.agentId}/runs/${latestRun.runId}`}
-            className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+            to={`/agents/${latestЗапустить.agentId}/runs/${latestЗапустить.runId}`}
+            classИмя="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
           >
             Latest run
           </Link>
@@ -556,30 +556,30 @@ export function IssueRunLedgerContent({
       </div>
 
       {children.total > 0 ? (
-        <div className="rounded-md border border-border/70 px-3 py-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="font-medium text-foreground">Child work</span>
-            <span className="text-muted-foreground">
+        <div classИмя="rounded-md border border-border/70 px-3 py-2">
+          <div classИмя="flex flex-wrap items-center gap-2 text-xs">
+            <span classИмя="font-medium text-foreground">Child work</span>
+            <span classИмя="text-muted-foreground">
               {children.active.length > 0
                 ? `${children.active.length} active, ${children.done} done, ${children.cancelled} cancelled`
                 : `all ${children.total} terminal (${children.done} done, ${children.cancelled} cancelled)`}
             </span>
           </div>
           {children.active.length > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div classИмя="mt-2 flex flex-wrap gap-1.5">
               {children.active.slice(0, 4).map((child) => (
                 <Link
                   key={child.id}
                   to={`/issues/${child.identifier ?? child.id}`}
-                  className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] hover:bg-accent/40"
+                  classИмя="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] hover:bg-accent/40"
                 >
-                  <span className="shrink-0 font-mono text-muted-foreground">{child.identifier ?? child.id.slice(0, 8)}</span>
-                  <span className="truncate">{child.title}</span>
-                  <span className="shrink-0 text-muted-foreground">{statusLabel(child.status)}</span>
+                  <span classИмя="shrink-0 font-mono text-muted-foreground">{child.identifier ?? child.id.slice(0, 8)}</span>
+                  <span classИмя="truncate">{child.title}</span>
+                  <span classИмя="shrink-0 text-muted-foreground">{statusLabel(child.status)}</span>
                 </Link>
               ))}
               {children.active.length > 4 ? (
-                <span className="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground">
+                <span classИмя="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground">
                   +{children.active.length - 4} more
                 </span>
               ) : null}
@@ -588,60 +588,60 @@ export function IssueRunLedgerContent({
         </div>
       ) : null}
 
-      {latestSilentRun?.outputSilence ? (
+      {latestSilentЗапустить?.outputSilence ? (
         <div
-          className={cn(
+          classИмя={cn(
             "rounded-md border px-3 py-2 text-xs",
-            latestSilentRun.outputSilence.level === "critical"
+            latestSilentЗапустить.outputSilence.level === "critical"
               ? "border-red-500/30 bg-red-500/10 text-red-900 dark:text-red-200"
               : "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200",
           )}
         >
-          <p className="font-medium">
-            {latestSilentRun.outputSilence.level === "critical"
+          <p classИмя="font-medium">
+            {latestSilentЗапустить.outputSilence.level === "critical"
               ? "Stale-run watchdog alert"
               : "Output silence watchdog warning"}
           </p>
-          <p className="mt-1">
+          <p classИмя="mt-1">
             Latest active run has been silent for{" "}
-            {formatSilenceAge(latestSilentRun.outputSilence.silenceAgeMs) ?? "an extended period"}.
-            {latestSilentRun.outputSilence.evaluationIssueIdentifier ? (
+            {formatSilenceAge(latestSilentЗапустить.outputSilence.silenceAgeMs) ?? "an extended period"}.
+            {latestSilentЗапустить.outputSilence.evaluationЗадачаIdentifier ? (
               <>
                 {" "}
                 Review{" "}
                 <Link
-                  to={`/issues/${latestSilentRun.outputSilence.evaluationIssueIdentifier}`}
-                  className="font-medium underline underline-offset-2"
+                  to={`/issues/${latestSilentЗапустить.outputSilence.evaluationЗадачаIdentifier}`}
+                  classИмя="font-medium underline underline-offset-2"
                 >
-                  {latestSilentRun.outputSilence.evaluationIssueIdentifier}
+                  {latestSilentЗапустить.outputSilence.evaluationЗадачаIdentifier}
                 </Link>
                 {" "}for recovery context.
               </>
             ) : null}
           </p>
           {onWatchdogDecision && canRecordWatchdogDecisions ? (
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div classИмя="mt-2 flex flex-wrap gap-1.5">
               <button
                 type="button"
-                className="rounded-md border border-border bg-background/80 px-2 py-1 text-[11px] text-foreground hover:bg-background"
+                classИмя="rounded-md border border-border bg-background/80 px-2 py-1 text-[11px] text-foreground hover:bg-background"
                 onClick={() =>
                   onWatchdogDecision({
-                    runId: latestSilentRun.runId,
+                    runId: latestSilentЗапустить.runId,
                     decision: "continue",
-                    evaluationIssueId: latestSilentRun.outputSilence?.evaluationIssueId ?? null,
+                    evaluationЗадачаId: latestSilentЗапустить.outputSilence?.evaluationЗадачаId ?? null,
                   })}
                 disabled={pendingWatchdogDecision != null}
               >
-                Continue monitoring
+                Продолжить monitoring
               </button>
               <button
                 type="button"
-                className="rounded-md border border-border bg-background/80 px-2 py-1 text-[11px] text-foreground hover:bg-background"
+                classИмя="rounded-md border border-border bg-background/80 px-2 py-1 text-[11px] text-foreground hover:bg-background"
                 onClick={() =>
                   onWatchdogDecision({
-                    runId: latestSilentRun.runId,
+                    runId: latestSilentЗапустить.runId,
                     decision: "snooze",
-                    evaluationIssueId: latestSilentRun.outputSilence?.evaluationIssueId ?? null,
+                    evaluationЗадачаId: latestSilentЗапустить.outputSilence?.evaluationЗадачаId ?? null,
                     snoozedUntil: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
                     reason: "Snoozed from issue run ledger",
                   })}
@@ -651,13 +651,13 @@ export function IssueRunLedgerContent({
               </button>
               <button
                 type="button"
-                className="rounded-md border border-border bg-background/80 px-2 py-1 text-[11px] text-foreground hover:bg-background"
+                classИмя="rounded-md border border-border bg-background/80 px-2 py-1 text-[11px] text-foreground hover:bg-background"
                 onClick={() =>
                   onWatchdogDecision({
-                    runId: latestSilentRun.runId,
+                    runId: latestSilentЗапустить.runId,
                     decision: "dismissed_false_positive",
-                    evaluationIssueId: latestSilentRun.outputSilence?.evaluationIssueId ?? null,
-                    reason: "Dismissed from issue run ledger",
+                    evaluationЗадачаId: latestSilentЗапустить.outputSilence?.evaluationЗадачаId ?? null,
+                    reason: "Закрытьed from issue run ledger",
                   })}
                 disabled={pendingWatchdogDecision != null}
               >
@@ -665,59 +665,59 @@ export function IssueRunLedgerContent({
               </button>
             </div>
           ) : null}
-          {watchdogDecisionError ? (
-            <p className="mt-2 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1 text-[11px] text-red-900 dark:text-red-200">
-              {watchdogDecisionError}
+          {watchdogDecisionОшибка ? (
+            <p classИмя="mt-2 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1 text-[11px] text-red-900 dark:text-red-200">
+              {watchdogDecisionОшибка}
             </p>
           ) : null}
         </div>
       ) : null}
 
       {feedItems.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border px-3 py-3 text-sm text-muted-foreground">
-          {renderActivityEvent
-            ? "Runs and activity will appear here once this issue has history."
+        <div classИмя="rounded-md border border-dashed border-border px-3 py-3 text-sm text-muted-foreground">
+          {renderАктивностьEvent
+            ? "Запуститьs and activity will appear here once this issue has history."
             : "Historical runs without liveness metadata will appear here once linked to this issue."}
         </div>
       ) : (
-        <div className="space-y-1.5">
+        <div classИмя="space-y-1.5">
           {feedItems.slice(0, 20).map((item) => {
             if (item.kind === "activity") {
-              return <div key={`activity:${item.id}`}>{renderActivityEvent?.(item.event)}</div>;
+              return <div key={`activity:${item.id}`}>{renderАктивностьEvent?.(item.event)}</div>;
             }
             const run = item.run;
-            const liveness = livenessCopyForRun(run);
+            const liveness = livenessКопироватьForЗапустить(run);
             const stopReason = stopReasonLabel(run);
             const duration = formatDuration(run.startedAt, run.finishedAt);
             const exhausted = hasExhaustedContinuation(run);
             const continuation = continuationLabel(run);
-            const retryState = describeRunRetryState(run);
-            const agentName = compactAgentName(run, agentMap);
+            const retryState = describeЗапуститьПовторитьState(run);
+            const agentИмя = compactАгентИмя(run, agentMap);
             return (
               <article
                 key={`run:${run.runId}`}
-                className="space-y-1.5 rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground"
+                classИмя="space-y-1.5 rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground"
               >
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-medium text-foreground">Run</span>
+                <div classИмя="flex flex-wrap items-center gap-1.5">
+                  <span classИмя="font-medium text-foreground">Запустить</span>
                   <Link
                     to={`/agents/${run.agentId}/runs/${run.runId}`}
-                    className="min-w-0 max-w-full truncate font-mono text-foreground hover:underline"
+                    classИмя="min-w-0 max-w-full truncate font-mono text-foreground hover:underline"
                   >
                     {run.runId.slice(0, 8)}
                   </Link>
-                  <span>by {agentName}</span>
-                  <span className="rounded-md border border-border px-1.5 py-0.5 text-[11px] capitalize text-muted-foreground">
+                  <span>by {agentИмя}</span>
+                  <span classИмя="rounded-md border border-border px-1.5 py-0.5 text-[11px] capitalize text-muted-foreground">
                     {statusLabel(run.status)}
                   </span>
                   {run.isLive ? (
-                    <span className="inline-flex items-center gap-1 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 text-[11px] text-cyan-700 dark:text-cyan-300">
-                      <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                    <span classИмя="inline-flex items-center gap-1 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 text-[11px] text-cyan-700 dark:text-cyan-300">
+                      <span classИмя="h-1.5 w-1.5 rounded-full bg-cyan-400" />
                       live
                     </span>
                   ) : null}
                   <span
-                    className={cn(
+                    classИмя={cn(
                       "rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
                       liveness.tone,
                     )}
@@ -726,16 +726,16 @@ export function IssueRunLedgerContent({
                     {liveness.label}
                   </span>
                   {exhausted ? (
-                    <span className="rounded-md border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 text-[11px] font-medium text-red-700 dark:text-red-300">
+                    <span classИмя="rounded-md border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 text-[11px] font-medium text-red-700 dark:text-red-300">
                       Exhausted
                     </span>
                   ) : null}
                   {continuation ? (
-                    <span className="text-[11px] text-muted-foreground">{continuation}</span>
+                    <span classИмя="text-[11px] text-muted-foreground">{continuation}</span>
                   ) : null}
                   {retryState ? (
                     <span
-                      className={cn(
+                      classИмя={cn(
                         "rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
                         retryState.tone,
                       )}
@@ -745,7 +745,7 @@ export function IssueRunLedgerContent({
                   ) : null}
                   {run.outputSilence && RUN_OUTPUT_SILENCE_COPY[run.outputSilence.level] ? (
                     <span
-                      className={cn(
+                      classИмя={cn(
                         "rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
                         RUN_OUTPUT_SILENCE_COPY[run.outputSilence.level]?.tone,
                       )}
@@ -754,55 +754,55 @@ export function IssueRunLedgerContent({
                     </span>
                   ) : null}
                   {(() => {
-                    const profile = modelProfileForRun(run);
+                    const profile = modelПрофильForЗапустить(run);
                     if (!profile) return null;
                     const label = profile.applied === profile.requested
-                      ? `Profile: ${profile.requested}`
+                      ? `Профиль: ${profile.requested}`
                       : profile.applied
-                        ? `Profile: ${profile.requested} → ${profile.applied}`
-                        : `Profile: ${profile.requested} (unavailable)`;
+                        ? `Профиль: ${profile.requested} → ${profile.applied}`
+                        : `Профиль: ${profile.requested} (unavailable)`;
                     return (
                       <span
-                        className={cn(
+                        classИмя={cn(
                           "rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
-                          modelProfileBadgeTone(profile),
+                          modelПрофильBadgeTone(profile),
                         )}
-                        title={modelProfileTitle(profile)}
+                        title={modelПрофильНазвание(profile)}
                       >
                         {label}
                       </span>
                     );
                   })()}
-                  <span className="ml-auto shrink-0">{relativeTime(item.timestamp)}</span>
+                  <span classИмя="ml-auto shrink-0">{relativeTime(item.timestamp)}</span>
                 </div>
 
-                <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
-                  <div className="min-w-0">
-                    <span className="text-foreground">Elapsed</span>{" "}
+                <div classИмя="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+                  <div classИмя="min-w-0">
+                    <span classИмя="text-foreground">Elapsed</span>{" "}
                     {duration ?? "unknown"}
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-foreground">Last useful action</span>{" "}
+                  <div classИмя="min-w-0">
+                    <span classИмя="text-foreground">Last useful action</span>{" "}
                     {lastUsefulActionLabel(run)}
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-foreground">Stop</span>{" "}
-                    {stopStatusLabel(run, stopReason)}
+                  <div classИмя="min-w-0">
+                    <span classИмя="text-foreground">Остановить</span>{" "}
+                    {stopСтатусLabel(run, stopReason)}
                   </div>
                 </div>
 
                 {retryState ? (
-                  <div className="rounded-md border border-border/70 bg-accent/20 px-2 py-2 text-xs leading-5 text-muted-foreground">
+                  <div classИмя="rounded-md border border-border/70 bg-accent/20 px-2 py-2 text-xs leading-5 text-muted-foreground">
                     {retryState.detail ? <p>{retryState.detail}</p> : null}
                     {retryState.secondary ? <p>{retryState.secondary}</p> : null}
-                    {retryState.retryOfRunId ? (
+                    {retryState.retryOfЗапуститьId ? (
                       <p>
-                        Retry of{" "}
+                        Повторить of{" "}
                         <Link
-                          to={`/agents/${run.agentId}/runs/${retryState.retryOfRunId}`}
-                          className="font-mono text-foreground hover:underline"
+                          to={`/agents/${run.agentId}/runs/${retryState.retryOfЗапуститьId}`}
+                          classИмя="font-mono text-foreground hover:underline"
                         >
-                          {retryState.retryOfRunId.slice(0, 8)}
+                          {retryState.retryOfЗапуститьId.slice(0, 8)}
                         </Link>
                       </p>
                     ) : null}
@@ -810,36 +810,36 @@ export function IssueRunLedgerContent({
                 ) : null}
 
                 {(() => {
-                  const profile = modelProfileForRun(run);
+                  const profile = modelПрофильForЗапустить(run);
                   if (!profile?.fallbackReason || profile.applied === profile.requested) return null;
                   return (
-                    <p className="min-w-0 break-words text-[11px] leading-5 text-amber-700 dark:text-amber-300">
+                    <p classИмя="min-w-0 break-words text-[11px] leading-5 text-amber-700 dark:text-amber-300">
                       {profile.requested === "cheap"
                         ? "Cheap profile fell back to primary"
                         : `${profile.requested} profile unavailable`}
                       {": "}
-                      <span className="font-mono">{profile.fallbackReason}</span>
+                      <span classИмя="font-mono">{profile.fallbackReason}</span>
                     </p>
                   );
                 })()}
 
                 {run.livenessReason ? (
-                  <p className="min-w-0 break-words text-xs leading-5 text-muted-foreground">
+                  <p classИмя="min-w-0 break-words text-xs leading-5 text-muted-foreground">
                     {run.livenessReason}
                   </p>
                 ) : null}
 
                 {run.nextAction ? (
-                  <div className="min-w-0 rounded-md bg-accent/40 px-2 py-1.5 text-xs leading-5">
-                    <span className="font-medium text-foreground">Next action: </span>
-                    <span className="break-words text-muted-foreground">{run.nextAction}</span>
+                  <div classИмя="min-w-0 rounded-md bg-accent/40 px-2 py-1.5 text-xs leading-5">
+                    <span classИмя="font-medium text-foreground">Далее action: </span>
+                    <span classИмя="break-words text-muted-foreground">{run.nextAction}</span>
                   </div>
                 ) : null}
               </article>
             );
           })}
           {feedItems.length > 20 ? (
-            <div className="px-3 py-2 text-xs text-muted-foreground">
+            <div classИмя="px-3 py-2 text-xs text-muted-foreground">
               {feedItems.length - 20} older items not shown
             </div>
           ) : null}

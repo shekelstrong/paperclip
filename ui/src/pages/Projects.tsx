@@ -1,67 +1,67 @@
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { projectsApi } from "../api/projects";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useDialogActions } from "../context/DialogContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import { EntityRow } from "../components/EntityRow";
-import { StatusBadge } from "../components/StatusBadge";
+import { СтатусBadge } from "../components/СтатусBadge";
 import { EmptyState } from "../components/EmptyState";
 import { PageSkeleton } from "../components/PageSkeleton";
 import { formatDate, projectUrl } from "../lib/utils";
 import { Button } from "@/components/ui/button";
 import { Hexagon, Plus } from "lucide-react";
 
-export function Projects() {
-  const { selectedCompanyId } = useCompany();
+export function Проекты() {
+  const { selectedКомпанияId } = useКомпания();
   const { openNewProject } = useDialogActions();
   const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Projects" }]);
+    setBreadcrumbs([{ label: "Проекты" }]);
   }, [setBreadcrumbs]);
 
-  const { data: allProjects, isLoading, error } = useQuery({
-    queryKey: queryKeys.projects.list(selectedCompanyId!),
-    queryFn: () => projectsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+  const { data: allПроекты, isЗагрузка, error } = useQuery({
+    queryКлюч: queryКлючs.projects.list(selectedКомпанияId!),
+    queryFn: () => projectsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
   const projects = useMemo(
-    () => (allProjects ?? []).filter((p) => !p.archivedAt),
-    [allProjects],
+    () => (allПроекты ?? []).filter((p) => !p.archivedAt),
+    [allПроекты],
   );
 
-  if (!selectedCompanyId) {
+  if (!selectedКомпанияId) {
     return <EmptyState icon={Hexagon} message="Select a company to view projects." />;
   }
 
-  if (isLoading) {
+  if (isЗагрузка) {
     return <PageSkeleton variant="list" />;
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-end">
+    <div classИмя="space-y-4">
+      <div classИмя="flex items-center justify-end">
         <Button size="sm" variant="outline" onClick={openNewProject}>
-          <Plus className="h-4 w-4 mr-1" />
-          Add Project
+          <Plus classИмя="h-4 w-4 mr-1" />
+          Добавить проект
         </Button>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error.message}</p>}
+      {error && <p classИмя="text-sm text-destructive">{error.message}</p>}
 
-      {!isLoading && projects.length === 0 && (
+      {!isЗагрузка && projects.length === 0 && (
         <EmptyState
           icon={Hexagon}
-          message="No projects yet."
-          action="Add Project"
+          message="Пока нет проектов."
+          action="Добавить проект"
           onAction={openNewProject}
         />
       )}
 
       {projects.length > 0 && (
-        <div className="border border-border">
+        <div classИмя="border border-border">
           {projects.map((project) => (
             <EntityRow
               key={project.id}
@@ -69,13 +69,13 @@ export function Projects() {
               subtitle={project.description ?? undefined}
               to={projectUrl(project)}
               trailing={
-                <div className="flex items-center gap-3">
+                <div classИмя="flex items-center gap-3">
                   {project.targetDate && (
-                    <span className="text-xs text-muted-foreground">
+                    <span classИмя="text-xs text-muted-foreground">
                       {formatDate(project.targetDate)}
                     </span>
                   )}
-                  <StatusBadge status={project.status} />
+                  <СтатусBadge status={project.status} />
                 </div>
               }
             />

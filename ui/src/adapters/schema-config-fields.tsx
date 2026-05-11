@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-import type { AdapterConfigSchema, ConfigFieldSchema, CreateConfigValues } from "@paperclipai/adapter-utils";
+import type { АдаптерConfigSchema, ConfigFieldSchema, СоздатьConfigЗначениеs } from "@paperclipai/adapter-utils";
 
-import type { AdapterConfigFieldsProps } from "./types";
+import type { АдаптерConfigFieldsProps } from "./types";
 import {
   Field,
-  DraftInput,
-  DraftNumberInput,
-  DraftTextarea,
+  ЧерновикInput,
+  ЧерновикNumberInput,
+  ЧерновикTextarea,
   ToggleField,
 } from "../components/agent-config-primitives";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
@@ -28,20 +28,20 @@ function SelectField({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
-          <span className={!value ? "text-muted-foreground" : ""}>
-            {selectedOpt?.label ?? value ?? "Select..."}
+        <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
+          <span classИмя={!value ? "text-muted-foreground" : ""}>
+            {selectedOpt?.label ?? value ?? "Выбрать..."}
           </span>
-          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          <ChevronDown classИмя="h-3 w-3 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1" align="start">
+      <PopoverContent classИмя="w-[var(--radix-popover-trigger-width)] p-1" align="start">
         {options.map((opt) => (
           <button
             key={opt.value}
-            className={`flex items-center w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50 ${opt.value === value ? "bg-accent" : ""}`}
+            classИмя={`flex items-center w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50 ${opt.value === value ? "bg-accent" : ""}`}
             onMouseDown={(e) => {
-              e.preventDefault();
+              e.preventПо умолчанию();
               onChange(opt.value);
               setOpen(false);
             }}
@@ -73,26 +73,26 @@ function ComboboxField({
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState("");
+  const [filter, setФильтр] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Sync filter with external value when it changes (e.g. provider switch resets model)
   useEffect(() => {
-    setFilter("");
+    setФильтр("");
   }, [value]);
 
   const filtered = options.filter((opt) => {
     if (!filter) return true;
-    const q = filter.toLowerCase();
+    const q = filter.toНизкийerCase();
     return (
-      opt.value.toLowerCase().includes(q) ||
-      opt.label.toLowerCase().includes(q) ||
-      (opt.group && opt.group.toLowerCase().includes(q))
+      opt.value.toНизкийerCase().includes(q) ||
+      opt.label.toНизкийerCase().includes(q) ||
+      (opt.group && opt.group.toНизкийerCase().includes(q))
     );
   });
 
   const selectedOpt = options.find((o) => o.value === value);
-  const displayValue = filter || selectedOpt?.value || value || "";
+  const displayЗначение = filter || selectedOpt?.value || value || "";
 
   // Group filtered options by `group` field if present
   const grouped = new Map<string, typeof filtered>();
@@ -106,15 +106,15 @@ function ComboboxField({
     (val: string) => {
       onChange(val);
       setOpen(false);
-      setFilter("");
+      setФильтр("");
       inputRef.current?.blur();
     },
     [onChange],
   );
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleКлючDown = (e: React.КлючboardEvent) => {
     if (e.key === "Enter") {
-      e.preventDefault();
+      e.preventПо умолчанию();
       // If exactly one match, select it. Otherwise commit the typed value.
       if (filtered.length === 1) {
         select(filtered[0].value);
@@ -123,24 +123,24 @@ function ComboboxField({
       }
     } else if (e.key === "Escape") {
       setOpen(false);
-      setFilter("");
+      setФильтр("");
     } else if (e.key === "ArrowDown" && !open) {
-      e.preventDefault();
+      e.preventПо умолчанию();
       setOpen(true);
     }
   };
 
   return (
-    <div className="relative">
-      <div className="flex items-center gap-0">
+    <div classИмя="relative">
+      <div classИмя="flex items-center gap-0">
         <input
           ref={inputRef}
           type="text"
-          className="flex-1 rounded-l-md border border-r-0 border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40 focus:z-10"
-          value={displayValue}
-          placeholder={placeholder ?? "Type or select..."}
+          classИмя="flex-1 rounded-l-md border border-r-0 border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40 focus:z-10"
+          value={displayЗначение}
+          placeholder={placeholder ?? "Тип or select..."}
           onChange={(e) => {
-            setFilter(e.target.value);
+            setФильтр(e.target.value);
             if (!open) setOpen(true);
           }}
           onFocus={() => {
@@ -150,45 +150,45 @@ function ComboboxField({
             // Delay close to allow click on option to register
             setTimeout(() => setOpen(false), 150);
           }}
-          onKeyDown={handleKeyDown}
+          onКлючDown={handleКлючDown}
         />
         <Popover open={open && filtered.length > 0} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <button className="rounded-r-md border border-border px-2 py-1.5 hover:bg-accent/50 transition-colors">
-              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            <button classИмя="rounded-r-md border border-border px-2 py-1.5 hover:bg-accent/50 transition-colors">
+              <ChevronDown classИмя="h-3 w-3 text-muted-foreground" />
             </button>
           </PopoverTrigger>
           <PopoverContent
-            className="p-1 max-h-60 overflow-y-auto"
+            classИмя="p-1 max-h-60 overflow-y-auto"
             style={{ minWidth: 280 }}
             align="start"
-            onOpenAutoFocus={(e) => e.preventDefault()}
+            onOpenАвтоFocus={(e) => e.preventПо умолчанию()}
           >
             {Array.from(grouped.entries()).map(([group, opts]) => (
               <div key={group || "_ungrouped"}>
                 {group && (
-                  <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                  <div classИмя="px-2 py-1 text-xs font-medium text-muted-foreground">
                     {group}
                   </div>
                 )}
                 {opts.map((opt) => (
                   <button
                     key={opt.value}
-                    className={`flex items-center w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50 ${
+                    classИмя={`flex items-center w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50 ${
                       opt.value === value ? "bg-accent" : ""
                     }`}
                     onMouseDown={(e) => {
-                      e.preventDefault(); // prevent input blur
+                      e.preventПо умолчанию(); // prevent input blur
                       select(opt.value);
                     }}
                   >
-                    <span className="truncate">{opt.label}</span>
+                    <span classИмя="truncate">{opt.label}</span>
                   </button>
                 ))}
               </div>
             ))}
             {filter && filtered.length === 0 && (
-              <div className="px-2 py-1.5 text-sm text-muted-foreground">
+              <div classИмя="px-2 py-1.5 text-sm text-muted-foreground">
                 Use &quot;{filter}&quot; as custom value (press Enter)
               </div>
             )}
@@ -203,63 +203,63 @@ function ComboboxField({
 // SchemaConfigFields component
 // ---------------------------------------------------------------------------
 
-const schemaCache = new Map<string, AdapterConfigSchema | null>();
-const schemaFetchInflight = new Map<string, Promise<AdapterConfigSchema | null>>();
-const failedSchemaTypes = new Set<string>();
+const schemaCache = new Map<string, АдаптерConfigSchema | null>();
+const schemaFetchInflight = new Map<string, Promise<АдаптерConfigSchema | null>>();
+const failedSchemaТипs = new Set<string>();
 
-async function fetchConfigSchema(adapterType: string): Promise<AdapterConfigSchema | null> {
-  const cached = schemaCache.get(adapterType);
+async function fetchConfigSchema(adapterТип: string): Promise<АдаптерConfigSchema | null> {
+  const cached = schemaCache.get(adapterТип);
   if (cached !== undefined) return cached;
-  if (failedSchemaTypes.has(adapterType)) return null;
+  if (failedSchemaТипs.has(adapterТип)) return null;
 
-  const inflight = schemaFetchInflight.get(adapterType);
+  const inflight = schemaFetchInflight.get(adapterТип);
   if (inflight) return inflight;
 
   const promise = (async () => {
     try {
-      const res = await fetch(`/api/adapters/${encodeURIComponent(adapterType)}/config-schema`);
+      const res = await fetch(`/api/adapters/${encodeURIComponent(adapterТип)}/config-schema`);
       if (!res.ok) {
-        failedSchemaTypes.add(adapterType);
+        failedSchemaТипs.add(adapterТип);
         return null;
       }
-      const schema = (await res.json()) as AdapterConfigSchema;
-      schemaCache.set(adapterType, schema);
+      const schema = (await res.json()) as АдаптерConfigSchema;
+      schemaCache.set(adapterТип, schema);
       return schema;
     } catch {
-      failedSchemaTypes.add(adapterType);
+      failedSchemaТипs.add(adapterТип);
       return null;
     } finally {
-      schemaFetchInflight.delete(adapterType);
+      schemaFetchInflight.delete(adapterТип);
     }
   })();
 
-  schemaFetchInflight.set(adapterType, promise);
+  schemaFetchInflight.set(adapterТип, promise);
   return promise;
 }
 
-export function invalidateConfigSchemaCache(adapterType: string): void {
-  schemaCache.delete(adapterType);
-  failedSchemaTypes.delete(adapterType);
+export function invalidateConfigSchemaCache(adapterТип: string): void {
+  schemaCache.delete(adapterТип);
+  failedSchemaТипs.delete(adapterТип);
 }
 
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
-function useConfigSchema(adapterType: string): AdapterConfigSchema | null {
-  const [schema, setSchema] = useState<AdapterConfigSchema | null>(
-    schemaCache.get(adapterType) ?? null,
+function useConfigSchema(adapterТип: string): АдаптерConfigSchema | null {
+  const [schema, setSchema] = useState<АдаптерConfigSchema | null>(
+    schemaCache.get(adapterТип) ?? null,
   );
 
   useEffect(() => {
     let cancelled = false;
-    fetchConfigSchema(adapterType).then((s) => {
+    fetchConfigSchema(adapterТип).then((s) => {
       if (!cancelled) setSchema(s);
     });
     return () => {
       cancelled = true;
     };
-  }, [adapterType]);
+  }, [adapterТип]);
 
   return schema;
 }
@@ -268,7 +268,7 @@ function useConfigSchema(adapterType: string): AdapterConfigSchema | null {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getDefaultValue(field: ConfigFieldSchema): unknown {
+function getПо умолчаниюЗначение(field: ConfigFieldSchema): unknown {
   if (field.default !== undefined) return field.default;
   switch (field.type) {
     case "toggle":
@@ -285,8 +285,8 @@ function getDefaultValue(field: ConfigFieldSchema): unknown {
 
 export function fieldMatchesVisibleWhen(
   field: ConfigFieldSchema,
-  readValue: (field: ConfigFieldSchema) => unknown,
-  schema: AdapterConfigSchema,
+  readЗначение: (field: ConfigFieldSchema) => unknown,
+  schema: АдаптерConfigSchema,
 ): boolean {
   const visibleWhen = field.meta?.visibleWhen;
   if (!visibleWhen || typeof visibleWhen !== "object" || Array.isArray(visibleWhen)) return true;
@@ -295,21 +295,21 @@ export function fieldMatchesVisibleWhen(
     key?: unknown;
     value?: unknown;
     values?: unknown;
-    notValues?: unknown;
+    notЗначениеs?: unknown;
   };
   if (typeof condition.key !== "string" || condition.key.length === 0) return true;
 
   const sourceField = schema.fields.find((candidate) => candidate.key === condition.key);
   if (!sourceField) return true;
 
-  const actual = String(readValue(sourceField) ?? "");
+  const actual = String(readЗначение(sourceField) ?? "");
   if (typeof condition.value === "string") return actual === condition.value;
   if (Array.isArray(condition.values)) {
     const values = condition.values.filter((value): value is string => typeof value === "string");
     return values.length > 0 && values.includes(actual);
   }
-  if (Array.isArray(condition.notValues)) {
-    const values = condition.notValues.filter((value): value is string => typeof value === "string");
+  if (Array.isArray(condition.notЗначениеs)) {
+    const values = condition.notЗначениеs.filter((value): value is string => typeof value === "string");
     return !values.includes(actual);
   }
   return true;
@@ -320,49 +320,49 @@ export function fieldMatchesVisibleWhen(
 // ---------------------------------------------------------------------------
 
 export function SchemaConfigFields({
-  adapterType,
-  isCreate,
+  adapterТип,
+  isСоздать,
   values,
   set,
   config,
   eff,
   mark,
-}: AdapterConfigFieldsProps) {
-  const schema = useConfigSchema(adapterType);
+}: АдаптерConfigFieldsProps) {
+  const schema = useConfigSchema(adapterТип);
 
-  const [defaultsApplied, setDefaultsApplied] = useState(false);
+  const [defaultsApplied, setПо умолчаниюsApplied] = useState(false);
   useEffect(() => {
-    if (!schema || !isCreate || defaultsApplied) return;
+    if (!schema || !isСоздать || defaultsApplied) return;
     const defaults: Record<string, unknown> = {};
     for (const field of schema.fields) {
-      const def = getDefaultValue(field);
+      const def = getПо умолчаниюЗначение(field);
       if (def !== undefined && def !== "") {
         defaults[field.key] = def;
       }
     }
     if (Object.keys(defaults).length > 0) {
       set?.({
-        adapterSchemaValues: { ...values?.adapterSchemaValues, ...defaults },
+        adapterSchemaЗначениеs: { ...values?.adapterSchemaЗначениеs, ...defaults },
       });
     }
-    setDefaultsApplied(true);
-  }, [schema, isCreate, defaultsApplied, set, values?.adapterSchemaValues]);
+    setПо умолчаниюsApplied(true);
+  }, [schema, isСоздать, defaultsApplied, set, values?.adapterSchemaЗначениеs]);
 
   if (!schema || schema.fields.length === 0) return null;
 
-  function readValue(field: ConfigFieldSchema): unknown {
-    if (isCreate) {
-      return values?.adapterSchemaValues?.[field.key] ?? getDefaultValue(field);
+  function readЗначение(field: ConfigFieldSchema): unknown {
+    if (isСоздать) {
+      return values?.adapterSchemaЗначениеs?.[field.key] ?? getПо умолчаниюЗначение(field);
     }
     const stored = config[field.key];
-    return eff("adapterConfig", field.key, (stored ?? getDefaultValue(field)) as string);
+    return eff("adapterConfig", field.key, (stored ?? getПо умолчаниюЗначение(field)) as string);
   }
 
-  function writeValue(field: ConfigFieldSchema, value: unknown): void {
-    if (isCreate) {
+  function writeЗначение(field: ConfigFieldSchema, value: unknown): void {
+    if (isСоздать) {
       const next = {
-        adapterSchemaValues: {
-          ...values?.adapterSchemaValues,
+        adapterSchemaЗначениеs: {
+          ...values?.adapterSchemaЗначениеs,
           [field.key]: value,
         },
       };
@@ -370,12 +370,12 @@ export function SchemaConfigFields({
       // When provider changes, auto-clear model if it's not in the new provider's list
       if (field.key === "provider" && schema) {
         const modelField = schema.fields.find((f) => f.key === "model");
-        if (modelField?.meta?.providerModels) {
-          const modelsByProvider = modelField.meta.providerModels as Record<string, string[]>;
-          const providerModels = modelsByProvider[String(value)] ?? [];
-          const currentModel = values?.adapterSchemaValues?.model;
-          if (currentModel && String(value) !== "auto" && !providerModels.includes(String(currentModel))) {
-            next.adapterSchemaValues.model = "";
+        if (modelField?.meta?.providerМодельs) {
+          const modelsByПровайдер = modelField.meta.providerМодельs as Record<string, string[]>;
+          const providerМодельs = modelsByПровайдер[String(value)] ?? [];
+          const currentМодель = values?.adapterSchemaЗначениеs?.model;
+          if (currentМодель && String(value) !== "auto" && !providerМодельs.includes(String(currentМодель))) {
+            next.adapterSchemaЗначениеs.model = "";
           }
         }
       }
@@ -387,11 +387,11 @@ export function SchemaConfigFields({
       // Same logic for edit mode
       if (field.key === "provider" && schema) {
         const modelField = schema.fields.find((f) => f.key === "model");
-        if (modelField?.meta?.providerModels) {
-          const modelsByProvider = modelField.meta.providerModels as Record<string, string[]>;
-          const providerModels = modelsByProvider[String(value)] ?? [];
-          const currentModel = eff("adapterConfig", "model", "");
-          if (currentModel && String(value) !== "auto" && !providerModels.includes(String(currentModel))) {
+        if (modelField?.meta?.providerМодельs) {
+          const modelsByПровайдер = modelField.meta.providerМодельs as Record<string, string[]>;
+          const providerМодельs = modelsByПровайдер[String(value)] ?? [];
+          const currentМодель = eff("adapterConfig", "model", "");
+          if (currentМодель && String(value) !== "auto" && !providerМодельs.includes(String(currentМодель))) {
             mark("adapterConfig", "model", "");
           }
         }
@@ -402,17 +402,17 @@ export function SchemaConfigFields({
   return (
     <>
       {schema.fields
-        .filter((field) => fieldMatchesVisibleWhen(field, readValue, schema))
+        .filter((field) => fieldMatchesVisibleWhen(field, readЗначение, schema))
         .map((field) => {
           switch (field.type) {
             case "select": {
-              const currentVal = String(readValue(field) ?? "");
+              const currentVal = String(readЗначение(field) ?? "");
               return (
                 <Field key={field.key} label={field.label} hint={field.hint}>
                   <SelectField
                     value={currentVal}
                     options={field.options ?? []}
-                    onChange={(v) => writeValue(field, v)}
+                    onChange={(v) => writeЗначение(field, v)}
                   />
                 </Field>
               );
@@ -424,19 +424,19 @@ export function SchemaConfigFields({
                   key={field.key}
                   label={field.label}
                   hint={field.hint}
-                  checked={readValue(field) === true}
-                  onChange={(v) => writeValue(field, v)}
+                  checked={readЗначение(field) === true}
+                  onChange={(v) => writeЗначение(field, v)}
                 />
               );
 
             case "number":
               return (
                 <Field key={field.key} label={field.label} hint={field.hint}>
-                  <DraftNumberInput
-                    value={Number(readValue(field) ?? 0)}
-                    onCommit={(v) => writeValue(field, v)}
+                  <ЧерновикNumberInput
+                    value={Number(readЗначение(field) ?? 0)}
+                    onCommit={(v) => writeЗначение(field, v)}
                     immediate
-                    className={inputClass}
+                    classИмя={inputClass}
                   />
                 </Field>
               );
@@ -444,27 +444,27 @@ export function SchemaConfigFields({
             case "textarea":
               return (
                 <Field key={field.key} label={field.label} hint={field.hint}>
-                  <DraftTextarea
-                    value={String(readValue(field) ?? "")}
-                    onCommit={(v) => writeValue(field, v || undefined)}
+                  <ЧерновикTextarea
+                    value={String(readЗначение(field) ?? "")}
+                    onCommit={(v) => writeЗначение(field, v || undefined)}
                     immediate
                   />
                 </Field>
               );
 
             case "combobox": {
-              const currentVal = String(readValue(field) ?? "");
-              // Dynamic options: if meta.providerModels exists, compute options
+              const currentVal = String(readЗначение(field) ?? "");
+              // Dynamic options: if meta.providerМодельs exists, compute options
               // based on the current provider value
               let comboboxOptions = field.options ?? [];
-              if (field.meta?.providerModels) {
-                const providerVal = String(readValue(schema.fields.find((f) => f.key === "provider")!) ?? "auto");
-                const modelsByProvider = field.meta.providerModels as Record<string, string[]>;
+              if (field.meta?.providerМодельs) {
+                const providerVal = String(readЗначение(schema.fields.find((f) => f.key === "provider")!) ?? "auto");
+                const modelsByПровайдер = field.meta.providerМодельs as Record<string, string[]>;
                 if (providerVal === "auto") {
-                  // Auto: show all models from all providers, grouped by provider
+                  // Авто: show all models from all providers, grouped by provider
                   const providerLabel = schema.fields.find((f) => f.key === "provider");
                   const providerOptions = providerLabel?.options ?? [];
-                  comboboxOptions = Object.entries(modelsByProvider).flatMap(([prov, models]) =>
+                  comboboxOptions = Object.entries(modelsByПровайдер).flatMap(([prov, models]) =>
                     models.map((m) => ({
                       label: m,
                       value: m,
@@ -472,13 +472,13 @@ export function SchemaConfigFields({
                     })),
                   );
                 } else {
-                  const providerModels = modelsByProvider[providerVal] ?? [];
+                  const providerМодельs = modelsByПровайдер[providerVal] ?? [];
                   const providerLabel = schema.fields.find((f) => f.key === "provider");
-                  const provName = providerLabel?.options?.find((p) => p.value === providerVal)?.label ?? providerVal;
-                  comboboxOptions = providerModels.map((m) => ({
+                  const provИмя = providerLabel?.options?.find((p) => p.value === providerVal)?.label ?? providerVal;
+                  comboboxOptions = providerМодельs.map((m) => ({
                     label: m,
                     value: m,
-                    group: provName,
+                    group: provИмя,
                   }));
                 }
               }
@@ -487,7 +487,7 @@ export function SchemaConfigFields({
                   <ComboboxField
                     value={currentVal}
                     options={comboboxOptions}
-                    onChange={(v) => writeValue(field, v || undefined)}
+                    onChange={(v) => writeЗначение(field, v || undefined)}
                     placeholder={field.hint}
                   />
                 </Field>
@@ -498,11 +498,11 @@ export function SchemaConfigFields({
             default:
               return (
                 <Field key={field.key} label={field.label} hint={field.hint}>
-                  <DraftInput
-                    value={String(readValue(field) ?? "")}
-                    onCommit={(v) => writeValue(field, v || undefined)}
+                  <ЧерновикInput
+                    value={String(readЗначение(field) ?? "")}
+                    onCommit={(v) => writeЗначение(field, v || undefined)}
                     immediate
-                    className={inputClass}
+                    classИмя={inputClass}
                   />
                 </Field>
               );
@@ -513,18 +513,18 @@ export function SchemaConfigFields({
 }
 
 // ---------------------------------------------------------------------------
-// Build adapter config from schema values + standard CreateConfigValues fields
+// Build adapter config from schema values + standard СоздатьConfigЗначениеs fields
 // ---------------------------------------------------------------------------
 
-export function buildSchemaAdapterConfig(
-  values: CreateConfigValues,
+export function buildSchemaАдаптерConfig(
+  values: СоздатьConfigЗначениеs,
 ): Record<string, unknown> {
   const ac: Record<string, unknown> = {};
 
   if (values.model?.trim()) ac.model = values.model.trim();
   if (values.cwd) ac.cwd = values.cwd;
   if (values.command) ac.command = values.command;
-  if (values.instructionsFilePath) ac.instructionsFilePath = values.instructionsFilePath;
+  if (values.instructionsFileПуть) ac.instructionsFileПуть = values.instructionsFileПуть;
   if (values.thinkingEffort) ac.thinkingEffort = values.thinkingEffort;
 
   if (values.extraArgs) {
@@ -533,8 +533,8 @@ export function buildSchemaAdapterConfig(
       .filter(Boolean);
   }
 
-  if (values.adapterSchemaValues) {
-    Object.assign(ac, values.adapterSchemaValues);
+  if (values.adapterSchemaЗначениеs) {
+    Object.assign(ac, values.adapterSchemaЗначениеs);
   }
 
   return ac;

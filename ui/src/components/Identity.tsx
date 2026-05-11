@@ -8,7 +8,7 @@ export interface IdentityProps {
   avatarUrl?: string | null;
   initials?: string;
   size?: IdentitySize;
-  className?: string;
+  classИмя?: string;
 }
 
 export function deriveInitials(name: string): string {
@@ -24,16 +24,16 @@ const textSize: Record<IdentitySize, string> = {
   lg: "text-sm",
 };
 
-export function Identity({ name, avatarUrl, initials, size = "default", className }: IdentityProps) {
+export function Identity({ name, avatarUrl, initials, size = "default", classИмя }: IdentityProps) {
   const displayInitials = initials ?? deriveInitials(name);
 
   return (
-    <span className={cn("inline-flex gap-1.5 items-center", size === "xs" && "gap-1", size === "lg" && "gap-2", className)}>
+    <span classИмя={cn("inline-flex gap-1.5 items-center", size === "xs" && "gap-1", size === "lg" && "gap-2", classИмя)}>
       <Avatar size={size}>
         {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
         <AvatarFallback>{displayInitials}</AvatarFallback>
       </Avatar>
-      <span className={cn("truncate", textSize[size])}>{name}</span>
+      <span classИмя={cn("truncate", textSize[size])}>{name}</span>
     </span>
   );
 }

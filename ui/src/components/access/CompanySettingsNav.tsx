@@ -3,15 +3,15 @@ import { Tabs } from "@/components/ui/tabs";
 import { useLocation, useNavigate } from "@/lib/router";
 
 const items = [
-  { value: "general", label: "General", href: "/company/settings" },
-  { value: "environments", label: "Environments", href: "/company/settings/environments" },
-  { value: "access", label: "Access", href: "/company/settings/access" },
+  { value: "general", label: "Общие", href: "/company/settings" },
+  { value: "environments", label: "Окружения", href: "/company/settings/environments" },
+  { value: "access", label: "Доступ", href: "/company/settings/access" },
   { value: "invites", label: "Invites", href: "/company/settings/invites" },
 ] as const;
 
-type CompanySettingsTab = (typeof items)[number]["value"];
+type КомпанияНастройкиTab = (typeof items)[number]["value"];
 
-export function getCompanySettingsTab(pathname: string): CompanySettingsTab {
+export function getКомпанияНастройкиTab(pathname: string): КомпанияНастройкиTab {
   if (pathname.includes("/company/settings/environments")) {
     return "environments";
   }
@@ -27,10 +27,10 @@ export function getCompanySettingsTab(pathname: string): CompanySettingsTab {
   return "general";
 }
 
-export function CompanySettingsNav() {
+export function КомпанияНастройкиNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const activeTab = getCompanySettingsTab(location.pathname);
+  const activeTab = getКомпанияНастройкиTab(location.pathname);
 
   function handleTabChange(value: string) {
     const nextTab = items.find((item) => item.value === value);
@@ -39,11 +39,11 @@ export function CompanySettingsNav() {
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={handleTabChange}>
+    <Tabs value={activeTab} onЗначениеChange={handleTabChange}>
       <PageTabBar
         items={items.map(({ value, label }) => ({ value, label }))}
         value={activeTab}
-        onValueChange={handleTabChange}
+        onЗначениеChange={handleTabChange}
         align="start"
       />
     </Tabs>

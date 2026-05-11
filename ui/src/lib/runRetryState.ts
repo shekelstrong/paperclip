@@ -1,21 +1,21 @@
 import { formatDateTime } from "./utils";
 
-type RetryAwareRun = {
+type ПовторитьAwareЗапустить = {
   status: string;
-  retryOfRunId?: string | null;
-  scheduledRetryAt?: string | Date | null;
-  scheduledRetryAttempt?: number | null;
-  scheduledRetryReason?: string | null;
+  retryOfЗапуститьId?: string | null;
+  scheduledПовторитьAt?: string | Date | null;
+  scheduledПовторитьAttempt?: number | null;
+  scheduledПовторитьReason?: string | null;
   retryExhaustedReason?: string | null;
 };
 
-export type RunRetryStateSummary = {
+export type ЗапуститьПовторитьStateSummary = {
   kind: "scheduled" | "exhausted" | "attempted";
   badgeLabel: string;
   tone: string;
   detail: string | null;
   secondary: string | null;
-  retryOfRunId: string | null;
+  retryOfЗапуститьId: string | null;
 };
 
 const RETRY_REASON_LABELS: Record<string, string> = {
@@ -27,7 +27,7 @@ const RETRY_REASON_LABELS: Record<string, string> = {
   max_turns_continuation: "Max-turn continuation",
 };
 
-function readNonEmptyString(value: unknown) {
+function readНетnEmptyString(value: unknown) {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
@@ -36,64 +36,64 @@ function joinFragments(parts: Array<string | null>) {
   return filtered.length > 0 ? filtered.join(" · ") : null;
 }
 
-export function formatRetryReason(reason: string | null | undefined) {
-  const normalized = readNonEmptyString(reason);
+export function formatПовторитьReason(reason: string | null | undefined) {
+  const normalized = readНетnEmptyString(reason);
   if (!normalized) return null;
   return RETRY_REASON_LABELS[normalized] ?? normalized.replace(/_/g, " ");
 }
 
-export function describeRunRetryState(run: RetryAwareRun): RunRetryStateSummary | null {
+export function describeЗапуститьПовторитьState(run: ПовторитьAwareЗапустить): ЗапуститьПовторитьStateSummary | null {
   const attempt =
-    typeof run.scheduledRetryAttempt === "number" && Number.isFinite(run.scheduledRetryAttempt) && run.scheduledRetryAttempt > 0
-      ? run.scheduledRetryAttempt
+    typeof run.scheduledПовторитьAttempt === "number" && Number.isFinite(run.scheduledПовторитьAttempt) && run.scheduledПовторитьAttempt > 0
+      ? run.scheduledПовторитьAttempt
       : null;
   const attemptLabel = attempt ? `Attempt ${attempt}` : null;
-  const reasonLabel = formatRetryReason(run.scheduledRetryReason);
-  const retryOfRunId = readNonEmptyString(run.retryOfRunId);
-  const exhaustedReason = readNonEmptyString(run.retryExhaustedReason);
-  const dueAt = run.scheduledRetryAt ? formatDateTime(run.scheduledRetryAt) : null;
-  const isMaxTurnContinuation = run.scheduledRetryReason === "max_turns_continuation";
-  const hasRetryMetadata =
-    Boolean(retryOfRunId)
+  const reasonLabel = formatПовторитьReason(run.scheduledПовторитьReason);
+  const retryOfЗапуститьId = readНетnEmptyString(run.retryOfЗапуститьId);
+  const exhaustedReason = readНетnEmptyString(run.retryExhaustedReason);
+  const dueAt = run.scheduledПовторитьAt ? formatDateTime(run.scheduledПовторитьAt) : null;
+  const isMaxTurnContinuation = run.scheduledПовторитьReason === "max_turns_continuation";
+  const hasПовторитьMetadata =
+    Boolean(retryOfЗапуститьId)
     || Boolean(reasonLabel)
     || Boolean(dueAt)
     || Boolean(attemptLabel)
     || Boolean(exhaustedReason);
 
-  if (!hasRetryMetadata) return null;
+  if (!hasПовторитьMetadata) return null;
 
   if (run.status === "scheduled_retry") {
     return {
       kind: "scheduled",
-      badgeLabel: isMaxTurnContinuation ? "Continuation scheduled" : "Retry scheduled",
+      badgeLabel: isMaxTurnContinuation ? "Continuation scheduled" : "Повторить scheduled",
       tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
       detail: joinFragments([attemptLabel, reasonLabel]),
       secondary: dueAt
-        ? `${isMaxTurnContinuation ? "Next continuation" : "Next retry"} ${dueAt}`
-        : `${isMaxTurnContinuation ? "Next continuation" : "Next retry"} pending schedule`,
-      retryOfRunId,
+        ? `${isMaxTurnContinuation ? "Далее continuation" : "Далее retry"} ${dueAt}`
+        : `${isMaxTurnContinuation ? "Далее continuation" : "Далее retry"} pending schedule`,
+      retryOfЗапуститьId,
     };
   }
 
   if (exhaustedReason) {
     return {
       kind: "exhausted",
-      badgeLabel: isMaxTurnContinuation ? "Continuation exhausted" : "Retry exhausted",
+      badgeLabel: isMaxTurnContinuation ? "Continuation exhausted" : "Повторить exhausted",
       tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-      detail: joinFragments([attemptLabel, reasonLabel, "Automatic retries exhausted"]),
+      detail: joinFragments([attemptLabel, reasonLabel, "Автоmatic retries exhausted"]),
       secondary: exhaustedReason.includes("Manual intervention required")
         ? exhaustedReason
         : `${exhaustedReason} Manual intervention required.`,
-      retryOfRunId,
+      retryOfЗапуститьId,
     };
   }
 
   return {
     kind: "attempted",
-    badgeLabel: isMaxTurnContinuation ? "Continued run" : "Retried run",
+    badgeLabel: isMaxTurnContinuation ? "Продолжитьd run" : "Retried run",
     tone: "border-slate-500/20 bg-slate-500/10 text-slate-700 dark:text-slate-300",
     detail: joinFragments([attemptLabel, reasonLabel]),
     secondary: null,
-    retryOfRunId,
+    retryOfЗапуститьId,
   };
 }

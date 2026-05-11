@@ -1,74 +1,74 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactНетde, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "@/lib/router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { INBOX_MINE_ISSUE_STATUS_FILTER } from "@paperclipai/shared";
 import { approvalsApi } from "../api/approvals";
 import { accessApi } from "../api/access";
 import { authApi } from "../api/auth";
-import { ApiError } from "../api/client";
+import { ApiОшибка } from "../api/client";
 import { dashboardApi } from "../api/dashboard";
-import { executionWorkspacesApi } from "../api/execution-workspaces";
+import { executionРабочие областиApi } from "../api/execution-workspaces";
 import { issuesApi } from "../api/issues";
 import { agentsApi } from "../api/agents";
 import { heartbeatsApi } from "../api/heartbeats";
-import { instanceSettingsApi } from "../api/instanceSettings";
+import { instanceНастройкиApi } from "../api/instanceНастройки";
 import { projectsApi } from "../api/projects";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { useGeneralSettings } from "../context/GeneralSettingsContext";
+import { useОбщиеНастройки } from "../context/ОбщиеНастройкиContext";
 import { useSidebar } from "../context/SidebarContext";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import { useDialogActions } from "../context/DialogContext";
 import {
-  applyIssueFilters,
-  countActiveIssueFilters,
-  type IssueFilterState,
+  applyЗадачаФильтрs,
+  countАктивенЗадачаФильтрs,
+  type ЗадачаФильтрState,
 } from "../lib/issue-filters";
-import { collectLiveIssueIds } from "../lib/liveIssueIds";
-import { formatAssigneeUserLabel } from "../lib/assignees";
-import { buildCompanyUserLabelMap, buildCompanyUserProfileMap } from "../lib/company-members";
+import { collectLiveЗадачаIds } from "../lib/liveЗадачаIds";
+import { formatИсполнительUserLabel } from "../lib/assignees";
+import { buildКомпанияUserLabelMap, buildКомпанияUserПрофильMap } from "../lib/company-members";
 import {
-  armIssueDetailInboxQuickArchive,
-  createIssueDetailLocationState,
-  createIssueDetailPath,
-  rememberIssueDetailLocationState,
-  withIssueDetailHeaderSeed,
+  armЗадачаDetailВходящиеQuickАрхивировать,
+  createЗадачаDetailLocationState,
+  createЗадачаDetailПуть,
+  rememberЗадачаDetailLocationState,
+  withЗадачаDetailHeaderSeed,
 } from "../lib/issueDetailBreadcrumb";
-import { prefetchIssueDetail } from "../lib/issueDetailCache";
+import { prefetchЗадачаDetail } from "../lib/issueDetailCache";
 import {
   hasBlockingShortcutDialog,
-  isKeyboardShortcutTextInputTarget,
-  resolveInboxUndoArchiveKeyAction,
-  shouldBlurPageSearchOnEnter,
-  shouldBlurPageSearchOnEscape,
+  isКлючboardShortcutTextInputЦель,
+  resolveВходящиеUndoАрхивироватьКлючAction,
+  shouldBlurPageПоискOnEnter,
+  shouldBlurPageПоискOnEscape,
 } from "../lib/keyboardShortcuts";
 import { EmptyState } from "../components/EmptyState";
-import { IssueGroupHeader } from "../components/IssueGroupHeader";
+import { ЗадачаGroupHeader } from "../components/ЗадачаGroupHeader";
 import { PageSkeleton } from "../components/PageSkeleton";
 import {
-  InboxIssueMetaLeading,
-  InboxIssueTrailingColumns,
-  IssueColumnPicker,
-  issueActivityText,
+  ВходящиеЗадачаMetaLeading,
+  ВходящиеЗадачаTrailingColumns,
+  ЗадачаColumnPicker,
+  issueАктивностьText,
   issueTrailingColumns,
-} from "../components/IssueColumns";
-import { IssueFiltersPopover } from "../components/IssueFiltersPopover";
-import { IssueRow } from "../components/IssueRow";
-import { SwipeToArchive } from "../components/SwipeToArchive";
+} from "../components/ЗадачаColumns";
+import { ЗадачаФильтрsPopover } from "../components/ЗадачаФильтрsPopover";
+import { ЗадачаRow } from "../components/ЗадачаRow";
+import { SwipeToАрхивировать } from "../components/SwipeToАрхивировать";
 
-import { StatusIcon } from "../components/StatusIcon";
+import { СтатусIcon } from "../components/СтатусIcon";
 import { cn } from "../lib/utils";
-import { StatusBadge } from "../components/StatusBadge";
-import { approvalLabel, defaultTypeIcon, typeIcon } from "../components/ApprovalPayload";
+import { СтатусBadge } from "../components/СтатусBadge";
+import { approvalLabel, defaultТипIcon, typeIcon } from "../components/СогласованиеPayload";
 import { timeAgo } from "../lib/timeAgo";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogОписание,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogНазвание,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Tabs } from "@/components/ui/tabs";
@@ -77,11 +77,11 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectЗначение,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Inbox as InboxIcon,
+  Входящие as ВходящиеIcon,
   AlertTriangle,
   Check,
   ChevronRight,
@@ -91,7 +91,7 @@ import {
   X,
   RotateCcw,
   UserPlus,
-  Search,
+  Поиск,
   ListTree,
 } from "lucide-react";
 
@@ -99,64 +99,64 @@ const INBOX_HEARTBEAT_RUN_LIMIT = 200;
 const INBOX_ISSUE_LIST_LIMIT = 500;
 import { Input } from "@/components/ui/input";
 import { PageTabBar } from "../components/PageTabBar";
-import type { Approval, HeartbeatRun, Issue, JoinRequest } from "@paperclipai/shared";
+import type { Согласование, HeartbeatЗапустить, Задача, JoinRequest } from "@paperclipai/shared";
 import {
   ACTIONABLE_APPROVAL_STATUSES,
   DEFAULT_INBOX_ISSUE_COLUMNS,
-  buildGroupedInboxSections,
-  buildInboxIssueGroupCreateDefaults,
-  buildInboxKeyboardNavEntries,
-  getAvailableInboxIssueColumns,
-  getInboxWorkItemKey,
-  getApprovalsForTab,
-  getArchivedInboxSearchIssues,
-  getInboxKeyboardSelectionIndex,
-  getInboxWorkItems,
-  getInboxSearchSupplementIssues,
-  getLatestFailedRunsByAgent,
-  matchesInboxIssueSearch,
-  getRecentTouchedIssues,
-  isInboxEntityDismissed,
-  isMineInboxTab,
-  loadCollapsedInboxGroupKeys,
-  loadInboxFilterPreferences,
-  loadInboxIssueColumns,
-  loadInboxNesting,
-  loadInboxWorkItemGroupBy,
-  normalizeInboxIssueColumns,
-  resolveInboxNestingEnabled,
-  shouldResetInboxWorkspaceGrouping,
-  resolveIssueWorkspaceName,
-  resolveInboxSelectionIndex,
-  saveInboxFilterPreferences,
-  saveCollapsedInboxGroupKeys,
-  saveInboxIssueColumns,
-  saveInboxNesting,
-  saveInboxWorkItemGroupBy,
-  type InboxWorkspaceGroupingOptions,
-  type InboxApprovalFilter,
-  type InboxCategoryFilter,
-  type InboxFilterPreferences,
-  type InboxIssueColumn,
-  type InboxKeyboardNavEntry,
-  saveLastInboxTab,
-  shouldShowCompanyAlerts,
-  shouldShowInboxSection,
-  type InboxGroupedSection,
-  type InboxTab,
-  type InboxWorkItem,
-  type InboxWorkItemGroupBy,
+  buildGroupedВходящиеSections,
+  buildВходящиеЗадачаGroupСоздатьПо умолчаниюs,
+  buildВходящиеКлючboardNavEntries,
+  getAvailableВходящиеЗадачаColumns,
+  getВходящиеРаботаItemКлюч,
+  getСогласованияForTab,
+  getАрхивированВходящиеПоискЗадачи,
+  getВходящиеКлючboardSelectionIndex,
+  getВходящиеРаботаItems,
+  getВходящиеПоискSupplementЗадачи,
+  getLatestОшибкаЗапуститьsByАгент,
+  matchesВходящиеЗадачаПоиск,
+  getRecentTouchedЗадачи,
+  isВходящиеEntityЗакрытьed,
+  isMineВходящиеTab,
+  loadCollapsedВходящиеGroupКлючs,
+  loadВходящиеФильтрPreferences,
+  loadВходящиеЗадачаColumns,
+  loadВходящиеNesting,
+  loadВходящиеРаботаItemGroupBy,
+  normalizeВходящиеЗадачаColumns,
+  resolveВходящиеNestingВключитьd,
+  shouldСброситьВходящиеРабочая областьGrouping,
+  resolveЗадачаРабочая областьИмя,
+  resolveВходящиеSelectionIndex,
+  saveВходящиеФильтрPreferences,
+  saveCollapsedВходящиеGroupКлючs,
+  saveВходящиеЗадачаColumns,
+  saveВходящиеNesting,
+  saveВходящиеРаботаItemGroupBy,
+  type ВходящиеРабочая областьGroupingOptions,
+  type ВходящиеСогласованиеФильтр,
+  type ВходящиеCategoryФильтр,
+  type ВходящиеФильтрPreferences,
+  type ВходящиеЗадачаColumn,
+  type ВходящиеКлючboardNavEntry,
+  saveLastВходящиеTab,
+  shouldShowКомпанияAlerts,
+  shouldShowВходящиеSection,
+  type ВходящиеGroupedSection,
+  type ВходящиеTab,
+  type ВходящиеРаботаItem,
+  type ВходящиеРаботаItemGroupBy,
 } from "../lib/inbox";
-import { useDismissedInboxAlerts, useInboxDismissals, useReadInboxItems } from "../hooks/useInboxBadge";
+import { useЗакрытьedВходящиеAlerts, useВходящиеЗакрытьals, useReadВходящиеItems } from "../hooks/useВходящиеBadge";
 
-export { InboxIssueMetaLeading, InboxIssueTrailingColumns } from "../components/IssueColumns";
-export { IssueGroupHeader as InboxGroupHeader } from "../components/IssueGroupHeader";
-type SectionKey =
+export { ВходящиеЗадачаMetaLeading, ВходящиеЗадачаTrailingColumns } from "../components/ЗадачаColumns";
+export { ЗадачаGroupHeader as ВходящиеGroupHeader } from "../components/ЗадачаGroupHeader";
+type SectionКлюч =
   | "work_items"
   | "alerts";
 
 /** A flat navigation entry for keyboard j/k traversal that includes expanded children. */
-type NavEntry = InboxKeyboardNavEntry;
+type NavEntry = ВходящиеКлючboardNavEntry;
 type CreatorOption = {
   id: string;
   label: string;
@@ -164,21 +164,21 @@ type CreatorOption = {
   searchText?: string;
 };
 
-function firstNonEmptyLine(value: string | null | undefined): string | null {
+function firstНетnEmptyLine(value: string | null | undefined): string | null {
   if (!value) return null;
   const line = value.split("\n").map((chunk) => chunk.trim()).find(Boolean);
   return line ?? null;
 }
 
-function runFailureMessage(run: HeartbeatRun): string {
-  return firstNonEmptyLine(run.error) ?? firstNonEmptyLine(run.stderrExcerpt) ?? "Run exited with an error.";
+function runFailureMessage(run: HeartbeatЗапустить): string {
+  return firstНетnEmptyLine(run.error) ?? firstНетnEmptyLine(run.stderrExcerpt) ?? "Запустить exited with an error.";
 }
 
-function approvalStatusLabel(status: Approval["status"]): string {
-  return status.replaceAll("_", " ");
+function approvalСтатусLabel(status: Согласование["status"]): string {
+  return status.replaceВсе("_", " ");
 }
 
-function readIssueIdFromRun(run: HeartbeatRun): string | null {
+function readЗадачаIdFromЗапустить(run: HeartbeatЗапустить): string | null {
   const context = run.contextSnapshot;
   if (!context) return null;
 
@@ -196,10 +196,10 @@ function nonEmptyLabel(value: string | null | undefined): string | null {
   return trimmed ? trimmed : null;
 }
 
-export function formatJoinRequestInboxLabel(
+export function formatJoinRequestВходящиеLabel(
   joinRequest: Pick<
     JoinRequest,
-    "requestType" | "agentName" | "requestEmailSnapshot" | "requestingUserId"
+    "requestТип" | "agentИмя" | "requestПочтаSnapshot" | "requestingUserId"
   > & {
     requesterUser?: {
       name: string | null;
@@ -207,177 +207,177 @@ export function formatJoinRequestInboxLabel(
     } | null;
   },
 ) {
-  if (joinRequest.requestType !== "human") {
-    return `Agent join request${joinRequest.agentName ? `: ${joinRequest.agentName}` : ""}`;
+  if (joinRequest.requestТип !== "human") {
+    return `Заявка агента${joinRequest.agentИмя ? `: ${joinRequest.agentИмя}` : ""}`;
   }
 
-  const requesterName = nonEmptyLabel(joinRequest.requesterUser?.name);
-  const requesterEmail =
+  const requesterИмя = nonEmptyLabel(joinRequest.requesterUser?.name);
+  const requesterПочта =
     nonEmptyLabel(joinRequest.requesterUser?.email) ??
-    nonEmptyLabel(joinRequest.requestEmailSnapshot);
+    nonEmptyLabel(joinRequest.requestПочтаSnapshot);
   const requesterId = nonEmptyLabel(joinRequest.requestingUserId);
 
-  if (requesterName && requesterEmail) return `${requesterName} (${requesterEmail})`;
-  if (requesterEmail) return requesterEmail;
-  if (requesterName) return requesterName;
+  if (requesterИмя && requesterПочта) return `${requesterИмя} (${requesterПочта})`;
+  if (requesterПочта) return requesterПочта;
+  if (requesterИмя) return requesterИмя;
   if (requesterId) return requesterId;
-  return "Human join request";
+  return "Человек join request";
 }
 
 
-type NonIssueUnreadState = "visible" | "fading" | "hidden" | null;
+type НетnЗадачаUnreadState = "visible" | "fading" | "hidden" | null;
 
-export function FailedRunInboxRow({
+export function ОшибкаЗапуститьВходящиеRow({
   run,
   issueById,
-  agentName: linkedAgentName,
+  agentИмя: linkedАгентИмя,
   issueLinkState,
-  onDismiss,
-  onRetry,
-  isRetrying,
+  onЗакрыть,
+  onПовторить,
+  isПовторитьing,
   unreadState = null,
   onMarkRead,
-  onArchive,
-  archiveDisabled,
+  onАрхивировать,
+  archiveОтключитьd,
   selected = false,
-  className,
+  classИмя,
 }: {
-  run: HeartbeatRun;
-  issueById: Map<string, Issue>;
-  agentName: string | null;
+  run: HeartbeatЗапустить;
+  issueById: Map<string, Задача>;
+  agentИмя: string | null;
   issueLinkState: unknown;
-  onDismiss: () => void;
-  onRetry: () => void;
-  isRetrying: boolean;
-  unreadState?: NonIssueUnreadState;
+  onЗакрыть: () => void;
+  onПовторить: () => void;
+  isПовторитьing: boolean;
+  unreadState?: НетnЗадачаUnreadState;
   onMarkRead?: () => void;
-  onArchive?: () => void;
-  archiveDisabled?: boolean;
+  onАрхивировать?: () => void;
+  archiveОтключитьd?: boolean;
   selected?: boolean;
-  className?: string;
+  classИмя?: string;
 }) {
-  const issueId = readIssueIdFromRun(run);
+  const issueId = readЗадачаIdFromЗапустить(run);
   const issue = issueId ? issueById.get(issueId) ?? null : null;
-  const displayError = runFailureMessage(run);
+  const displayОшибка = runFailureMessage(run);
   const showUnreadSlot = unreadState !== null;
   const showUnreadDot = unreadState === "visible" || unreadState === "fading";
 
   return (
-    <div className={cn(
+    <div classИмя={cn(
       "group border-b border-border px-2 py-2.5 last:border-b-0 sm:px-1 sm:pr-3 sm:py-2",
-      className,
+      classИмя,
     )}>
-      <div className="flex items-start gap-2 sm:items-center">
+      <div classИмя="flex items-start gap-2 sm:items-center">
         {showUnreadSlot ? (
-          <span className="hidden sm:inline-flex h-4 w-4 shrink-0 items-center justify-center self-center">
+          <span classИмя="hidden sm:inline-flex h-4 w-4 shrink-0 items-center justify-center self-center">
             {showUnreadDot ? (
               <button
                 type="button"
                 onClick={onMarkRead}
-                className={cn(
+                classИмя={cn(
                   "inline-flex h-4 w-4 items-center justify-center rounded-full transition-colors",
                   "hover:bg-blue-500/20",
                 )}
                 aria-label="Mark as read"
               >
-                <span className={cn(
+                <span classИмя={cn(
                   "block h-2 w-2 rounded-full transition-opacity duration-300",
                   "bg-blue-600 dark:bg-blue-400",
                   unreadState === "fading" ? "opacity-0" : "opacity-100",
                 )} />
               </button>
-            ) : onArchive ? (
+            ) : onАрхивировать ? (
               <button
                 type="button"
-                onClick={onArchive}
-                disabled={archiveDisabled}
-                className="inline-flex h-4 w-4 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-30"
-                aria-label="Dismiss from inbox"
+                onClick={onАрхивировать}
+                disabled={archiveОтключитьd}
+                classИмя="inline-flex h-4 w-4 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-30"
+                aria-label="Закрыть from inbox"
               >
-                <X className="h-3.5 w-3.5" />
+                <X classИмя="h-3.5 w-3.5" />
               </button>
             ) : (
-              <span className="inline-flex h-4 w-4" aria-hidden="true" />
+              <span classИмя="inline-flex h-4 w-4" aria-hidden="true" />
             )}
           </span>
         ) : null}
         <Link
           to={`/agents/${run.agentId}/runs/${run.id}`}
-          className={cn(
+          classИмя={cn(
             "flex min-w-0 flex-1 items-start gap-2 no-underline text-inherit transition-colors",
             selected ? "hover:bg-transparent" : "hover:bg-accent/50",
           )}
         >
-          {!showUnreadSlot && <span className="hidden h-2 w-2 shrink-0 sm:inline-flex" aria-hidden="true" />}
-          <span className="hidden h-3.5 w-3.5 shrink-0 sm:inline-flex" aria-hidden="true" />
-          <span className="mt-0.5 shrink-0 rounded-md bg-red-500/20 p-1.5 sm:mt-0">
-            <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+          {!showUnreadSlot && <span classИмя="hidden h-2 w-2 shrink-0 sm:inline-flex" aria-hidden="true" />}
+          <span classИмя="hidden h-3.5 w-3.5 shrink-0 sm:inline-flex" aria-hidden="true" />
+          <span classИмя="mt-0.5 shrink-0 rounded-md bg-red-500/20 p-1.5 sm:mt-0">
+            <XCircle classИмя="h-4 w-4 text-red-600 dark:text-red-400" />
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="line-clamp-2 text-sm font-medium sm:truncate sm:line-clamp-none">
+          <span classИмя="min-w-0 flex-1">
+            <span classИмя="line-clamp-2 text-sm font-medium sm:truncate sm:line-clamp-none">
               {issue ? (
                 <>
-                  <span className="font-mono text-muted-foreground mr-1.5">
+                  <span classИмя="font-mono text-muted-foreground mr-1.5">
                     {issue.identifier ?? issue.id.slice(0, 8)}
                   </span>
                   {issue.title}
                 </>
               ) : (
-                <>Failed run{linkedAgentName ? ` — ${linkedAgentName}` : ""}</>
+                <>Ошибка run{linkedАгентИмя ? ` — ${linkedАгентИмя}` : ""}</>
               )}
             </span>
-            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-              <StatusBadge status={run.status} />
-              {linkedAgentName && issue ? <span>{linkedAgentName}</span> : null}
-              <span className="truncate max-w-[300px]">{displayError}</span>
+            <span classИмя="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              <СтатусBadge status={run.status} />
+              {linkedАгентИмя && issue ? <span>{linkedАгентИмя}</span> : null}
+              <span classИмя="truncate max-w-[300px]">{displayОшибка}</span>
               <span>{timeAgo(run.createdAt)}</span>
             </span>
           </span>
         </Link>
-        <div className="hidden shrink-0 items-center gap-2 sm:flex">
+        <div classИмя="hidden shrink-0 items-center gap-2 sm:flex">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 shrink-0 px-2.5"
-            onClick={onRetry}
-            disabled={isRetrying}
+            classИмя="h-8 shrink-0 px-2.5"
+            onClick={onПовторить}
+            disabled={isПовторитьing}
           >
-            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            {isRetrying ? "Retrying…" : "Retry"}
+            <RotateCcw classИмя="mr-1.5 h-3.5 w-3.5" />
+            {isПовторитьing ? "Повторитьing…" : "Повторить"}
           </Button>
           {!showUnreadSlot && (
             <button
               type="button"
-              onClick={onDismiss}
-              className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100"
-              aria-label="Dismiss"
+              onClick={onЗакрыть}
+              classИмя="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100"
+              aria-label="Закрыть"
             >
-              <X className="h-4 w-4" />
+              <X classИмя="h-4 w-4" />
             </button>
           )}
         </div>
       </div>
-      <div className="mt-3 flex gap-2 sm:hidden">
+      <div classИмя="mt-3 flex gap-2 sm:hidden">
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 shrink-0 px-2.5"
-          onClick={onRetry}
-          disabled={isRetrying}
+          classИмя="h-8 shrink-0 px-2.5"
+          onClick={onПовторить}
+          disabled={isПовторитьing}
         >
-          <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-          {isRetrying ? "Retrying…" : "Retry"}
+          <RotateCcw classИмя="mr-1.5 h-3.5 w-3.5" />
+          {isПовторитьing ? "Повторитьing…" : "Повторить"}
         </Button>
         {!showUnreadSlot && (
           <button
             type="button"
-            onClick={onDismiss}
-            className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Dismiss"
+            onClick={onЗакрыть}
+            classИмя="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Закрыть"
           >
-            <X className="h-4 w-4" />
+            <X classИмя="h-4 w-4" />
           </button>
         )}
       </div>
@@ -385,32 +385,32 @@ export function FailedRunInboxRow({
   );
 }
 
-function ApprovalInboxRow({
+function СогласованиеВходящиеRow({
   approval,
-  requesterName,
-  onApprove,
-  onReject,
-  isPending,
+  requesterИмя,
+  onОдобрить,
+  onОтклонить,
+  isОжидание,
   unreadState = null,
   onMarkRead,
-  onArchive,
-  archiveDisabled,
+  onАрхивировать,
+  archiveОтключитьd,
   selected = false,
-  className,
+  classИмя,
 }: {
-  approval: Approval;
-  requesterName: string | null;
-  onApprove: () => void;
-  onReject: () => void;
-  isPending: boolean;
-  unreadState?: NonIssueUnreadState;
+  approval: Согласование;
+  requesterИмя: string | null;
+  onОдобрить: () => void;
+  onОтклонить: () => void;
+  isОжидание: boolean;
+  unreadState?: НетnЗадачаUnreadState;
   onMarkRead?: () => void;
-  onArchive?: () => void;
-  archiveDisabled?: boolean;
+  onАрхивировать?: () => void;
+  archiveОтключитьd?: boolean;
   selected?: boolean;
-  className?: string;
+  classИмя?: string;
 }) {
-  const Icon = typeIcon[approval.type] ?? defaultTypeIcon;
+  const Icon = typeIcon[approval.type] ?? defaultТипIcon;
   const label = approvalLabel(approval.type, approval.payload as Record<string, unknown> | null);
   const showResolutionButtons =
     approval.type !== "budget_override_required" &&
@@ -419,107 +419,107 @@ function ApprovalInboxRow({
   const showUnreadDot = unreadState === "visible" || unreadState === "fading";
 
   return (
-    <div className={cn(
+    <div classИмя={cn(
       "group border-b border-border px-2 py-2.5 last:border-b-0 sm:px-1 sm:pr-3 sm:py-2",
-      className,
+      classИмя,
     )}>
-      <div className="flex items-start gap-2 sm:items-center">
+      <div classИмя="flex items-start gap-2 sm:items-center">
         {showUnreadSlot ? (
-          <span className="hidden sm:inline-flex h-4 w-4 shrink-0 items-center justify-center self-center">
+          <span classИмя="hidden sm:inline-flex h-4 w-4 shrink-0 items-center justify-center self-center">
             {showUnreadDot ? (
               <button
                 type="button"
                 onClick={onMarkRead}
-                className={cn(
+                classИмя={cn(
                   "inline-flex h-4 w-4 items-center justify-center rounded-full transition-colors",
                   "hover:bg-blue-500/20",
                 )}
                 aria-label="Mark as read"
               >
-                <span className={cn(
+                <span classИмя={cn(
                   "block h-2 w-2 rounded-full transition-opacity duration-300",
                   "bg-blue-600 dark:bg-blue-400",
                   unreadState === "fading" ? "opacity-0" : "opacity-100",
                 )} />
               </button>
-            ) : onArchive ? (
+            ) : onАрхивировать ? (
               <button
                 type="button"
-                onClick={onArchive}
-                disabled={archiveDisabled}
-                className="inline-flex h-4 w-4 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-30"
-                aria-label="Dismiss from inbox"
+                onClick={onАрхивировать}
+                disabled={archiveОтключитьd}
+                classИмя="inline-flex h-4 w-4 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-30"
+                aria-label="Закрыть from inbox"
               >
-                <X className="h-3.5 w-3.5" />
+                <X classИмя="h-3.5 w-3.5" />
               </button>
             ) : (
-              <span className="inline-flex h-4 w-4" aria-hidden="true" />
+              <span classИмя="inline-flex h-4 w-4" aria-hidden="true" />
             )}
           </span>
         ) : null}
         <Link
           to={`/approvals/${approval.id}`}
-          className={cn(
+          classИмя={cn(
             "flex min-w-0 flex-1 items-start gap-2 no-underline text-inherit transition-colors",
             selected ? "hover:bg-transparent" : "hover:bg-accent/50",
           )}
         >
-          {!showUnreadSlot && <span className="hidden h-2 w-2 shrink-0 sm:inline-flex" aria-hidden="true" />}
-          <span className="hidden h-3.5 w-3.5 shrink-0 sm:inline-flex" aria-hidden="true" />
-          <span className="mt-0.5 shrink-0 rounded-md bg-muted p-1.5 sm:mt-0">
-            <Icon className="h-4 w-4 text-muted-foreground" />
+          {!showUnreadSlot && <span classИмя="hidden h-2 w-2 shrink-0 sm:inline-flex" aria-hidden="true" />}
+          <span classИмя="hidden h-3.5 w-3.5 shrink-0 sm:inline-flex" aria-hidden="true" />
+          <span classИмя="mt-0.5 shrink-0 rounded-md bg-muted p-1.5 sm:mt-0">
+            <Icon classИмя="h-4 w-4 text-muted-foreground" />
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="line-clamp-2 text-sm font-medium sm:truncate sm:line-clamp-none">
+          <span classИмя="min-w-0 flex-1">
+            <span classИмя="line-clamp-2 text-sm font-medium sm:truncate sm:line-clamp-none">
               {label}
             </span>
-            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-              <span className="capitalize">{approvalStatusLabel(approval.status)}</span>
-              {requesterName ? <span>requested by {requesterName}</span> : null}
+            <span classИмя="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              <span classИмя="capitalize">{approvalСтатусLabel(approval.status)}</span>
+              {requesterИмя ? <span>requested by {requesterИмя}</span> : null}
               <span>updated {timeAgo(approval.updatedAt)}</span>
             </span>
           </span>
         </Link>
         {showResolutionButtons ? (
-          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+          <div classИмя="hidden shrink-0 items-center gap-2 sm:flex">
             <Button
               size="sm"
-              className="h-8 bg-green-700 px-3 text-white hover:bg-green-600"
-              onClick={onApprove}
-              disabled={isPending}
+              classИмя="h-8 bg-green-700 px-3 text-white hover:bg-green-600"
+              onClick={onОдобрить}
+              disabled={isОжидание}
             >
-              Approve
+              Одобрить
             </Button>
             <Button
               variant="destructive"
               size="sm"
-              className="h-8 px-3"
-              onClick={onReject}
-              disabled={isPending}
+              classИмя="h-8 px-3"
+              onClick={onОтклонить}
+              disabled={isОжидание}
             >
-              Reject
+              Отклонить
             </Button>
           </div>
         ) : null}
       </div>
       {showResolutionButtons ? (
-        <div className="mt-3 flex gap-2 sm:hidden">
+        <div classИмя="mt-3 flex gap-2 sm:hidden">
           <Button
             size="sm"
-            className="h-8 bg-green-700 px-3 text-white hover:bg-green-600"
-            onClick={onApprove}
-            disabled={isPending}
+            classИмя="h-8 bg-green-700 px-3 text-white hover:bg-green-600"
+            onClick={onОдобрить}
+            disabled={isОжидание}
           >
-            Approve
+            Одобрить
           </Button>
           <Button
             variant="destructive"
             size="sm"
-            className="h-8 px-3"
-            onClick={onReject}
-            disabled={isPending}
+            classИмя="h-8 px-3"
+            onClick={onОтклонить}
+            disabled={isОжидание}
           >
-            Reject
+            Отклонить
           </Button>
         </div>
       ) : null}
@@ -527,169 +527,169 @@ function ApprovalInboxRow({
   );
 }
 
-function JoinRequestInboxRow({
+function JoinRequestВходящиеRow({
   joinRequest,
-  onApprove,
-  onReject,
-  isPending,
+  onОдобрить,
+  onОтклонить,
+  isОжидание,
   unreadState = null,
   onMarkRead,
-  onArchive,
-  archiveDisabled,
+  onАрхивировать,
+  archiveОтключитьd,
   selected = false,
-  className,
+  classИмя,
 }: {
   joinRequest: JoinRequest;
-  onApprove: () => void;
-  onReject: () => void;
-  isPending: boolean;
-  unreadState?: NonIssueUnreadState;
+  onОдобрить: () => void;
+  onОтклонить: () => void;
+  isОжидание: boolean;
+  unreadState?: НетnЗадачаUnreadState;
   onMarkRead?: () => void;
-  onArchive?: () => void;
-  archiveDisabled?: boolean;
+  onАрхивировать?: () => void;
+  archiveОтключитьd?: boolean;
   selected?: boolean;
-  className?: string;
+  classИмя?: string;
 }) {
-  const label = formatJoinRequestInboxLabel(joinRequest);
+  const label = formatJoinRequestВходящиеLabel(joinRequest);
   const showUnreadSlot = unreadState !== null;
   const showUnreadDot = unreadState === "visible" || unreadState === "fading";
 
   return (
-    <div className={cn(
+    <div classИмя={cn(
       "group border-b border-border px-2 py-2.5 last:border-b-0 sm:px-1 sm:pr-3 sm:py-2",
-      className,
+      classИмя,
     )}>
-      <div className="flex items-start gap-2 sm:items-center">
+      <div classИмя="flex items-start gap-2 sm:items-center">
         {showUnreadSlot ? (
-          <span className="hidden sm:inline-flex h-4 w-4 shrink-0 items-center justify-center self-center">
+          <span classИмя="hidden sm:inline-flex h-4 w-4 shrink-0 items-center justify-center self-center">
             {showUnreadDot ? (
               <button
                 type="button"
                 onClick={onMarkRead}
-                className={cn(
+                classИмя={cn(
                   "inline-flex h-4 w-4 items-center justify-center rounded-full transition-colors",
                   "hover:bg-blue-500/20",
                 )}
                 aria-label="Mark as read"
               >
-                <span className={cn(
+                <span classИмя={cn(
                   "block h-2 w-2 rounded-full transition-opacity duration-300",
                   "bg-blue-600 dark:bg-blue-400",
                   unreadState === "fading" ? "opacity-0" : "opacity-100",
                 )} />
               </button>
-            ) : onArchive ? (
+            ) : onАрхивировать ? (
               <button
                 type="button"
-                onClick={onArchive}
-                disabled={archiveDisabled}
-                className="inline-flex h-4 w-4 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-30"
-                aria-label="Dismiss from inbox"
+                onClick={onАрхивировать}
+                disabled={archiveОтключитьd}
+                classИмя="inline-flex h-4 w-4 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-30"
+                aria-label="Закрыть from inbox"
               >
-                <X className="h-3.5 w-3.5" />
+                <X classИмя="h-3.5 w-3.5" />
               </button>
             ) : (
-              <span className="inline-flex h-4 w-4" aria-hidden="true" />
+              <span classИмя="inline-flex h-4 w-4" aria-hidden="true" />
             )}
           </span>
         ) : null}
-        <div className="flex min-w-0 flex-1 items-start gap-2">
-          {!showUnreadSlot && <span className="hidden h-2 w-2 shrink-0 sm:inline-flex" aria-hidden="true" />}
-          <span className="hidden h-3.5 w-3.5 shrink-0 sm:inline-flex" aria-hidden="true" />
-          <span className="mt-0.5 shrink-0 rounded-md bg-muted p-1.5 sm:mt-0">
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
+        <div classИмя="flex min-w-0 flex-1 items-start gap-2">
+          {!showUnreadSlot && <span classИмя="hidden h-2 w-2 shrink-0 sm:inline-flex" aria-hidden="true" />}
+          <span classИмя="hidden h-3.5 w-3.5 shrink-0 sm:inline-flex" aria-hidden="true" />
+          <span classИмя="mt-0.5 shrink-0 rounded-md bg-muted p-1.5 sm:mt-0">
+            <UserPlus classИмя="h-4 w-4 text-muted-foreground" />
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="line-clamp-2 text-sm font-medium sm:truncate sm:line-clamp-none">
+          <span classИмя="min-w-0 flex-1">
+            <span classИмя="line-clamp-2 text-sm font-medium sm:truncate sm:line-clamp-none">
               {label}
             </span>
-            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span classИмя="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               <span>requested {timeAgo(joinRequest.createdAt)} from IP {joinRequest.requestIp}</span>
-              {joinRequest.adapterType && <span>adapter: {joinRequest.adapterType}</span>}
+              {joinRequest.adapterТип && <span>adapter: {joinRequest.adapterТип}</span>}
             </span>
           </span>
         </div>
-        <div className="hidden shrink-0 items-center gap-2 sm:flex">
+        <div classИмя="hidden shrink-0 items-center gap-2 sm:flex">
           <Button
             size="sm"
-            className="h-8 bg-green-700 px-3 text-white hover:bg-green-600"
-            onClick={onApprove}
-            disabled={isPending}
+            classИмя="h-8 bg-green-700 px-3 text-white hover:bg-green-600"
+            onClick={onОдобрить}
+            disabled={isОжидание}
           >
-            Approve
+            Одобрить
           </Button>
           <Button
             variant="destructive"
             size="sm"
-            className="h-8 px-3"
-            onClick={onReject}
-            disabled={isPending}
+            classИмя="h-8 px-3"
+            onClick={onОтклонить}
+            disabled={isОжидание}
           >
-            Reject
+            Отклонить
           </Button>
         </div>
       </div>
-      <div className="mt-3 flex gap-2 sm:hidden">
+      <div classИмя="mt-3 flex gap-2 sm:hidden">
         <Button
           size="sm"
-          className="h-8 bg-green-700 px-3 text-white hover:bg-green-600"
-          onClick={onApprove}
-          disabled={isPending}
+          classИмя="h-8 bg-green-700 px-3 text-white hover:bg-green-600"
+          onClick={onОдобрить}
+          disabled={isОжидание}
         >
-          Approve
+          Одобрить
         </Button>
         <Button
           variant="destructive"
           size="sm"
-          className="h-8 px-3"
-          onClick={onReject}
-          disabled={isPending}
+          classИмя="h-8 px-3"
+          onClick={onОтклонить}
+          disabled={isОжидание}
         >
-          Reject
+          Отклонить
         </Button>
       </div>
     </div>
   );
 }
 
-export function Inbox() {
-  const { selectedCompanyId } = useCompany();
+export function Входящие() {
+  const { selectedКомпанияId } = useКомпания();
   const { setBreadcrumbs } = useBreadcrumbs();
-  const { openNewIssue } = useDialogActions();
+  const { openNewЗадача } = useDialogActions();
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const [actionError, setActionError] = useState<string | null>(null);
-  const { keyboardShortcutsEnabled } = useGeneralSettings();
-  const { data: experimentalSettings } = useQuery({
-    queryKey: queryKeys.instance.experimentalSettings,
-    queryFn: () => instanceSettingsApi.getExperimental(),
+  const [actionОшибка, setActionОшибка] = useState<string | null>(null);
+  const { keyboardShortcutsВключитьd } = useОбщиеНастройки();
+  const { data: experimentalНастройки } = useQuery({
+    queryКлюч: queryКлючs.instance.experimentalНастройки,
+    queryFn: () => instanceНастройкиApi.getExperimental(),
     retry: false,
   });
-  const experimentalSettingsLoaded = experimentalSettings !== undefined;
-  const [searchQuery, setSearchQuery] = useState("");
-  const normalizedSearchQuery = searchQuery.trim();
-  const [filterPreferences, setFilterPreferences] = useState<InboxFilterPreferences>(
-    () => loadInboxFilterPreferences(selectedCompanyId),
+  const experimentalНастройкиLoaded = experimentalНастройки !== undefined;
+  const [searchQuery, setПоискQuery] = useState("");
+  const normalizedПоискQuery = searchQuery.trim();
+  const [filterPreferences, setФильтрPreferences] = useState<ВходящиеФильтрPreferences>(
+    () => loadВходящиеФильтрPreferences(selectedКомпанияId),
   );
-  const [groupBy, setGroupBy] = useState<InboxWorkItemGroupBy>(() => loadInboxWorkItemGroupBy());
-  const [visibleIssueColumns, setVisibleIssueColumns] = useState<InboxIssueColumn[]>(loadInboxIssueColumns);
-  const { dismissed: dismissedAlerts, dismiss: dismissAlert } = useDismissedInboxAlerts();
-  const { dismissedAtByKey, dismiss: dismissInboxItem } = useInboxDismissals(selectedCompanyId);
-  const { readItems, markRead: markItemRead, markUnread: markItemUnread } = useReadInboxItems();
-  const { allCategoryFilter, allApprovalFilter, issueFilters } = filterPreferences;
+  const [groupBy, setGroupBy] = useState<ВходящиеРаботаItemGroupBy>(() => loadВходящиеРаботаItemGroupBy());
+  const [visibleЗадачаColumns, setVisibleЗадачаColumns] = useState<ВходящиеЗадачаColumn[]>(loadВходящиеЗадачаColumns);
+  const { dismissed: dismissedAlerts, dismiss: dismissAlert } = useЗакрытьedВходящиеAlerts();
+  const { dismissedAtByКлюч, dismiss: dismissВходящиеItem } = useВходящиеЗакрытьals(selectedКомпанияId);
+  const { readItems, markRead: markItemRead, markUnread: markItemUnread } = useReadВходящиеItems();
+  const { allCategoryФильтр, allСогласованиеФильтр, issueФильтрs } = filterPreferences;
 
   const pathSegment = location.pathname.split("/").pop() ?? "mine";
-  const tab: InboxTab =
+  const tab: ВходящиеTab =
     pathSegment === "mine" || pathSegment === "recent" || pathSegment === "all" || pathSegment === "unread"
       ? pathSegment
       : "mine";
-  const canArchiveFromTab = isMineInboxTab(tab);
+  const canАрхивироватьFromTab = isMineВходящиеTab(tab);
   const issueLinkState = useMemo(
     () =>
-      createIssueDetailLocationState(
-        "Inbox",
+      createЗадачаDetailLocationState(
+        "Входящие",
         `${location.pathname}${location.search}${location.hash}`,
         "inbox",
       ),
@@ -697,191 +697,191 @@ export function Inbox() {
   );
 
   const { data: session } = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
   });
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(selectedCompanyId!),
-    queryFn: () => agentsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
+    queryFn: () => agentsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
   const { data: projects } = useQuery({
-    queryKey: queryKeys.projects.list(selectedCompanyId!),
-    queryFn: () => projectsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.projects.list(selectedКомпанияId!),
+    queryFn: () => projectsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
   const { data: labels } = useQuery({
-    queryKey: queryKeys.issues.labels(selectedCompanyId!),
-    queryFn: () => issuesApi.listLabels(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.issues.labels(selectedКомпанияId!),
+    queryFn: () => issuesApi.listЯрлыки(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
-  const isolatedWorkspacesEnabled = experimentalSettings?.enableIsolatedWorkspaces === true;
-  const { data: executionWorkspaces = [] } = useQuery({
-    queryKey: selectedCompanyId
-      ? queryKeys.executionWorkspaces.summaryList(selectedCompanyId)
+  const isolatedРабочие областиВключитьd = experimentalНастройки?.enableIsolatedРабочие области === true;
+  const { data: executionРабочие области = [] } = useQuery({
+    queryКлюч: selectedКомпанияId
+      ? queryКлючs.executionРабочие области.summaryList(selectedКомпанияId)
       : ["execution-workspaces", "__disabled__"],
-    queryFn: () => executionWorkspacesApi.listSummaries(selectedCompanyId!),
-    enabled: !!selectedCompanyId && isolatedWorkspacesEnabled,
+    queryFn: () => executionРабочие областиApi.listSummaries(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId && isolatedРабочие областиВключитьd,
   });
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Inbox" }]);
+    setBreadcrumbs([{ label: "Входящие" }]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
-    saveLastInboxTab(tab);
+    saveLastВходящиеTab(tab);
     setSelectedIndex(-1);
-    setSearchQuery("");
+    setПоискQuery("");
   }, [tab]);
 
-  const previousSelectedCompanyIdRef = useRef<string | null>(selectedCompanyId);
+  const previousSelectedКомпанияIdRef = useRef<string | null>(selectedКомпанияId);
   useEffect(() => {
-    if (previousSelectedCompanyIdRef.current !== selectedCompanyId) {
-      previousSelectedCompanyIdRef.current = selectedCompanyId;
-      setFilterPreferences(loadInboxFilterPreferences(selectedCompanyId));
-      setCollapsedGroupKeys(loadCollapsedInboxGroupKeys(selectedCompanyId));
+    if (previousSelectedКомпанияIdRef.current !== selectedКомпанияId) {
+      previousSelectedКомпанияIdRef.current = selectedКомпанияId;
+      setФильтрPreferences(loadВходящиеФильтрPreferences(selectedКомпанияId));
+      setCollapsedGroupКлючs(loadCollapsedВходящиеGroupКлючs(selectedКомпанияId));
     }
-  }, [selectedCompanyId]);
+  }, [selectedКомпанияId]);
 
   const {
     data: approvals,
-    isLoading: isApprovalsLoading,
-    error: approvalsError,
+    isЗагрузка: isСогласованияЗагрузка,
+    error: approvalsОшибка,
   } = useQuery({
-    queryKey: queryKeys.approvals.list(selectedCompanyId!),
-    queryFn: () => approvalsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.approvals.list(selectedКомпанияId!),
+    queryFn: () => approvalsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
   const {
     data: joinRequests = [],
-    isLoading: isJoinRequestsLoading,
+    isЗагрузка: isJoinRequestsЗагрузка,
   } = useQuery({
-    queryKey: queryKeys.access.joinRequests(selectedCompanyId!),
+    queryКлюч: queryКлючs.access.joinRequests(selectedКомпанияId!),
     queryFn: async () => {
       try {
-        return await accessApi.listJoinRequests(selectedCompanyId!, "pending_approval");
+        return await accessApi.listJoinRequests(selectedКомпанияId!, "pending_approval");
       } catch (err) {
-        if (err instanceof ApiError && (err.status === 403 || err.status === 401)) {
+        if (err instanceof ApiОшибка && (err.status === 403 || err.status === 401)) {
           return [];
         }
         throw err;
       }
     },
-    enabled: !!selectedCompanyId,
+    enabled: !!selectedКомпанияId,
     retry: false,
   });
 
-  const { data: dashboard, isLoading: isDashboardLoading } = useQuery({
-    queryKey: queryKeys.dashboard(selectedCompanyId!),
-    queryFn: () => dashboardApi.summary(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+  const { data: dashboard, isЗагрузка: isПанель управленияЗагрузка } = useQuery({
+    queryКлюч: queryКлючs.dashboard(selectedКомпанияId!),
+    queryFn: () => dashboardApi.summary(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
-  const { data: issues, isLoading: isIssuesLoading } = useQuery({
-    queryKey: [...queryKeys.issues.list(selectedCompanyId!), "with-routine-executions"],
+  const { data: issues, isЗагрузка: isЗадачиЗагрузка } = useQuery({
+    queryКлюч: [...queryКлючs.issues.list(selectedКомпанияId!), "with-routine-executions"],
     queryFn: () =>
-      issuesApi.list(selectedCompanyId!, {
-        includeRoutineExecutions: true,
+      issuesApi.list(selectedКомпанияId!, {
+        includeПроцедураExecutions: true,
         limit: INBOX_ISSUE_LIST_LIMIT,
       }),
-    enabled: !!selectedCompanyId,
+    enabled: !!selectedКомпанияId,
   });
   const {
-    data: mineIssuesRaw = [],
-    isLoading: isMineIssuesLoading,
+    data: mineЗадачиRaw = [],
+    isЗагрузка: isMineЗадачиЗагрузка,
   } = useQuery({
-    queryKey: [...queryKeys.issues.listMineByMe(selectedCompanyId!), "with-routine-executions"],
+    queryКлюч: [...queryКлючs.issues.listMineByMe(selectedКомпанияId!), "with-routine-executions"],
     queryFn: () =>
-      issuesApi.list(selectedCompanyId!, {
+      issuesApi.list(selectedКомпанияId!, {
         touchedByUserId: "me",
-        inboxArchivedByUserId: "me",
+        inboxАрхивированByUserId: "me",
         status: INBOX_MINE_ISSUE_STATUS_FILTER,
-        includeRoutineExecutions: true,
+        includeПроцедураExecutions: true,
         limit: INBOX_ISSUE_LIST_LIMIT,
       }),
-    enabled: !!selectedCompanyId,
+    enabled: !!selectedКомпанияId,
   });
   const {
-    data: touchedIssuesRaw = [],
-    isLoading: isTouchedIssuesLoading,
+    data: touchedЗадачиRaw = [],
+    isЗагрузка: isTouchedЗадачиЗагрузка,
   } = useQuery({
-    queryKey: [...queryKeys.issues.listTouchedByMe(selectedCompanyId!), "with-routine-executions"],
+    queryКлюч: [...queryКлючs.issues.listTouchedByMe(selectedКомпанияId!), "with-routine-executions"],
     queryFn: () =>
-      issuesApi.list(selectedCompanyId!, {
+      issuesApi.list(selectedКомпанияId!, {
         touchedByUserId: "me",
         status: INBOX_MINE_ISSUE_STATUS_FILTER,
-        includeRoutineExecutions: true,
+        includeПроцедураExecutions: true,
         limit: INBOX_ISSUE_LIST_LIMIT,
       }),
-    enabled: !!selectedCompanyId,
+    enabled: !!selectedКомпанияId,
   });
 
-  const { data: heartbeatRuns, isLoading: isRunsLoading } = useQuery({
-    queryKey: [...queryKeys.heartbeats(selectedCompanyId!), "limit", INBOX_HEARTBEAT_RUN_LIMIT],
-    queryFn: () => heartbeatsApi.list(selectedCompanyId!, undefined, INBOX_HEARTBEAT_RUN_LIMIT),
-    enabled: !!selectedCompanyId,
+  const { data: heartbeatЗапуститьs, isЗагрузка: isЗапуститьsЗагрузка } = useQuery({
+    queryКлюч: [...queryКлючs.heartbeats(selectedКомпанияId!), "limit", INBOX_HEARTBEAT_RUN_LIMIT],
+    queryFn: () => heartbeatsApi.list(selectedКомпанияId!, undefined, INBOX_HEARTBEAT_RUN_LIMIT),
+    enabled: !!selectedКомпанияId,
   });
 
-  const { data: liveRuns } = useQuery({
-    queryKey: queryKeys.liveRuns(selectedCompanyId!),
-    queryFn: () => heartbeatsApi.liveRunsForCompany(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+  const { data: liveЗапуститьs } = useQuery({
+    queryКлюч: queryКлючs.liveЗапуститьs(selectedКомпанияId!),
+    queryFn: () => heartbeatsApi.liveЗапуститьsForКомпания(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
     refetchInterval: 5000,
   });
-  const liveIssueIds = useMemo(() => collectLiveIssueIds(liveRuns), [liveRuns]);
+  const liveЗадачаIds = useMemo(() => collectLiveЗадачаIds(liveЗапуститьs), [liveЗапуститьs]);
   const { data: companyMembers } = useQuery({
-    queryKey: queryKeys.access.companyUserDirectory(selectedCompanyId!),
-    queryFn: () => accessApi.listUserDirectory(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.access.companyUserDirectory(selectedКомпанияId!),
+    queryFn: () => accessApi.listUserDirectory(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
   const currentUserId = session?.user.id ?? session?.session.userId ?? null;
 
   const companyUserLabelMap = useMemo(
-    () => buildCompanyUserLabelMap(companyMembers?.users),
+    () => buildКомпанияUserLabelMap(companyMembers?.users),
     [companyMembers?.users],
   );
-  const companyUserProfileMap = useMemo(
-    () => buildCompanyUserProfileMap(companyMembers?.users),
+  const companyUserПрофильMap = useMemo(
+    () => buildКомпанияUserПрофильMap(companyMembers?.users),
     [companyMembers?.users],
   );
 
-  const mineIssues = useMemo(() => getRecentTouchedIssues(mineIssuesRaw), [mineIssuesRaw]);
-  const touchedIssues = useMemo(() => getRecentTouchedIssues(touchedIssuesRaw), [touchedIssuesRaw]);
-  const visibleMineIssues = useMemo(
-    () => applyIssueFilters(mineIssues, issueFilters, currentUserId, true, liveIssueIds),
-    [mineIssues, issueFilters, currentUserId, liveIssueIds],
+  const mineЗадачи = useMemo(() => getRecentTouchedЗадачи(mineЗадачиRaw), [mineЗадачиRaw]);
+  const touchedЗадачи = useMemo(() => getRecentTouchedЗадачи(touchedЗадачиRaw), [touchedЗадачиRaw]);
+  const visibleMineЗадачи = useMemo(
+    () => applyЗадачаФильтрs(mineЗадачи, issueФильтрs, currentUserId, true, liveЗадачаIds),
+    [mineЗадачи, issueФильтрs, currentUserId, liveЗадачаIds],
   );
-  const visibleTouchedIssues = useMemo(
-    () => applyIssueFilters(touchedIssues, issueFilters, currentUserId, true, liveIssueIds),
-    [touchedIssues, issueFilters, currentUserId, liveIssueIds],
+  const visibleTouchedЗадачи = useMemo(
+    () => applyЗадачаФильтрs(touchedЗадачи, issueФильтрs, currentUserId, true, liveЗадачаIds),
+    [touchedЗадачи, issueФильтрs, currentUserId, liveЗадачаIds],
   );
-  const unreadTouchedIssues = useMemo(
-    () => visibleTouchedIssues.filter((issue) => issue.isUnreadForMe),
-    [visibleTouchedIssues],
+  const unreadTouchedЗадачи = useMemo(
+    () => visibleTouchedЗадачи.filter((issue) => issue.isUnreadForMe),
+    [visibleTouchedЗадачи],
   );
   const creatorOptions = useMemo<CreatorOption[]>(() => {
     const options = new Map<string, CreatorOption>();
-    const sourceIssues = [...mineIssues, ...touchedIssues];
+    const sourceЗадачи = [...mineЗадачи, ...touchedЗадачи];
 
     if (currentUserId) {
       options.set(`user:${currentUserId}`, {
         id: `user:${currentUserId}`,
-        label: currentUserId === "local-board" ? "Board" : "Me",
+        label: currentUserId === "local-board" ? "Совет" : "Me",
         kind: "user",
         searchText: currentUserId === "local-board" ? "board me human local-board" : `me board human ${currentUserId}`,
       });
     }
 
-    for (const issue of sourceIssues) {
+    for (const issue of sourceЗадачи) {
       if (issue.createdByUserId) {
         const id = `user:${issue.createdByUserId}`;
         if (!options.has(id)) {
           options.set(id, {
             id,
-            label: formatAssigneeUserLabel(issue.createdByUserId, currentUserId) ?? issue.createdByUserId.slice(0, 5),
+            label: formatИсполнительUserLabel(issue.createdByUserId, currentUserId) ?? issue.createdByUserId.slice(0, 5),
             kind: "user",
             searchText: `${issue.createdByUserId} board user human`,
           });
@@ -889,9 +889,9 @@ export function Inbox() {
       }
     }
 
-    const knownAgentIds = new Set<string>();
+    const knownАгентIds = new Set<string>();
     for (const agent of agents ?? []) {
-      knownAgentIds.add(agent.id);
+      knownАгентIds.add(agent.id);
       const id = `agent:${agent.id}`;
       if (!options.has(id)) {
         options.set(id, {
@@ -903,15 +903,15 @@ export function Inbox() {
       }
     }
 
-    for (const issue of sourceIssues) {
-      if (issue.createdByAgentId && !knownAgentIds.has(issue.createdByAgentId)) {
-        const id = `agent:${issue.createdByAgentId}`;
+    for (const issue of sourceЗадачи) {
+      if (issue.createdByАгентId && !knownАгентIds.has(issue.createdByАгентId)) {
+        const id = `agent:${issue.createdByАгентId}`;
         if (!options.has(id)) {
           options.set(id, {
             id,
-            label: issue.createdByAgentId.slice(0, 8),
+            label: issue.createdByАгентId.slice(0, 8),
             kind: "agent",
-            searchText: `${issue.createdByAgentId} agent`,
+            searchText: `${issue.createdByАгентId} agent`,
           });
         }
       }
@@ -921,14 +921,14 @@ export function Inbox() {
       if (a.kind !== b.kind) return a.kind === "user" ? -1 : 1;
       return a.label.localeCompare(b.label);
     });
-  }, [agents, currentUserId, mineIssues, touchedIssues]);
+  }, [agents, currentUserId, mineЗадачи, touchedЗадачи]);
   const issuesToRender = useMemo(
     () => {
-      if (tab === "mine") return visibleMineIssues;
-      if (tab === "unread") return unreadTouchedIssues;
-      return visibleTouchedIssues;
+      if (tab === "mine") return visibleMineЗадачи;
+      if (tab === "unread") return unreadTouchedЗадачи;
+      return visibleTouchedЗадачи;
     },
-    [tab, visibleMineIssues, visibleTouchedIssues, unreadTouchedIssues],
+    [tab, visibleMineЗадачи, visibleTouchedЗадачи, unreadTouchedЗадачи],
   );
 
   const agentById = useMemo(() => {
@@ -938,7 +938,7 @@ export function Inbox() {
   }, [agents]);
 
   const issueById = useMemo(() => {
-    const map = new Map<string, Issue>();
+    const map = new Map<string, Задача>();
     for (const issue of issues ?? []) map.set(issue.id, issue);
     return map;
   }, [issues]);
@@ -949,7 +949,7 @@ export function Inbox() {
     }
     return map;
   }, [projects]);
-  const projectWorkspaceById = useMemo(() => {
+  const projectРабочая областьById = useMemo(() => {
     const map = new Map<string, { name: string; projectId: string }>();
     for (const project of projects ?? []) {
       for (const workspace of project.workspaces ?? []) {
@@ -958,43 +958,43 @@ export function Inbox() {
     }
     return map;
   }, [projects]);
-  const defaultProjectWorkspaceIdByProjectId = useMemo(() => {
+  const defaultProjectРабочая областьIdByProjectId = useMemo(() => {
     const map = new Map<string, string>();
     for (const project of projects ?? []) {
-      const defaultWorkspaceId =
-        project.executionWorkspacePolicy?.defaultProjectWorkspaceId
-        ?? project.primaryWorkspace?.id
+      const defaultРабочая областьId =
+        project.executionРабочая областьPolicy?.defaultProjectРабочая областьId
+        ?? project.primaryРабочая область?.id
         ?? null;
-      if (defaultWorkspaceId) map.set(project.id, defaultWorkspaceId);
+      if (defaultРабочая областьId) map.set(project.id, defaultРабочая областьId);
     }
     return map;
   }, [projects]);
-  const executionWorkspaceById = useMemo(() => {
+  const executionРабочая областьById = useMemo(() => {
     const map = new Map<string, {
       name: string;
       mode: "shared_workspace" | "isolated_workspace" | "operator_branch" | "adapter_managed" | "cloud_sandbox";
-      projectWorkspaceId: string | null;
+      projectРабочая областьId: string | null;
       projectId: string | null;
     }>();
-    for (const workspace of executionWorkspaces) {
-      const projectWorkspace = workspace.projectWorkspaceId
-        ? projectWorkspaceById.get(workspace.projectWorkspaceId) ?? null
+    for (const workspace of executionРабочие области) {
+      const projectРабочая область = workspace.projectРабочая областьId
+        ? projectРабочая областьById.get(workspace.projectРабочая областьId) ?? null
         : null;
       map.set(workspace.id, {
         name: workspace.name,
         mode: workspace.mode,
-        projectWorkspaceId: workspace.projectWorkspaceId ?? null,
-        projectId: projectWorkspace?.projectId ?? null,
+        projectРабочая областьId: workspace.projectРабочая областьId ?? null,
+        projectId: projectРабочая область?.projectId ?? null,
       });
     }
     return map;
-  }, [executionWorkspaces, projectWorkspaceById]);
-  const inboxWorkspaceGrouping = useMemo<InboxWorkspaceGroupingOptions>(
+  }, [executionРабочие области, projectРабочая областьById]);
+  const inboxРабочая областьGrouping = useMemo<ВходящиеРабочая областьGroupingOptions>(
     () => ({
       agentById,
-      executionWorkspaceById,
-      projectWorkspaceById,
-      defaultProjectWorkspaceIdByProjectId,
+      executionРабочая областьById,
+      projectРабочая областьById,
+      defaultProjectРабочая областьIdByProjectId,
       projectById,
       userLabelById: companyUserLabelMap,
       currentUserId,
@@ -1003,111 +1003,111 @@ export function Inbox() {
       agentById,
       companyUserLabelMap,
       currentUserId,
-      defaultProjectWorkspaceIdByProjectId,
-      executionWorkspaceById,
+      defaultProjectРабочая областьIdByProjectId,
+      executionРабочая областьById,
       projectById,
-      projectWorkspaceById,
+      projectРабочая областьById,
     ],
   );
-  const visibleIssueColumnSet = useMemo(() => new Set(visibleIssueColumns), [visibleIssueColumns]);
-  const availableIssueColumns = useMemo(
-    () => getAvailableInboxIssueColumns(isolatedWorkspacesEnabled),
-    [isolatedWorkspacesEnabled],
+  const visibleЗадачаColumnSet = useMemo(() => new Set(visibleЗадачаColumns), [visibleЗадачаColumns]);
+  const availableЗадачаColumns = useMemo(
+    () => getAvailableВходящиеЗадачаColumns(isolatedРабочие областиВключитьd),
+    [isolatedРабочие областиВключитьd],
   );
-  const availableIssueColumnSet = useMemo(() => new Set(availableIssueColumns), [availableIssueColumns]);
-  const visibleTrailingIssueColumns = useMemo(
-    () => issueTrailingColumns.filter((column) => visibleIssueColumnSet.has(column) && availableIssueColumnSet.has(column)),
-    [availableIssueColumnSet, visibleIssueColumnSet],
+  const availableЗадачаColumnSet = useMemo(() => new Set(availableЗадачаColumns), [availableЗадачаColumns]);
+  const visibleTrailingЗадачаColumns = useMemo(
+    () => issueTrailingColumns.filter((column) => visibleЗадачаColumnSet.has(column) && availableЗадачаColumnSet.has(column)),
+    [availableЗадачаColumnSet, visibleЗадачаColumnSet],
   );
 
-  const failedRuns = useMemo(
+  const failedЗапуститьs = useMemo(
     () =>
-      getLatestFailedRunsByAgent(heartbeatRuns ?? []).filter(
-        (r) => !isInboxEntityDismissed(dismissedAtByKey, `run:${r.id}`, r.createdAt),
+      getLatestОшибкаЗапуститьsByАгент(heartbeatЗапуститьs ?? []).filter(
+        (r) => !isВходящиеEntityЗакрытьed(dismissedAtByКлюч, `run:${r.id}`, r.createdAt),
       ),
-    [heartbeatRuns, dismissedAtByKey],
+    [heartbeatЗапуститьs, dismissedAtByКлюч],
   );
   const approvalsToRender = useMemo(() => {
-    let filtered = getApprovalsForTab(approvals ?? [], tab, allApprovalFilter, currentUserId);
+    let filtered = getСогласованияForTab(approvals ?? [], tab, allСогласованиеФильтр, currentUserId);
     if (tab === "mine") {
       filtered = filtered.filter(
-        (a) => !isInboxEntityDismissed(dismissedAtByKey, `approval:${a.id}`, a.updatedAt),
+        (a) => !isВходящиеEntityЗакрытьed(dismissedAtByКлюч, `approval:${a.id}`, a.updatedAt),
       );
     }
     return filtered;
-  }, [approvals, tab, allApprovalFilter, currentUserId, dismissedAtByKey]);
+  }, [approvals, tab, allСогласованиеФильтр, currentUserId, dismissedAtByКлюч]);
   const showJoinRequestsCategory =
-    allCategoryFilter === "everything" || allCategoryFilter === "join_requests";
+    allCategoryФильтр === "everything" || allCategoryФильтр === "join_requests";
   const showTouchedCategory =
-    allCategoryFilter === "everything" || allCategoryFilter === "issues_i_touched";
-  const showApprovalsCategory =
-    allCategoryFilter === "everything" || allCategoryFilter === "approvals";
-  const showFailedRunsCategory =
-    allCategoryFilter === "everything" || allCategoryFilter === "failed_runs";
-  const showAlertsCategory = allCategoryFilter === "everything" || allCategoryFilter === "alerts";
-  const failedRunsForTab = useMemo(() => {
-    if (tab === "all" && !showFailedRunsCategory) return [];
-    return failedRuns;
-  }, [failedRuns, tab, showFailedRunsCategory]);
+    allCategoryФильтр === "everything" || allCategoryФильтр === "issues_i_touched";
+  const showСогласованияCategory =
+    allCategoryФильтр === "everything" || allCategoryФильтр === "approvals";
+  const showОшибкаЗапуститьsCategory =
+    allCategoryФильтр === "everything" || allCategoryФильтр === "failed_runs";
+  const showAlertsCategory = allCategoryФильтр === "everything" || allCategoryФильтр === "alerts";
+  const failedЗапуститьsForTab = useMemo(() => {
+    if (tab === "all" && !showОшибкаЗапуститьsCategory) return [];
+    return failedЗапуститьs;
+  }, [failedЗапуститьs, tab, showОшибкаЗапуститьsCategory]);
 
   const joinRequestsForTab = useMemo(() => {
     if (tab === "all" && !showJoinRequestsCategory) return [];
     if (tab === "mine") {
       return joinRequests.filter(
-        (jr) => !isInboxEntityDismissed(dismissedAtByKey, `join:${jr.id}`, jr.updatedAt ?? jr.createdAt),
+        (jr) => !isВходящиеEntityЗакрытьed(dismissedAtByКлюч, `join:${jr.id}`, jr.updatedAt ?? jr.createdAt),
       );
     }
     return joinRequests;
-  }, [joinRequests, tab, showJoinRequestsCategory, dismissedAtByKey]);
+  }, [joinRequests, tab, showJoinRequestsCategory, dismissedAtByКлюч]);
 
   const workItemsToRender = useMemo(
     () =>
-      getInboxWorkItems({
+      getВходящиеРаботаItems({
         issues: tab === "all" && !showTouchedCategory ? [] : issuesToRender,
-        approvals: tab === "all" && !showApprovalsCategory ? [] : approvalsToRender,
-        failedRuns: failedRunsForTab,
+        approvals: tab === "all" && !showСогласованияCategory ? [] : approvalsToRender,
+        failedЗапуститьs: failedЗапуститьsForTab,
         joinRequests: joinRequestsForTab,
       }),
-    [approvalsToRender, issuesToRender, showApprovalsCategory, showTouchedCategory, tab, failedRunsForTab, joinRequestsForTab],
+    [approvalsToRender, issuesToRender, showСогласованияCategory, showTouchedCategory, tab, failedЗапуститьsForTab, joinRequestsForTab],
   );
 
-  const filteredWorkItems = useMemo(() => {
-    const q = normalizedSearchQuery.toLowerCase();
+  const filteredРаботаItems = useMemo(() => {
+    const q = normalizedПоискQuery.toНизкийerCase();
     if (!q) return workItemsToRender;
     return workItemsToRender.filter((item) => {
       if (item.kind === "issue") {
-        return matchesInboxIssueSearch(item.issue, q, {
-          isolatedWorkspacesEnabled,
-          executionWorkspaceById,
-          projectWorkspaceById,
-          defaultProjectWorkspaceIdByProjectId,
+        return matchesВходящиеЗадачаПоиск(item.issue, q, {
+          isolatedРабочие областиВключитьd,
+          executionРабочая областьById,
+          projectРабочая областьById,
+          defaultProjectРабочая областьIdByProjectId,
         });
       }
       if (item.kind === "approval") {
         const a = item.approval;
         const label = approvalLabel(a.type, a.payload as Record<string, unknown> | null);
-        if (label.toLowerCase().includes(q)) return true;
-        if (a.type.toLowerCase().includes(q)) return true;
+        if (label.toНизкийerCase().includes(q)) return true;
+        if (a.type.toНизкийerCase().includes(q)) return true;
         return false;
       }
       if (item.kind === "failed_run") {
         const run = item.run;
         const name = agentById.get(run.agentId);
-        if (name?.toLowerCase().includes(q)) return true;
+        if (name?.toНизкийerCase().includes(q)) return true;
         const msg = runFailureMessage(run);
-        if (msg.toLowerCase().includes(q)) return true;
-        const issueId = readIssueIdFromRun(run);
+        if (msg.toНизкийerCase().includes(q)) return true;
+        const issueId = readЗадачаIdFromЗапустить(run);
         if (issueId) {
           const issue = issueById.get(issueId);
-          if (issue?.title.toLowerCase().includes(q)) return true;
-          if (issue?.identifier?.toLowerCase().includes(q)) return true;
+          if (issue?.title.toНизкийerCase().includes(q)) return true;
+          if (issue?.identifier?.toНизкийerCase().includes(q)) return true;
         }
         return false;
       }
       if (item.kind === "join_request") {
         const jr = item.joinRequest;
-        if (jr.agentName?.toLowerCase().includes(q)) return true;
-        if (jr.capabilities?.toLowerCase().includes(q)) return true;
+        if (jr.agentИмя?.toНизкийerCase().includes(q)) return true;
+        if (jr.capabilities?.toНизкийerCase().includes(q)) return true;
         return false;
       }
       return false;
@@ -1115,160 +1115,160 @@ export function Inbox() {
   }, [
     workItemsToRender,
     agentById,
-    defaultProjectWorkspaceIdByProjectId,
-    executionWorkspaceById,
+    defaultProjectРабочая областьIdByProjectId,
+    executionРабочая областьById,
     issueById,
-    isolatedWorkspacesEnabled,
-    normalizedSearchQuery,
-    projectWorkspaceById,
+    isolatedРабочие областиВключитьd,
+    normalizedПоискQuery,
+    projectРабочая областьById,
   ]);
 
-  const archivedSearchIssues = useMemo(
+  const archivedПоискЗадачи = useMemo(
     () =>
       tab === "mine"
-        ? getArchivedInboxSearchIssues({
-          visibleIssues: visibleMineIssues,
-          searchableIssues: visibleTouchedIssues,
-          query: normalizedSearchQuery,
-          isolatedWorkspacesEnabled,
-          executionWorkspaceById,
-          projectWorkspaceById,
-          defaultProjectWorkspaceIdByProjectId,
+        ? getАрхивированВходящиеПоискЗадачи({
+          visibleЗадачи: visibleMineЗадачи,
+          searchableЗадачи: visibleTouchedЗадачи,
+          query: normalizedПоискQuery,
+          isolatedРабочие областиВключитьd,
+          executionРабочая областьById,
+          projectРабочая областьById,
+          defaultProjectРабочая областьIdByProjectId,
         })
         : [],
     [
-      defaultProjectWorkspaceIdByProjectId,
-      executionWorkspaceById,
-      isolatedWorkspacesEnabled,
-      normalizedSearchQuery,
-      projectWorkspaceById,
+      defaultProjectРабочая областьIdByProjectId,
+      executionРабочая областьById,
+      isolatedРабочие областиВключитьd,
+      normalizedПоискQuery,
+      projectРабочая областьById,
       tab,
-      visibleMineIssues,
-      visibleTouchedIssues,
+      visibleMineЗадачи,
+      visibleTouchedЗадачи,
     ],
   );
-  const shouldUseIssueSearchSupplement =
-    !!selectedCompanyId
-    && normalizedSearchQuery.length > 0;
-  const { data: remoteIssueSearchResults = [] } = useQuery({
-    queryKey: [
-      ...queryKeys.issues.search(selectedCompanyId!, normalizedSearchQuery, undefined, 25),
+  const shouldUseЗадачаПоискSupplement =
+    !!selectedКомпанияId
+    && normalizedПоискQuery.length > 0;
+  const { data: remoteЗадачаПоискResults = [] } = useQuery({
+    queryКлюч: [
+      ...queryКлючs.issues.search(selectedКомпанияId!, normalizedПоискQuery, undefined, 25),
       "inbox-supplement",
     ],
     queryFn: () =>
-      issuesApi.list(selectedCompanyId!, {
-        q: normalizedSearchQuery,
+      issuesApi.list(selectedКомпанияId!, {
+        q: normalizedПоискQuery,
         limit: 25,
-        includeRoutineExecutions: true,
+        includeПроцедураExecutions: true,
       }),
-    enabled: shouldUseIssueSearchSupplement,
+    enabled: shouldUseЗадачаПоискSupplement,
     placeholderData: (previousData) => previousData,
   });
-  const issueSearchSupplementResults = useMemo(
+  const issueПоискSupplementResults = useMemo(
     () =>
-      getInboxSearchSupplementIssues({
-        query: normalizedSearchQuery,
-        filteredWorkItems,
-        archivedSearchIssues,
-        remoteIssues: remoteIssueSearchResults,
-        issueFilters,
+      getВходящиеПоискSupplementЗадачи({
+        query: normalizedПоискQuery,
+        filteredРаботаItems,
+        archivedПоискЗадачи,
+        remoteЗадачи: remoteЗадачаПоискResults,
+        issueФильтрs,
         currentUserId,
-        enableRoutineVisibilityFilter: true,
-        liveIssueIds,
+        enableПроцедураVisibilityФильтр: true,
+        liveЗадачаIds,
       }),
     [
-      archivedSearchIssues,
+      archivedПоискЗадачи,
       currentUserId,
-      filteredWorkItems,
-      issueFilters,
-      liveIssueIds,
-      normalizedSearchQuery,
-      remoteIssueSearchResults,
+      filteredРаботаItems,
+      issueФильтрs,
+      liveЗадачаIds,
+      normalizedПоискQuery,
+      remoteЗадачаПоискResults,
     ],
   );
-  const nonInboxSearchIssueIds = useMemo(
+  const nonВходящиеПоискЗадачаIds = useMemo(
     () => new Set([
-      ...archivedSearchIssues.map((issue) => issue.id),
-      ...issueSearchSupplementResults.map((issue) => issue.id),
+      ...archivedПоискЗадачи.map((issue) => issue.id),
+      ...issueПоискSupplementResults.map((issue) => issue.id),
     ]),
-    [archivedSearchIssues, issueSearchSupplementResults],
+    [archivedПоискЗадачи, issueПоискSupplementResults],
   );
 
-  // --- Parent-child nesting for inbox issues ---
-  const [nestingPreferenceEnabled, setNestingPreferenceEnabled] = useState(() => loadInboxNesting());
-  const nestingEnabled = resolveInboxNestingEnabled(nestingPreferenceEnabled, isMobile);
+  // --- Родитель-child nesting for inbox issues ---
+  const [nestingPreferenceВключитьd, setNestingPreferenceВключитьd] = useState(() => loadВходящиеNesting());
+  const nestingВключитьd = resolveВходящиеNestingВключитьd(nestingPreferenceВключитьd, isMobile);
   useEffect(() => {
-    if (!shouldResetInboxWorkspaceGrouping(groupBy, isolatedWorkspacesEnabled, experimentalSettingsLoaded)) return;
+    if (!shouldСброситьВходящиеРабочая областьGrouping(groupBy, isolatedРабочие областиВключитьd, experimentalНастройкиLoaded)) return;
     setGroupBy("none");
-    saveInboxWorkItemGroupBy("none");
-  }, [experimentalSettingsLoaded, groupBy, isolatedWorkspacesEnabled]);
+    saveВходящиеРаботаItemGroupBy("none");
+  }, [experimentalНастройкиLoaded, groupBy, isolatedРабочие областиВключитьd]);
   const toggleNesting = useCallback(() => {
-    setNestingPreferenceEnabled((prev) => {
+    setNestingPreferenceВключитьd((prev) => {
       const next = !prev;
-      saveInboxNesting(next);
+      saveВходящиеNesting(next);
       return next;
     });
   }, []);
-  const [collapsedInboxParents, setCollapsedInboxParents] = useState<Set<string>>(new Set());
-  const [collapsedGroupKeys, setCollapsedGroupKeys] = useState<Set<string>>(() => loadCollapsedInboxGroupKeys(selectedCompanyId));
-  const toggleGroupCollapse = useCallback((groupKey: string) => {
-    setCollapsedGroupKeys((prev) => {
+  const [collapsedВходящиеРодительs, setCollapsedВходящиеРодительs] = useState<Set<string>>(new Set());
+  const [collapsedGroupКлючs, setCollapsedGroupКлючs] = useState<Set<string>>(() => loadCollapsedВходящиеGroupКлючs(selectedКомпанияId));
+  const toggleGroupCollapse = useCallback((groupКлюч: string) => {
+    setCollapsedGroupКлючs((prev) => {
       const next = new Set(prev);
-      if (next.has(groupKey)) next.delete(groupKey);
-      else next.add(groupKey);
-      saveCollapsedInboxGroupKeys(selectedCompanyId, next);
+      if (next.has(groupКлюч)) next.delete(groupКлюч);
+      else next.add(groupКлюч);
+      saveCollapsedВходящиеGroupКлючs(selectedКомпанияId, next);
       return next;
     });
-  }, [selectedCompanyId]);
-  const setGroupCollapsed = useCallback((groupKey: string, collapsed: boolean) => {
-    setCollapsedGroupKeys((prev) => {
-      if (collapsed ? prev.has(groupKey) : !prev.has(groupKey)) return prev;
+  }, [selectedКомпанияId]);
+  const setGroupCollapsed = useCallback((groupКлюч: string, collapsed: boolean) => {
+    setCollapsedGroupКлючs((prev) => {
+      if (collapsed ? prev.has(groupКлюч) : !prev.has(groupКлюч)) return prev;
       const next = new Set(prev);
-      if (collapsed) next.add(groupKey);
-      else next.delete(groupKey);
-      saveCollapsedInboxGroupKeys(selectedCompanyId, next);
+      if (collapsed) next.add(groupКлюч);
+      else next.delete(groupКлюч);
+      saveCollapsedВходящиеGroupКлючs(selectedКомпанияId, next);
       return next;
     });
-  }, [selectedCompanyId]);
-  const groupedSections = useMemo<InboxGroupedSection[]>(() => [
-    ...buildGroupedInboxSections(filteredWorkItems, groupBy, inboxWorkspaceGrouping, { nestingEnabled }),
-    ...buildGroupedInboxSections(
-      getInboxWorkItems({ issues: archivedSearchIssues, approvals: [] }),
+  }, [selectedКомпанияId]);
+  const groupedSections = useMemo<ВходящиеGroupedSection[]>(() => [
+    ...buildGroupedВходящиеSections(filteredРаботаItems, groupBy, inboxРабочая областьGrouping, { nestingВключитьd }),
+    ...buildGroupedВходящиеSections(
+      getВходящиеРаботаItems({ issues: archivedПоискЗадачи, approvals: [] }),
       groupBy,
-      inboxWorkspaceGrouping,
-      { keyPrefix: "archived-search:", searchSection: "archived", nestingEnabled },
+      inboxРабочая областьGrouping,
+      { keyPrefix: "archived-search:", searchSection: "archived", nestingВключитьd },
     ),
-    ...buildGroupedInboxSections(
-      getInboxWorkItems({ issues: issueSearchSupplementResults, approvals: [] }),
+    ...buildGroupedВходящиеSections(
+      getВходящиеРаботаItems({ issues: issueПоискSupplementResults, approvals: [] }),
       groupBy,
-      inboxWorkspaceGrouping,
-      { keyPrefix: "other-search:", searchSection: "other", nestingEnabled },
+      inboxРабочая областьGrouping,
+      { keyPrefix: "other-search:", searchSection: "other", nestingВключитьd },
     ),
   ], [
-    archivedSearchIssues,
-    filteredWorkItems,
+    archivedПоискЗадачи,
+    filteredРаботаItems,
     groupBy,
-    inboxWorkspaceGrouping,
-    issueSearchSupplementResults,
-    nestingEnabled,
+    inboxРабочая областьGrouping,
+    issueПоискSupplementResults,
+    nestingВключитьd,
   ]);
 
-  const openCreateIssueForGroup = useCallback((group: InboxGroupedSection) => {
-    const defaults = buildInboxIssueGroupCreateDefaults(
+  const openСоздатьЗадачаForGroup = useCallback((group: ВходящиеGroupedSection) => {
+    const defaults = buildВходящиеЗадачаGroupСоздатьПо умолчаниюs(
       group.key,
       groupBy,
       group.displayItems,
-      inboxWorkspaceGrouping,
+      inboxРабочая областьGrouping,
     );
     if (!defaults) return;
-    openNewIssue(defaults);
-  }, [groupBy, inboxWorkspaceGrouping, openNewIssue]);
-  const totalVisibleWorkItems = useMemo(
+    openNewЗадача(defaults);
+  }, [groupBy, inboxРабочая областьGrouping, openNewЗадача]);
+  const totalVisibleРаботаItems = useMemo(
     () => groupedSections.reduce((count, group) => count + group.displayItems.length, 0),
     [groupedSections],
   );
-  const toggleInboxParentCollapse = useCallback((parentId: string) => {
-    setCollapsedInboxParents((prev) => {
+  const toggleВходящиеРодительCollapse = useCallback((parentId: string) => {
+    setCollapsedВходящиеРодительs((prev) => {
       const next = new Set(prev);
       if (next.has(parentId)) next.delete(parentId);
       else next.add(parentId);
@@ -1278,12 +1278,12 @@ export function Inbox() {
 
   // Build flat navigation list from visible rows so keyboard traversal respects collapsed groups.
   const flatNavItems = useMemo((): NavEntry[] => {
-    return buildInboxKeyboardNavEntries(groupedSections, collapsedGroupKeys, collapsedInboxParents);
-  }, [collapsedGroupKeys, collapsedInboxParents, groupedSections]);
+    return buildВходящиеКлючboardNavEntries(groupedSections, collapsedGroupКлючs, collapsedВходящиеРодительs);
+  }, [collapsedGroupКлючs, collapsedВходящиеРодительs, groupedSections]);
   const topFlatIndex = useMemo(() => {
     const map = new Map<string, number>();
     flatNavItems.forEach((entry, index) => {
-      if (entry.type === "top") map.set(entry.itemKey, index);
+      if (entry.type === "top") map.set(entry.itemКлюч, index);
     });
     return map;
   }, [flatNavItems]);
@@ -1297,115 +1297,115 @@ export function Inbox() {
   const groupFlatIndex = useMemo(() => {
     const map = new Map<string, number>();
     flatNavItems.forEach((entry, index) => {
-      if (entry.type === "group") map.set(entry.groupKey, index);
+      if (entry.type === "group") map.set(entry.groupКлюч, index);
     });
     return map;
   }, [flatNavItems]);
 
-  const agentName = (id: string | null) => {
+  const agentИмя = (id: string | null) => {
     if (!id) return null;
     return agentById.get(id) ?? null;
   };
-  const setIssueColumns = useCallback((next: InboxIssueColumn[]) => {
-    const normalized = normalizeInboxIssueColumns(next);
-    setVisibleIssueColumns(normalized);
-    saveInboxIssueColumns(normalized);
+  const setЗадачаColumns = useCallback((next: ВходящиеЗадачаColumn[]) => {
+    const normalized = normalizeВходящиеЗадачаColumns(next);
+    setVisibleЗадачаColumns(normalized);
+    saveВходящиеЗадачаColumns(normalized);
   }, []);
-  const toggleIssueColumn = useCallback((column: InboxIssueColumn, enabled: boolean) => {
+  const toggleЗадачаColumn = useCallback((column: ВходящиеЗадачаColumn, enabled: boolean) => {
     if (enabled) {
-      setIssueColumns([...visibleIssueColumns, column]);
+      setЗадачаColumns([...visibleЗадачаColumns, column]);
       return;
     }
-    setIssueColumns(visibleIssueColumns.filter((value) => value !== column));
-  }, [setIssueColumns, visibleIssueColumns]);
-  const updateFilterPreferences = useCallback(
-    (updater: (previous: InboxFilterPreferences) => InboxFilterPreferences) => {
-      setFilterPreferences((previous) => {
+    setЗадачаColumns(visibleЗадачаColumns.filter((value) => value !== column));
+  }, [setЗадачаColumns, visibleЗадачаColumns]);
+  const updateФильтрPreferences = useCallback(
+    (updater: (previous: ВходящиеФильтрPreferences) => ВходящиеФильтрPreferences) => {
+      setФильтрPreferences((previous) => {
         const next = updater(previous);
-        saveInboxFilterPreferences(selectedCompanyId, next);
+        saveВходящиеФильтрPreferences(selectedКомпанияId, next);
         return next;
       });
     },
-    [selectedCompanyId],
+    [selectedКомпанияId],
   );
-  const updateIssueFilters = useCallback((patch: Partial<IssueFilterState>) => {
-    updateFilterPreferences((previous) => ({
+  const updateЗадачаФильтрs = useCallback((patch: Partial<ЗадачаФильтрState>) => {
+    updateФильтрPreferences((previous) => ({
       ...previous,
-      issueFilters: { ...previous.issueFilters, ...patch },
+      issueФильтрs: { ...previous.issueФильтрs, ...patch },
     }));
-  }, [updateFilterPreferences]);
-  const updateAllCategoryFilter = useCallback((value: InboxCategoryFilter) => {
-    updateFilterPreferences((previous) => ({ ...previous, allCategoryFilter: value }));
-  }, [updateFilterPreferences]);
-  const updateAllApprovalFilter = useCallback((value: InboxApprovalFilter) => {
-    updateFilterPreferences((previous) => ({ ...previous, allApprovalFilter: value }));
-  }, [updateFilterPreferences]);
-  const updateGroupBy = useCallback((nextGroupBy: InboxWorkItemGroupBy) => {
+  }, [updateФильтрPreferences]);
+  const updateВсеCategoryФильтр = useCallback((value: ВходящиеCategoryФильтр) => {
+    updateФильтрPreferences((previous) => ({ ...previous, allCategoryФильтр: value }));
+  }, [updateФильтрPreferences]);
+  const updateВсеСогласованиеФильтр = useCallback((value: ВходящиеСогласованиеФильтр) => {
+    updateФильтрPreferences((previous) => ({ ...previous, allСогласованиеФильтр: value }));
+  }, [updateФильтрPreferences]);
+  const updateGroupBy = useCallback((nextGroupBy: ВходящиеРаботаItemGroupBy) => {
     setGroupBy(nextGroupBy);
-    saveInboxWorkItemGroupBy(nextGroupBy);
+    saveВходящиеРаботаItemGroupBy(nextGroupBy);
   }, []);
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => approvalsApi.approve(id),
-    onSuccess: (_approval, id) => {
-      setActionError(null);
-      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list(selectedCompanyId!) });
+    onУспешно: (_approval, id) => {
+      setActionОшибка(null);
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.list(selectedКомпанияId!) });
       navigate(`/approvals/${id}?resolved=approved`);
     },
-    onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to approve");
+    onОшибка: (err) => {
+      setActionОшибка(err instanceof Ошибка ? err.message : "Ошибка to approve");
     },
   });
 
   const rejectMutation = useMutation({
     mutationFn: (id: string) => approvalsApi.reject(id),
-    onSuccess: () => {
-      setActionError(null);
-      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list(selectedCompanyId!) });
+    onУспешно: () => {
+      setActionОшибка(null);
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.list(selectedКомпанияId!) });
     },
-    onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to reject");
+    onОшибка: (err) => {
+      setActionОшибка(err instanceof Ошибка ? err.message : "Ошибка to reject");
     },
   });
 
   const approveJoinMutation = useMutation({
     mutationFn: (joinRequest: JoinRequest) =>
-      accessApi.approveJoinRequest(selectedCompanyId!, joinRequest.id),
-    onSuccess: () => {
-      setActionError(null);
-      queryClient.invalidateQueries({ queryKey: queryKeys.access.joinRequests(selectedCompanyId!) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(selectedCompanyId!) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(selectedCompanyId!) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      accessApi.approveJoinRequest(selectedКомпанияId!, joinRequest.id),
+    onУспешно: () => {
+      setActionОшибка(null);
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.access.joinRequests(selectedКомпанияId!) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(selectedКомпанияId!) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.list(selectedКомпанияId!) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
     },
-    onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to approve join request");
+    onОшибка: (err) => {
+      setActionОшибка(err instanceof Ошибка ? err.message : "Ошибка to approve join request");
     },
   });
 
   const rejectJoinMutation = useMutation({
     mutationFn: (joinRequest: JoinRequest) =>
-      accessApi.rejectJoinRequest(selectedCompanyId!, joinRequest.id),
-    onSuccess: () => {
-      setActionError(null);
-      queryClient.invalidateQueries({ queryKey: queryKeys.access.joinRequests(selectedCompanyId!) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(selectedCompanyId!) });
+      accessApi.rejectJoinRequest(selectedКомпанияId!, joinRequest.id),
+    onУспешно: () => {
+      setActionОшибка(null);
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.access.joinRequests(selectedКомпанияId!) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(selectedКомпанияId!) });
     },
-    onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to reject join request");
+    onОшибка: (err) => {
+      setActionОшибка(err instanceof Ошибка ? err.message : "Ошибка to reject join request");
     },
   });
 
-  const [retryingRunIds, setRetryingRunIds] = useState<Set<string>>(new Set());
+  const [retryingЗапуститьIds, setПовторитьingЗапуститьIds] = useState<Set<string>>(new Set());
 
-  const retryRunMutation = useMutation({
-    mutationFn: async (run: HeartbeatRun) => {
+  const retryЗапуститьMutation = useMutation({
+    mutationFn: async (run: HeartbeatЗапустить) => {
       const payload: Record<string, unknown> = {};
       const context = run.contextSnapshot as Record<string, unknown> | null;
       if (context) {
         if (typeof context.issueId === "string" && context.issueId) payload.issueId = context.issueId;
         if (typeof context.taskId === "string" && context.taskId) payload.taskId = context.taskId;
-        if (typeof context.taskKey === "string" && context.taskKey) payload.taskKey = context.taskKey;
+        if (typeof context.taskКлюч === "string" && context.taskКлюч) payload.taskКлюч = context.taskКлюч;
       }
       const result = await agentsApi.wakeup(run.agentId, {
         source: "on_demand",
@@ -1414,21 +1414,21 @@ export function Inbox() {
         payload,
       });
       if (!("id" in result)) {
-        throw new Error(result.message ?? "Retry was skipped.");
+        throw new Ошибка(result.message ?? "Повторить was skipped.");
       }
-      return { newRun: result, originalRun: run };
+      return { newЗапустить: result, originalЗапустить: run };
     },
     onMutate: (run) => {
-      setRetryingRunIds((prev) => new Set(prev).add(run.id));
+      setПовторитьingЗапуститьIds((prev) => new Set(prev).add(run.id));
     },
-    onSuccess: ({ newRun, originalRun }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(originalRun.companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(originalRun.companyId, originalRun.agentId) });
-      navigate(`/agents/${originalRun.agentId}/runs/${newRun.id}`);
+    onУспешно: ({ newЗапустить, originalЗапустить }) => {
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.heartbeats(originalЗапустить.companyId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.heartbeats(originalЗапустить.companyId, originalЗапустить.agentId) });
+      navigate(`/agents/${originalЗапустить.agentId}/runs/${newЗапустить.id}`);
     },
     onSettled: (_data, _error, run) => {
       if (!run) return;
-      setRetryingRunIds((prev) => {
+      setПовторитьingЗапуститьIds((prev) => {
         const next = new Set(prev);
         next.delete(run.id);
         return next;
@@ -1436,43 +1436,43 @@ export function Inbox() {
     },
   });
 
-  const [fadingOutIssues, setFadingOutIssues] = useState<Set<string>>(new Set());
-  const [showMarkAllReadConfirm, setShowMarkAllReadConfirm] = useState(false);
-  const [archivingIssueIds, setArchivingIssueIds] = useState<Set<string>>(new Set());
-  const [undoableArchiveIssueIds, setUndoableArchiveIssueIds] = useState<string[]>([]);
-  const [unarchivingIssueIds, setUnarchivingIssueIds] = useState<Set<string>>(new Set());
-  const [fadingNonIssueItems, setFadingNonIssueItems] = useState<Set<string>>(new Set());
-  const [archivingNonIssueIds, setArchivingNonIssueIds] = useState<Set<string>>(new Set());
+  const [fadingOutЗадачи, setFadingOutЗадачи] = useState<Set<string>>(new Set());
+  const [showMarkВсеReadПодтвердить, setShowMarkВсеReadПодтвердить] = useState(false);
+  const [archivingЗадачаIds, setArchivingЗадачаIds] = useState<Set<string>>(new Set());
+  const [undoableАрхивироватьЗадачаIds, setUndoableАрхивироватьЗадачаIds] = useState<string[]>([]);
+  const [unarchivingЗадачаIds, setUnarchivingЗадачаIds] = useState<Set<string>>(new Set());
+  const [fadingНетnЗадачаItems, setFadingНетnЗадачаItems] = useState<Set<string>>(new Set());
+  const [archivingНетnЗадачаIds, setArchivingНетnЗадачаIds] = useState<Set<string>>(new Set());
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const invalidateInboxIssueQueries = () => {
-    if (!selectedCompanyId) return;
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.listMineByMe(selectedCompanyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(selectedCompanyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.issues.listUnreadTouchedByMe(selectedCompanyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(selectedCompanyId) });
+  const invalidateВходящиеЗадачаQueries = () => {
+    if (!selectedКомпанияId) return;
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listMineByMe(selectedКомпанияId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listTouchedByMe(selectedКомпанияId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listUnreadTouchedByMe(selectedКомпанияId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(selectedКомпанияId) });
   };
 
-  const archiveIssueMutation = useMutation({
-    mutationFn: (id: string) => issuesApi.archiveFromInbox(id),
+  const archiveЗадачаMutation = useMutation({
+    mutationFn: (id: string) => issuesApi.archiveFromВходящие(id),
     onMutate: async (id) => {
-      setActionError(null);
-      setArchivingIssueIds((prev) => new Set(prev).add(id));
+      setActionОшибка(null);
+      setArchivingЗадачаIds((prev) => new Set(prev).add(id));
 
-      // Cancel in-flight refetches so they don't overwrite our optimistic update
-      const queryKeys_ = [
-        [...queryKeys.issues.listMineByMe(selectedCompanyId!), "with-routine-executions"],
-        [...queryKeys.issues.listTouchedByMe(selectedCompanyId!), "with-routine-executions"],
-        queryKeys.issues.listUnreadTouchedByMe(selectedCompanyId!),
+      // Отмена in-flight refetches so they don't overwrite our optimistic update
+      const queryКлючs_ = [
+        [...queryКлючs.issues.listMineByMe(selectedКомпанияId!), "with-routine-executions"],
+        [...queryКлючs.issues.listTouchedByMe(selectedКомпанияId!), "with-routine-executions"],
+        queryКлючs.issues.listUnreadTouchedByMe(selectedКомпанияId!),
       ];
-      await Promise.all(queryKeys_.map((qk) => queryClient.cancelQueries({ queryKey: qk })));
+      await Promise.all(queryКлючs_.map((qk) => queryClient.cancelQueries({ queryКлюч: qk })));
 
       // Snapshot previous data for rollback
-      const previousData = queryKeys_.map((qk) => [qk, queryClient.getQueryData(qk)] as const);
+      const previousData = queryКлючs_.map((qk) => [qk, queryClient.getQueryData(qk)] as const);
 
       // Optimistically remove the issue from all inbox query caches
-      for (const qk of queryKeys_) {
+      for (const qk of queryКлючs_) {
         queryClient.setQueryData(qk, (old: unknown) => {
           if (!Array.isArray(old)) return old;
           return old.filter((issue: { id: string }) => issue.id !== id);
@@ -1481,9 +1481,9 @@ export function Inbox() {
 
       return { previousData };
     },
-    onError: (err, id, context) => {
-      setActionError(err instanceof Error ? err.message : "Failed to archive issue");
-      setArchivingIssueIds((prev) => {
+    onОшибка: (err, id, context) => {
+      setActionОшибка(err instanceof Ошибка ? err.message : "Ошибка to archive issue");
+      setArchivingЗадачаIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
@@ -1497,54 +1497,54 @@ export function Inbox() {
     },
     onSettled: (_data, _error, id) => {
       // Clean up archiving state and refetch to sync with server
-      setArchivingIssueIds((prev) => {
+      setArchivingЗадачаIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
-      invalidateInboxIssueQueries();
+      invalidateВходящиеЗадачаQueries();
     },
-    onSuccess: (_data, id) => {
-      setUndoableArchiveIssueIds((prev) => [...prev.filter((issueId) => issueId !== id), id]);
+    onУспешно: (_data, id) => {
+      setUndoableАрхивироватьЗадачаIds((prev) => [...prev.filter((issueId) => issueId !== id), id]);
     },
   });
 
-  const unarchiveIssueMutation = useMutation({
-    mutationFn: (id: string) => issuesApi.unarchiveFromInbox(id),
+  const unarchiveЗадачаMutation = useMutation({
+    mutationFn: (id: string) => issuesApi.unarchiveFromВходящие(id),
     onMutate: (id) => {
-      setActionError(null);
-      setUnarchivingIssueIds((prev) => new Set(prev).add(id));
+      setActionОшибка(null);
+      setUnarchivingЗадачаIds((prev) => new Set(prev).add(id));
     },
-    onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to undo inbox archive");
+    onОшибка: (err) => {
+      setActionОшибка(err instanceof Ошибка ? err.message : "Ошибка to undo inbox archive");
     },
-    onSuccess: (_data, id) => {
-      setUndoableArchiveIssueIds((prev) => {
+    onУспешно: (_data, id) => {
+      setUndoableАрхивироватьЗадачаIds((prev) => {
         const next = prev.filter((issueId) => issueId !== id);
         return next;
       });
     },
     onSettled: (_data, _error, id) => {
-      setUnarchivingIssueIds((prev) => {
+      setUnarchivingЗадачаIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
-      invalidateInboxIssueQueries();
+      invalidateВходящиеЗадачаQueries();
     },
   });
 
   const markReadMutation = useMutation({
     mutationFn: (id: string) => issuesApi.markRead(id),
     onMutate: (id) => {
-      setFadingOutIssues((prev) => new Set(prev).add(id));
+      setFadingOutЗадачи((prev) => new Set(prev).add(id));
     },
-    onSuccess: () => {
-      invalidateInboxIssueQueries();
+    onУспешно: () => {
+      invalidateВходящиеЗадачаQueries();
     },
     onSettled: (_data, _error, id) => {
       setTimeout(() => {
-        setFadingOutIssues((prev) => {
+        setFadingOutЗадачи((prev) => {
           const next = new Set(prev);
           next.delete(id);
           return next;
@@ -1553,23 +1553,23 @@ export function Inbox() {
     },
   });
 
-  const markAllReadMutation = useMutation({
+  const markВсеReadMutation = useMutation({
     mutationFn: async (issueIds: string[]) => {
       await Promise.all(issueIds.map((issueId) => issuesApi.markRead(issueId)));
     },
     onMutate: (issueIds) => {
-      setFadingOutIssues((prev) => {
+      setFadingOutЗадачи((prev) => {
         const next = new Set(prev);
         for (const issueId of issueIds) next.add(issueId);
         return next;
       });
     },
-    onSuccess: () => {
-      invalidateInboxIssueQueries();
+    onУспешно: () => {
+      invalidateВходящиеЗадачаQueries();
     },
     onSettled: (_data, _error, issueIds) => {
       setTimeout(() => {
-        setFadingOutIssues((prev) => {
+        setFadingOutЗадачи((prev) => {
           const next = new Set(prev);
           for (const issueId of issueIds) next.delete(issueId);
           return next;
@@ -1580,16 +1580,16 @@ export function Inbox() {
 
   const markUnreadMutation = useMutation({
     mutationFn: (id: string) => issuesApi.markUnread(id),
-    onSuccess: () => {
-      invalidateInboxIssueQueries();
+    onУспешно: () => {
+      invalidateВходящиеЗадачаQueries();
     },
   });
 
-  const handleMarkNonIssueRead = useCallback((key: string) => {
-    setFadingNonIssueItems((prev) => new Set(prev).add(key));
+  const handleMarkНетnЗадачаRead = useCallback((key: string) => {
+    setFadingНетnЗадачаItems((prev) => new Set(prev).add(key));
     markItemRead(key);
     setTimeout(() => {
-      setFadingNonIssueItems((prev) => {
+      setFadingНетnЗадачаItems((prev) => {
         const next = new Set(prev);
         next.delete(key);
         return next;
@@ -1597,26 +1597,26 @@ export function Inbox() {
     }, 300);
   }, [markItemRead]);
 
-  const handleArchiveNonIssue = useCallback((key: string) => {
-    setArchivingNonIssueIds((prev) => new Set(prev).add(key));
+  const handleАрхивироватьНетnЗадача = useCallback((key: string) => {
+    setArchivingНетnЗадачаIds((prev) => new Set(prev).add(key));
     setTimeout(() => {
       if (key.startsWith("alert:")) {
         dismissAlert(key);
       } else {
-        dismissInboxItem(key);
+        dismissВходящиеItem(key);
       }
-      setArchivingNonIssueIds((prev) => {
+      setArchivingНетnЗадачаIds((prev) => {
         const next = new Set(prev);
         next.delete(key);
         return next;
       });
     }, 200);
-  }, [dismissAlert, dismissInboxItem]);
+  }, [dismissAlert, dismissВходящиеItem]);
 
-  const nonIssueUnreadState = (key: string): NonIssueUnreadState => {
-    if (!canArchiveFromTab) return null;
+  const nonЗадачаUnreadState = (key: string): НетnЗадачаUnreadState => {
+    if (!canАрхивироватьFromTab) return null;
     const isRead = readItems.has(key);
-    const isFading = fadingNonIssueItems.has(key);
+    const isFading = fadingНетnЗадачаItems.has(key);
     if (isFading) return "fading";
     if (!isRead) return "visible";
     return "hidden";
@@ -1624,81 +1624,81 @@ export function Inbox() {
 
   // Keep selection valid when the list shape changes, but do not auto-select on initial load.
   useEffect(() => {
-    setSelectedIndex((prev) => resolveInboxSelectionIndex(prev, flatNavItems.length));
+    setSelectedIndex((prev) => resolveВходящиеSelectionIndex(prev, flatNavItems.length));
   }, [flatNavItems.length]);
 
   useEffect(() => {
-    setUndoableArchiveIssueIds([]);
-    setUnarchivingIssueIds(new Set());
-  }, [selectedCompanyId]);
+    setUndoableАрхивироватьЗадачаIds([]);
+    setUnarchivingЗадачаIds(new Set());
+  }, [selectedКомпанияId]);
 
   // Use refs for keyboard handler to avoid stale closures
   const kbStateRef = useRef({
     workItems: groupedSections,
     flatNavItems,
     selectedIndex,
-    canArchive: canArchiveFromTab,
-    nonInboxSearchIssueIds,
-    archivingIssueIds,
-    undoableArchiveIssueIds,
-    unarchivingIssueIds,
-    archivingNonIssueIds,
-    fadingOutIssues,
+    canАрхивировать: canАрхивироватьFromTab,
+    nonВходящиеПоискЗадачаIds,
+    archivingЗадачаIds,
+    undoableАрхивироватьЗадачаIds,
+    unarchivingЗадачаIds,
+    archivingНетnЗадачаIds,
+    fadingOutЗадачи,
     readItems,
   });
   kbStateRef.current = {
     workItems: groupedSections,
     flatNavItems,
     selectedIndex,
-    canArchive: canArchiveFromTab,
-    nonInboxSearchIssueIds,
-    archivingIssueIds,
-    undoableArchiveIssueIds,
-    unarchivingIssueIds,
-    archivingNonIssueIds,
-    fadingOutIssues,
+    canАрхивировать: canАрхивироватьFromTab,
+    nonВходящиеПоискЗадачаIds,
+    archivingЗадачаIds,
+    undoableАрхивироватьЗадачаIds,
+    unarchivingЗадачаIds,
+    archivingНетnЗадачаIds,
+    fadingOutЗадачи,
     readItems,
   };
 
   const kbActionsRef = useRef({
-    archiveIssue: (id: string) => archiveIssueMutation.mutate(id),
-    undoArchiveIssue: (id: string) => unarchiveIssueMutation.mutate(id),
-    archiveNonIssue: handleArchiveNonIssue,
+    archiveЗадача: (id: string) => archiveЗадачаMutation.mutate(id),
+    undoАрхивироватьЗадача: (id: string) => unarchiveЗадачаMutation.mutate(id),
+    archiveНетnЗадача: handleАрхивироватьНетnЗадача,
     markRead: (id: string) => markReadMutation.mutate(id),
-    markUnreadIssue: (id: string) => markUnreadMutation.mutate(id),
-    markNonIssueRead: handleMarkNonIssueRead,
-    markNonIssueUnread: markItemUnread,
+    markUnreadЗадача: (id: string) => markUnreadMutation.mutate(id),
+    markНетnЗадачаRead: handleMarkНетnЗадачаRead,
+    markНетnЗадачаUnread: markItemUnread,
     setGroupCollapsed,
     navigate,
   });
   kbActionsRef.current = {
-    archiveIssue: (id: string) => archiveIssueMutation.mutate(id),
-    undoArchiveIssue: (id: string) => unarchiveIssueMutation.mutate(id),
-    archiveNonIssue: handleArchiveNonIssue,
+    archiveЗадача: (id: string) => archiveЗадачаMutation.mutate(id),
+    undoАрхивироватьЗадача: (id: string) => unarchiveЗадачаMutation.mutate(id),
+    archiveНетnЗадача: handleАрхивироватьНетnЗадача,
     markRead: (id: string) => markReadMutation.mutate(id),
-    markUnreadIssue: (id: string) => markUnreadMutation.mutate(id),
-    markNonIssueRead: handleMarkNonIssueRead,
-    markNonIssueUnread: markItemUnread,
+    markUnreadЗадача: (id: string) => markUnreadMutation.mutate(id),
+    markНетnЗадачаRead: handleMarkНетnЗадачаRead,
+    markНетnЗадачаUnread: markItemUnread,
     setGroupCollapsed,
     navigate,
   };
 
-  // Keyboard shortcuts (mail-client style) — single stable listener using refs
+  // Ключboard shortcuts (mail-client style) — single stable listener using refs
   useEffect(() => {
-    if (!keyboardShortcutsEnabled) return;
+    if (!keyboardShortcutsВключитьd) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleКлючDown = (e: КлючboardEvent) => {
       if (e.defaultPrevented) return;
 
       // Don't capture when typing in inputs/textareas or with modifier keys
       const target = e.target;
       if (
         !(target instanceof HTMLElement) ||
-        isKeyboardShortcutTextInputTarget(target) ||
+        isКлючboardShortcutTextInputЦель(target) ||
         hasBlockingShortcutDialog(document) ||
-        e.metaKey ||
-        e.ctrlKey ||
-        e.altKey
+        e.metaКлюч ||
+        e.ctrlКлюч ||
+        e.altКлюч
       ) {
         return;
       }
@@ -1706,24 +1706,24 @@ export function Inbox() {
       const st = kbStateRef.current;
       const act = kbActionsRef.current;
 
-      // Keyboard shortcuts are only active on the "mine" tab
-      if (!st.canArchive) return;
+      // Ключboard shortcuts are only active on the "mine" tab
+      if (!st.canАрхивировать) return;
 
-      const undoArchiveAction = resolveInboxUndoArchiveKeyAction({
-        hasUndoableArchive: st.undoableArchiveIssueIds.length > 0,
+      const undoАрхивироватьAction = resolveВходящиеUndoАрхивироватьКлючAction({
+        hasUndoableАрхивировать: st.undoableАрхивироватьЗадачаIds.length > 0,
         defaultPrevented: e.defaultPrevented,
         key: e.key,
-        metaKey: e.metaKey,
-        ctrlKey: e.ctrlKey,
-        altKey: e.altKey,
+        metaКлюч: e.metaКлюч,
+        ctrlКлюч: e.ctrlКлюч,
+        altКлюч: e.altКлюч,
         target,
         hasOpenDialog: hasBlockingShortcutDialog(document),
       });
-      if (undoArchiveAction === "undo_archive") {
-        const issueId = st.undoableArchiveIssueIds[st.undoableArchiveIssueIds.length - 1];
-        if (!issueId || st.unarchivingIssueIds.has(issueId)) return;
-        e.preventDefault();
-        act.undoArchiveIssue(issueId);
+      if (undoАрхивироватьAction === "undo_archive") {
+        const issueId = st.undoableАрхивироватьЗадачаIds[st.undoableАрхивироватьЗадачаIds.length - 1];
+        if (!issueId || st.unarchivingЗадачаIds.has(issueId)) return;
+        e.preventПо умолчанию();
+        act.undoАрхивироватьЗадача(issueId);
         return;
       }
 
@@ -1732,7 +1732,7 @@ export function Inbox() {
       if (navCount === 0) return;
 
       /** Resolve the nav entry at selectedIndex to an issue (for child entries) or work item. */
-      const resolveNavEntry = (idx: number): { issue?: Issue; item?: InboxWorkItem } => {
+      const resolveNavEntry = (idx: number): { issue?: Задача; item?: ВходящиеРаботаItem } => {
         const entry = navItems[idx];
         if (!entry) return {};
         if (entry.type === "child") return { issue: entry.issue };
@@ -1743,14 +1743,14 @@ export function Inbox() {
       switch (e.key) {
         case "j":
         case "ArrowDown": {
-          e.preventDefault();
-          setSelectedIndex((prev) => getInboxKeyboardSelectionIndex(prev, navCount, "next"));
+          e.preventПо умолчанию();
+          setSelectedIndex((prev) => getВходящиеКлючboardSelectionIndex(prev, navCount, "next"));
           break;
         }
         case "k":
         case "ArrowUp": {
-          e.preventDefault();
-          setSelectedIndex((prev) => getInboxKeyboardSelectionIndex(prev, navCount, "previous"));
+          e.preventПо умолчанию();
+          setSelectedIndex((prev) => getВходящиеКлючboardSelectionIndex(prev, navCount, "previous"));
           break;
         }
         case "ArrowLeft":
@@ -1758,76 +1758,76 @@ export function Inbox() {
           if (st.selectedIndex < 0 || st.selectedIndex >= navCount) return;
           const entry = navItems[st.selectedIndex];
           if (!entry || entry.type !== "group") return;
-          e.preventDefault();
-          act.setGroupCollapsed(entry.groupKey, e.key === "ArrowLeft");
+          e.preventПо умолчанию();
+          act.setGroupCollapsed(entry.groupКлюч, e.key === "ArrowLeft");
           break;
         }
         case "a":
         case "y": {
           if (st.selectedIndex < 0 || st.selectedIndex >= navCount) return;
-          e.preventDefault();
+          e.preventПо умолчанию();
           const { issue, item } = resolveNavEntry(st.selectedIndex);
           if (issue) {
-            if (!st.nonInboxSearchIssueIds.has(issue.id) && !st.archivingIssueIds.has(issue.id)) act.archiveIssue(issue.id);
+            if (!st.nonВходящиеПоискЗадачаIds.has(issue.id) && !st.archivingЗадачаIds.has(issue.id)) act.archiveЗадача(issue.id);
           } else if (item) {
             if (item.kind === "issue") {
-              if (!st.nonInboxSearchIssueIds.has(item.issue.id) && !st.archivingIssueIds.has(item.issue.id)) {
-                act.archiveIssue(item.issue.id);
+              if (!st.nonВходящиеПоискЗадачаIds.has(item.issue.id) && !st.archivingЗадачаIds.has(item.issue.id)) {
+                act.archiveЗадача(item.issue.id);
               }
             } else {
-              const key = getInboxWorkItemKey(item);
-              if (!st.archivingNonIssueIds.has(key)) act.archiveNonIssue(key);
+              const key = getВходящиеРаботаItemКлюч(item);
+              if (!st.archivingНетnЗадачаIds.has(key)) act.archiveНетnЗадача(key);
             }
           }
           break;
         }
         case "U": {
           if (st.selectedIndex < 0 || st.selectedIndex >= navCount) return;
-          e.preventDefault();
+          e.preventПо умолчанию();
           const { issue, item } = resolveNavEntry(st.selectedIndex);
           if (issue) {
-            act.markUnreadIssue(issue.id);
+            act.markUnreadЗадача(issue.id);
           } else if (item) {
-            if (item.kind === "issue") act.markUnreadIssue(item.issue.id);
-            else act.markNonIssueUnread(getInboxWorkItemKey(item));
+            if (item.kind === "issue") act.markUnreadЗадача(item.issue.id);
+            else act.markНетnЗадачаUnread(getВходящиеРаботаItemКлюч(item));
           }
           break;
         }
         case "r": {
           if (st.selectedIndex < 0 || st.selectedIndex >= navCount) return;
-          e.preventDefault();
+          e.preventПо умолчанию();
           const { issue, item } = resolveNavEntry(st.selectedIndex);
           if (issue) {
-            if (issue.isUnreadForMe && !st.fadingOutIssues.has(issue.id)) act.markRead(issue.id);
+            if (issue.isUnreadForMe && !st.fadingOutЗадачи.has(issue.id)) act.markRead(issue.id);
           } else if (item) {
             if (item.kind === "issue") {
-              if (item.issue.isUnreadForMe && !st.fadingOutIssues.has(item.issue.id)) act.markRead(item.issue.id);
+              if (item.issue.isUnreadForMe && !st.fadingOutЗадачи.has(item.issue.id)) act.markRead(item.issue.id);
             } else {
-              const key = getInboxWorkItemKey(item);
-              if (!st.readItems.has(key)) act.markNonIssueRead(key);
+              const key = getВходящиеРаботаItemКлюч(item);
+              if (!st.readItems.has(key)) act.markНетnЗадачаRead(key);
             }
           }
           break;
         }
         case "Enter": {
           if (st.selectedIndex < 0 || st.selectedIndex >= navCount) return;
-          e.preventDefault();
+          e.preventПо умолчанию();
           const { issue, item } = resolveNavEntry(st.selectedIndex);
           if (issue) {
             const pathId = issue.identifier ?? issue.id;
-            const detailState = armIssueDetailInboxQuickArchive(withIssueDetailHeaderSeed(issueLinkState, issue));
-            rememberIssueDetailLocationState(pathId, detailState);
-            void prefetchIssueDetail(queryClient, pathId, { issue });
-            act.navigate(createIssueDetailPath(pathId), { state: detailState });
+            const detailState = armЗадачаDetailВходящиеQuickАрхивировать(withЗадачаDetailHeaderSeed(issueLinkState, issue));
+            rememberЗадачаDetailLocationState(pathId, detailState);
+            void prefetchЗадачаDetail(queryClient, pathId, { issue });
+            act.navigate(createЗадачаDetailПуть(pathId), { state: detailState });
           } else if (item) {
             if (item.kind === "issue") {
               const pathId = item.issue.identifier ?? item.issue.id;
-              const detailState = armIssueDetailInboxQuickArchive(
-                withIssueDetailHeaderSeed(issueLinkState, item.issue),
+              const detailState = armЗадачаDetailВходящиеQuickАрхивировать(
+                withЗадачаDetailHeaderSeed(issueLinkState, item.issue),
               );
-              rememberIssueDetailLocationState(pathId, detailState);
-              void prefetchIssueDetail(queryClient, pathId, { issue: item.issue });
-              act.navigate(createIssueDetailPath(pathId), { state: detailState });
+              rememberЗадачаDetailLocationState(pathId, detailState);
+              void prefetchЗадачаDetail(queryClient, pathId, { issue: item.issue });
+              act.navigate(createЗадачаDetailПуть(pathId), { state: detailState });
             } else if (item.kind === "approval") {
               act.navigate(`/approvals/${item.approval.id}`);
             } else if (item.kind === "failed_run") {
@@ -1840,102 +1840,102 @@ export function Inbox() {
           return;
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [issueLinkState, keyboardShortcutsEnabled]);
+    window.addEventListener("keydown", handleКлючDown);
+    return () => window.removeEventListener("keydown", handleКлючDown);
+  }, [issueLinkState, keyboardShortcutsВключитьd]);
 
   // Scroll selected item into view
   useEffect(() => {
     if (selectedIndex < 0 || !listRef.current) return;
-    const rows = listRef.current.querySelectorAll("[data-inbox-item]");
+    const rows = listRef.current.querySelectorВсе("[data-inbox-item]");
     const row = rows[selectedIndex];
     if (row) row.scrollIntoView({ block: "nearest" });
   }, [selectedIndex]);
 
-  if (!selectedCompanyId) {
-    return <EmptyState icon={InboxIcon} message="Select a company to view inbox." />;
+  if (!selectedКомпанияId) {
+    return <EmptyState icon={ВходящиеIcon} message="Select a company to view inbox." />;
   }
 
-  const hasRunFailures = failedRuns.length > 0;
-  const showCompanyAlerts = shouldShowCompanyAlerts(tab) && showAlertsCategory;
-  const showAggregateAgentError =
-    showCompanyAlerts &&
+  const hasЗапуститьFailures = failedЗапуститьs.length > 0;
+  const showКомпанияAlerts = shouldShowКомпанияAlerts(tab) && showAlertsCategory;
+  const showAggregateАгентОшибка =
+    showКомпанияAlerts &&
     !!dashboard &&
     dashboard.agents.error > 0 &&
-    !hasRunFailures &&
+    !hasЗапуститьFailures &&
     !dismissedAlerts.has("alert:agent-errors");
-  const showBudgetAlert =
-    showCompanyAlerts &&
+  const showБюджетAlert =
+    showКомпанияAlerts &&
     !!dashboard &&
-    dashboard.costs.monthBudgetCents > 0 &&
+    dashboard.costs.monthБюджетCents > 0 &&
     dashboard.costs.monthUtilizationPercent >= 80 &&
     !dismissedAlerts.has("alert:budget");
-  const hasAlerts = showAggregateAgentError || showBudgetAlert;
-  const showWorkItemsSection = totalVisibleWorkItems > 0;
-  const showAlertsSection = shouldShowInboxSection({
+  const hasAlerts = showAggregateАгентОшибка || showБюджетAlert;
+  const showРаботаItemsSection = totalVisibleРаботаItems > 0;
+  const showAlertsSection = shouldShowВходящиеSection({
     tab,
     hasItems: hasAlerts,
     showOnMine: false,
     showOnRecent: false,
     showOnUnread: false,
-    showOnAll: hasAlerts,
+    showOnВсе: hasAlerts,
   });
 
   const visibleSections = [
     showAlertsSection ? "alerts" : null,
-    showWorkItemsSection ? "work_items" : null,
-  ].filter((key): key is SectionKey => key !== null);
+    showРаботаItemsSection ? "work_items" : null,
+  ].filter((key): key is SectionКлюч => key !== null);
 
   const allLoaded =
-    !isJoinRequestsLoading &&
-    !isApprovalsLoading &&
-    !isDashboardLoading &&
-    !isIssuesLoading &&
-    !isMineIssuesLoading &&
-    !isTouchedIssuesLoading &&
-    !isRunsLoading;
+    !isJoinRequestsЗагрузка &&
+    !isСогласованияЗагрузка &&
+    !isПанель управленияЗагрузка &&
+    !isЗадачиЗагрузка &&
+    !isMineЗадачиЗагрузка &&
+    !isTouchedЗадачиЗагрузка &&
+    !isЗапуститьsЗагрузка;
 
-  const showSeparatorBefore = (key: SectionKey) => visibleSections.indexOf(key) > 0;
-  const markAllReadIssues = (tab === "mine" ? visibleMineIssues : unreadTouchedIssues)
-    .filter((issue) => issue.isUnreadForMe && !fadingOutIssues.has(issue.id) && !archivingIssueIds.has(issue.id));
-  const unreadIssueIds = markAllReadIssues
+  const showSeparatorBefore = (key: SectionКлюч) => visibleSections.indexOf(key) > 0;
+  const markВсеReadЗадачи = (tab === "mine" ? visibleMineЗадачи : unreadTouchedЗадачи)
+    .filter((issue) => issue.isUnreadForMe && !fadingOutЗадачи.has(issue.id) && !archivingЗадачаIds.has(issue.id));
+  const unreadЗадачаIds = markВсеReadЗадачи
     .map((issue) => issue.id);
-  const canMarkAllRead = unreadIssueIds.length > 0;
-  const activeIssueFilterCount = countActiveIssueFilters(issueFilters, true);
+  const canMarkВсеRead = unreadЗадачаIds.length > 0;
+  const activeЗадачаФильтрCount = countАктивенЗадачаФильтрs(issueФильтрs, true);
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        {/* Search — full-width row on mobile, inline on desktop */}
-        <div className="relative sm:hidden">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+    <div classИмя="space-y-6">
+      <div classИмя="space-y-2">
+        {/* Поиск — full-width row on mobile, inline on desktop */}
+        <div classИмя="relative sm:hidden">
+          <Поиск classИмя="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search inbox…"
+            placeholder="Поиск inbox…"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (shouldBlurPageSearchOnEnter({
+            onChange={(e) => setПоискQuery(e.target.value)}
+            onКлючDown={(e) => {
+              if (shouldBlurPageПоискOnEnter({
                 key: e.key,
                 isComposing: e.nativeEvent.isComposing,
               })) {
-                e.currentTarget.blur();
+                e.currentЦель.blur();
                 return;
               }
 
-              if (shouldBlurPageSearchOnEscape({
+              if (shouldBlurPageПоискOnEscape({
                 key: e.key,
                 isComposing: e.nativeEvent.isComposing,
-                currentValue: e.currentTarget.value,
+                currentЗначение: e.currentЦель.value,
               })) {
-                e.currentTarget.blur();
+                e.currentЦель.blur();
               }
             }}
-            className="h-8 w-full pl-8 text-xs"
+            classИмя="h-8 w-full pl-8 text-xs"
             data-page-search-target="true"
           />
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-        <Tabs value={tab} onValueChange={(value) => navigate(`/inbox/${value}`)}>
+        <div classИмя="flex flex-wrap items-center justify-between gap-2">
+        <Tabs value={tab} onЗначениеChange={(value) => navigate(`/inbox/${value}`)}>
           <PageTabBar
             items={[
               {
@@ -1947,37 +1947,37 @@ export function Inbox() {
                 label: "Recent",
               },
               { value: "unread", label: "Unread" },
-              { value: "all", label: "All" },
+              { value: "all", label: "Все" },
             ]}
           />
         </Tabs>
 
-        <div className="flex items-center gap-2">
-          <div className="relative hidden sm:block">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <div classИмя="flex items-center gap-2">
+          <div classИмя="relative hidden sm:block">
+            <Поиск classИмя="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search inbox…"
+              placeholder="Поиск inbox…"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (shouldBlurPageSearchOnEnter({
+              onChange={(e) => setПоискQuery(e.target.value)}
+              onКлючDown={(e) => {
+                if (shouldBlurPageПоискOnEnter({
                   key: e.key,
                   isComposing: e.nativeEvent.isComposing,
                 })) {
-                  e.currentTarget.blur();
+                  e.currentЦель.blur();
                   return;
                 }
 
-                if (shouldBlurPageSearchOnEscape({
+                if (shouldBlurPageПоискOnEscape({
                   key: e.key,
                   isComposing: e.nativeEvent.isComposing,
-                  currentValue: e.currentTarget.value,
+                  currentЗначение: e.currentЦель.value,
                 })) {
-                  e.currentTarget.blur();
+                  e.currentЦель.blur();
                 }
               }}
-              className="h-8 w-[220px] pl-8 text-xs"
+              classИмя="h-8 w-[220px] pl-8 text-xs"
               data-page-search-target="true"
             />
           </div>
@@ -1985,25 +1985,25 @@ export function Inbox() {
             type="button"
             variant="outline"
             size="icon"
-            className={cn("hidden h-8 w-8 shrink-0 sm:inline-flex", nestingEnabled && "bg-accent")}
+            classИмя={cn("hidden h-8 w-8 shrink-0 sm:inline-flex", nestingВключитьd && "bg-accent")}
             onClick={toggleNesting}
-            title={nestingEnabled ? "Disable parent-child nesting" : "Enable parent-child nesting"}
+            title={nestingВключитьd ? "Отключить parent-child nesting" : "Включить parent-child nesting"}
           >
-            <ListTree className="h-3.5 w-3.5" />
+            <ListTree classИмя="h-3.5 w-3.5" />
           </Button>
-          <IssueFiltersPopover
-            state={issueFilters}
-            onChange={updateIssueFilters}
-            activeFilterCount={activeIssueFilterCount}
+          <ЗадачаФильтрsPopover
+            state={issueФильтрs}
+            onChange={updateЗадачаФильтрs}
+            activeФильтрCount={activeЗадачаФильтрCount}
             agents={agents}
             creators={creatorOptions}
             projects={projects?.map((project) => ({ id: project.id, name: project.name }))}
             labels={labels?.map((label) => ({ id: label.id, name: label.name, color: label.color }))}
             currentUserId={currentUserId}
-            enableRoutineVisibilityFilter
+            enableПроцедураVisibilityФильтр
             buttonVariant="outline"
             iconOnly
-            workspaces={isolatedWorkspacesEnabled ? executionWorkspaces.filter((w) => w.mode === "isolated_workspace").map((w) => ({ id: w.id, name: w.name })) : undefined}
+            workspaces={isolatedРабочие областиВключитьd ? executionРабочие области.filter((w) => w.mode === "isolated_workspace").map((w) => ({ id: w.id, name: w.name })) : undefined}
           />
           <Popover>
             <PopoverTrigger asChild>
@@ -2011,73 +2011,73 @@ export function Inbox() {
                 type="button"
                 variant="outline"
                 size="icon"
-                className={cn("h-8 w-8 shrink-0", groupBy !== "none" && "bg-accent")}
+                classИмя={cn("h-8 w-8 shrink-0", groupBy !== "none" && "bg-accent")}
                 title="Group"
               >
-                <Layers className="h-3.5 w-3.5" />
+                <Layers classИмя="h-3.5 w-3.5" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-40 p-2">
-              <div className="space-y-0.5">
+            <PopoverContent align="end" classИмя="w-40 p-2">
+              <div classИмя="space-y-0.5">
                 {([
-                  ["none", "None"],
-                  ["type", "Type"],
-                  ["assignee", "Assignee"],
+                  ["none", "Нет"],
+                  ["type", "Тип"],
+                  ["assignee", "Исполнитель"],
                   ["project", "Project"],
-                  ...(isolatedWorkspacesEnabled ? ([["workspace", "Workspace"]] as const) : []),
+                  ...(isolatedРабочие областиВключитьd ? ([["workspace", "Рабочая область"]] as const) : []),
                 ] as const).map(([value, label]) => (
                   <button
                     key={value}
                     type="button"
-                    className={cn(
+                    classИмя={cn(
                       "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm",
                       groupBy === value ? "bg-accent/50 text-foreground" : "text-muted-foreground hover:bg-accent/50",
                     )}
                     onClick={() => updateGroupBy(value)}
                   >
                     <span>{label}</span>
-                    {groupBy === value ? <Check className="h-3.5 w-3.5" /> : null}
+                    {groupBy === value ? <Check classИмя="h-3.5 w-3.5" /> : null}
                   </button>
                 ))}
               </div>
             </PopoverContent>
           </Popover>
-          <IssueColumnPicker
-            availableColumns={availableIssueColumns}
-            visibleColumnSet={visibleIssueColumnSet}
-            onToggleColumn={toggleIssueColumn}
-            onResetColumns={() => setIssueColumns(DEFAULT_INBOX_ISSUE_COLUMNS)}
+          <ЗадачаColumnPicker
+            availableColumns={availableЗадачаColumns}
+            visibleColumnSet={visibleЗадачаColumnSet}
+            onToggleColumn={toggleЗадачаColumn}
+            onСброситьColumns={() => setЗадачаColumns(DEFAULT_INBOX_ISSUE_COLUMNS)}
             title="Choose which inbox columns stay visible"
             iconOnly
           />
-          {canMarkAllRead && (
+          {canMarkВсеRead && (
             <>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 shrink-0"
-                onClick={() => setShowMarkAllReadConfirm(true)}
-                disabled={markAllReadMutation.isPending}
+                classИмя="h-8 shrink-0"
+                onClick={() => setShowMarkВсеReadПодтвердить(true)}
+                disabled={markВсеReadMutation.isОжидание}
               >
-                {markAllReadMutation.isPending ? "Marking…" : "Mark all as read"}
+                {markВсеReadMutation.isОжидание ? "Marking…" : "Mark all as read"}
               </Button>
-              <Dialog open={showMarkAllReadConfirm} onOpenChange={setShowMarkAllReadConfirm}>
-                <DialogContent className="sm:max-w-md">
+              <Dialog open={showMarkВсеReadПодтвердить} onOpenChange={setShowMarkВсеReadПодтвердить}>
+                <DialogContent classИмя="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Mark all as read?</DialogTitle>
-                    <DialogDescription>
-                      This will mark {unreadIssueIds.length} unread {unreadIssueIds.length === 1 ? "item" : "items"} as read.
-                    </DialogDescription>
+                    <DialogНазвание>Mark all as read?</DialogНазвание>
+                    <DialogОписание>
+                      This will mark {unreadЗадачаIds.length} unread {unreadЗадачаIds.length === 1 ? "item" : "items"} as read.
+                    </DialogОписание>
                   </DialogHeader>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowMarkAllReadConfirm(false)}>
-                      Cancel
+                    <Button variant="outline" onClick={() => setShowMarkВсеReadПодтвердить(false)}>
+                      Отмена
                     </Button>
                     <Button
                       onClick={() => {
-                        setShowMarkAllReadConfirm(false);
-                        markAllReadMutation.mutate(unreadIssueIds);
+                        setShowMarkВсеReadПодтвердить(false);
+                        markВсеReadMutation.mutate(unreadЗадачаIds);
                       }}
                     >
                       Mark all as read
@@ -2092,34 +2092,34 @@ export function Inbox() {
       </div>
 
       {tab === "all" && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div classИмя="flex flex-wrap items-center gap-2">
           <Select
-            value={allCategoryFilter}
-            onValueChange={(value) => updateAllCategoryFilter(value as InboxCategoryFilter)}
+            value={allCategoryФильтр}
+            onЗначениеChange={(value) => updateВсеCategoryФильтр(value as ВходящиеCategoryФильтр)}
           >
-            <SelectTrigger className="h-8 w-[170px] text-xs">
-              <SelectValue placeholder="Category" />
+            <SelectTrigger classИмя="h-8 w-[170px] text-xs">
+              <SelectЗначение placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="everything">All categories</SelectItem>
+              <SelectItem value="everything">Все categories</SelectItem>
               <SelectItem value="issues_i_touched">My recent issues</SelectItem>
               <SelectItem value="join_requests">Join requests</SelectItem>
-              <SelectItem value="approvals">Approvals</SelectItem>
-              <SelectItem value="failed_runs">Failed runs</SelectItem>
+              <SelectItem value="approvals">Согласования</SelectItem>
+              <SelectItem value="failed_runs">Ошибка runs</SelectItem>
               <SelectItem value="alerts">Alerts</SelectItem>
             </SelectContent>
           </Select>
 
-          {showApprovalsCategory && (
+          {showСогласованияCategory && (
             <Select
-              value={allApprovalFilter}
-              onValueChange={(value) => updateAllApprovalFilter(value as InboxApprovalFilter)}
+              value={allСогласованиеФильтр}
+              onЗначениеChange={(value) => updateВсеСогласованиеФильтр(value as ВходящиеСогласованиеФильтр)}
             >
-              <SelectTrigger className="h-8 w-[170px] text-xs">
-                <SelectValue placeholder="Approval status" />
+              <SelectTrigger classИмя="h-8 w-[170px] text-xs">
+                <SelectЗначение placeholder="Согласование status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All approval statuses</SelectItem>
+                <SelectItem value="all">Все approval statuses</SelectItem>
                 <SelectItem value="actionable">Needs action</SelectItem>
                 <SelectItem value="resolved">Resolved</SelectItem>
               </SelectContent>
@@ -2128,8 +2128,8 @@ export function Inbox() {
         </div>
       )}
 
-      {approvalsError && <p className="text-sm text-destructive">{approvalsError.message}</p>}
-      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+      {approvalsОшибка && <p classИмя="text-sm text-destructive">{approvalsОшибка.message}</p>}
+      {actionОшибка && <p classИмя="text-sm text-destructive">{actionОшибка}</p>}
 
       {!allLoaded && visibleSections.length === 0 && (
         <PageSkeleton variant="inbox" />
@@ -2137,138 +2137,138 @@ export function Inbox() {
 
       {allLoaded && visibleSections.length === 0 && (
         <EmptyState
-          icon={searchQuery.trim() ? Search : InboxIcon}
+          icon={searchQuery.trim() ? Поиск : ВходящиеIcon}
           message={
             searchQuery.trim()
-              ? "No inbox items match your search."
+              ? "Нет inbox items match your search."
               : tab === "mine"
-              ? "Inbox zero."
+              ? "Входящие пусты."
               : tab === "unread"
-              ? "No new inbox items."
+              ? "Нет новых входящих."
               : tab === "recent"
-                ? "No recent inbox items."
-                : "No inbox items match these filters."
+                ? "Нет recent inbox items."
+                : "Нет inbox items match these filters."
           }
         />
       )}
 
-      {showWorkItemsSection && (
+      {showРаботаItemsSection && (
         <>
           {showSeparatorBefore("work_items") && <Separator />}
           <div>
-            <div ref={listRef} className="overflow-hidden rounded-xl">
+            <div ref={listRef} classИмя="overflow-hidden rounded-xl">
               {(() => {
-                const renderInboxIssue = ({
+                const renderВходящиеЗадача = ({
                   issue,
                   depth,
                   selected,
                   hasChildren = false,
                   isExpanded = false,
                   childCount = 0,
-                  collapseParentId = null,
-                  allowArchive = canArchiveFromTab,
+                  collapseРодительId = null,
+                  allowАрхивировать = canАрхивироватьFromTab,
                 }: {
-                  issue: Issue;
+                  issue: Задача;
                   depth: number;
                   selected: boolean;
                   hasChildren?: boolean;
                   isExpanded?: boolean;
                   childCount?: number;
-                  collapseParentId?: string | null;
-                  allowArchive?: boolean;
+                  collapseРодительId?: string | null;
+                  allowАрхивировать?: boolean;
                 }) => {
-                  const isUnread = issue.isUnreadForMe && !fadingOutIssues.has(issue.id);
-                  const isFading = fadingOutIssues.has(issue.id);
-                  const isArchiving = archivingIssueIds.has(issue.id);
+                  const isUnread = issue.isUnreadForMe && !fadingOutЗадачи.has(issue.id);
+                  const isFading = fadingOutЗадачи.has(issue.id);
+                  const isArchiving = archivingЗадачаIds.has(issue.id);
                   const project = issue.projectId ? projectById.get(issue.projectId) ?? null : null;
-                  const assigneeUserProfile = issue.assigneeUserId
-                    ? companyUserProfileMap.get(issue.assigneeUserId) ?? null
+                  const assigneeUserПрофиль = issue.assigneeUserId
+                    ? companyUserПрофильMap.get(issue.assigneeUserId) ?? null
                     : null;
                   return (
-                    <IssueRow
+                    <ЗадачаRow
                       key={`issue:${issue.id}`}
                       issue={issue}
                       issueLinkState={issueLinkState}
                       selected={selected}
-                      className={
+                      classИмя={
                         isArchiving
                           ? "pointer-events-none -translate-x-4 scale-[0.98] opacity-0 transition-all duration-200 ease-out"
                           : "transition-all duration-200 ease-out"
                       }
                       desktopMetaLeading={
                         <>
-                          {nestingEnabled ? (
-                            depth === 0 && hasChildren && collapseParentId ? (
+                          {nestingВключитьd ? (
+                            depth === 0 && hasChildren && collapseРодительId ? (
                               <button
                                 type="button"
-                                className="hidden w-4 shrink-0 items-center justify-center sm:inline-flex"
+                                classИмя="hidden w-4 shrink-0 items-center justify-center sm:inline-flex"
                                 onClick={(event) => {
-                                  event.preventDefault();
+                                  event.preventПо умолчанию();
                                   event.stopPropagation();
-                                  toggleInboxParentCollapse(collapseParentId);
+                                  toggleВходящиеРодительCollapse(collapseРодительId);
                                 }}
                               >
-                                <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
+                                <ChevronRight classИмя={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
                               </button>
                             ) : (
-                              <span className="hidden w-4 shrink-0 sm:block" />
+                              <span classИмя="hidden w-4 shrink-0 sm:block" />
                             )
                           ) : null}
-                          {depth > 0 ? <span className="hidden w-4 shrink-0 sm:block" /> : null}
-                          <InboxIssueMetaLeading
+                          {depth > 0 ? <span classИмя="hidden w-4 shrink-0 sm:block" /> : null}
+                          <ВходящиеЗадачаMetaLeading
                             issue={issue}
-                            isLive={liveIssueIds.has(issue.id)}
-                            showStatus={visibleIssueColumnSet.has("status") && availableIssueColumnSet.has("status")}
-                            showIdentifier={visibleIssueColumnSet.has("id") && availableIssueColumnSet.has("id")}
+                            isLive={liveЗадачаIds.has(issue.id)}
+                            showСтатус={visibleЗадачаColumnSet.has("status") && availableЗадачаColumnSet.has("status")}
+                            showIdentifier={visibleЗадачаColumnSet.has("id") && availableЗадачаColumnSet.has("id")}
                           />
                         </>
                       }
                       titleSuffix={hasChildren && !isExpanded && depth === 0 ? (
-                        <span className="ml-1.5 text-xs text-muted-foreground">
+                        <span classИмя="ml-1.5 text-xs text-muted-foreground">
                           ({childCount} sub-task{childCount !== 1 ? "s" : ""})
                         </span>
                       ) : undefined}
-                      mobileMeta={issueActivityText(issue).toLowerCase()}
+                      mobileMeta={issueАктивностьText(issue).toНизкийerCase()}
                       mobileLeading={
-                        depth === 0 && hasChildren && collapseParentId ? (
+                        depth === 0 && hasChildren && collapseРодительId ? (
                           <button
                             type="button"
                             onClick={(event) => {
-                              event.preventDefault();
+                              event.preventПо умолчанию();
                               event.stopPropagation();
-                              toggleInboxParentCollapse(collapseParentId);
+                              toggleВходящиеРодительCollapse(collapseРодительId);
                             }}
                           >
-                            <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
+                            <ChevronRight classИмя={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
                           </button>
                         ) : undefined
                       }
                       unreadState={isUnread ? "visible" : isFading ? "fading" : "hidden"}
                       onMarkRead={() => markReadMutation.mutate(issue.id)}
-                      onArchive={allowArchive ? () => archiveIssueMutation.mutate(issue.id) : undefined}
-                      archiveDisabled={isArchiving || archiveIssueMutation.isPending}
+                      onАрхивировать={allowАрхивировать ? () => archiveЗадачаMutation.mutate(issue.id) : undefined}
+                      archiveОтключитьd={isArchiving || archiveЗадачаMutation.isОжидание}
                       desktopTrailing={
-                        visibleTrailingIssueColumns.length > 0 ? (
-                          <InboxIssueTrailingColumns
+                        visibleTrailingЗадачаColumns.length > 0 ? (
+                          <ВходящиеЗадачаTrailingColumns
                             issue={issue}
-                            columns={visibleTrailingIssueColumns}
-                            projectName={project?.name ?? null}
+                            columns={visibleTrailingЗадачаColumns}
+                            projectИмя={project?.name ?? null}
                             projectColor={project?.color ?? null}
-                            workspaceName={resolveIssueWorkspaceName(issue, {
-                              executionWorkspaceById,
-                              projectWorkspaceById,
-                              defaultProjectWorkspaceIdByProjectId,
+                            workspaceИмя={resolveЗадачаРабочая областьИмя(issue, {
+                              executionРабочая областьById,
+                              projectРабочая областьById,
+                              defaultProjectРабочая областьIdByProjectId,
                             })}
-                            assigneeName={agentName(issue.assigneeAgentId)}
-                            assigneeUserName={
-                              formatAssigneeUserLabel(issue.assigneeUserId, currentUserId, companyUserLabelMap)
-                              ?? assigneeUserProfile?.label
+                            assigneeИмя={agentИмя(issue.assigneeАгентId)}
+                            assigneeUserИмя={
+                              formatИсполнительUserLabel(issue.assigneeUserId, currentUserId, companyUserLabelMap)
+                              ?? assigneeUserПрофиль?.label
                               ?? null
                             }
-                            assigneeUserAvatarUrl={assigneeUserProfile?.image ?? null}
+                            assigneeUserAvatarUrl={assigneeUserПрофиль?.image ?? null}
                             currentUserId={currentUserId}
                             parentIdentifier={issue.parentId ? (issueById.get(issue.parentId)?.identifier ?? null) : null}
-                            parentTitle={issue.parentId ? (issueById.get(issue.parentId)?.title ?? null) : null}
+                            parentНазвание={issue.parentId ? (issueById.get(issue.parentId)?.title ?? null) : null}
                           />
                         ) : undefined
                       }
@@ -2278,8 +2278,8 @@ export function Inbox() {
 
                 let previousTimestamp = Number.POSITIVE_INFINITY;
                 return groupedSections.flatMap((group, groupIndex) => {
-                  const elements: ReactNode[] = [];
-                  const isGroupCollapsed = collapsedGroupKeys.has(group.key);
+                  const elements: ReactНетde[] = [];
+                  const isGroupCollapsed = collapsedGroupКлючs.has(group.key);
                   if (
                     group.searchSection !== "none"
                     && group.searchSection !== groupedSections[groupIndex - 1]?.searchSection
@@ -2287,25 +2287,25 @@ export function Inbox() {
                     elements.push(
                       <div
                         key={`${group.searchSection}-search-divider`}
-                        className="flex items-center gap-3 border-y border-border/70 bg-muted/30 px-4 py-2"
+                        classИмя="flex items-center gap-3 border-y border-border/70 bg-muted/30 px-4 py-2"
                       >
-                        <div className="h-px flex-1 bg-border/80" />
-                        <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                          {group.searchSection === "archived" ? "Archived" : "Other results"}
+                        <div classИмя="h-px flex-1 bg-border/80" />
+                        <span classИмя="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {group.searchSection === "archived" ? "Архивирован" : "Other results"}
                         </span>
-                        <div className="h-px flex-1 bg-border/80" />
+                        <div classИмя="h-px flex-1 bg-border/80" />
                       </div>,
                     );
                   }
                   if (group.label) {
                     const groupNavIdx = groupFlatIndex.get(group.key) ?? -1;
                     const isGroupSelected = groupNavIdx >= 0 && selectedIndex === groupNavIdx;
-                    const canCreateIssueInGroup = group.displayItems.some((item) => item.kind === "issue");
+                    const canСоздатьЗадачаInGroup = group.displayItems.some((item) => item.kind === "issue");
                     elements.push(
                       <div
                         key={`group-${group.key}`}
                         data-inbox-item
-                        className={cn(
+                        classИмя={cn(
                           "px-3 sm:px-4",
                           groupIndex > 0 && "pt-2",
                           isGroupSelected && "bg-accent/50",
@@ -2314,24 +2314,24 @@ export function Inbox() {
                           if (groupNavIdx >= 0) setSelectedIndex(groupNavIdx);
                         }}
                       >
-                        <IssueGroupHeader
+                        <ЗадачаGroupHeader
                           label={group.label}
                           collapsible
                           collapsed={isGroupCollapsed}
                           onToggle={() => toggleGroupCollapse(group.key)}
-                          trailing={canCreateIssueInGroup ? (
+                          trailing={canСоздатьЗадачаInGroup ? (
                             <Button
                               variant="ghost"
                               size="icon-xs"
-                              className="-mr-2 text-muted-foreground"
-                              title={`New issue in ${group.label}`}
-                              aria-label={`New issue in ${group.label}`}
+                              classИмя="-mr-2 text-muted-foreground"
+                              title={`Новая задача in ${group.label}`}
+                              aria-label={`Новая задача in ${group.label}`}
                               onClick={(event) => {
                                 event.stopPropagation();
-                                openCreateIssueForGroup(group);
+                                openСоздатьЗадачаForGroup(group);
                               }}
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus classИмя="h-3 w-3" />
                             </Button>
                           ) : null}
                         />
@@ -2342,29 +2342,29 @@ export function Inbox() {
 
                   for (let index = 0; index < group.displayItems.length; index += 1) {
                     const item = group.displayItems[index]!;
-                    const navIdx = topFlatIndex.get(`${group.key}:${getInboxWorkItemKey(item)}`) ?? 0;
-                    const wrapItem = (key: string, isSelected: boolean, child: ReactNode) => (
+                    const navIdx = topFlatIndex.get(`${group.key}:${getВходящиеРаботаItemКлюч(item)}`) ?? 0;
+                    const wrapItem = (key: string, isSelected: boolean, child: ReactНетde) => (
                       <div
                         key={`sel-${key}`}
                         data-inbox-item
-                        className="relative"
+                        classИмя="relative"
                         onClick={() => setSelectedIndex(navIdx)}
                       >
                         {child}
                       </div>
                     );
                     const todayCutoff = Date.now() - 24 * 60 * 60 * 1000;
-                    const showTodayDivider =
+                    const showСегодняDivider =
                       groupBy === "none" &&
                       item.timestamp > 0 &&
                       item.timestamp < todayCutoff &&
                       previousTimestamp >= todayCutoff;
                     previousTimestamp = item.timestamp > 0 ? item.timestamp : previousTimestamp;
-                    if (showTodayDivider) {
+                    if (showСегодняDivider) {
                       elements.push(
-                        <div key={`today-divider-${group.key}-${index}`} className="my-2 flex items-center gap-3 px-4">
-                          <div className="flex-1 border-t border-zinc-600" />
-                          <span className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+                        <div key={`today-divider-${group.key}-${index}`} classИмя="my-2 flex items-center gap-3 px-4">
+                          <div classИмя="flex-1 border-t border-zinc-600" />
+                          <span classИмя="shrink-0 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                             Earlier
                           </span>
                         </div>,
@@ -2373,192 +2373,192 @@ export function Inbox() {
                     const isSelected = selectedIndex === navIdx;
 
                     if (item.kind === "approval") {
-                      const approvalKey = `approval:${item.approval.id}`;
-                      const isArchiving = archivingNonIssueIds.has(approvalKey);
+                      const approvalКлюч = `approval:${item.approval.id}`;
+                      const isArchiving = archivingНетnЗадачаIds.has(approvalКлюч);
                       const row = (
-                        <ApprovalInboxRow
-                          key={approvalKey}
+                        <СогласованиеВходящиеRow
+                          key={approvalКлюч}
                           approval={item.approval}
                           selected={isSelected}
-                          requesterName={agentName(item.approval.requestedByAgentId)}
-                          onApprove={() => approveMutation.mutate(item.approval.id)}
-                          onReject={() => rejectMutation.mutate(item.approval.id)}
-                          isPending={approveMutation.isPending || rejectMutation.isPending}
-                          unreadState={nonIssueUnreadState(approvalKey)}
-                          onMarkRead={() => handleMarkNonIssueRead(approvalKey)}
-                          onArchive={canArchiveFromTab ? () => handleArchiveNonIssue(approvalKey) : undefined}
-                          archiveDisabled={isArchiving}
-                          className={
+                          requesterИмя={agentИмя(item.approval.requestedByАгентId)}
+                          onОдобрить={() => approveMutation.mutate(item.approval.id)}
+                          onОтклонить={() => rejectMutation.mutate(item.approval.id)}
+                          isОжидание={approveMutation.isОжидание || rejectMutation.isОжидание}
+                          unreadState={nonЗадачаUnreadState(approvalКлюч)}
+                          onMarkRead={() => handleMarkНетnЗадачаRead(approvalКлюч)}
+                          onАрхивировать={canАрхивироватьFromTab ? () => handleАрхивироватьНетnЗадача(approvalКлюч) : undefined}
+                          archiveОтключитьd={isArchiving}
+                          classИмя={
                             isArchiving
                               ? "pointer-events-none -translate-x-4 scale-[0.98] opacity-0 transition-all duration-200 ease-out"
                               : "transition-all duration-200 ease-out"
                           }
                         />
                       );
-                      elements.push(wrapItem(approvalKey, isSelected, canArchiveFromTab ? (
-                        <SwipeToArchive
-                          key={approvalKey}
+                      elements.push(wrapItem(approvalКлюч, isSelected, canАрхивироватьFromTab ? (
+                        <SwipeToАрхивировать
+                          key={approvalКлюч}
                           selected={isSelected}
                           disabled={isArchiving}
-                          onArchive={() => handleArchiveNonIssue(approvalKey)}
+                          onАрхивировать={() => handleАрхивироватьНетnЗадача(approvalКлюч)}
                         >
                           {row}
-                        </SwipeToArchive>
+                        </SwipeToАрхивировать>
                       ) : row));
                       continue;
                     }
 
                     if (item.kind === "failed_run") {
-                      const runKey = `run:${item.run.id}`;
-                      const isArchiving = archivingNonIssueIds.has(runKey);
+                      const runКлюч = `run:${item.run.id}`;
+                      const isArchiving = archivingНетnЗадачаIds.has(runКлюч);
                       const row = (
-                        <FailedRunInboxRow
-                          key={runKey}
+                        <ОшибкаЗапуститьВходящиеRow
+                          key={runКлюч}
                           run={item.run}
                           selected={isSelected}
                           issueById={issueById}
-                          agentName={agentName(item.run.agentId)}
+                          agentИмя={agentИмя(item.run.agentId)}
                           issueLinkState={issueLinkState}
-                          onDismiss={() => dismissInboxItem(runKey)}
-                          onRetry={() => retryRunMutation.mutate(item.run)}
-                          isRetrying={retryingRunIds.has(item.run.id)}
-                          unreadState={nonIssueUnreadState(runKey)}
-                          onMarkRead={() => handleMarkNonIssueRead(runKey)}
-                          onArchive={canArchiveFromTab ? () => handleArchiveNonIssue(runKey) : undefined}
-                          archiveDisabled={isArchiving}
-                          className={
+                          onЗакрыть={() => dismissВходящиеItem(runКлюч)}
+                          onПовторить={() => retryЗапуститьMutation.mutate(item.run)}
+                          isПовторитьing={retryingЗапуститьIds.has(item.run.id)}
+                          unreadState={nonЗадачаUnreadState(runКлюч)}
+                          onMarkRead={() => handleMarkНетnЗадачаRead(runКлюч)}
+                          onАрхивировать={canАрхивироватьFromTab ? () => handleАрхивироватьНетnЗадача(runКлюч) : undefined}
+                          archiveОтключитьd={isArchiving}
+                          classИмя={
                             isArchiving
                               ? "pointer-events-none -translate-x-4 scale-[0.98] opacity-0 transition-all duration-200 ease-out"
                               : "transition-all duration-200 ease-out"
                           }
                         />
                       );
-                      elements.push(wrapItem(runKey, isSelected, canArchiveFromTab ? (
-                        <SwipeToArchive
-                          key={runKey}
+                      elements.push(wrapItem(runКлюч, isSelected, canАрхивироватьFromTab ? (
+                        <SwipeToАрхивировать
+                          key={runКлюч}
                           selected={isSelected}
                           disabled={isArchiving}
-                          onArchive={() => handleArchiveNonIssue(runKey)}
+                          onАрхивировать={() => handleАрхивироватьНетnЗадача(runКлюч)}
                         >
                           {row}
-                        </SwipeToArchive>
+                        </SwipeToАрхивировать>
                       ) : row));
                       continue;
                     }
 
                     if (item.kind === "join_request") {
-                      const joinKey = `join:${item.joinRequest.id}`;
-                      const isArchiving = archivingNonIssueIds.has(joinKey);
+                      const joinКлюч = `join:${item.joinRequest.id}`;
+                      const isArchiving = archivingНетnЗадачаIds.has(joinКлюч);
                       const row = (
-                        <JoinRequestInboxRow
-                          key={joinKey}
+                        <JoinRequestВходящиеRow
+                          key={joinКлюч}
                           joinRequest={item.joinRequest}
                           selected={isSelected}
-                          onApprove={() => approveJoinMutation.mutate(item.joinRequest)}
-                          onReject={() => rejectJoinMutation.mutate(item.joinRequest)}
-                          isPending={approveJoinMutation.isPending || rejectJoinMutation.isPending}
-                          unreadState={nonIssueUnreadState(joinKey)}
-                          onMarkRead={() => handleMarkNonIssueRead(joinKey)}
-                          onArchive={canArchiveFromTab ? () => handleArchiveNonIssue(joinKey) : undefined}
-                          archiveDisabled={isArchiving}
-                          className={
+                          onОдобрить={() => approveJoinMutation.mutate(item.joinRequest)}
+                          onОтклонить={() => rejectJoinMutation.mutate(item.joinRequest)}
+                          isОжидание={approveJoinMutation.isОжидание || rejectJoinMutation.isОжидание}
+                          unreadState={nonЗадачаUnreadState(joinКлюч)}
+                          onMarkRead={() => handleMarkНетnЗадачаRead(joinКлюч)}
+                          onАрхивировать={canАрхивироватьFromTab ? () => handleАрхивироватьНетnЗадача(joinКлюч) : undefined}
+                          archiveОтключитьd={isArchiving}
+                          classИмя={
                             isArchiving
                               ? "pointer-events-none -translate-x-4 scale-[0.98] opacity-0 transition-all duration-200 ease-out"
                               : "transition-all duration-200 ease-out"
                           }
                         />
                       );
-                      elements.push(wrapItem(joinKey, isSelected, canArchiveFromTab ? (
-                        <SwipeToArchive
-                          key={joinKey}
+                      elements.push(wrapItem(joinКлюч, isSelected, canАрхивироватьFromTab ? (
+                        <SwipeToАрхивировать
+                          key={joinКлюч}
                           selected={isSelected}
                           disabled={isArchiving}
-                          onArchive={() => handleArchiveNonIssue(joinKey)}
+                          onАрхивировать={() => handleАрхивироватьНетnЗадача(joinКлюч)}
                         >
                           {row}
-                        </SwipeToArchive>
+                        </SwipeToАрхивировать>
                       ) : row));
                       continue;
                     }
 
                     const issue = item.issue;
-                    const childIssues = group.childrenByIssueId.get(issue.id) ?? [];
-                    const hasChildren = childIssues.length > 0;
-                    const isExpanded = hasChildren && !collapsedInboxParents.has(issue.id);
-                    const canArchiveIssue = canArchiveFromTab && group.searchSection === "none";
-                    const renderChildIssueRows = (
-                      children: Issue[],
+                    const childЗадачи = group.childrenByЗадачаId.get(issue.id) ?? [];
+                    const hasChildren = childЗадачи.length > 0;
+                    const isExpanded = hasChildren && !collapsedВходящиеРодительs.has(issue.id);
+                    const canАрхивироватьЗадача = canАрхивироватьFromTab && group.searchSection === "none";
+                    const renderChildЗадачаRows = (
+                      children: Задача[],
                       depth: number,
                       seen: ReadonlySet<string>,
-                    ): ReactNode[] =>
+                    ): ReactНетde[] =>
                       children.flatMap((child) => {
                         if (seen.has(child.id)) return [];
                         const nextSeen = new Set(seen);
                         nextSeen.add(child.id);
                         const childNavIdx = childFlatIndex.get(child.id) ?? -1;
                         const isChildSelected = selectedIndex === childNavIdx;
-                        const grandchildIssues = group.childrenByIssueId.get(child.id) ?? [];
-                        const childHasChildren = grandchildIssues.length > 0;
-                        const childIsExpanded = childHasChildren && !collapsedInboxParents.has(child.id);
-                        const childRow = renderInboxIssue({
+                        const grandchildЗадачи = group.childrenByЗадачаId.get(child.id) ?? [];
+                        const childHasChildren = grandchildЗадачи.length > 0;
+                        const childIsExpanded = childHasChildren && !collapsedВходящиеРодительs.has(child.id);
+                        const childRow = renderВходящиеЗадача({
                           issue: child,
                           depth,
                           selected: isChildSelected,
                           hasChildren: childHasChildren,
                           isExpanded: childIsExpanded,
-                          childCount: grandchildIssues.length,
-                          collapseParentId: child.id,
-                          allowArchive: canArchiveIssue,
+                          childCount: grandchildЗадачи.length,
+                          collapseРодительId: child.id,
+                          allowАрхивировать: canАрхивироватьЗадача,
                         });
-                        const isChildArchiving = archivingIssueIds.has(child.id);
+                        const isChildArchiving = archivingЗадачаIds.has(child.id);
                         const row = (
                           <div
                             key={`sel-issue:${child.id}`}
                             data-inbox-item
-                            className="relative"
+                            classИмя="relative"
                             onClick={() => setSelectedIndex(childNavIdx)}
                           >
-                            {canArchiveIssue ? (
-                              <SwipeToArchive
+                            {canАрхивироватьЗадача ? (
+                              <SwipeToАрхивировать
                                 key={`issue:${child.id}`}
                                 selected={isChildSelected}
-                                disabled={isChildArchiving || archiveIssueMutation.isPending}
-                                onArchive={() => archiveIssueMutation.mutate(child.id)}
+                                disabled={isChildArchiving || archiveЗадачаMutation.isОжидание}
+                                onАрхивировать={() => archiveЗадачаMutation.mutate(child.id)}
                               >
                                 {childRow}
-                              </SwipeToArchive>
+                              </SwipeToАрхивировать>
                             ) : childRow}
                           </div>
                         );
 
                         return childIsExpanded
-                          ? [row, ...renderChildIssueRows(grandchildIssues, depth + 1, nextSeen)]
+                          ? [row, ...renderChildЗадачаRows(grandchildЗадачи, depth + 1, nextSeen)]
                           : [row];
                       });
-                    const parentRow = renderInboxIssue({
+                    const parentRow = renderВходящиеЗадача({
                       issue,
                       depth: 0,
                       selected: isSelected,
                       hasChildren,
                       isExpanded,
-                      childCount: childIssues.length,
-                      collapseParentId: issue.id,
-                      allowArchive: canArchiveIssue,
+                      childCount: childЗадачи.length,
+                      collapseРодительId: issue.id,
+                      allowАрхивировать: canАрхивироватьЗадача,
                     });
 
-                    elements.push(wrapItem(`issue:${issue.id}`, isSelected, canArchiveIssue ? (
-                      <SwipeToArchive
+                    elements.push(wrapItem(`issue:${issue.id}`, isSelected, canАрхивироватьЗадача ? (
+                      <SwipeToАрхивировать
                         key={`issue:${issue.id}`}
                         selected={isSelected}
-                        disabled={archivingIssueIds.has(issue.id) || archiveIssueMutation.isPending}
-                        onArchive={() => archiveIssueMutation.mutate(issue.id)}
+                        disabled={archivingЗадачаIds.has(issue.id) || archiveЗадачаMutation.isОжидание}
+                        onАрхивировать={() => archiveЗадачаMutation.mutate(issue.id)}
                       >
                         {parentRow}
-                      </SwipeToArchive>
+                      </SwipeToАрхивировать>
                     ) : parentRow));
 
                     if (isExpanded) {
-                      elements.push(...renderChildIssueRows(childIssues, 1, new Set([issue.id])));
+                      elements.push(...renderChildЗадачаRows(childЗадачи, 1, new Set([issue.id])));
                     }
                   }
 
@@ -2574,52 +2574,52 @@ export function Inbox() {
         <>
           {showSeparatorBefore("alerts") && <Separator />}
           <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h3 classИмя="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Alerts
             </h3>
-            <div className="divide-y divide-border border border-border">
-              {showAggregateAgentError && (
-                <div className="group/alert relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/50">
+            <div classИмя="divide-y divide-border border border-border">
+              {showAggregateАгентОшибка && (
+                <div classИмя="group/alert relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/50">
                   <Link
                     to="/agents"
-                    className="flex flex-1 cursor-pointer items-center gap-3 no-underline text-inherit"
+                    classИмя="flex flex-1 cursor-pointer items-center gap-3 no-underline text-inherit"
                   >
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
-                    <span className="text-sm">
-                      <span className="font-medium">{dashboard!.agents.error}</span>{" "}
+                    <AlertTriangle classИмя="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+                    <span classИмя="text-sm">
+                      <span classИмя="font-medium">{dashboard!.agents.error}</span>{" "}
                       {dashboard!.agents.error === 1 ? "agent has" : "agents have"} errors
                     </span>
                   </Link>
                   <button
                     type="button"
                     onClick={() => dismissAlert("alert:agent-errors")}
-                    className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover/alert:opacity-100"
-                    aria-label="Dismiss"
+                    classИмя="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover/alert:opacity-100"
+                    aria-label="Закрыть"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X classИмя="h-3.5 w-3.5" />
                   </button>
                 </div>
               )}
-              {showBudgetAlert && (
-                <div className="group/alert relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/50">
+              {showБюджетAlert && (
+                <div classИмя="group/alert relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/50">
                   <Link
                     to="/costs"
-                    className="flex flex-1 cursor-pointer items-center gap-3 no-underline text-inherit"
+                    classИмя="flex flex-1 cursor-pointer items-center gap-3 no-underline text-inherit"
                   >
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-yellow-400" />
-                    <span className="text-sm">
-                      Budget at{" "}
-                      <span className="font-medium">{dashboard!.costs.monthUtilizationPercent}%</span>{" "}
+                    <AlertTriangle classИмя="h-4 w-4 shrink-0 text-yellow-400" />
+                    <span classИмя="text-sm">
+                      Бюджет at{" "}
+                      <span classИмя="font-medium">{dashboard!.costs.monthUtilizationPercent}%</span>{" "}
                       utilization this month
                     </span>
                   </Link>
                   <button
                     type="button"
                     onClick={() => dismissAlert("alert:budget")}
-                    className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover/alert:opacity-100"
-                    aria-label="Dismiss"
+                    classИмя="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover/alert:opacity-100"
+                    aria-label="Закрыть"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X classИмя="h-3.5 w-3.5" />
                   </button>
                 </div>
               )}

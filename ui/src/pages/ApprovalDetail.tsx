@@ -1,63 +1,63 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "@/lib/router";
+import { Link, useNavigate, useParams, useПоискParams } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { approvalsApi } from "../api/approvals";
 import { agentsApi } from "../api/agents";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { queryKeys } from "../lib/queryKeys";
-import { StatusBadge } from "../components/StatusBadge";
+import { queryКлючs } from "../lib/queryКлючs";
+import { СтатусBadge } from "../components/СтатусBadge";
 import { Identity } from "../components/Identity";
-import { approvalLabel, typeIcon, defaultTypeIcon, ApprovalPayloadRenderer } from "../components/ApprovalPayload";
+import { approvalLabel, typeIcon, defaultТипIcon, СогласованиеPayloadRenderer } from "../components/СогласованиеPayload";
 import { PageSkeleton } from "../components/PageSkeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
-import type { ApprovalComment } from "@paperclipai/shared";
+import type { СогласованиеComment } from "@paperclipai/shared";
 import { MarkdownBody } from "../components/MarkdownBody";
 
-export function ApprovalDetail() {
+export function СогласованиеDetail() {
   const { approvalId } = useParams<{ approvalId: string }>();
-  const { selectedCompanyId, setSelectedCompanyId } = useCompany();
+  const { selectedКомпанияId, setSelectedКомпанияId } = useКомпания();
   const { setBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams] = useПоискParams();
   const queryClient = useQueryClient();
   const [commentBody, setCommentBody] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setОшибка] = useState<string | null>(null);
   const [showRawPayload, setShowRawPayload] = useState(false);
 
-  const { data: approval, isLoading } = useQuery({
-    queryKey: queryKeys.approvals.detail(approvalId!),
+  const { data: approval, isЗагрузка } = useQuery({
+    queryКлюч: queryКлючs.approvals.detail(approvalId!),
     queryFn: () => approvalsApi.get(approvalId!),
     enabled: !!approvalId,
   });
-  const resolvedCompanyId = approval?.companyId ?? selectedCompanyId;
+  const resolvedКомпанияId = approval?.companyId ?? selectedКомпанияId;
 
   const { data: comments } = useQuery({
-    queryKey: queryKeys.approvals.comments(approvalId!),
-    queryFn: () => approvalsApi.listComments(approvalId!),
+    queryКлюч: queryКлючs.approvals.comments(approvalId!),
+    queryFn: () => approvalsApi.listКомментарии(approvalId!),
     enabled: !!approvalId,
   });
 
-  const { data: linkedIssues } = useQuery({
-    queryKey: queryKeys.approvals.issues(approvalId!),
-    queryFn: () => approvalsApi.listIssues(approvalId!),
+  const { data: linkedЗадачи } = useQuery({
+    queryКлюч: queryКлючs.approvals.issues(approvalId!),
+    queryFn: () => approvalsApi.listЗадачи(approvalId!),
     enabled: !!approvalId,
   });
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(resolvedCompanyId ?? ""),
-    queryFn: () => agentsApi.list(resolvedCompanyId ?? ""),
-    enabled: !!resolvedCompanyId,
+    queryКлюч: queryКлючs.agents.list(resolvedКомпанияId ?? ""),
+    queryFn: () => agentsApi.list(resolvedКомпанияId ?? ""),
+    enabled: !!resolvedКомпанияId,
   });
 
   useEffect(() => {
-    if (!approval?.companyId || approval.companyId === selectedCompanyId) return;
-    setSelectedCompanyId(approval.companyId, { source: "route_sync" });
-  }, [approval?.companyId, selectedCompanyId, setSelectedCompanyId]);
+    if (!approval?.companyId || approval.companyId === selectedКомпанияId) return;
+    setSelectedКомпанияId(approval.companyId, { source: "route_sync" });
+  }, [approval?.companyId, selectedКомпанияId, setSelectedКомпанияId]);
 
-  const agentNameById = useMemo(() => {
+  const agentИмяById = useMemo(() => {
     const map = new Map<string, string>();
     for (const agent of agents ?? []) map.set(agent.id, agent.name);
     return map;
@@ -65,124 +65,124 @@ export function ApprovalDetail() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Approvals", href: "/approvals" },
-      { label: approval?.id?.slice(0, 8) ?? approvalId ?? "Approval" },
+      { label: "Согласования", href: "/approvals" },
+      { label: approval?.id?.slice(0, 8) ?? approvalId ?? "Согласование" },
     ]);
   }, [setBreadcrumbs, approval, approvalId]);
 
   const refresh = () => {
     if (!approvalId) return;
-    queryClient.invalidateQueries({ queryKey: queryKeys.approvals.detail(approvalId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.approvals.comments(approvalId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.approvals.issues(approvalId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.detail(approvalId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.comments(approvalId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.issues(approvalId) });
     if (approval?.companyId) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list(approval.companyId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.approvals.list(approval.companyId) });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.approvals.list(approval.companyId, "pending"),
+        queryКлюч: queryКлючs.approvals.list(approval.companyId, "pending"),
       });
-      queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(approval.companyId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.list(approval.companyId) });
     }
   };
 
   const approveMutation = useMutation({
     mutationFn: () => approvalsApi.approve(approvalId!),
-    onSuccess: () => {
-      setError(null);
+    onУспешно: () => {
+      setОшибка(null);
       refresh();
       navigate(`/approvals/${approvalId}?resolved=approved`, { replace: true });
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Approve failed"),
+    onОшибка: (err) => setОшибка(err instanceof Ошибка ? err.message : "Одобрить failed"),
   });
 
   const rejectMutation = useMutation({
     mutationFn: () => approvalsApi.reject(approvalId!),
-    onSuccess: () => {
-      setError(null);
+    onУспешно: () => {
+      setОшибка(null);
       refresh();
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Reject failed"),
+    onОшибка: (err) => setОшибка(err instanceof Ошибка ? err.message : "Отклонить failed"),
   });
 
   const revisionMutation = useMutation({
     mutationFn: () => approvalsApi.requestRevision(approvalId!),
-    onSuccess: () => {
-      setError(null);
+    onУспешно: () => {
+      setОшибка(null);
       refresh();
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Revision request failed"),
+    onОшибка: (err) => setОшибка(err instanceof Ошибка ? err.message : "Revision request failed"),
   });
 
   const resubmitMutation = useMutation({
     mutationFn: () => approvalsApi.resubmit(approvalId!),
-    onSuccess: () => {
-      setError(null);
+    onУспешно: () => {
+      setОшибка(null);
       refresh();
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Resubmit failed"),
+    onОшибка: (err) => setОшибка(err instanceof Ошибка ? err.message : "Resubmit failed"),
   });
 
   const addCommentMutation = useMutation({
     mutationFn: () => approvalsApi.addComment(approvalId!, commentBody.trim()),
-    onSuccess: () => {
+    onУспешно: () => {
       setCommentBody("");
-      setError(null);
+      setОшибка(null);
       refresh();
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Comment failed"),
+    onОшибка: (err) => setОшибка(err instanceof Ошибка ? err.message : "Comment failed"),
   });
 
-  const deleteAgentMutation = useMutation({
+  const deleteАгентMutation = useMutation({
     mutationFn: (agentId: string) => agentsApi.remove(agentId),
-    onSuccess: () => {
-      setError(null);
+    onУспешно: () => {
+      setОшибка(null);
       refresh();
       navigate("/approvals");
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Delete failed"),
+    onОшибка: (err) => setОшибка(err instanceof Ошибка ? err.message : "Ошибка удаления"),
   });
 
-  if (isLoading) return <PageSkeleton variant="detail" />;
-  if (!approval) return <p className="text-sm text-muted-foreground">Approval not found.</p>;
+  if (isЗагрузка) return <PageSkeleton variant="detail" />;
+  if (!approval) return <p classИмя="text-sm text-muted-foreground">Согласование not found.</p>;
 
   const payload = approval.payload as Record<string, unknown>;
-  const linkedAgentId = typeof payload.agentId === "string" ? payload.agentId : null;
+  const linkedАгентId = typeof payload.agentId === "string" ? payload.agentId : null;
   const isActionable = approval.status === "pending" || approval.status === "revision_requested";
-  const isBudgetApproval = approval.type === "budget_override_required";
-  const TypeIcon = typeIcon[approval.type] ?? defaultTypeIcon;
-  const showApprovedBanner = searchParams.get("resolved") === "approved" && approval.status === "approved";
-  const primaryLinkedIssue = linkedIssues?.[0] ?? null;
+  const isБюджетСогласование = approval.type === "budget_override_required";
+  const ТипIcon = typeIcon[approval.type] ?? defaultТипIcon;
+  const showОдобритьdBanner = searchParams.get("resolved") === "approved" && approval.status === "approved";
+  const primaryLinkedЗадача = linkedЗадачи?.[0] ?? null;
   const resolvedCta =
-    primaryLinkedIssue
+    primaryLinkedЗадача
       ? {
           label:
-            (linkedIssues?.length ?? 0) > 1
+            (linkedЗадачи?.length ?? 0) > 1
               ? "Review linked issues"
               : "Review linked issue",
-          to: `/issues/${primaryLinkedIssue.identifier ?? primaryLinkedIssue.id}`,
+          to: `/issues/${primaryLinkedЗадача.identifier ?? primaryLinkedЗадача.id}`,
         }
-      : linkedAgentId
+      : linkedАгентId
         ? {
             label: "Open hired agent",
-            to: `/agents/${linkedAgentId}`,
+            to: `/agents/${linkedАгентId}`,
           }
         : {
-            label: "Back to approvals",
+            label: "Назад к согласованиям",
             to: "/approvals",
           };
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      {showApprovedBanner && (
-        <div className="border border-green-300 dark:border-green-700/40 bg-green-50 dark:bg-green-900/20 rounded-lg px-4 py-3 animate-in fade-in zoom-in-95 duration-300">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-2">
-              <div className="relative mt-0.5">
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-300" />
-                <Sparkles className="h-3 w-3 text-green-500 dark:text-green-200 absolute -right-2 -top-1 animate-pulse" />
+    <div classИмя="space-y-6 max-w-3xl">
+      {showОдобритьdBanner && (
+        <div classИмя="border border-green-300 dark:border-green-700/40 bg-green-50 dark:bg-green-900/20 rounded-lg px-4 py-3 animate-in fade-in zoom-in-95 duration-300">
+          <div classИмя="flex items-start justify-between gap-3">
+            <div classИмя="flex items-start gap-2">
+              <div classИмя="relative mt-0.5">
+                <CheckCircle2 classИмя="h-4 w-4 text-green-600 dark:text-green-300" />
+                <Sparkles classИмя="h-3 w-3 text-green-500 dark:text-green-200 absolute -right-2 -top-1 animate-pulse" />
               </div>
               <div>
-                <p className="text-sm text-green-800 dark:text-green-100 font-medium">Approval confirmed</p>
-                <p className="text-xs text-green-700 dark:text-green-200/90">
+                <p classИмя="text-sm text-green-800 dark:text-green-100 font-medium">Согласование confirmed</p>
+                <p classИмя="text-xs text-green-700 dark:text-green-200/90">
                   Requesting agent was notified to review this approval and linked issues.
                 </p>
               </div>
@@ -190,7 +190,7 @@ export function ApprovalDetail() {
             <Button
               size="sm"
               variant="outline"
-              className="border-green-400 dark:border-green-600/50 text-green-800 dark:text-green-100 hover:bg-green-100 dark:hover:bg-green-900/30"
+              classИмя="border-green-400 dark:border-green-600/50 text-green-800 dark:text-green-100 hover:bg-green-100 dark:hover:bg-green-900/30"
               onClick={() => navigate(resolvedCta.to)}
             >
               {resolvedCta.label}
@@ -198,92 +198,92 @@ export function ApprovalDetail() {
           </div>
         </div>
       )}
-      <div className="border border-border rounded-lg p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TypeIcon className="h-5 w-5 text-muted-foreground shrink-0" />
+      <div classИмя="border border-border rounded-lg p-4 space-y-3">
+        <div classИмя="flex items-center justify-between">
+          <div classИмя="flex items-center gap-2">
+            <ТипIcon classИмя="h-5 w-5 text-muted-foreground shrink-0" />
             <div>
-              <h2 className="text-lg font-semibold">{approvalLabel(approval.type, approval.payload as Record<string, unknown> | null)}</h2>
-              <p className="text-xs text-muted-foreground font-mono">{approval.id}</p>
+              <h2 classИмя="text-lg font-semibold">{approvalLabel(approval.type, approval.payload as Record<string, unknown> | null)}</h2>
+              <p classИмя="text-xs text-muted-foreground font-mono">{approval.id}</p>
             </div>
           </div>
-          <StatusBadge status={approval.status} />
+          <СтатусBadge status={approval.status} />
         </div>
-        <div className="text-sm space-y-1">
-          {approval.requestedByAgentId && (
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-xs">Requested by</span>
+        <div classИмя="text-sm space-y-1">
+          {approval.requestedByАгентId && (
+            <div classИмя="flex items-center gap-2">
+              <span classИмя="text-muted-foreground text-xs">Requested by</span>
               <Identity
-                name={agentNameById.get(approval.requestedByAgentId) ?? approval.requestedByAgentId.slice(0, 8)}
+                name={agentИмяById.get(approval.requestedByАгентId) ?? approval.requestedByАгентId.slice(0, 8)}
                 size="sm"
               />
             </div>
           )}
-          <ApprovalPayloadRenderer type={approval.type} payload={payload} />
+          <СогласованиеPayloadRenderer type={approval.type} payload={payload} />
           <button
             type="button"
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2"
+            classИмя="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2"
             onClick={() => setShowRawPayload((v) => !v)}
           >
-            <ChevronRight className={`h-3 w-3 transition-transform ${showRawPayload ? "rotate-90" : ""}`} />
+            <ChevronRight classИмя={`h-3 w-3 transition-transform ${showRawPayload ? "rotate-90" : ""}`} />
             See full request
           </button>
           {showRawPayload && (
-            <pre className="text-xs bg-muted/40 rounded-md p-3 overflow-x-auto">
+            <pre classИмя="text-xs bg-muted/40 rounded-md p-3 overflow-x-auto">
               {JSON.stringify(payload, null, 2)}
             </pre>
           )}
-          {approval.decisionNote && (
-            <p className="text-xs text-muted-foreground">Decision note: {approval.decisionNote}</p>
+          {approval.decisionНетte && (
+            <p classИмя="text-xs text-muted-foreground">Decision note: {approval.decisionНетte}</p>
           )}
         </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        {linkedIssues && linkedIssues.length > 0 && (
-          <div className="pt-2 border-t border-border/60">
-            <p className="text-xs text-muted-foreground mb-1.5">Linked Issues</p>
-            <div className="space-y-1.5">
-              {linkedIssues.map((issue) => (
+        {error && <p classИмя="text-sm text-destructive">{error}</p>}
+        {linkedЗадачи && linkedЗадачи.length > 0 && (
+          <div classИмя="pt-2 border-t border-border/60">
+            <p classИмя="text-xs text-muted-foreground mb-1.5">Linked Задачи</p>
+            <div classИмя="space-y-1.5">
+              {linkedЗадачи.map((issue) => (
                 <Link
                   key={issue.id}
                   to={`/issues/${issue.identifier ?? issue.id}`}
-                  className="block text-xs rounded border border-border/70 px-2 py-1.5 hover:bg-accent/20"
+                  classИмя="block text-xs rounded border border-border/70 px-2 py-1.5 hover:bg-accent/20"
                 >
-                  <span className="font-mono text-muted-foreground mr-2">
+                  <span classИмя="font-mono text-muted-foreground mr-2">
                     {issue.identifier ?? issue.id.slice(0, 8)}
                   </span>
                   <span>{issue.title}</span>
                 </Link>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-2">
+            <p classИмя="text-[11px] text-muted-foreground mt-2">
               Linked issues remain open until the requesting agent follows up and closes them.
             </p>
           </div>
         )}
-        <div className="flex flex-wrap items-center gap-2">
-          {isActionable && !isBudgetApproval && (
+        <div classИмя="flex flex-wrap items-center gap-2">
+          {isActionable && !isБюджетСогласование && (
             <>
               <Button
                 size="sm"
-                className="bg-green-700 hover:bg-green-600 text-white"
+                classИмя="bg-green-700 hover:bg-green-600 text-white"
                 onClick={() => approveMutation.mutate()}
-                disabled={approveMutation.isPending}
+                disabled={approveMutation.isОжидание}
               >
-                Approve
+                Одобрить
               </Button>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => rejectMutation.mutate()}
-                disabled={rejectMutation.isPending}
+                disabled={rejectMutation.isОжидание}
               >
-                Reject
+                Отклонить
               </Button>
             </>
           )}
-          {isBudgetApproval && approval.status === "pending" && (
-            <p className="text-sm text-muted-foreground">
-              Resolve this budget stop from the budget controls on <Link to="/costs" className="underline underline-offset-2">/costs</Link>.
+          {isБюджетСогласование && approval.status === "pending" && (
+            <p classИмя="text-sm text-muted-foreground">
+              Resolve this budget stop from the budget controls on <Link to="/costs" classИмя="underline underline-offset-2">/costs</Link>.
             </p>
           )}
           {approval.status === "pending" && (
@@ -291,7 +291,7 @@ export function ApprovalDetail() {
               size="sm"
               variant="outline"
               onClick={() => revisionMutation.mutate()}
-              disabled={revisionMutation.isPending}
+              disabled={revisionMutation.isОжидание}
             >
               Request revision
             </Button>
@@ -301,65 +301,65 @@ export function ApprovalDetail() {
               size="sm"
               variant="outline"
               onClick={() => resubmitMutation.mutate()}
-              disabled={resubmitMutation.isPending}
+              disabled={resubmitMutation.isОжидание}
             >
               Mark resubmitted
             </Button>
           )}
-          {approval.status === "rejected" && approval.type === "hire_agent" && linkedAgentId && (
+          {approval.status === "rejected" && approval.type === "hire_agent" && linkedАгентId && (
             <Button
               size="sm"
               variant="outline"
-              className="text-destructive border-destructive/40"
+              classИмя="text-destructive border-destructive/40"
               onClick={() => {
-                if (!window.confirm("Delete this disapproved agent? This cannot be undone.")) return;
-                deleteAgentMutation.mutate(linkedAgentId);
+                if (!window.confirm("Удалить this disapproved agent? This cannot be undone.")) return;
+                deleteАгентMutation.mutate(linkedАгентId);
               }}
-              disabled={deleteAgentMutation.isPending}
+              disabled={deleteАгентMutation.isОжидание}
             >
-              Delete disapproved agent
+              Удалить disapproved agent
             </Button>
           )}
         </div>
       </div>
 
-      <div className="border border-border rounded-lg p-4 space-y-3">
-        <h3 className="text-sm font-medium">Comments ({comments?.length ?? 0})</h3>
-        <div className="space-y-2">
-          {(comments ?? []).map((comment: ApprovalComment) => (
-            <div key={comment.id} className="border border-border/60 rounded-md p-3">
-              <div className="flex items-center justify-between mb-1">
-                {comment.authorAgentId ? (
-                  <Link to={`/agents/${comment.authorAgentId}`} className="hover:underline">
+      <div classИмя="border border-border rounded-lg p-4 space-y-3">
+        <h3 classИмя="text-sm font-medium">Комментарии ({comments?.length ?? 0})</h3>
+        <div classИмя="space-y-2">
+          {(comments ?? []).map((comment: СогласованиеComment) => (
+            <div key={comment.id} classИмя="border border-border/60 rounded-md p-3">
+              <div classИмя="flex items-center justify-between mb-1">
+                {comment.authorАгентId ? (
+                  <Link to={`/agents/${comment.authorАгентId}`} classИмя="hover:underline">
                     <Identity
-                      name={agentNameById.get(comment.authorAgentId) ?? comment.authorAgentId.slice(0, 8)}
+                      name={agentИмяById.get(comment.authorАгентId) ?? comment.authorАгентId.slice(0, 8)}
                       size="sm"
                     />
                   </Link>
                 ) : (
-                  <Identity name="Board" size="sm" />
+                  <Identity name="Совет" size="sm" />
                 )}
-                <span className="text-xs text-muted-foreground">
+                <span classИмя="text-xs text-muted-foreground">
                   {new Date(comment.createdAt).toLocaleString()}
                 </span>
               </div>
-              <MarkdownBody className="text-sm">{comment.body}</MarkdownBody>
+              <MarkdownBody classИмя="text-sm">{comment.body}</MarkdownBody>
             </div>
           ))}
         </div>
         <Textarea
           value={commentBody}
           onChange={(e) => setCommentBody(e.target.value)}
-          placeholder="Add a comment..."
+          placeholder="Добавить a comment..."
           rows={3}
         />
-        <div className="flex justify-end">
+        <div classИмя="flex justify-end">
           <Button
             size="sm"
             onClick={() => addCommentMutation.mutate()}
-            disabled={!commentBody.trim() || addCommentMutation.isPending}
+            disabled={!commentBody.trim() || addCommentMutation.isОжидание}
           >
-            {addCommentMutation.isPending ? "Posting…" : "Post comment"}
+            {addCommentMutation.isОжидание ? "Posting…" : "Post comment"}
           </Button>
         </div>
       </div>

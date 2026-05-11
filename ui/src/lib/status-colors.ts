@@ -1,16 +1,16 @@
 /**
  * Canonical status & priority color definitions.
  *
- * Every component that renders a status indicator (StatusIcon, StatusBadge,
+ * Every component that renders a status indicator (СтатусIcon, СтатусBadge,
  * agent status dots, etc.) should import from here so colors stay consistent.
  */
 
 // ---------------------------------------------------------------------------
-// Issue status colors
+// Задача status colors
 // ---------------------------------------------------------------------------
 
-/** StatusIcon circle: text + border classes */
-export const issueStatusIcon: Record<string, string> = {
+/** СтатусIcon circle: text + border classes */
+export const issueСтатусIcon: Record<string, string> = {
   backlog: "text-muted-foreground border-muted-foreground",
   todo: "text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400",
   in_progress: "text-yellow-600 border-yellow-600 dark:text-yellow-400 dark:border-yellow-400",
@@ -20,10 +20,10 @@ export const issueStatusIcon: Record<string, string> = {
   blocked: "text-red-600 border-red-600 dark:text-red-400 dark:border-red-400",
 };
 
-export const issueStatusIconDefault = "text-muted-foreground border-muted-foreground";
+export const issueСтатусIconПо умолчанию = "text-muted-foreground border-muted-foreground";
 
 /** Text-only color for issue statuses (dropdowns, labels) */
-export const issueStatusText: Record<string, string> = {
+export const issueСтатусText: Record<string, string> = {
   backlog: "text-muted-foreground",
   todo: "text-blue-600 dark:text-blue-400",
   in_progress: "text-yellow-600 dark:text-yellow-400",
@@ -33,14 +33,14 @@ export const issueStatusText: Record<string, string> = {
   blocked: "text-red-600 dark:text-red-400",
 };
 
-export const issueStatusTextDefault = "text-muted-foreground";
+export const issueСтатусTextПо умолчанию = "text-muted-foreground";
 
 // ---------------------------------------------------------------------------
-// Badge colors — used by StatusBadge for all entity types
+// Badge colors — used by СтатусBadge for all entity types
 // ---------------------------------------------------------------------------
 
 export const statusBadge: Record<string, string> = {
-  // Agent statuses
+  // Агент statuses
   active: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
   running: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300",
   scheduled_retry: "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
@@ -48,12 +48,12 @@ export const statusBadge: Record<string, string> = {
   idle: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300",
   archived: "bg-muted text-muted-foreground",
 
-  // Goal statuses
+  // Цель statuses
   planned: "bg-muted text-muted-foreground",
   achieved: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
   completed: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
 
-  // Run statuses
+  // Запустить statuses
   failed: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
   timed_out: "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300",
   succeeded: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
@@ -64,13 +64,13 @@ export const statusBadge: Record<string, string> = {
   terminated: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
   pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300",
 
-  // Approval statuses
+  // Согласование statuses
   pending_approval: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
   revision_requested: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
   approved: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
   rejected: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
 
-  // Issue statuses — consistent hues with issueStatusIcon above
+  // Задача statuses — consistent hues with issueСтатусIcon above
   backlog: "bg-muted text-muted-foreground",
   todo: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
   in_progress: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300",
@@ -80,13 +80,13 @@ export const statusBadge: Record<string, string> = {
   cancelled: "bg-muted text-muted-foreground",
 };
 
-export const statusBadgeDefault = "bg-muted text-muted-foreground";
+export const statusBadgeПо умолчанию = "bg-muted text-muted-foreground";
 
 // ---------------------------------------------------------------------------
-// Agent status dot — solid background for small indicator dots
+// Агент status dot — solid background for small indicator dots
 // ---------------------------------------------------------------------------
 
-export const agentStatusDot: Record<string, string> = {
+export const agentСтатусDot: Record<string, string> = {
   running: "bg-cyan-400 animate-pulse",
   active: "bg-green-400",
   paused: "bg-yellow-400",
@@ -96,10 +96,10 @@ export const agentStatusDot: Record<string, string> = {
   archived: "bg-neutral-400",
 };
 
-export const agentStatusDotDefault = "bg-neutral-400";
+export const agentСтатусDotПо умолчанию = "bg-neutral-400";
 
 // ---------------------------------------------------------------------------
-// Priority colors
+// Приоритет colors
 // ---------------------------------------------------------------------------
 
 export const priorityColor: Record<string, string> = {
@@ -109,4 +109,4 @@ export const priorityColor: Record<string, string> = {
   low: "text-blue-600 dark:text-blue-400",
 };
 
-export const priorityColorDefault = "text-yellow-600 dark:text-yellow-400";
+export const priorityColorПо умолчанию = "text-yellow-600 dark:text-yellow-400";

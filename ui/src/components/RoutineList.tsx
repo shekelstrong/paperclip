@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import type { ReactНетde } from "react";
 import { MoreHorizontal, Play } from "lucide-react";
 import { Link } from "@/lib/router";
-import { AgentIcon } from "@/components/AgentIconPicker";
+import { АгентIcon } from "@/components/АгентIconPicker";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,155 +12,155 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 
-export type RoutineListProjectSummary = {
+export type ПроцедураListProjectSummary = {
   name: string;
   color?: string | null;
 };
 
-export type RoutineListAgentSummary = {
+export type ПроцедураListАгентSummary = {
   name: string;
   icon?: string | null;
 };
 
-export type RoutineListRowItem = {
+export type ПроцедураListRowItem = {
   id: string;
   title: string;
   status: string;
   projectId: string | null;
-  assigneeAgentId: string | null;
-  lastRun?: {
+  assigneeАгентId: string | null;
+  lastЗапустить?: {
     triggeredAt?: Date | string | null;
     status?: string | null;
   } | null;
 };
 
-export function formatLastRunTimestamp(value: Date | string | null | undefined) {
-  if (!value) return "Never";
+export function formatLastЗапуститьTimestamp(value: Date | string | null | undefined) {
+  if (!value) return "Никогда";
   return new Date(value).toLocaleString();
 }
 
-export function formatRoutineRunStatus(value: string | null | undefined) {
+export function formatПроцедураЗапуститьСтатус(value: string | null | undefined) {
   if (!value) return null;
-  return value.replaceAll("_", " ");
+  return value.replaceВсе("_", " ");
 }
 
-export function nextRoutineStatus(currentStatus: string, enabled: boolean) {
-  if (currentStatus === "archived" && enabled) return "active";
+export function nextПроцедураСтатус(currentСтатус: string, enabled: boolean) {
+  if (currentСтатус === "archived" && enabled) return "active";
   return enabled ? "active" : "paused";
 }
 
-export function RoutineListRow<TRoutine extends RoutineListRowItem>({
+export function ПроцедураListRow<TПроцедура extends ПроцедураListRowItem>({
   routine,
   projectById,
   agentById,
-  runningRoutineId,
-  statusMutationRoutineId,
+  runningПроцедураId,
+  statusMutationПроцедураId,
   href,
-  configureLabel = "Edit",
+  configureLabel = "Изменить",
   managedByLabel,
-  secondaryDetails,
-  runNowButton = false,
-  disableRunNow = false,
+  secondaryДетали,
+  runСейчасButton = false,
+  disableЗапуститьСейчас = false,
   disableToggle = false,
-  hideArchiveAction = false,
-  onRunNow,
-  onToggleEnabled,
-  onToggleArchived,
+  hideАрхивироватьAction = false,
+  onЗапуститьСейчас,
+  onToggleВключитьd,
+  onToggleАрхивирован,
 }: {
-  routine: TRoutine;
-  projectById: Map<string, RoutineListProjectSummary>;
-  agentById: Map<string, RoutineListAgentSummary>;
-  runningRoutineId: string | null;
-  statusMutationRoutineId: string | null;
+  routine: TПроцедура;
+  projectById: Map<string, ПроцедураListProjectSummary>;
+  agentById: Map<string, ПроцедураListАгентSummary>;
+  runningПроцедураId: string | null;
+  statusMutationПроцедураId: string | null;
   href: string;
   configureLabel?: string;
   managedByLabel?: string | null;
-  secondaryDetails?: ReactNode;
-  runNowButton?: boolean;
-  disableRunNow?: boolean;
+  secondaryДетали?: ReactНетde;
+  runСейчасButton?: boolean;
+  disableЗапуститьСейчас?: boolean;
   disableToggle?: boolean;
-  hideArchiveAction?: boolean;
-  onRunNow: (routine: TRoutine) => void;
-  onToggleEnabled: (routine: TRoutine, enabled: boolean) => void;
-  onToggleArchived?: (routine: TRoutine) => void;
+  hideАрхивироватьAction?: boolean;
+  onЗапуститьСейчас: (routine: TПроцедура) => void;
+  onToggleВключитьd: (routine: TПроцедура, enabled: boolean) => void;
+  onToggleАрхивирован?: (routine: TПроцедура) => void;
 }) {
   const enabled = routine.status === "active";
-  const isArchived = routine.status === "archived";
-  const isStatusPending = statusMutationRoutineId === routine.id;
+  const isАрхивирован = routine.status === "archived";
+  const isСтатусОжидание = statusMutationПроцедураId === routine.id;
   const project = routine.projectId ? projectById.get(routine.projectId) ?? null : null;
-  const agent = routine.assigneeAgentId ? agentById.get(routine.assigneeAgentId) ?? null : null;
-  const isDraft = !isArchived && !routine.assigneeAgentId;
-  const runDisabled = runningRoutineId === routine.id || isArchived || disableRunNow;
+  const agent = routine.assigneeАгентId ? agentById.get(routine.assigneeАгентId) ?? null : null;
+  const isЧерновик = !isАрхивирован && !routine.assigneeАгентId;
+  const runОтключитьd = runningПроцедураId === routine.id || isАрхивирован || disableЗапуститьСейчас;
 
   return (
     <Link
       to={href}
-      className="group flex flex-col gap-3 border-b border-border px-3 py-3 transition-colors hover:bg-accent/50 last:border-b-0 sm:flex-row sm:items-center no-underline text-inherit"
+      classИмя="group flex flex-col gap-3 border-b border-border px-3 py-3 transition-colors hover:bg-accent/50 last:border-b-0 sm:flex-row sm:items-center no-underline text-inherit"
     >
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="truncate text-sm font-medium">{routine.title}</span>
-          {(isArchived || routine.status === "paused" || isDraft) ? (
-            <span className="text-xs text-muted-foreground">
-              {isArchived ? "archived" : isDraft ? "draft" : "paused"}
+      <div classИмя="min-w-0 flex-1 space-y-1.5">
+        <div classИмя="flex flex-wrap items-center gap-2">
+          <span classИмя="truncate text-sm font-medium">{routine.title}</span>
+          {(isАрхивирован || routine.status === "paused" || isЧерновик) ? (
+            <span classИмя="text-xs text-muted-foreground">
+              {isАрхивирован ? "archived" : isЧерновик ? "draft" : "paused"}
             </span>
           ) : null}
           {managedByLabel ? (
-            <span className="text-xs text-muted-foreground">{managedByLabel}</span>
+            <span classИмя="text-xs text-muted-foreground">{managedByLabel}</span>
           ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span className="flex items-center gap-2">
+        <div classИмя="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span classИмя="flex items-center gap-2">
             <span
-              className="h-2.5 w-2.5 shrink-0 rounded-sm"
+              classИмя="h-2.5 w-2.5 shrink-0 rounded-sm"
               style={{ backgroundColor: project?.color ?? "#64748b" }}
             />
-            <span>{routine.projectId ? (project?.name ?? "Unknown project") : "No project"}</span>
+            <span>{routine.projectId ? (project?.name ?? "Неизвестно project") : "Нет project"}</span>
           </span>
-          <span className="flex items-center gap-2">
-            {agent?.icon ? <AgentIcon icon={agent.icon} className="h-3.5 w-3.5 shrink-0" /> : null}
-            <span>{routine.assigneeAgentId ? (agent?.name ?? "Unknown agent") : "No default agent"}</span>
+          <span classИмя="flex items-center gap-2">
+            {agent?.icon ? <АгентIcon icon={agent.icon} classИмя="h-3.5 w-3.5 shrink-0" /> : null}
+            <span>{routine.assigneeАгентId ? (agent?.name ?? "Неизвестно agent") : "Нет default agent"}</span>
           </span>
           <span>
-            {formatLastRunTimestamp(routine.lastRun?.triggeredAt)}
-            {routine.lastRun ? ` · ${formatRoutineRunStatus(routine.lastRun.status)}` : ""}
+            {formatLastЗапуститьTimestamp(routine.lastЗапустить?.triggeredAt)}
+            {routine.lastЗапустить ? ` · ${formatПроцедураЗапуститьСтатус(routine.lastЗапустить.status)}` : ""}
           </span>
         </div>
-        {secondaryDetails ? (
-          <div className="text-xs text-muted-foreground">{secondaryDetails}</div>
+        {secondaryДетали ? (
+          <div classИмя="text-xs text-muted-foreground">{secondaryДетали}</div>
         ) : null}
       </div>
 
-      <div className="flex items-center gap-3" onClick={(event) => { event.preventDefault(); event.stopPropagation(); }}>
-        {runNowButton ? (
+      <div classИмя="flex items-center gap-3" onClick={(event) => { event.preventПо умолчанию(); event.stopPropagation(); }}>
+        {runСейчасButton ? (
           <Button
             variant="ghost"
             size="sm"
-            disabled={runDisabled}
-            onClick={() => onRunNow(routine)}
+            disabled={runОтключитьd}
+            onClick={() => onЗапуститьСейчас(routine)}
           >
-            <Play className="h-3.5 w-3.5" />
-            {runningRoutineId === routine.id ? "Running..." : "Run now"}
+            <Play classИмя="h-3.5 w-3.5" />
+            {runningПроцедураId === routine.id ? "Выполняется..." : "Запустить сейчас"}
           </Button>
         ) : null}
 
-        <div className="flex items-center gap-3">
+        <div classИмя="flex items-center gap-3">
           <ToggleSwitch
             size="lg"
             checked={enabled}
-            onCheckedChange={() => onToggleEnabled(routine, enabled)}
-            disabled={isStatusPending || isArchived || disableToggle}
-            aria-label={enabled ? `Disable ${routine.title}` : `Enable ${routine.title}`}
+            onCheckedChange={() => onToggleВключитьd(routine, enabled)}
+            disabled={isСтатусОжидание || isАрхивирован || disableToggle}
+            aria-label={enabled ? `Отключить ${routine.title}` : `Включить ${routine.title}`}
           />
-          <span className="w-12 text-xs text-muted-foreground">
-            {isArchived ? "Archived" : isDraft ? "Draft" : enabled ? "On" : "Off"}
+          <span classИмя="w-12 text-xs text-muted-foreground">
+            {isАрхивирован ? "Архивирован" : isЧерновик ? "Черновик" : enabled ? "On" : "Off"}
           </span>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label={`More actions for ${routine.title}`}>
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal classИмя="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -168,24 +168,24 @@ export function RoutineListRow<TRoutine extends RoutineListRowItem>({
               <Link to={href}>{configureLabel}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem
-              disabled={runDisabled}
-              onClick={() => onRunNow(routine)}
+              disabled={runОтключитьd}
+              onClick={() => onЗапуститьСейчас(routine)}
             >
-              {runningRoutineId === routine.id ? "Running..." : "Run now"}
+              {runningПроцедураId === routine.id ? "Выполняется..." : "Запустить сейчас"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => onToggleEnabled(routine, enabled)}
-              disabled={isStatusPending || isArchived || disableToggle}
+              onClick={() => onToggleВключитьd(routine, enabled)}
+              disabled={isСтатусОжидание || isАрхивирован || disableToggle}
             >
-              {enabled ? "Pause" : "Enable"}
+              {enabled ? "Пауза" : "Включить"}
             </DropdownMenuItem>
-            {!hideArchiveAction && onToggleArchived ? (
+            {!hideАрхивироватьAction && onToggleАрхивирован ? (
               <DropdownMenuItem
-                onClick={() => onToggleArchived(routine)}
-                disabled={isStatusPending}
+                onClick={() => onToggleАрхивирован(routine)}
+                disabled={isСтатусОжидание}
               >
-                {routine.status === "archived" ? "Restore" : "Archive"}
+                {routine.status === "archived" ? "Restore" : "Архивировать"}
               </DropdownMenuItem>
             ) : null}
           </DropdownMenuContent>

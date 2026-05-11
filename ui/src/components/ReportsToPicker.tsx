@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Agent } from "@paperclipai/shared";
+import type { Агент } from "@paperclipai/shared";
 import {
   Popover,
   PopoverContent,
@@ -7,28 +7,28 @@ import {
 } from "@/components/ui/popover";
 import { User } from "lucide-react";
 import { cn } from "../lib/utils";
-import { roleLabels } from "./agent-config-primitives";
-import { AgentIcon } from "./AgentIconPicker";
+import { roleЯрлыки } from "./agent-config-primitives";
+import { АгентIcon } from "./АгентIconPicker";
 
-export function ReportsToPicker({
+export function РепозиторийrtsToPicker({
   agents,
   value,
   onChange,
   disabled = false,
-  excludeAgentIds = [],
-  disabledEmptyLabel = "Reports to: N/A (CEO)",
-  chooseLabel = "Reports to...",
+  excludeАгентIds = [],
+  disabledEmptyLabel = "Репозиторийrts to: N/A (CEO)",
+  chooseLabel = "Репозиторийrts to...",
 }: {
-  agents: Agent[];
+  agents: Агент[];
   value: string | null;
   onChange: (id: string | null) => void;
   disabled?: boolean;
-  excludeAgentIds?: string[];
+  excludeАгентIds?: string[];
   disabledEmptyLabel?: string;
   chooseLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const exclude = new Set(excludeAgentIds);
+  const exclude = new Set(excludeАгентIds);
   const rows = agents.filter(
     (a) => a.status !== "terminated" && !exclude.has(a.id),
   );
@@ -41,7 +41,7 @@ export function ReportsToPicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={cn(
+          classИмя={cn(
             "inline-flex max-w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors",
             terminatedManager && "border-amber-600/45 bg-amber-500/5",
             disabled && "opacity-60 cursor-not-allowed",
@@ -50,35 +50,35 @@ export function ReportsToPicker({
         >
           {unknownManager ? (
             <>
-              <User className="h-3 w-3 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 truncate text-muted-foreground">Unknown manager (stale ID)</span>
+              <User classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
+              <span classИмя="min-w-0 truncate text-muted-foreground">Неизвестно manager (stale ID)</span>
             </>
           ) : current ? (
             <>
-              <AgentIcon icon={current.icon} className="h-3 w-3 shrink-0 text-muted-foreground" />
+              <АгентIcon icon={current.icon} classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
               <span
-                className={cn(
+                classИмя={cn(
                   "min-w-0 truncate",
                   terminatedManager && "text-amber-900 dark:text-amber-200",
                 )}
               >
-                {`Reports to ${current.name}${terminatedManager ? " (terminated)" : ""}`}
+                {`Репозиторийrts to ${current.name}${terminatedManager ? " (terminated)" : ""}`}
               </span>
             </>
           ) : (
             <>
-              <User className="h-3 w-3 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 truncate">
+              <User classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
+              <span classИмя="min-w-0 truncate">
                 {disabled ? disabledEmptyLabel : chooseLabel}
               </span>
             </>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-48 p-1" align="start">
+      <PopoverContent classИмя="w-48 p-1" align="start">
         <button
           type="button"
-          className={cn(
+          classИмя={cn(
             "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
             value === null && "bg-accent",
           )}
@@ -87,26 +87,26 @@ export function ReportsToPicker({
             setOpen(false);
           }}
         >
-          No manager
+          Нет manager
         </button>
         {terminatedManager && (
-          <div className="flex min-w-0 items-center gap-2 overflow-hidden px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
-            <AgentIcon icon={current.icon} className="shrink-0 h-3 w-3" />
-            <span className="min-w-0 truncate">
+          <div classИмя="flex min-w-0 items-center gap-2 overflow-hidden px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
+            <АгентIcon icon={current.icon} classИмя="shrink-0 h-3 w-3" />
+            <span classИмя="min-w-0 truncate">
               Current: {current.name} (terminated)
             </span>
           </div>
         )}
         {unknownManager && (
-          <div className="px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
-            Saved manager is missing from this company. Choose a new manager or clear.
+          <div classИмя="px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-0.5">
+            Сохранитьd manager is missing from this company. Choose a new manager or clear.
           </div>
         )}
         {rows.map((a) => (
           <button
             type="button"
             key={a.id}
-            className={cn(
+            classИмя={cn(
               "flex items-center gap-2 w-full min-w-0 px-2 py-1.5 text-xs rounded hover:bg-accent/50 overflow-hidden",
               a.id === value && "bg-accent",
             )}
@@ -115,9 +115,9 @@ export function ReportsToPicker({
               setOpen(false);
             }}
           >
-            <AgentIcon icon={a.icon} className="shrink-0 h-3 w-3 text-muted-foreground" />
-            <span className="min-w-0 truncate">{a.name}</span>
-            <span className="text-muted-foreground ml-auto shrink-0">{roleLabels[a.role] ?? a.role}</span>
+            <АгентIcon icon={a.icon} classИмя="shrink-0 h-3 w-3 text-muted-foreground" />
+            <span classИмя="min-w-0 truncate">{a.name}</span>
+            <span classИмя="text-muted-foreground ml-auto shrink-0">{roleЯрлыки[a.role] ?? a.role}</span>
           </button>
         ))}
       </PopoverContent>

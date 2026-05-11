@@ -1,14 +1,14 @@
-import type { CompanySearchHighlight } from "@paperclipai/shared";
+import type { КомпанияПоискВысокийlight } from "@paperclipai/shared";
 import { cn } from "@/lib/utils";
 
-export interface HighlightedTextProps {
+export interface ВысокийlightedTextProps {
   text: string;
-  highlights?: readonly CompanySearchHighlight[] | null;
-  className?: string;
-  markClassName?: string;
+  highlights?: readonly КомпанияПоискВысокийlight[] | null;
+  classИмя?: string;
+  markClassИмя?: string;
 }
 
-function clampedRanges(text: string, highlights: readonly CompanySearchHighlight[]) {
+function clampedRanges(text: string, highlights: readonly КомпанияПоискВысокийlight[]) {
   const result: Array<{ start: number; end: number }> = [];
   for (const range of highlights) {
     const start = Math.max(0, Math.min(text.length, range.start));
@@ -29,10 +29,10 @@ function clampedRanges(text: string, highlights: readonly CompanySearchHighlight
   return merged;
 }
 
-export function HighlightedText({ text, highlights, className, markClassName }: HighlightedTextProps) {
+export function ВысокийlightedText({ text, highlights, classИмя, markClassИмя }: ВысокийlightedTextProps) {
   const ranges = highlights && highlights.length > 0 ? clampedRanges(text, highlights) : [];
   if (ranges.length === 0) {
-    return <span className={className}>{text}</span>;
+    return <span classИмя={classИмя}>{text}</span>;
   }
   const segments: Array<{ key: string; text: string; highlight: boolean }> = [];
   let cursor = 0;
@@ -47,14 +47,14 @@ export function HighlightedText({ text, highlights, className, markClassName }: 
     segments.push({ key: "t-end", text: text.slice(cursor), highlight: false });
   }
   return (
-    <span className={className}>
+    <span classИмя={classИмя}>
       {segments.map((segment) =>
         segment.highlight ? (
           <mark
             key={segment.key}
-            className={cn(
+            classИмя={cn(
               "rounded-sm bg-yellow-200/60 px-0.5 text-foreground dark:bg-yellow-300/30",
-              markClassName,
+              markClassИмя,
             )}
           >
             {segment.text}

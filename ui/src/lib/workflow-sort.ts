@@ -1,14 +1,14 @@
-export type WorkflowSortBlocker = { id: string };
+export type РаботаflowСортировкаBlocker = { id: string };
 
-export type WorkflowSortIssue = {
+export type РаботаflowСортировкаЗадача = {
   id: string;
   createdAt: Date | string;
-  blockedBy?: WorkflowSortBlocker[] | null;
+  blockedBy?: РаботаflowСортировкаBlocker[] | null;
 };
 
 // Orders siblings so that blocker chains stay contiguous (predecessor emitted
 // immediately before its successor) when the graph is linear enough to allow
-// it. Branches, merges, and cross-parent blockers stop the chain walk and send
+// it. Веткаes, merges, and cross-parent blockers stop the chain walk and send
 // control back to the ready queue, where creation order (then id) breaks ties.
 //
 // Blockers whose id is absent from the input are treated as absent for
@@ -16,7 +16,7 @@ export type WorkflowSortIssue = {
 //
 // If the input contains a cycle (API rejects this, so it shouldn't happen in
 // practice), the util degrades to a pure tie-break sort instead of hanging.
-export function workflowSort<T extends WorkflowSortIssue>(issues: T[]): T[] {
+export function workflowСортировка<T extends РаботаflowСортировкаЗадача>(issues: T[]): T[] {
   if (issues.length <= 1) return [...issues];
 
   const tieBreakAsc = (a: T, b: T): number => {
@@ -62,7 +62,7 @@ export function workflowSort<T extends WorkflowSortIssue>(issues: T[]): T[] {
   const emitted = new Set<string>();
   const output: T[] = [];
 
-  const insertReady = (issue: T): void => {
+  const insertГотово = (issue: T): void => {
     let lo = 0;
     let hi = ready.length;
     while (lo < hi) {
@@ -73,14 +73,14 @@ export function workflowSort<T extends WorkflowSortIssue>(issues: T[]): T[] {
     ready.splice(lo, 0, issue);
   };
 
-  const releaseSuccessors = (id: string): void => {
+  const releaseУспешноors = (id: string): void => {
     for (const succId of successors.get(id) ?? []) {
       if (emitted.has(succId)) continue;
       const remaining = (inDegree.get(succId) ?? 0) - 1;
       inDegree.set(succId, remaining);
       if (remaining === 0) {
         const succ = byId.get(succId);
-        if (succ) insertReady(succ);
+        if (succ) insertГотово(succ);
       }
     }
   };
@@ -90,7 +90,7 @@ export function workflowSort<T extends WorkflowSortIssue>(issues: T[]): T[] {
     while (current && !emitted.has(current.id)) {
       output.push(current);
       emitted.add(current.id);
-      releaseSuccessors(current.id);
+      releaseУспешноors(current.id);
 
       const succIds = successors.get(current.id) ?? [];
       if (succIds.length !== 1) break;

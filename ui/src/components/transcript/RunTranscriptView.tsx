@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { TranscriptEntry } from "../../adapters";
 import { MarkdownBody } from "../MarkdownBody";
-import { cn, formatTokens } from "../../lib/utils";
+import { cn, formatТокенs } from "../../lib/utils";
 import {
   Check,
   ChevronDown,
@@ -21,7 +21,7 @@ const RAW_OVERSCAN_ROWS = 40;
 const RAW_ESTIMATED_ROW_HEIGHT = 36;
 const RAW_INITIAL_ROWS = 180;
 
-interface RunTranscriptViewProps {
+interface ЗапуститьTranscriptViewProps {
   entries: TranscriptEntry[];
   mode?: TranscriptMode;
   density?: TranscriptDensity;
@@ -29,8 +29,8 @@ interface RunTranscriptViewProps {
   streaming?: boolean;
   collapseStdout?: boolean;
   emptyMessage?: string;
-  className?: string;
-  thinkingClassName?: string;
+  classИмя?: string;
+  thinkingClassИмя?: string;
 }
 
 type TranscriptBlock =
@@ -55,7 +55,7 @@ type TranscriptBlock =
       toolUseId?: string;
       input: unknown;
       result?: string;
-      isError?: boolean;
+      isОшибка?: boolean;
       status: "running" | "completed" | "error";
     }
   | {
@@ -74,7 +74,7 @@ type TranscriptBlock =
         endTs?: string;
         input: unknown;
         result?: string;
-        isError?: boolean;
+        isОшибка?: boolean;
         status: "running" | "completed" | "error";
       }>;
     }
@@ -88,7 +88,7 @@ type TranscriptBlock =
         name: string;
         input: unknown;
         result?: string;
-        isError?: boolean;
+        isОшибка?: boolean;
         status: "running" | "completed" | "error";
       }>;
     }
@@ -121,9 +121,9 @@ type TranscriptBlock =
       type: "diff_group";
       ts: string;
       endTs?: string;
-      filePath?: string;
+      fileПуть?: string;
       hunks: Array<{
-        changeType: "add" | "remove" | "context" | "hunk" | "file_header" | "truncation";
+        changeТип: "add" | "remove" | "context" | "hunk" | "file_header" | "truncation";
         text: string;
       }>;
     };
@@ -156,7 +156,7 @@ function stripWrappedShell(command: string): string {
   return compactWhitespace(quoted?.[2] ?? inner);
 }
 
-function formatUnknown(value: unknown): string {
+function formatНеизвестно(value: unknown): string {
   if (typeof value === "string") return value;
   if (value === null || value === undefined) return "";
   try {
@@ -174,7 +174,7 @@ function formatToolPayload(value: unknown): string {
       return value;
     }
   }
-  return formatUnknown(value);
+  return formatНеизвестно(value);
 }
 
 function extractToolUseId(input: unknown): string | undefined {
@@ -208,12 +208,12 @@ function summarizeRecord(record: Record<string, unknown>, keys: string[]): strin
 function summarizeToolInput(name: string, input: unknown, density: TranscriptDensity): string {
   const compactMax = density === "compact" ? 72 : 120;
   if (typeof input === "string") {
-    const normalized = isCommandTool(name, input) ? stripWrappedShell(input) : compactWhitespace(input);
+    const normalized = isКомандаTool(name, input) ? stripWrappedShell(input) : compactWhitespace(input);
     return truncate(normalized, compactMax);
   }
   const record = asRecord(input);
   if (!record) {
-    const serialized = compactWhitespace(formatUnknown(input));
+    const serialized = compactWhitespace(formatНеизвестно(input));
     return serialized ? truncate(serialized, compactMax) : `Inspect ${name} input`;
   }
 
@@ -222,12 +222,12 @@ function summarizeToolInput(name: string, input: unknown, density: TranscriptDen
     : typeof record.cmd === "string"
       ? record.cmd
       : null;
-  if (command && isCommandTool(name, record)) {
+  if (command && isКомандаTool(name, record)) {
     return truncate(stripWrappedShell(command), compactMax);
   }
 
   const direct =
-    summarizeRecord(record, ["command", "cmd", "path", "filePath", "file_path", "query", "url", "prompt", "message"])
+    summarizeRecord(record, ["command", "cmd", "path", "fileПуть", "file_path", "query", "url", "prompt", "message"])
     ?? summarizeRecord(record, ["pattern", "name", "title", "target", "tool"])
     ?? null;
   if (direct) return truncate(direct, compactMax);
@@ -240,7 +240,7 @@ function summarizeToolInput(name: string, input: unknown, density: TranscriptDen
   }
 
   const keys = Object.keys(record);
-  if (keys.length === 0) return `No ${name} input`;
+  if (keys.length === 0) return `Нет ${name} input`;
   if (keys.length === 1) return truncate(`${keys[0]} payload`, compactMax);
   return truncate(`${keys.length} fields: ${keys.slice(0, 3).join(", ")}`, compactMax);
 }
@@ -249,17 +249,17 @@ function parseStructuredToolResult(result: string | undefined) {
   if (!result) return null;
   const lines = result.split(/\r?\n/);
   const metadata = new Map<string, string>();
-  let bodyStartIndex = lines.findIndex((line) => line.trim() === "");
-  if (bodyStartIndex === -1) bodyStartIndex = lines.length;
+  let bodyНачатьIndex = lines.findIndex((line) => line.trim() === "");
+  if (bodyНачатьIndex === -1) bodyНачатьIndex = lines.length;
 
-  for (let index = 0; index < bodyStartIndex; index += 1) {
+  for (let index = 0; index < bodyНачатьIndex; index += 1) {
     const match = lines[index]?.match(/^([a-z_]+):\s*(.+)$/i);
     if (match) {
-      metadata.set(match[1].toLowerCase(), compactWhitespace(match[2]));
+      metadata.set(match[1].toНизкийerCase(), compactWhitespace(match[2]));
     }
   }
 
-  const body = lines.slice(Math.min(bodyStartIndex + 1, lines.length))
+  const body = lines.slice(Math.min(bodyНачатьIndex + 1, lines.length))
     .map((line) => compactWhitespace(line))
     .filter(Boolean)
     .join("\n");
@@ -272,7 +272,7 @@ function parseStructuredToolResult(result: string | undefined) {
   };
 }
 
-function isCommandTool(name: string, input: unknown): boolean {
+function isКомандаTool(name: string, input: unknown): boolean {
   if (name === "command_execution" || name === "shell" || name === "shellToolCall" || name === "bash") {
     return true;
   }
@@ -283,21 +283,21 @@ function isCommandTool(name: string, input: unknown): boolean {
   return Boolean(record && (typeof record.command === "string" || typeof record.cmd === "string"));
 }
 
-function displayToolName(name: string, input: unknown): string {
-  if (isCommandTool(name, input)) return "Executing command";
+function displayToolИмя(name: string, input: unknown): string {
+  if (isКомандаTool(name, input)) return "Executing command";
   return humanizeLabel(name);
 }
 
-function summarizeToolResult(result: string | undefined, isError: boolean | undefined, density: TranscriptDensity): string {
-  if (!result) return isError ? "Tool failed" : "Waiting for result";
+function summarizeToolResult(result: string | undefined, isОшибка: boolean | undefined, density: TranscriptDensity): string {
+  if (!result) return isОшибка ? "Tool failed" : "Waiting for result";
   const structured = parseStructuredToolResult(result);
   if (structured) {
     if (structured.body) {
       return truncate(structured.body.split("\n")[0] ?? structured.body, density === "compact" ? 84 : 140);
     }
-    if (structured.status === "completed") return "Completed";
+    if (structured.status === "completed") return "Завершён";
     if (structured.status === "failed" || structured.status === "error") {
-      return structured.exitCode ? `Failed with exit code ${structured.exitCode}` : "Failed";
+      return structured.exitCode ? `Ошибка with exit code ${structured.exitCode}` : "Ошибка";
     }
   }
   const lines = result
@@ -308,22 +308,22 @@ function summarizeToolResult(result: string | undefined, isError: boolean | unde
   return truncate(firstLine, density === "compact" ? 84 : 140);
 }
 
-function parseSystemActivity(text: string): { activityId?: string; name: string; status: "running" | "completed" } | null {
+function parseSystemАктивность(text: string): { activityId?: string; name: string; status: "running" | "completed" } | null {
   const match = text.match(/^item (started|completed):\s*([a-z0-9_-]+)(?:\s+\(id=([^)]+)\))?$/i);
   if (!match) return null;
   return {
-    status: match[1].toLowerCase() === "started" ? "running" : "completed",
-    name: humanizeLabel(match[2] ?? "Activity"),
+    status: match[1].toНизкийerCase() === "started" ? "running" : "completed",
+    name: humanizeLabel(match[2] ?? "Активность"),
     activityId: match[3] || undefined,
   };
 }
 
 function shouldHideNiceModeStderr(text: string): boolean {
-  const normalized = compactWhitespace(text).toLowerCase();
+  const normalized = compactWhitespace(text).toНизкийerCase();
   return normalized.startsWith("[paperclip] skipping saved session resume");
 }
 
-function groupCommandBlocks(blocks: TranscriptBlock[]): TranscriptBlock[] {
+function groupКомандаBlocks(blocks: TranscriptBlock[]): TranscriptBlock[] {
   const grouped: TranscriptBlock[] = [];
   let pending: Array<Extract<TranscriptBlock, { type: "command_group" }>["items"][number]> = [];
   let groupTs: string | null = null;
@@ -343,7 +343,7 @@ function groupCommandBlocks(blocks: TranscriptBlock[]): TranscriptBlock[] {
   };
 
   for (const block of blocks) {
-    if (block.type === "tool" && isCommandTool(block.name, block.input)) {
+    if (block.type === "tool" && isКомандаTool(block.name, block.input)) {
       if (!groupTs) {
         groupTs = block.ts;
       }
@@ -353,7 +353,7 @@ function groupCommandBlocks(blocks: TranscriptBlock[]): TranscriptBlock[] {
         endTs: block.endTs,
         input: block.input,
         result: block.result,
-        isError: block.isError,
+        isОшибка: block.isОшибка,
         status: block.status,
       });
       continue;
@@ -388,7 +388,7 @@ function groupToolBlocks(blocks: TranscriptBlock[]): TranscriptBlock[] {
   };
 
   for (const block of blocks) {
-    if (block.type === "tool" && !isCommandTool(block.name, block.input)) {
+    if (block.type === "tool" && !isКомандаTool(block.name, block.input)) {
       if (!groupTs) groupTs = block.ts;
       groupEndTs = block.endTs ?? block.ts;
       pending.push({
@@ -397,7 +397,7 @@ function groupToolBlocks(blocks: TranscriptBlock[]): TranscriptBlock[] {
         name: block.name,
         input: block.input,
         result: block.result,
-        isError: block.isError,
+        isОшибка: block.isОшибка,
         status: block.status,
       });
       continue;
@@ -412,7 +412,7 @@ function groupToolBlocks(blocks: TranscriptBlock[]): TranscriptBlock[] {
 export function normalizeTranscript(entries: TranscriptEntry[], streaming: boolean): TranscriptBlock[] {
   const blocks: TranscriptBlock[] = [];
   const pendingToolBlocks = new Map<string, Extract<TranscriptBlock, { type: "tool" }>>();
-  const pendingActivityBlocks = new Map<string, Extract<TranscriptBlock, { type: "activity" }>>();
+  const pendingАктивностьBlocks = new Map<string, Extract<TranscriptBlock, { type: "activity" }>>();
 
   for (const entry of entries) {
     const previous = blocks[blocks.length - 1];
@@ -456,7 +456,7 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
       const toolBlock: Extract<TranscriptBlock, { type: "tool" }> = {
         type: "tool",
         ts: entry.ts,
-        name: displayToolName(entry.name, entry.input),
+        name: displayToolИмя(entry.name, entry.input),
         toolUseId: entry.toolUseId ?? extractToolUseId(entry.input),
         input: entry.input,
         status: "running",
@@ -475,8 +475,8 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
 
       if (matched) {
         matched.result = entry.content;
-        matched.isError = entry.isError;
-        matched.status = entry.isError ? "error" : "completed";
+        matched.isОшибка = entry.isОшибка;
+        matched.status = entry.isОшибка ? "error" : "completed";
         matched.endTs = entry.ts;
         pendingToolBlocks.delete(entry.toolUseId);
       } else {
@@ -484,12 +484,12 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
           type: "tool",
           ts: entry.ts,
           endTs: entry.ts,
-          name: entry.toolName ?? "tool",
+          name: entry.toolИмя ?? "tool",
           toolUseId: entry.toolUseId,
           input: null,
           result: entry.content,
-          isError: entry.isError,
-          status: entry.isError ? "error" : "completed",
+          isОшибка: entry.isОшибка,
+          status: entry.isОшибка ? "error" : "completed",
         });
       }
       continue;
@@ -511,11 +511,11 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
         type: "event",
         ts: entry.ts,
         label: "result",
-        tone: entry.isError ? "error" : "info",
-        text: entry.text.trim() || entry.errors[0] || (entry.isError ? "Run failed" : "Completed"),
+        tone: entry.isОшибка ? "error" : "info",
+        text: entry.text.trim() || entry.errors[0] || (entry.isОшибка ? "Запустить failed" : "Завершён"),
         detail:
-          !entry.isError && entry.text.trim().length > 0
-            ? `${formatTokens(entry.inputTokens)} / ${formatTokens(entry.outputTokens)} / $${entry.costUsd.toFixed(6)}`
+          !entry.isОшибка && entry.text.trim().length > 0
+            ? `${formatТокенs(entry.inputТокенs)} / ${formatТокенs(entry.outputТокенs)} / $${entry.costUsd.toFixed(6)}`
             : undefined,
       });
       continue;
@@ -542,17 +542,17 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
     }
 
     if (entry.kind === "system") {
-      if (compactWhitespace(entry.text).toLowerCase() === "turn started") {
+      if (compactWhitespace(entry.text).toНизкийerCase() === "turn started") {
         continue;
       }
-      const activity = parseSystemActivity(entry.text);
+      const activity = parseSystemАктивность(entry.text);
       if (activity) {
-        const existing = activity.activityId ? pendingActivityBlocks.get(activity.activityId) : undefined;
+        const existing = activity.activityId ? pendingАктивностьBlocks.get(activity.activityId) : undefined;
         if (existing) {
           existing.status = activity.status;
           existing.ts = entry.ts;
           if (activity.status === "completed" && activity.activityId) {
-            pendingActivityBlocks.delete(activity.activityId);
+            pendingАктивностьBlocks.delete(activity.activityId);
           }
         } else {
           const block: Extract<TranscriptBlock, { type: "activity" }> = {
@@ -564,7 +564,7 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
           };
           blocks.push(block);
           if (activity.status === "running" && activity.activityId) {
-            pendingActivityBlocks.set(activity.activityId, block);
+            pendingАктивностьBlocks.set(activity.activityId, block);
           }
         }
         continue;
@@ -585,13 +585,13 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
       continue;
     }
 
-    const activeCommandBlock = [...blocks].reverse().find(
+    const activeКомандаBlock = [...blocks].reverse().find(
       (block): block is Extract<TranscriptBlock, { type: "tool" }> =>
-        block.type === "tool" && block.status === "running" && isCommandTool(block.name, block.input),
+        block.type === "tool" && block.status === "running" && isКомандаTool(block.name, block.input),
     );
-    if (activeCommandBlock) {
-      activeCommandBlock.result = activeCommandBlock.result
-        ? `${activeCommandBlock.result}${activeCommandBlock.result.endsWith("\n") || entry.text.startsWith("\n") ? entry.text : `\n${entry.text}`}`
+    if (activeКомандаBlock) {
+      activeКомандаBlock.result = activeКомандаBlock.result
+        ? `${activeКомандаBlock.result}${activeКомандаBlock.result.endsWith("\n") || entry.text.startsWith("\n") ? entry.text : `\n${entry.text}`}`
         : entry.text;
       continue;
     }
@@ -600,19 +600,19 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
     if (entry.kind === "diff") {
       const prev = blocks[blocks.length - 1];
       if (prev && prev.type === "diff_group") {
-        if (entry.changeType === "file_header") {
-          // New file in the same diff block — update filePath
-          prev.filePath = entry.text;
+        if (entry.changeТип === "file_header") {
+          // New file in the same diff block — update fileПуть
+          prev.fileПуть = entry.text;
         }
-        prev.hunks.push({ changeType: entry.changeType, text: entry.text });
+        prev.hunks.push({ changeТип: entry.changeТип, text: entry.text });
         prev.endTs = entry.ts;
       } else {
         blocks.push({
           type: "diff_group",
           ts: entry.ts,
           endTs: entry.ts,
-          filePath: entry.changeType === "file_header" ? entry.text : undefined,
-          hunks: [{ changeType: entry.changeType, text: entry.text }],
+          fileПуть: entry.changeТип === "file_header" ? entry.text : undefined,
+          hunks: [{ changeТип: entry.changeТип, text: entry.text }],
         });
       }
       continue;
@@ -630,7 +630,7 @@ export function normalizeTranscript(entries: TranscriptEntry[], streaming: boole
     }
   }
 
-  return groupToolBlocks(groupCommandBlocks(blocks));
+  return groupToolBlocks(groupКомандаBlocks(blocks));
 }
 
 function TranscriptMessageBlock({
@@ -646,13 +646,13 @@ function TranscriptMessageBlock({
   return (
     <div>
       {!isAssistant && (
-        <div className="mb-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          <User className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+        <div classИмя="mb-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <User classИмя={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           <span>User</span>
         </div>
       )}
       <MarkdownBody
-        className={cn(
+        classИмя={cn(
           "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
           compact ? "text-xs leading-5 text-foreground/85" : "text-sm",
         )}
@@ -660,10 +660,10 @@ function TranscriptMessageBlock({
         {block.text}
       </MarkdownBody>
       {block.streaming && (
-        <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium italic text-muted-foreground">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-70" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-current" />
+        <div classИмя="mt-2 inline-flex items-center gap-1 text-[10px] font-medium italic text-muted-foreground">
+          <span classИмя="relative flex h-1.5 w-1.5">
+            <span classИмя="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-70" />
+            <span classИмя="relative inline-flex h-1.5 w-1.5 rounded-full bg-current" />
           </span>
           Streaming
         </div>
@@ -675,18 +675,18 @@ function TranscriptMessageBlock({
 function TranscriptThinkingBlock({
   block,
   density,
-  className,
+  classИмя,
 }: {
   block: Extract<TranscriptBlock, { type: "thinking" }>;
   density: TranscriptDensity;
-  className?: string;
+  classИмя?: string;
 }) {
   return (
     <MarkdownBody
-      className={cn(
+      classИмя={cn(
         "italic text-foreground/70 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         density === "compact" ? "text-[11px] leading-5" : "text-sm leading-6",
-        className,
+        classИмя,
       )}
     >
       {block.text}
@@ -706,10 +706,10 @@ function TranscriptToolCard({
   const parsedResult = parseStructuredToolResult(block.result);
   const statusLabel =
     block.status === "running"
-      ? "Running"
+      ? "Выполняется"
       : block.status === "error"
-        ? "Errored"
-        : "Completed";
+        ? "Ошибкаed"
+        : "Завершён";
   const statusTone =
     block.status === "running"
       ? "text-cyan-700 dark:text-cyan-300"
@@ -732,57 +732,57 @@ function TranscriptToolCard({
     ? summarizeToolInput(block.name, block.input, density)
     : block.status === "completed" && parsedResult?.body
       ? truncate(parsedResult.body.split("\n")[0] ?? parsedResult.body, compact ? 84 : 140)
-      : summarizeToolResult(block.result, block.isError, density);
+      : summarizeToolResult(block.result, block.isОшибка, density);
 
   return (
-    <div className={cn(block.status === "error" && "rounded-xl border border-red-500/20 bg-red-500/[0.04] p-3")}>
-      <div className="flex items-start gap-2">
+    <div classИмя={cn(block.status === "error" && "rounded-xl border border-red-500/20 bg-red-500/[0.04] p-3")}>
+      <div classИмя="flex items-start gap-2">
         {block.status === "error" ? (
-          <CircleAlert className={iconClass} />
+          <CircleAlert classИмя={iconClass} />
         ) : block.status === "completed" ? (
-          <Check className={iconClass} />
+          <Check classИмя={iconClass} />
         ) : (
-          <Wrench className={iconClass} />
+          <Wrench classИмя={iconClass} />
         )}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <div classИмя="min-w-0 flex-1">
+          <div classИмя="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span classИмя="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               {block.name}
             </span>
-            <span className={cn("text-[10px] font-semibold uppercase tracking-[0.14em]", statusTone)}>
+            <span classИмя={cn("text-[10px] font-semibold uppercase tracking-[0.14em]", statusTone)}>
               {statusLabel}
             </span>
           </div>
-          <div className={cn("mt-1 break-words text-foreground/80", compact ? "text-xs" : "text-sm")}>
+          <div classИмя={cn("mt-1 break-words text-foreground/80", compact ? "text-xs" : "text-sm")}>
             {summary}
           </div>
         </div>
         <button
           type="button"
-          className="mt-0.5 inline-flex h-5 w-5 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+          classИмя="mt-0.5 inline-flex h-5 w-5 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
           onClick={() => setOpen((value) => !value)}
           aria-label={open ? "Collapse tool details" : "Expand tool details"}
         >
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {open ? <ChevronDown classИмя="h-4 w-4" /> : <ChevronRight classИмя="h-4 w-4" />}
         </button>
       </div>
       {open && (
-        <div className="mt-3">
-          <div className={detailsClass}>
-            <div className={cn("grid gap-3", compact ? "grid-cols-1" : "lg:grid-cols-2")}>
+        <div classИмя="mt-3">
+          <div classИмя={detailsClass}>
+            <div classИмя={cn("grid gap-3", compact ? "grid-cols-1" : "lg:grid-cols-2")}>
               <div>
-                <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                <div classИмя="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Input
                 </div>
-                <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-foreground/80">
+                <pre classИмя="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-foreground/80">
                   {formatToolPayload(block.input) || "<empty>"}
                 </pre>
               </div>
               <div>
-                <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                <div classИмя="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Result
                 </div>
-                <pre className={cn(
+                <pre classИмя={cn(
                   "overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px]",
                   block.status === "error" ? "text-red-700 dark:text-red-300" : "text-foreground/80",
                 )}>
@@ -802,7 +802,7 @@ function hasSelectedText() {
   return (window.getSelection()?.toString().length ?? 0) > 0;
 }
 
-function TranscriptCommandGroup({
+function TranscriptКомандаGroup({
   block,
   density,
 }: {
@@ -813,10 +813,10 @@ function TranscriptCommandGroup({
   const compact = density === "compact";
   const runningItem = [...block.items].reverse().find((item) => item.status === "running");
   const latestItem = block.items[block.items.length - 1] ?? null;
-  const hasError = block.items.some((item) => item.status === "error");
-  const isRunning = Boolean(runningItem);
-  const showExpandedErrorState = open && hasError;
-  const title = isRunning
+  const hasОшибка = block.items.some((item) => item.status === "error");
+  const isВыполняется = Boolean(runningItem);
+  const showExpandedОшибкаState = open && hasОшибка;
+  const title = isВыполняется
     ? "Executing command"
     : block.items.length === 1
       ? "Executed command"
@@ -824,62 +824,62 @@ function TranscriptCommandGroup({
   const subtitle = runningItem
     ? summarizeToolInput("command_execution", runningItem.input, density)
     : null;
-  const statusTone = isRunning
+  const statusTone = isВыполняется
       ? "text-cyan-700 dark:text-cyan-300"
       : "text-foreground/70";
 
   return (
-    <div className={cn(showExpandedErrorState && "rounded-xl border border-red-500/20 bg-red-500/[0.04] p-3")}>
+    <div classИмя={cn(showExpandedОшибкаState && "rounded-xl border border-red-500/20 bg-red-500/[0.04] p-3")}>
       <div
         role="button"
         tabIndex={0}
-        className={cn("flex cursor-pointer gap-2", subtitle ? "items-start" : "items-center")}
+        classИмя={cn("flex cursor-pointer gap-2", subtitle ? "items-start" : "items-center")}
         onClick={() => {
           if (hasSelectedText()) return;
           setOpen((value) => !value);
         }}
-        onKeyDown={(event) => {
+        onКлючDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
+            event.preventПо умолчанию();
             setOpen((value) => !value);
           }
         }}
       >
-        <div className={cn("flex shrink-0 items-center", subtitle && "mt-0.5")}>
+        <div classИмя={cn("flex shrink-0 items-center", subtitle && "mt-0.5")}>
           {block.items.slice(0, Math.min(block.items.length, 3)).map((_, index) => (
             <span
               key={index}
-              className={cn(
+              classИмя={cn(
                 "inline-flex h-6 w-6 items-center justify-center rounded-full border shadow-sm",
                 index > 0 && "-ml-1.5",
-                isRunning
+                isВыполняется
                   ? "border-cyan-500/25 bg-cyan-500/[0.08] text-cyan-600 dark:text-cyan-300"
                   : "border-border/70 bg-background text-foreground/55",
-                isRunning && "animate-pulse",
+                isВыполняется && "animate-pulse",
               )}
             >
-              <TerminalSquare className="h-3.5 w-3.5" />
+              <TerminalSquare classИмя="h-3.5 w-3.5" />
             </span>
           ))}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-semibold uppercase leading-none tracking-[0.1em] text-muted-foreground/70">
+        <div classИмя="min-w-0 flex-1">
+          <div classИмя="text-[11px] font-semibold uppercase leading-none tracking-[0.1em] text-muted-foreground/70">
             {title}
           </div>
           {subtitle && (
-            <div className={cn("mt-1 break-words font-mono text-foreground/85", compact ? "text-xs" : "text-sm")}>
+            <div classИмя={cn("mt-1 break-words font-mono text-foreground/85", compact ? "text-xs" : "text-sm")}>
               {subtitle}
             </div>
           )}
           {!subtitle && latestItem?.status === "error" && open && (
-            <div className={cn("mt-1", compact ? "text-xs" : "text-sm", statusTone)}>
-              Command failed
+            <div classИмя={cn("mt-1", compact ? "text-xs" : "text-sm", statusTone)}>
+              Команда failed
             </div>
           )}
         </div>
         <button
           type="button"
-          className={cn(
+          classИмя={cn(
             "inline-flex h-5 w-5 items-center justify-center text-muted-foreground transition-colors hover:text-foreground",
             subtitle && "mt-0.5",
           )}
@@ -889,15 +889,15 @@ function TranscriptCommandGroup({
           }}
           aria-label={open ? "Collapse command details" : "Expand command details"}
         >
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {open ? <ChevronDown classИмя="h-4 w-4" /> : <ChevronRight classИмя="h-4 w-4" />}
         </button>
       </div>
       {open && (
-        <div className={cn("mt-3 space-y-3", hasError && "rounded-xl border border-red-500/20 bg-red-500/[0.06] p-3")}>
+        <div classИмя={cn("mt-3 space-y-3", hasОшибка && "rounded-xl border border-red-500/20 bg-red-500/[0.06] p-3")}>
           {block.items.map((item, index) => (
-            <div key={`${item.ts}-${index}`} className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className={cn(
+            <div key={`${item.ts}-${index}`} classИмя="space-y-2">
+              <div classИмя="flex items-center gap-2">
+                <span classИмя={cn(
                   "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
                   item.status === "error"
                     ? "border-red-500/25 bg-red-500/[0.08] text-red-600 dark:text-red-300"
@@ -905,14 +905,14 @@ function TranscriptCommandGroup({
                       ? "border-cyan-500/25 bg-cyan-500/[0.08] text-cyan-600 dark:text-cyan-300"
                       : "border-border/70 bg-background text-foreground/55",
                 )}>
-                  <TerminalSquare className="h-3 w-3" />
+                  <TerminalSquare classИмя="h-3 w-3" />
                 </span>
-                <span className={cn("font-mono break-all", compact ? "text-[11px]" : "text-xs")}>
+                <span classИмя={cn("font-mono break-all", compact ? "text-[11px]" : "text-xs")}>
                   {summarizeToolInput("command_execution", item.input, density)}
                 </span>
               </div>
               {item.result && (
-                <pre className={cn(
+                <pre classИмя={cn(
                   "overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px]",
                   item.status === "error" ? "text-red-700 dark:text-red-300" : "text-foreground/80",
                 )}>
@@ -937,14 +937,14 @@ function TranscriptToolGroup({
   const [open, setOpen] = useState(false);
   const compact = density === "compact";
   const runningItem = [...block.items].reverse().find((item) => item.status === "running");
-  const hasError = block.items.some((item) => item.status === "error");
-  const isRunning = Boolean(runningItem);
-  const uniqueNames = [...new Set(block.items.map((item) => item.name))];
+  const hasОшибка = block.items.some((item) => item.status === "error");
+  const isВыполняется = Boolean(runningItem);
+  const uniqueИмяs = [...new Set(block.items.map((item) => item.name))];
   const toolLabel =
-    uniqueNames.length === 1
-      ? humanizeLabel(uniqueNames[0])
-      : `${uniqueNames.length} tools`;
-  const title = isRunning
+    uniqueИмяs.length === 1
+      ? humanizeLabel(uniqueИмяs[0])
+      : `${uniqueИмяs.length} tools`;
+  const title = isВыполняется
     ? `Using ${toolLabel}`
     : block.items.length === 1
       ? `Used ${toolLabel}`
@@ -952,67 +952,67 @@ function TranscriptToolGroup({
   const subtitle = runningItem
     ? summarizeToolInput(runningItem.name, runningItem.input, density)
     : null;
-  const statusTone = isRunning
+  const statusTone = isВыполняется
     ? "text-cyan-700 dark:text-cyan-300"
     : "text-foreground/70";
 
   return (
-    <div className="rounded-xl border border-border/40 bg-muted/[0.25]">
+    <div classИмя="rounded-xl border border-border/40 bg-muted/[0.25]">
       <div
         role="button"
         tabIndex={0}
-        className={cn("flex cursor-pointer gap-2 px-3 py-2.5", subtitle ? "items-start" : "items-center")}
+        classИмя={cn("flex cursor-pointer gap-2 px-3 py-2.5", subtitle ? "items-start" : "items-center")}
         onClick={() => { if (hasSelectedText()) return; setOpen((v) => !v); }}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((v) => !v); } }}
+        onКлючDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventПо умолчанию(); setOpen((v) => !v); } }}
       >
-        <div className={cn("flex shrink-0 items-center", subtitle && "mt-0.5")}>
+        <div classИмя={cn("flex shrink-0 items-center", subtitle && "mt-0.5")}>
           {block.items.slice(0, Math.min(block.items.length, 3)).map((item, index) => {
-            const isItemRunning = item.status === "running";
-            const isItemError = item.status === "error";
+            const isItemВыполняется = item.status === "running";
+            const isItemОшибка = item.status === "error";
             return (
               <span
                 key={`${item.ts}-${index}`}
-                className={cn(
+                classИмя={cn(
                   "inline-flex h-6 w-6 items-center justify-center rounded-full border shadow-sm",
                   index > 0 && "-ml-1.5",
-                  isItemRunning
+                  isItemВыполняется
                     ? "border-cyan-500/25 bg-cyan-500/[0.08] text-cyan-600 dark:text-cyan-300"
-                    : isItemError
+                    : isItemОшибка
                       ? "border-red-500/25 bg-red-500/[0.08] text-red-600 dark:text-red-300"
                       : "border-border/70 bg-background text-foreground/55",
-                  isItemRunning && "animate-pulse",
+                  isItemВыполняется && "animate-pulse",
                 )}
               >
-                <Wrench className="h-3.5 w-3.5" />
+                <Wrench classИмя="h-3.5 w-3.5" />
               </span>
             );
           })}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className={cn("font-semibold uppercase leading-none tracking-[0.1em]", compact ? "text-[10px]" : "text-[11px]", "text-muted-foreground/70")}>
+        <div classИмя="min-w-0 flex-1">
+          <div classИмя={cn("font-semibold uppercase leading-none tracking-[0.1em]", compact ? "text-[10px]" : "text-[11px]", "text-muted-foreground/70")}>
             {title}
           </div>
           {subtitle && (
-            <div className={cn("mt-1 break-words font-mono text-foreground/85", compact ? "text-xs" : "text-sm")}>
+            <div classИмя={cn("mt-1 break-words font-mono text-foreground/85", compact ? "text-xs" : "text-sm")}>
               {subtitle}
             </div>
           )}
         </div>
         <button
           type="button"
-          className={cn("inline-flex h-5 w-5 items-center justify-center text-muted-foreground transition-colors hover:text-foreground", subtitle && "mt-0.5")}
+          classИмя={cn("inline-flex h-5 w-5 items-center justify-center text-muted-foreground transition-colors hover:text-foreground", subtitle && "mt-0.5")}
           onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
           aria-label={open ? "Collapse tool details" : "Expand tool details"}
         >
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {open ? <ChevronDown classИмя="h-4 w-4" /> : <ChevronRight classИмя="h-4 w-4" />}
         </button>
       </div>
       {open && (
-        <div className={cn("space-y-2 border-t border-border/30 px-3 py-3", hasError && "rounded-b-xl")}>
+        <div classИмя={cn("space-y-2 border-t border-border/30 px-3 py-3", hasОшибка && "rounded-b-xl")}>
           {block.items.map((item, index) => (
-            <div key={`${item.ts}-${index}`} className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className={cn(
+            <div key={`${item.ts}-${index}`} classИмя="space-y-1.5">
+              <div classИмя="flex items-center gap-2">
+                <span classИмя={cn(
                   "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
                   item.status === "error"
                     ? "border-red-500/25 bg-red-500/[0.08] text-red-600 dark:text-red-300"
@@ -1020,30 +1020,30 @@ function TranscriptToolGroup({
                       ? "border-cyan-500/25 bg-cyan-500/[0.08] text-cyan-600 dark:text-cyan-300"
                       : "border-border/70 bg-background text-foreground/55",
                 )}>
-                  <Wrench className="h-3 w-3" />
+                  <Wrench classИмя="h-3 w-3" />
                 </span>
-                <span className={cn("text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground")}>
+                <span classИмя={cn("text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground")}>
                   {humanizeLabel(item.name)}
                 </span>
-                <span className={cn("text-[10px] font-semibold uppercase tracking-[0.14em]",
+                <span classИмя={cn("text-[10px] font-semibold uppercase tracking-[0.14em]",
                   item.status === "running" ? "text-cyan-700 dark:text-cyan-300"
                   : item.status === "error" ? "text-red-700 dark:text-red-300"
                   : "text-emerald-700 dark:text-emerald-300"
                 )}>
-                  {item.status === "running" ? "Running" : item.status === "error" ? "Errored" : "Completed"}
+                  {item.status === "running" ? "Выполняется" : item.status === "error" ? "Ошибкаed" : "Завершён"}
                 </span>
               </div>
-              <div className={cn("grid gap-2 pl-7", compact ? "grid-cols-1" : "lg:grid-cols-2")}>
+              <div classИмя={cn("grid gap-2 pl-7", compact ? "grid-cols-1" : "lg:grid-cols-2")}>
                 <div>
-                  <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Input</div>
-                  <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-foreground/80">
+                  <div classИмя="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Input</div>
+                  <pre classИмя="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-foreground/80">
                     {formatToolPayload(item.input) || "<empty>"}
                   </pre>
                 </div>
                 {item.result && (
                   <div>
-                    <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Result</div>
-                    <pre className={cn(
+                    <div classИмя="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Result</div>
+                    <pre classИмя={cn(
                       "overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px]",
                       item.status === "error" ? "text-red-700 dark:text-red-300" : "text-foreground/80",
                     )}>
@@ -1060,7 +1060,7 @@ function TranscriptToolGroup({
   );
 }
 
-function TranscriptActivityRow({
+function TranscriptАктивностьRow({
   block,
   density,
 }: {
@@ -1068,16 +1068,16 @@ function TranscriptActivityRow({
   density: TranscriptDensity;
 }) {
   return (
-    <div className="flex items-start gap-2">
+    <div classИмя="flex items-start gap-2">
       {block.status === "completed" ? (
-        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+        <Check classИмя="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300" />
       ) : (
-        <span className="relative mt-1 flex h-2.5 w-2.5 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-70" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500" />
+        <span classИмя="relative mt-1 flex h-2.5 w-2.5 shrink-0">
+          <span classИмя="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-70" />
+          <span classИмя="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500" />
         </span>
       )}
-      <div className={cn(
+      <div classИмя={cn(
         "break-words text-foreground/80",
         density === "compact" ? "text-xs leading-5" : "text-sm leading-6",
       )}>
@@ -1105,19 +1105,19 @@ function TranscriptEventRow({
           : "text-foreground/75";
 
   return (
-    <div className={toneClasses}>
-      <div className="flex items-start gap-2">
+    <div classИмя={toneClasses}>
+      <div classИмя="flex items-start gap-2">
         {block.tone === "error" ? (
-          <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <CircleAlert classИмя="mt-0.5 h-3.5 w-3.5 shrink-0" />
         ) : block.tone === "warn" ? (
-          <TerminalSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <TerminalSquare classИмя="mt-0.5 h-3.5 w-3.5 shrink-0" />
         ) : (
-          <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-current/50" />
+          <span classИмя="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-current/50" />
         )}
-        <div className="min-w-0 flex-1">
+        <div classИмя="min-w-0 flex-1">
           {block.label === "result" && block.tone !== "error" ? (
             <MarkdownBody
-              className={cn(
+              classИмя={cn(
                 "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0 text-sky-700 dark:text-sky-300",
                 compact ? "text-[11px] leading-5" : "text-xs leading-5",
               )}
@@ -1125,15 +1125,15 @@ function TranscriptEventRow({
               {block.text}
             </MarkdownBody>
           ) : (
-            <div className={cn("whitespace-pre-wrap break-words", compact ? "text-[11px]" : "text-xs")}>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">
+            <div classИмя={cn("whitespace-pre-wrap break-words", compact ? "text-[11px]" : "text-xs")}>
+              <span classИмя="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">
                 {block.label}
               </span>
-              {block.text ? <span className="ml-2">{block.text}</span> : null}
+              {block.text ? <span classИмя="ml-2">{block.text}</span> : null}
             </div>
           )}
           {block.detail && (
-            <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-foreground/75">
+            <pre classИмя="mt-2 overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-foreground/75">
               {block.detail}
             </pre>
           )}
@@ -1154,71 +1154,71 @@ function TranscriptDiffGroup({
   const compact = density === "compact";
 
   // Count add/remove lines (exclude context, hunk, file_header, truncation)
-  const addCount = block.hunks.filter((h) => h.changeType === "add").length;
-  const removeCount = block.hunks.filter((h) => h.changeType === "remove").length;
+  const addCount = block.hunks.filter((h) => h.changeТип === "add").length;
+  const removeCount = block.hunks.filter((h) => h.changeТип === "remove").length;
   const hasChanges = addCount > 0 || removeCount > 0;
 
   // Extract a short file name from the path
-  const shortFile = block.filePath
-    ? block.filePath.split("/").pop() ?? block.filePath
+  const shortFile = block.fileПуть
+    ? block.fileПуть.split("/").pop() ?? block.fileПуть
     : "diff";
 
   return (
-    <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-2">
+    <div classИмя="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-2">
       <div
         role="button"
         tabIndex={0}
-        className="flex cursor-pointer items-center gap-2"
+        classИмя="flex cursor-pointer items-center gap-2"
         onClick={() => setOpen((v) => !v)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((v) => !v); } }}
+        onКлючDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventПо умолчанию(); setOpen((v) => !v); } }}
       >
-        <GitCompare className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
-        <span className={cn("text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300")}>
+        <GitCompare classИмя={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+        <span classИмя={cn("text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300")}>
           {shortFile}
         </span>
         {hasChanges && (
-          <span className="text-[10px] tabular-nums">
-            <span className="text-emerald-600 dark:text-emerald-400">+{addCount}</span>
+          <span classИмя="text-[10px] tabular-nums">
+            <span classИмя="text-emerald-600 dark:text-emerald-400">+{addCount}</span>
             {" "}
-            <span className="text-red-600 dark:text-red-400">-{removeCount}</span>
+            <span classИмя="text-red-600 dark:text-red-400">-{removeCount}</span>
           </span>
         )}
-        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        {open ? <ChevronDown classИмя="h-3.5 w-3.5" /> : <ChevronRight classИмя="h-3.5 w-3.5" />}
       </div>
       {open && (
-        <pre className={cn(
+        <pre classИмя={cn(
           "mt-2 overflow-x-auto whitespace-pre-wrap break-words font-mono pl-5",
           compact ? "text-[11px]" : "text-xs",
         )}>
           {block.hunks.map((hunk, i) => {
-            const key = `${i}-${hunk.changeType}`;
-            switch (hunk.changeType) {
+            const key = `${i}-${hunk.changeТип}`;
+            switch (hunk.changeТип) {
               case "remove":
                 return (
-                  <span key={key} className="block bg-red-500/[0.10] text-red-700 dark:text-red-300 -mx-2 px-2">
-                    <span className="select-none mr-2 text-red-500/60 dark:text-red-400/50">-</span>
+                  <span key={key} classИмя="block bg-red-500/[0.10] text-red-700 dark:text-red-300 -mx-2 px-2">
+                    <span classИмя="select-none mr-2 text-red-500/60 dark:text-red-400/50">-</span>
                     {hunk.text}
                     {"\n"}
                   </span>
                 );
               case "add":
                 return (
-                  <span key={key} className="block bg-emerald-500/[0.10] text-emerald-700 dark:text-emerald-300 -mx-2 px-2">
-                    <span className="select-none mr-2 text-emerald-500/60 dark:text-emerald-400/50">+</span>
+                  <span key={key} classИмя="block bg-emerald-500/[0.10] text-emerald-700 dark:text-emerald-300 -mx-2 px-2">
+                    <span classИмя="select-none mr-2 text-emerald-500/60 dark:text-emerald-400/50">+</span>
                     {hunk.text}
                     {"\n"}
                   </span>
                 );
               case "file_header":
                 return (
-                  <span key={key} className="block font-semibold text-blue-600 dark:text-blue-300 mt-2 first:mt-0">
+                  <span key={key} classИмя="block font-semibold text-blue-600 dark:text-blue-300 mt-2 first:mt-0">
                     {hunk.text}
                     {"\n"}
                   </span>
                 );
               case "truncation":
                 return (
-                  <span key={key} className="block text-muted-foreground italic mt-1">
+                  <span key={key} classИмя="block text-muted-foreground italic mt-1">
                     {hunk.text}
                     {"\n"}
                   </span>
@@ -1226,7 +1226,7 @@ function TranscriptDiffGroup({
               case "context":
               default:
                 return (
-                  <span key={key} className="block text-muted-foreground/70">
+                  <span key={key} classИмя="block text-muted-foreground/70">
                     {" "}
                     {hunk.text}
                     {"\n"}
@@ -1250,24 +1250,24 @@ function TranscriptStderrGroup({
   const [open, setOpen] = useState(false);
   const compact = density === "compact";
   return (
-    <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-2 text-amber-700 dark:text-amber-300">
+    <div classИмя="rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-2 text-amber-700 dark:text-amber-300">
       <div
         role="button"
         tabIndex={0}
-        className="flex cursor-pointer items-center gap-2"
+        classИмя="flex cursor-pointer items-center gap-2"
         onClick={() => setOpen((v) => !v)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((v) => !v); } }}
+        onКлючDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventПо умолчанию(); setOpen((v) => !v); } }}
       >
-        <span className={cn("text-[10px] font-semibold uppercase tracking-[0.14em]")}>
+        <span classИмя={cn("text-[10px] font-semibold uppercase tracking-[0.14em]")}>
           {block.lines.length} log {block.lines.length === 1 ? "line" : "lines"}
         </span>
-        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        {open ? <ChevronDown classИмя="h-3.5 w-3.5" /> : <ChevronRight classИмя="h-3.5 w-3.5" />}
       </div>
       {open && (
-        <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-amber-700/80 dark:text-amber-300/80 pl-5">
+        <pre classИмя="mt-2 overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-amber-700/80 dark:text-amber-300/80 pl-5">
           {block.lines.map((line, i) => (
             <span key={`${line.ts}-${i}`}>
-              <span className="select-none text-amber-500/50 dark:text-amber-400/40">{i > 0 ? "\n" : ""}</span>
+              <span classИмя="select-none text-amber-500/50 dark:text-amber-400/40">{i > 0 ? "\n" : ""}</span>
               {line.text}
             </span>
           ))}
@@ -1286,25 +1286,25 @@ function TranscriptSystemGroup({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-2 text-blue-700 dark:text-blue-300">
+    <div classИмя="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-2 text-blue-700 dark:text-blue-300">
       <div
         role="button"
         tabIndex={0}
-        className="flex cursor-pointer items-center gap-2"
+        classИмя="flex cursor-pointer items-center gap-2"
         onClick={() => setOpen((v) => !v)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((v) => !v); } }}
+        onКлючDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventПо умолчанию(); setOpen((v) => !v); } }}
       >
-        <TerminalSquare className="h-3.5 w-3.5 shrink-0" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
+        <TerminalSquare classИмя="h-3.5 w-3.5 shrink-0" />
+        <span classИмя="text-[10px] font-semibold uppercase tracking-[0.14em]">
           {block.lines.length} system {block.lines.length === 1 ? "message" : "messages"}
         </span>
-        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        {open ? <ChevronDown classИмя="h-3.5 w-3.5" /> : <ChevronRight classИмя="h-3.5 w-3.5" />}
       </div>
       {open && (
-        <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-blue-700/80 dark:text-blue-300/80 pl-5">
+        <pre classИмя="mt-2 overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] text-blue-700/80 dark:text-blue-300/80 pl-5">
           {block.lines.map((line, i) => (
             <span key={`${line.ts}-${i}`}>
-              <span className="select-none text-blue-500/40 dark:text-blue-400/30">{i > 0 ? "\n" : ""}</span>
+              <span classИмя="select-none text-blue-500/40 dark:text-blue-400/30">{i > 0 ? "\n" : ""}</span>
               {line.text}
             </span>
           ))}
@@ -1317,31 +1317,31 @@ function TranscriptSystemGroup({
 function TranscriptStdoutRow({
   block,
   density,
-  collapseByDefault,
+  collapseByПо умолчанию,
 }: {
   block: Extract<TranscriptBlock, { type: "stdout" }>;
   density: TranscriptDensity;
-  collapseByDefault: boolean;
+  collapseByПо умолчанию: boolean;
 }) {
-  const [open, setOpen] = useState(!collapseByDefault);
+  const [open, setOpen] = useState(!collapseByПо умолчанию);
 
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+      <div classИмя="flex items-center gap-2">
+        <span classИмя="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           stdout
         </span>
         <button
           type="button"
-          className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+          classИмя="inline-flex h-5 w-5 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
           onClick={() => setOpen((value) => !value)}
           aria-label={open ? "Collapse stdout" : "Expand stdout"}
         >
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {open ? <ChevronDown classИмя="h-4 w-4" /> : <ChevronRight classИмя="h-4 w-4" />}
         </button>
       </div>
       {open && (
-        <pre className={cn(
+        <pre classИмя={cn(
           "mt-2 overflow-x-auto whitespace-pre-wrap break-words font-mono text-foreground/80",
           density === "compact" ? "text-[11px]" : "text-xs",
         )}>
@@ -1352,7 +1352,7 @@ function TranscriptStdoutRow({
   );
 }
 
-function findScrollParent(element: HTMLElement): HTMLElement | Window {
+function findScrollРодитель(element: HTMLElement): HTMLElement | Window {
   let current = element.parentElement;
   while (current) {
     const style = window.getComputedStyle(current);
@@ -1372,7 +1372,7 @@ function rawEntryContent(entry: TranscriptEntry): string {
     return formatToolPayload(entry.content);
   }
   if (entry.kind === "result") {
-    return `${entry.text}\n${formatTokens(entry.inputTokens)} / ${formatTokens(entry.outputTokens)} / $${entry.costUsd.toFixed(6)}`;
+    return `${entry.text}\n${formatТокенs(entry.inputТокенs)} / ${formatТокенs(entry.outputТокенs)} / $${entry.costUsd.toFixed(6)}`;
   }
   if (entry.kind === "init") {
     return `model=${entry.model}${entry.sessionId ? ` session=${entry.sessionId}` : ""}`;
@@ -1404,33 +1404,33 @@ function RawTranscriptView({
     const list = listRef.current;
     if (!list) return;
 
-    const scrollParent = findScrollParent(list);
+    const scrollРодитель = findScrollРодитель(list);
     const updateRange = () => {
-      const scrollElement: HTMLElement | null = scrollParent === window ? null : (scrollParent as HTMLElement);
+      const scrollElement: HTMLElement | null = scrollРодитель === window ? null : (scrollРодитель as HTMLElement);
       const scrollerTop = scrollElement ? scrollElement.getBoundingClientRect().top : 0;
       const scrollerHeight = scrollElement ? scrollElement.clientHeight : window.innerHeight;
       const listTop = list.getBoundingClientRect().top;
       const visibleTop = Math.max(0, scrollerTop - listTop);
-      const visibleBottom = Math.max(visibleTop + scrollerHeight, 0);
-      const nextStart = Math.max(0, Math.floor(visibleTop / RAW_ESTIMATED_ROW_HEIGHT) - RAW_OVERSCAN_ROWS);
+      const visibleБотtom = Math.max(visibleTop + scrollerHeight, 0);
+      const nextНачать = Math.max(0, Math.floor(visibleTop / RAW_ESTIMATED_ROW_HEIGHT) - RAW_OVERSCAN_ROWS);
       const nextEnd = Math.min(
         entries.length,
-        Math.ceil(visibleBottom / RAW_ESTIMATED_ROW_HEIGHT) + RAW_OVERSCAN_ROWS,
+        Math.ceil(visibleБотtom / RAW_ESTIMATED_ROW_HEIGHT) + RAW_OVERSCAN_ROWS,
       );
       setRange((current) => (
-        current.start === nextStart && current.end === nextEnd
+        current.start === nextНачать && current.end === nextEnd
           ? current
-          : { start: nextStart, end: nextEnd }
+          : { start: nextНачать, end: nextEnd }
       ));
     };
 
     updateRange();
     const frame = window.requestAnimationFrame(updateRange);
-    scrollParent.addEventListener("scroll", updateRange, { passive: true });
+    scrollРодитель.addEventListener("scroll", updateRange, { passive: true });
     window.addEventListener("resize", updateRange);
     return () => {
       window.cancelAnimationFrame(frame);
-      scrollParent.removeEventListener("scroll", updateRange);
+      scrollРодитель.removeEventListener("scroll", updateRange);
       window.removeEventListener("resize", updateRange);
     };
   }, [entries.length, shouldVirtualize]);
@@ -1440,20 +1440,20 @@ function RawTranscriptView({
   const bottomSpacer = shouldVirtualize ? Math.max(0, entries.length - range.end) * RAW_ESTIMATED_ROW_HEIGHT : 0;
 
   return (
-    <div ref={listRef} className={cn("font-mono", compact ? "space-y-1 text-[11px]" : "space-y-1.5 text-xs")}>
+    <div ref={listRef} classИмя={cn("font-mono", compact ? "space-y-1 text-[11px]" : "space-y-1.5 text-xs")}>
       {topSpacer > 0 && <div aria-hidden="true" style={{ height: topSpacer }} />}
       {visibleEntries.map((entry, idx) => (
         <div
           key={`${entry.kind}-${entry.ts}-${range.start + idx}`}
-          className={cn(
+          classИмя={cn(
             "grid gap-x-3",
             "grid-cols-[auto_1fr]",
           )}
         >
-          <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <span classИмя="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             {entry.kind}
           </span>
-          <pre className="min-w-0 whitespace-pre-wrap break-words text-foreground/80">
+          <pre classИмя="min-w-0 whitespace-pre-wrap break-words text-foreground/80">
             {rawEntryContent(entry)}
           </pre>
         </div>
@@ -1463,17 +1463,17 @@ function RawTranscriptView({
   );
 }
 
-export function RunTranscriptView({
+export function ЗапуститьTranscriptView({
   entries,
   mode = "nice",
   density = "comfortable",
   limit,
   streaming = false,
   collapseStdout = false,
-  emptyMessage = "No transcript yet.",
-  className,
-  thinkingClassName,
-}: RunTranscriptViewProps) {
+  emptyMessage = "Нет transcript yet.",
+  classИмя,
+  thinkingClassИмя,
+}: ЗапуститьTranscriptViewProps) {
   const blocks = useMemo(
     () => (mode === "raw" ? [] : normalizeTranscript(entries, streaming)),
     [entries, mode, streaming],
@@ -1483,7 +1483,7 @@ export function RunTranscriptView({
 
   if (entries.length === 0) {
     return (
-      <div className={cn("rounded-2xl border border-dashed border-border/70 bg-background/40 p-4 text-sm text-muted-foreground", className)}>
+      <div classИмя={cn("rounded-2xl border border-dashed border-border/70 bg-background/40 p-4 text-sm text-muted-foreground", classИмя)}>
         {emptyMessage}
       </div>
     );
@@ -1491,33 +1491,33 @@ export function RunTranscriptView({
 
   if (mode === "raw") {
     return (
-      <div className={className}>
+      <div classИмя={classИмя}>
         <RawTranscriptView entries={visibleEntries} density={density} />
       </div>
     );
   }
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div classИмя={cn("space-y-3", classИмя)}>
       {visibleBlocks.map((block, index) => (
         <div
           key={`${block.type}-${block.ts}-${index}`}
-          className={cn(index === visibleBlocks.length - 1 && streaming && "animate-in fade-in slide-in-from-bottom-1 duration-300")}
+          classИмя={cn(index === visibleBlocks.length - 1 && streaming && "animate-in fade-in slide-in-from-bottom-1 duration-300")}
         >
           {block.type === "message" && <TranscriptMessageBlock block={block} density={density} />}
           {block.type === "thinking" && (
-            <TranscriptThinkingBlock block={block} density={density} className={thinkingClassName} />
+            <TranscriptThinkingBlock block={block} density={density} classИмя={thinkingClassИмя} />
           )}
           {block.type === "tool" && <TranscriptToolCard block={block} density={density} />}
-          {block.type === "command_group" && <TranscriptCommandGroup block={block} density={density} />}
+          {block.type === "command_group" && <TranscriptКомандаGroup block={block} density={density} />}
           {block.type === "tool_group" && <TranscriptToolGroup block={block} density={density} />}
           {block.type === "diff_group" && <TranscriptDiffGroup block={block} density={density} />}
           {block.type === "stderr_group" && <TranscriptStderrGroup block={block} density={density} />}
           {block.type === "system_group" && <TranscriptSystemGroup block={block} density={density} />}
           {block.type === "stdout" && (
-            <TranscriptStdoutRow block={block} density={density} collapseByDefault={collapseStdout} />
+            <TranscriptStdoutRow block={block} density={density} collapseByПо умолчанию={collapseStdout} />
           )}
-          {block.type === "activity" && <TranscriptActivityRow block={block} density={density} />}
+          {block.type === "activity" && <TranscriptАктивностьRow block={block} density={density} />}
           {block.type === "event" && <TranscriptEventRow block={block} density={density} />}
         </div>
       ))}

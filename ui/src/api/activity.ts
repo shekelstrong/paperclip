@@ -1,13 +1,13 @@
-import type { ActivityEvent, RunLivenessState } from "@paperclipai/shared";
+import type { АктивностьEvent, ЗапуститьLivenessState } from "@paperclipai/shared";
 import { api } from "./client";
 
-export type { RunLivenessState } from "@paperclipai/shared";
+export type { ЗапуститьLivenessState } from "@paperclipai/shared";
 
-export interface RunForIssue {
+export interface ЗапуститьForЗадача {
   runId: string;
   status: string;
   agentId: string;
-  adapterType: string;
+  adapterТип: string;
   startedAt: string | null;
   finishedAt: string | null;
   createdAt: string;
@@ -15,12 +15,12 @@ export interface RunForIssue {
   usageJson: Record<string, unknown> | null;
   resultJson: Record<string, unknown> | null;
   logBytes?: number | null;
-  retryOfRunId?: string | null;
-  scheduledRetryAt?: string | null;
-  scheduledRetryAttempt?: number;
-  scheduledRetryReason?: string | null;
+  retryOfЗапуститьId?: string | null;
+  scheduledПовторитьAt?: string | null;
+  scheduledПовторитьAttempt?: number;
+  scheduledПовторитьReason?: string | null;
   retryExhaustedReason?: string | null;
-  livenessState?: RunLivenessState | null;
+  livenessState?: ЗапуститьLivenessState | null;
   livenessReason?: string | null;
   continuationAttempt?: number;
   lastUsefulActionAt?: string | null;
@@ -37,16 +37,16 @@ export interface RunForIssue {
     leasePolicy: string;
     provider: string | null;
     providerLeaseId: string | null;
-    executionWorkspaceId: string | null;
-    workspacePath: string | null;
+    executionРабочая областьId: string | null;
+    workspaceПуть: string | null;
     failureReason: string | null;
-    cleanupStatus: string | null;
+    cleanupСтатус: string | null;
     acquiredAt: string | Date;
     releasedAt: string | Date | null;
   } | null;
 }
 
-export interface IssueForRun {
+export interface ЗадачаForЗапустить {
   issueId: string;
   identifier: string | null;
   title: string;
@@ -55,16 +55,16 @@ export interface IssueForRun {
 }
 
 export const activityApi = {
-  list: (companyId: string, filters?: { entityType?: string; entityId?: string; agentId?: string; limit?: number }) => {
-    const params = new URLSearchParams();
-    if (filters?.entityType) params.set("entityType", filters.entityType);
+  list: (companyId: string, filters?: { entityТип?: string; entityId?: string; agentId?: string; limit?: number }) => {
+    const params = new URLПоискParams();
+    if (filters?.entityТип) params.set("entityТип", filters.entityТип);
     if (filters?.entityId) params.set("entityId", filters.entityId);
     if (filters?.agentId) params.set("agentId", filters.agentId);
     if (filters?.limit) params.set("limit", String(filters.limit));
     const qs = params.toString();
-    return api.get<ActivityEvent[]>(`/companies/${companyId}/activity${qs ? `?${qs}` : ""}`);
+    return api.get<АктивностьEvent[]>(`/companies/${companyId}/activity${qs ? `?${qs}` : ""}`);
   },
-  forIssue: (issueId: string) => api.get<ActivityEvent[]>(`/issues/${issueId}/activity`),
-  runsForIssue: (issueId: string) => api.get<RunForIssue[]>(`/issues/${issueId}/runs`),
-  issuesForRun: (runId: string) => api.get<IssueForRun[]>(`/heartbeat-runs/${runId}/issues`),
+  forЗадача: (issueId: string) => api.get<АктивностьEvent[]>(`/issues/${issueId}/activity`),
+  runsForЗадача: (issueId: string) => api.get<ЗапуститьForЗадача[]>(`/issues/${issueId}/runs`),
+  issuesForЗапустить: (runId: string) => api.get<ЗадачаForЗапустить[]>(`/heartbeat-runs/${runId}/issues`),
 };

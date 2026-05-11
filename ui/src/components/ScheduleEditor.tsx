@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectЗначение } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -14,11 +14,11 @@ import { X } from "lucide-react";
 
 /**
  * Limited preset set kept for backwards compatibility. `parseCronToPreset` and
- * the `describeSchedule` fallback rely on this set. Any cron that can't be
+ * the `describeРасписание` fallback rely on this set. Any cron that can't be
  * expressed with a single hour / minute / day-of-week / day-of-month routes
  * to "custom" from this parser so old callers never see a lossy preset.
  */
-export type SchedulePreset =
+export type РасписаниеPreset =
   | "every_minute"
   | "every_hour"
   | "every_day"
@@ -39,7 +39,7 @@ const DAY_NAMES_LONG = [
 ];
 
 function pad(n: number): string {
-  return String(n).padStart(2, "0");
+  return String(n).padНачать(2, "0");
 }
 
 function ordinalSuffix(n: number): string {
@@ -75,7 +75,7 @@ function hasSingleMinuteAcrossTimes(times: string[]): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Back-compat parser (kept so tests and any external callers continue to work)
+// Назад-compat parser (kept so tests and any external callers continue to work)
 // ---------------------------------------------------------------------------
 
 /**
@@ -83,11 +83,11 @@ function hasSingleMinuteAcrossTimes(times: string[]): boolean {
  * Complex expressions (comma lists, ranges, steps, named tokens) all map to
  * "custom" so the caller can safely round-trip the raw string without losing
  * multi-value information. Don't change these semantics without updating the
- * ScheduleEditor tests — they intentionally guard against silent collapse of
+ * РасписаниеИзменитьor tests — they intentionally guard against silent collapse of
  * multi-value crons like `0 9,13,17 * * *`.
  */
 export function parseCronToPreset(cron: string): {
-  preset: SchedulePreset;
+  preset: РасписаниеPreset;
   hour: string;
   minute: string;
   dayOfWeek: string;
@@ -156,7 +156,7 @@ export function parseCronToPreset(cron: string): {
 // Richer internal parser that can handle multi-value fields
 // ---------------------------------------------------------------------------
 
-type EditorPreset =
+type ИзменитьorPreset =
   | "every_minute"
   | "every_n_minutes"
   | "hourly"
@@ -166,11 +166,11 @@ type EditorPreset =
   | "monthly"
   | "custom";
 
-interface EditorState {
-  preset: EditorPreset;
+interface ИзменитьorState {
+  preset: ИзменитьorPreset;
   n: number; // every_n_minutes, every_n_hours
-  windowEnabled: boolean;
-  windowStart: number;
+  windowВключитьd: boolean;
+  windowНачать: number;
   windowEnd: number;
   weekdaysOnly: boolean;
   minutePast: number; // hourly, every_n_hours
@@ -180,11 +180,11 @@ interface EditorState {
   custom: string;
 }
 
-const DEFAULT_STATE: EditorState = {
+const DEFAULT_STATE: ИзменитьorState = {
   preset: "daily",
   n: 15,
-  windowEnabled: false,
-  windowStart: 9,
+  windowВключитьd: false,
+  windowНачать: 9,
   windowEnd: 17,
   weekdaysOnly: false,
   minutePast: 0,
@@ -202,7 +202,7 @@ function parseCronField(field: string, min: number, max: number): number[] {
   const out = new Set<number>();
   for (const p of parts) {
     if (!p) {
-      throw new Error("Invalid cron field");
+      throw new Ошибка("Invalid cron field");
     }
     const stepMatch = p.match(/^(.+)\/(\d+)$/);
     let base = p;
@@ -211,23 +211,23 @@ function parseCronField(field: string, min: number, max: number): number[] {
       base = stepMatch[1];
       step = parseInt(stepMatch[2], 10);
       if (!Number.isInteger(step) || step <= 0) {
-        throw new Error("Invalid cron step");
+        throw new Ошибка("Invalid cron step");
       }
     }
     if (base === "*") {
       for (let i = min; i <= max; i += step) out.add(i);
     } else if (base.includes("-")) {
       if (!/^\d+-\d+$/.test(base)) {
-        throw new Error("Invalid cron range");
+        throw new Ошибка("Invalid cron range");
       }
       const [a, b] = base.split("-").map(Number);
       if (a > b) {
-        throw new Error("Invalid cron range");
+        throw new Ошибка("Invalid cron range");
       }
       for (let i = a; i <= b; i += step) out.add(i);
     } else {
       if (!/^\d+$/.test(base)) {
-        throw new Error("Invalid cron value");
+        throw new Ошибка("Invalid cron value");
       }
       const n = parseInt(base, 10);
       out.add(n);
@@ -235,12 +235,12 @@ function parseCronField(field: string, min: number, max: number): number[] {
   }
   for (const value of out) {
     if (value < min || value > max) {
-      throw new Error("Cron value out of range");
+      throw new Ошибка("Cron value out of range");
     }
   }
   const sorted = [...out].sort((a, b) => a - b);
   if (sorted.length === 0) {
-    throw new Error("Invalid cron field");
+    throw new Ошибка("Invalid cron field");
   }
   return sorted;
 }
@@ -256,7 +256,7 @@ function timesFromFields(minuteField: string, hourField: string): string[] | nul
   return out.length > 0 && out.length <= 24 ? out : null;
 }
 
-function parseCronToEditorState(cron: string): EditorState {
+function parseCronToИзменитьorState(cron: string): ИзменитьorState {
   if (!cron || !cron.trim()) return { ...DEFAULT_STATE };
 
   const fields = cron.trim().split(/\s+/);
@@ -285,11 +285,11 @@ function parseCronToEditorState(cron: string): EditorState {
   const hourRange = h.match(/^(\d+)-(\d+)$/);
   if (minuteStep && dom === "*") {
     const n = parseInt(minuteStep[1], 10);
-    const state = { ...DEFAULT_STATE, preset: "every_n_minutes" as EditorPreset, n };
+    const state = { ...DEFAULT_STATE, preset: "every_n_minutes" as ИзменитьorPreset, n };
     if (h !== "*") {
       if (hourRange) {
-        state.windowEnabled = true;
-        state.windowStart = +hourRange[1];
+        state.windowВключитьd = true;
+        state.windowНачать = +hourRange[1];
         state.windowEnd = +hourRange[2];
       } else {
         // unsupported hour field for this preset → custom
@@ -314,7 +314,7 @@ function parseCronToEditorState(cron: string): EditorState {
   if (/^\d+$/.test(m) && hourStep && dom === "*") {
     const state = {
       ...DEFAULT_STATE,
-      preset: "every_n_hours" as EditorPreset,
+      preset: "every_n_hours" as ИзменитьorPreset,
       n: parseInt(hourStep[1], 10),
       minutePast: parseInt(m, 10),
     };
@@ -365,7 +365,7 @@ function parseCronToEditorState(cron: string): EditorState {
   return { ...DEFAULT_STATE, preset: "custom", custom: cron };
 }
 
-function buildCronFromState(s: EditorState): string {
+function buildCronFromState(s: ИзменитьorState): string {
   const fmt = (arr: number[] | string): string => {
     if (typeof arr === "string") return arr;
     if (arr.length === 0) return "*";
@@ -377,7 +377,7 @@ function buildCronFromState(s: EditorState): string {
     case "every_minute":
       return "* * * * *";
     case "every_n_minutes": {
-      const hourField = s.windowEnabled ? `${s.windowStart}-${s.windowEnd}` : "*";
+      const hourField = s.windowВключитьd ? `${s.windowНачать}-${s.windowEnd}` : "*";
       const dowField = s.weekdaysOnly ? "1-5" : "*";
       return `*/${s.n} ${hourField} * * ${dowField}`;
     }
@@ -388,13 +388,13 @@ function buildCronFromState(s: EditorState): string {
       return `${s.minutePast} */${s.n} * * ${dowField}`;
     }
     case "daily": {
-      const parsedTimes = s.times.map(parseTimeParts).filter((value): value is NonNullable<typeof value> => value != null);
+      const parsedTimes = s.times.map(parseTimeParts).filter((value): value is НетnNullable<typeof value> => value != null);
       const minute = parsedTimes[0]?.minute ?? 0;
       const hours = [...new Set(parsedTimes.map((time) => time.hour))].sort((a, b) => a - b);
       return `${minute} ${fmt(hours)} * * *`;
     }
     case "weekdays": {
-      const parsedTimes = s.times.map(parseTimeParts).filter((value): value is NonNullable<typeof value> => value != null);
+      const parsedTimes = s.times.map(parseTimeParts).filter((value): value is НетnNullable<typeof value> => value != null);
       const minute = parsedTimes[0]?.minute ?? 0;
       const hours = [...new Set(parsedTimes.map((time) => time.hour))].sort((a, b) => a - b);
       const days = s.days.length === 0
@@ -405,7 +405,7 @@ function buildCronFromState(s: EditorState): string {
       return `${minute} ${fmt(hours)} * * ${days}`;
     }
     case "monthly": {
-      const parsedTimes = s.times.map(parseTimeParts).filter((value): value is NonNullable<typeof value> => value != null);
+      const parsedTimes = s.times.map(parseTimeParts).filter((value): value is НетnNullable<typeof value> => value != null);
       const minute = parsedTimes[0]?.minute ?? 0;
       const hours = [...new Set(parsedTimes.map((time) => time.hour))].sort((a, b) => a - b);
       const doms = s.domDays.length === 0 ? [1] : s.domDays.slice().sort((a, b) => a - b);
@@ -426,7 +426,7 @@ function buildCronFromState(s: EditorState): string {
  * "Every weekday at 09:00, 13:00 and 17:00"). Falls back to the raw cron
  * expression when it can't confidently describe the schedule.
  */
-export function describeSchedule(cron: string): string {
+export function describeРасписание(cron: string): string {
   if (!cron || !cron.trim()) return "Every day at 10:00";
   const fields = cron.trim().split(/\s+/);
   if (fields.length !== 5) return cron;
@@ -499,7 +499,7 @@ export function describeSchedule(cron: string): string {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const PRESET_OPTIONS: { value: EditorPreset; label: string }[] = [
+const PRESET_OPTIONS: { value: ИзменитьorPreset; label: string }[] = [
   { value: "every_minute", label: "Every minute" },
   { value: "every_n_minutes", label: "Every N minutes" },
   { value: "hourly", label: "Hourly" },
@@ -507,7 +507,7 @@ const PRESET_OPTIONS: { value: EditorPreset; label: string }[] = [
   { value: "daily", label: "Daily — at one or more times" },
   { value: "weekdays", label: "On selected days of the week" },
   { value: "monthly", label: "Monthly — on selected dates" },
-  { value: "custom", label: "Custom (cron expression)" },
+  { value: "custom", label: "Свой (cron expression)" },
 ];
 
 function TimeList({
@@ -518,13 +518,13 @@ function TimeList({
   onChange: (next: string[]) => void;
 }) {
   return (
-    <div className="space-y-2">
+    <div classИмя="space-y-2">
       {times.map((t, i) => (
-        <div key={i} className="flex items-center gap-2">
+        <div key={i} classИмя="flex items-center gap-2">
           <Input
             type="time"
             value={t}
-            className="font-mono w-32"
+            classИмя="font-mono w-32"
             onChange={(e) => {
               const next = times.slice();
               const value = e.target.value || "00:00";
@@ -552,7 +552,7 @@ function TimeList({
               onChange(next);
             }}
           >
-            <X className="h-3.5 w-3.5" />
+            <X classИмя="h-3.5 w-3.5" />
           </Button>
         </div>
       ))}
@@ -562,7 +562,7 @@ function TimeList({
         size="sm"
         onClick={() => onChange([...times, "12:00"])}
       >
-        + Add time
+        + Добавить time
       </Button>
     </div>
   );
@@ -577,7 +577,7 @@ function DayOfWeekPicker({
 }) {
   const letters = ["S", "M", "T", "W", "T", "F", "S"];
   return (
-    <div className="flex gap-1.5 flex-wrap">
+    <div classИмя="flex gap-1.5 flex-wrap">
       {letters.map((l, i) => {
         const active = days.includes(i);
         return (
@@ -586,7 +586,7 @@ function DayOfWeekPicker({
             type="button"
             variant={active ? "default" : "outline"}
             size="sm"
-            className="h-9 w-9 p-0"
+            classИмя="h-9 w-9 p-0"
             title={DAY_NAMES_LONG[i]}
             onClick={() => {
               const next = active ? days.filter((d) => d !== i) : [...days, i].sort((a, b) => a - b);
@@ -609,7 +609,7 @@ function DayOfMonthPicker({
   onChange: (next: number[]) => void;
 }) {
   return (
-    <div className="grid grid-cols-7 sm:grid-cols-10 gap-1.5">
+    <div classИмя="grid grid-cols-7 sm:grid-cols-10 gap-1.5">
       {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
         const active = domDays.includes(d);
         return (
@@ -618,7 +618,7 @@ function DayOfMonthPicker({
             type="button"
             variant={active ? "default" : "outline"}
             size="sm"
-            className="h-8 px-0 text-xs"
+            classИмя="h-8 px-0 text-xs"
             onClick={() => {
               const next = active ? domDays.filter((x) => x !== d) : [...domDays, d].sort((a, b) => a - b);
               onChange(next.length === 0 ? [d] : next);
@@ -633,29 +633,29 @@ function DayOfMonthPicker({
 }
 
 // ---------------------------------------------------------------------------
-// ScheduleEditor component (rich)
+// РасписаниеИзменитьor component (rich)
 // ---------------------------------------------------------------------------
 
-export function ScheduleEditor({
+export function РасписаниеИзменитьor({
   value,
   onChange,
 }: {
   value: string;
   onChange: (cron: string) => void;
 }) {
-  const [state, setState] = useState<EditorState>(() => parseCronToEditorState(value));
+  const [state, setState] = useState<ИзменитьorState>(() => parseCronToИзменитьorState(value));
 
   // Sync when external value changes and isn't the same cron we just emitted.
   useEffect(() => {
     const currentCron = buildCronFromState(state);
     if (currentCron !== value) {
-      setState(parseCronToEditorState(value));
+      setState(parseCronToИзменитьorState(value));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const emitState = useCallback(
-    (next: EditorState) => {
+    (next: ИзменитьorState) => {
       setState(next);
       onChange(buildCronFromState(next));
     },
@@ -663,7 +663,7 @@ export function ScheduleEditor({
   );
 
   const update = useCallback(
-    <K extends keyof EditorState>(patch: Pick<EditorState, K> | Partial<EditorState>) => {
+    <K extends keyof ИзменитьorState>(patch: Pick<ИзменитьorState, K> | Partial<ИзменитьorState>) => {
       emitState({ ...state, ...patch });
     },
     [emitState, state],
@@ -672,13 +672,13 @@ export function ScheduleEditor({
   const { preset } = state;
 
   return (
-    <div className="space-y-4">
+    <div classИмя="space-y-4">
       {/* Preset */}
-      <div className="space-y-1.5">
-        <Label className="text-xs">Schedule</Label>
-        <Select value={preset} onValueChange={(p) => emitState(changePreset(state, p as EditorPreset))}>
-          <SelectTrigger className="w-full">
-            <SelectValue />
+      <div classИмя="space-y-1.5">
+        <Label classИмя="text-xs">Расписание</Label>
+        <Select value={preset} onЗначениеChange={(p) => emitState(changePreset(state, p as ИзменитьorPreset))}>
+          <SelectTrigger classИмя="w-full">
+            <SelectЗначение />
           </SelectTrigger>
           <SelectContent>
             {PRESET_OPTIONS.map((p) => (
@@ -691,32 +691,32 @@ export function ScheduleEditor({
       </div>
 
       {preset === "every_minute" && (
-        <p className="text-xs text-muted-foreground">
-          No options — runs every minute, around the clock.
+        <p classИмя="text-xs text-muted-foreground">
+          Нет options — runs every minute, around the clock.
         </p>
       )}
 
       {preset === "every_n_minutes" && (
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Run every</Label>
-            <div className="flex items-center gap-2">
+        <div classИмя="space-y-4">
+          <div classИмя="space-y-1.5">
+            <Label classИмя="text-xs">Запустить every</Label>
+            <div classИмя="flex items-center gap-2">
               <Input
                 type="number"
                 min={1}
                 max={59}
-                className="w-24 font-mono"
+                classИмя="w-24 font-mono"
                 value={state.n}
                 onChange={(e) => update({ n: clamp(+e.target.value || 1, 1, 59) })}
               />
-              <span className="text-sm text-muted-foreground">minutes</span>
+              <span classИмя="text-sm text-muted-foreground">minutes</span>
             </div>
-            <div className="flex flex-wrap gap-1.5 pt-1">
+            <div classИмя="flex flex-wrap gap-1.5 pt-1">
               {[1, 5, 10, 15, 20, 30].map((v) => (
                 <Badge
                   key={v}
                   variant="outline"
-                  className="cursor-pointer hover:bg-accent"
+                  classИмя="cursor-pointer hover:bg-accent"
                   onClick={() => update({ n: v })}
                 >
                   {v}
@@ -729,43 +729,43 @@ export function ScheduleEditor({
       )}
 
       {preset === "hourly" && (
-        <div className="space-y-1.5">
-          <Label className="text-xs">Minute past the hour</Label>
+        <div classИмя="space-y-1.5">
+          <Label classИмя="text-xs">Minute past the hour</Label>
           <Input
             type="number"
             min={0}
             max={59}
-            className="w-24 font-mono"
+            classИмя="w-24 font-mono"
             value={state.minutePast}
             onChange={(e) => update({ minutePast: clamp(+e.target.value || 0, 0, 59) })}
           />
-          <p className="text-xs text-muted-foreground">
-            Runs once an hour at <span className="font-mono">:{pad(state.minutePast)}</span>
+          <p classИмя="text-xs text-muted-foreground">
+            Запуститьs once an hour at <span classИмя="font-mono">:{pad(state.minutePast)}</span>
           </p>
         </div>
       )}
 
       {preset === "every_n_hours" && (
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Run every</Label>
-            <div className="flex items-center gap-2">
+        <div classИмя="space-y-4">
+          <div classИмя="space-y-1.5">
+            <Label classИмя="text-xs">Запустить every</Label>
+            <div classИмя="flex items-center gap-2">
               <Input
                 type="number"
                 min={1}
                 max={23}
-                className="w-24 font-mono"
+                classИмя="w-24 font-mono"
                 value={state.n}
                 onChange={(e) => update({ n: clamp(+e.target.value || 1, 1, 23) })}
               />
-              <span className="text-sm text-muted-foreground">hours</span>
+              <span classИмя="text-sm text-muted-foreground">hours</span>
             </div>
-            <div className="flex flex-wrap gap-1.5 pt-1">
+            <div classИмя="flex flex-wrap gap-1.5 pt-1">
               {[1, 2, 3, 4, 6, 8, 12].map((v) => (
                 <Badge
                   key={v}
                   variant="outline"
-                  className="cursor-pointer hover:bg-accent"
+                  classИмя="cursor-pointer hover:bg-accent"
                   onClick={() => update({ n: v })}
                 >
                   {v}
@@ -773,13 +773,13 @@ export function ScheduleEditor({
               ))}
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Minute past the hour</Label>
+          <div classИмя="space-y-1.5">
+            <Label classИмя="text-xs">Minute past the hour</Label>
             <Input
               type="number"
               min={0}
               max={59}
-              className="w-24 font-mono"
+              classИмя="w-24 font-mono"
               value={state.minutePast}
               onChange={(e) => update({ minutePast: clamp(+e.target.value || 0, 0, 59) })}
             />
@@ -789,28 +789,28 @@ export function ScheduleEditor({
       )}
 
       {preset === "daily" && (
-        <div className="space-y-1.5">
-          <Label className="text-xs">Times of day</Label>
+        <div classИмя="space-y-1.5">
+          <Label classИмя="text-xs">Times of day</Label>
           <TimeList times={state.times} onChange={(times) => update({ times })} />
           {state.times.length > 1 && (
-            <p className="text-xs text-muted-foreground">
-              All times in one schedule share the same minute. Changing one minute updates them all.
+            <p classИмя="text-xs text-muted-foreground">
+              Все times in one schedule share the same minute. Changing one minute updates them all.
             </p>
           )}
         </div>
       )}
 
       {preset === "weekdays" && (
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Days of the week</Label>
+        <div classИмя="space-y-4">
+          <div classИмя="space-y-1.5">
+            <Label classИмя="text-xs">Days of the week</Label>
             <DayOfWeekPicker days={state.days} onChange={(days) => update({ days })} />
-            <div className="flex flex-wrap gap-1.5 pt-1">
+            <div classИмя="flex flex-wrap gap-1.5 pt-1">
               {(
                 [
                   ["Weekdays", [1, 2, 3, 4, 5]],
                   ["Weekends", [0, 6]],
-                  ["All days", [0, 1, 2, 3, 4, 5, 6]],
+                  ["Все days", [0, 1, 2, 3, 4, 5, 6]],
                   ["Mon · Wed · Fri", [1, 3, 5]],
                   ["Tue · Thu", [2, 4]],
                 ] as const
@@ -818,7 +818,7 @@ export function ScheduleEditor({
                 <Badge
                   key={label}
                   variant="outline"
-                  className="cursor-pointer hover:bg-accent"
+                  classИмя="cursor-pointer hover:bg-accent"
                   onClick={() => update({ days: [...days] })}
                 >
                   {label}
@@ -826,12 +826,12 @@ export function ScheduleEditor({
               ))}
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Times of day</Label>
+          <div classИмя="space-y-1.5">
+            <Label classИмя="text-xs">Times of day</Label>
             <TimeList times={state.times} onChange={(times) => update({ times })} />
             {state.times.length > 1 && (
-              <p className="text-xs text-muted-foreground">
-                All times in one schedule share the same minute. Changing one minute updates them all.
+              <p classИмя="text-xs text-muted-foreground">
+                Все times in one schedule share the same minute. Changing one minute updates them all.
               </p>
             )}
           </div>
@@ -839,11 +839,11 @@ export function ScheduleEditor({
       )}
 
       {preset === "monthly" && (
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Days of the month</Label>
+        <div classИмя="space-y-4">
+          <div classИмя="space-y-1.5">
+            <Label classИмя="text-xs">Days of the month</Label>
             <DayOfMonthPicker domDays={state.domDays} onChange={(domDays) => update({ domDays })} />
-            <div className="flex flex-wrap gap-1.5 pt-1">
+            <div classИмя="flex flex-wrap gap-1.5 pt-1">
               {(
                 [
                   ["1st only", [1]],
@@ -855,23 +855,23 @@ export function ScheduleEditor({
                 <Badge
                   key={label}
                   variant="outline"
-                  className="cursor-pointer hover:bg-accent"
+                  classИмя="cursor-pointer hover:bg-accent"
                   onClick={() => update({ domDays: [...days] })}
                 >
                   {label}
                 </Badge>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p classИмя="text-xs text-muted-foreground">
               Days 29–31 are skipped in months that don't have them.
             </p>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Times of day</Label>
+          <div classИмя="space-y-1.5">
+            <Label classИмя="text-xs">Times of day</Label>
             <TimeList times={state.times} onChange={(times) => update({ times })} />
             {state.times.length > 1 && (
-              <p className="text-xs text-muted-foreground">
-                All times in one schedule share the same minute. Changing one minute updates them all.
+              <p classИмя="text-xs text-muted-foreground">
+                Все times in one schedule share the same minute. Changing one minute updates them all.
               </p>
             )}
           </div>
@@ -879,15 +879,15 @@ export function ScheduleEditor({
       )}
 
       {preset === "custom" && (
-        <div className="space-y-1.5">
-          <Label className="text-xs">Cron expression</Label>
+        <div classИмя="space-y-1.5">
+          <Label classИмя="text-xs">Cron expression</Label>
           <Input
             value={state.custom}
             onChange={(e) => update({ custom: e.target.value })}
             placeholder="0 10 * * *"
-            className="font-mono text-sm"
+            classИмя="font-mono text-sm"
           />
-          <p className="text-xs text-muted-foreground">
+          <p classИмя="text-xs text-muted-foreground">
             Five fields: minute hour day-of-month month day-of-week
           </p>
         </div>
@@ -895,12 +895,12 @@ export function ScheduleEditor({
 
       <Separator />
 
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="text-xs">
-          <span className="text-muted-foreground">Summary — </span>
-          <span className="font-medium">{describeSchedule(buildCronFromState(state))}</span>
+      <div classИмя="flex items-start justify-between gap-3 flex-wrap">
+        <div classИмя="text-xs">
+          <span classИмя="text-muted-foreground">Summary — </span>
+          <span classИмя="font-medium">{describeРасписание(buildCronFromState(state))}</span>
         </div>
-        <code className="text-xs font-mono text-muted-foreground">
+        <code classИмя="text-xs font-mono text-muted-foreground">
           {buildCronFromState(state)}
         </code>
       </div>
@@ -912,33 +912,33 @@ function WindowAndWeekdaysToggles({
   state,
   update,
 }: {
-  state: EditorState;
-  update: (patch: Partial<EditorState>) => void;
+  state: ИзменитьorState;
+  update: (patch: Partial<ИзменитьorState>) => void;
 }) {
   return (
     <>
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 cursor-pointer text-sm">
+      <div classИмя="space-y-2">
+        <label classИмя="flex items-center gap-2 cursor-pointer text-sm">
           <Checkbox
-            checked={state.windowEnabled}
-            onCheckedChange={(checked) => update({ windowEnabled: checked === true })}
+            checked={state.windowВключитьd}
+            onCheckedChange={(checked) => update({ windowВключитьd: checked === true })}
           />
           <span>Only between certain hours</span>
         </label>
-        {state.windowEnabled && (
-          <div className="flex items-center gap-2 pl-6 flex-wrap">
+        {state.windowВключитьd && (
+          <div classИмя="flex items-center gap-2 pl-6 flex-wrap">
             <Select
-              value={String(state.windowStart)}
-              onValueChange={(v) => {
-                const windowStart = Number(v);
+              value={String(state.windowНачать)}
+              onЗначениеChange={(v) => {
+                const windowНачать = Number(v);
                 update({
-                  windowStart,
-                  windowEnd: Math.max(state.windowEnd, windowStart),
+                  windowНачать,
+                  windowEnd: Math.max(state.windowEnd, windowНачать),
                 });
               }}
             >
-              <SelectTrigger className="w-28">
-                <SelectValue />
+              <SelectTrigger classИмя="w-28">
+                <SelectЗначение />
               </SelectTrigger>
               <SelectContent>
                 {Array.from({ length: 24 }, (_, i) => (
@@ -948,17 +948,17 @@ function WindowAndWeekdaysToggles({
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-xs text-muted-foreground">to</span>
+            <span classИмя="text-xs text-muted-foreground">to</span>
             <Select
               value={String(state.windowEnd)}
-              onValueChange={(v) => update({ windowEnd: Math.max(Number(v), state.windowStart) })}
+              onЗначениеChange={(v) => update({ windowEnd: Math.max(Number(v), state.windowНачать) })}
             >
-              <SelectTrigger className="w-28">
-                <SelectValue />
+              <SelectTrigger classИмя="w-28">
+                <SelectЗначение />
               </SelectTrigger>
               <SelectContent>
                 {Array.from({ length: 24 }, (_, i) => (
-                  <SelectItem key={i} value={String(i)} disabled={i < state.windowStart}>
+                  <SelectItem key={i} value={String(i)} disabled={i < state.windowНачать}>
                     {pad(i)}:00
                   </SelectItem>
                 ))}
@@ -976,11 +976,11 @@ function WeekdaysOnlyToggle({
   state,
   update,
 }: {
-  state: EditorState;
-  update: (patch: Partial<EditorState>) => void;
+  state: ИзменитьorState;
+  update: (patch: Partial<ИзменитьorState>) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 cursor-pointer text-sm">
+    <label classИмя="flex items-center gap-2 cursor-pointer text-sm">
       <Checkbox
         checked={state.weekdaysOnly}
         onCheckedChange={(checked) => update({ weekdaysOnly: checked === true })}
@@ -990,14 +990,14 @@ function WeekdaysOnlyToggle({
   );
 }
 
-function changePreset(state: EditorState, next: EditorPreset): EditorState {
-  // Reset ambiguous sub-state when switching presets so we don't carry
-  // over a stale weekdaysOnly / windowEnabled from a sibling preset.
+function changePreset(state: ИзменитьorState, next: ИзменитьorPreset): ИзменитьorState {
+  // Сбросить ambiguous sub-state when switching presets so we don't carry
+  // over a stale weekdaysOnly / windowВключитьd from a sibling preset.
   switch (next) {
     case "every_minute":
       return { ...state, preset: next };
     case "every_n_minutes":
-      return { ...state, preset: next, n: 15, windowEnabled: false, weekdaysOnly: false };
+      return { ...state, preset: next, n: 15, windowВключитьd: false, weekdaysOnly: false };
     case "hourly":
       return { ...state, preset: next };
     case "every_n_hours":
@@ -1027,14 +1027,14 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.min(Math.max(v, lo), hi);
 }
 
-export function getScheduleEditorPresetForTest(cron: string): EditorPreset {
-  return parseCronToEditorState(cron).preset;
+export function getРасписаниеИзменитьorPresetForПроверить(cron: string): ИзменитьorPreset {
+  return parseCronToИзменитьorState(cron).preset;
 }
 
-export function hasSingleMinuteAcrossTimesForTest(times: string[]): boolean {
+export function hasSingleMinuteAcrossTimesForПроверить(times: string[]): boolean {
   return hasSingleMinuteAcrossTimes(times);
 }
 
-export function roundTripCronForTest(cron: string): string {
-  return buildCronFromState(parseCronToEditorState(cron));
+export function roundTripCronForПроверить(cron: string): string {
+  return buildCronFromState(parseCronToИзменитьorState(cron));
 }

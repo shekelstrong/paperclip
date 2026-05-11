@@ -1,29 +1,29 @@
 import { AGENT_DEFAULT_MAX_CONCURRENT_RUNS } from "@paperclipai/shared";
-import { defaultCreateValues } from "../components/agent-config-defaults";
+import { defaultСоздатьЗначениеs } from "../components/agent-config-defaults";
 
-export function buildNewAgentRuntimeConfig(input?: {
-  heartbeatEnabled?: boolean;
+export function buildNewАгентЗапуститьtimeConfig(input?: {
+  heartbeatВключитьd?: boolean;
   intervalSec?: number;
-  cheapModel?: string;
-  cheapModelEnabled?: boolean;
+  cheapМодель?: string;
+  cheapМодельВключитьd?: boolean;
 }): Record<string, unknown> {
   const config: Record<string, unknown> = {
     heartbeat: {
-      enabled: input?.heartbeatEnabled ?? defaultCreateValues.heartbeatEnabled,
-      intervalSec: input?.intervalSec ?? defaultCreateValues.intervalSec,
+      enabled: input?.heartbeatВключитьd ?? defaultСоздатьЗначениеs.heartbeatВключитьd,
+      intervalSec: input?.intervalSec ?? defaultСоздатьЗначениеs.intervalSec,
       wakeOnDemand: true,
       cooldownSec: 10,
-      maxConcurrentRuns: AGENT_DEFAULT_MAX_CONCURRENT_RUNS,
+      maxConcurrentЗапуститьs: AGENT_DEFAULT_MAX_CONCURRENT_RUNS,
     },
   };
 
-  const cheapModel = input?.cheapModel?.trim() ?? "";
-  const cheapEnabled = input?.cheapModelEnabled ?? false;
-  if (cheapModel && cheapEnabled) {
-    config.modelProfiles = {
+  const cheapМодель = input?.cheapМодель?.trim() ?? "";
+  const cheapВключитьd = input?.cheapМодельВключитьd ?? false;
+  if (cheapМодель && cheapВключитьd) {
+    config.modelПрофильs = {
       cheap: {
         enabled: true,
-        adapterConfig: { model: cheapModel },
+        adapterConfig: { model: cheapМодель },
       },
     };
   }

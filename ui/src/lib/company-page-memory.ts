@@ -1,12 +1,12 @@
 import {
-  extractCompanyPrefixFromPath,
-  normalizeCompanyPrefix,
-  toCompanyRelativePath,
+  extractКомпанияPrefixFromПуть,
+  normalizeКомпанияPrefix,
+  toКомпанияRelativeПуть,
 } from "./company-routes";
 
 const GLOBAL_SEGMENTS = new Set(["auth", "invite", "board-claim", "cli-auth", "docs"]);
 
-export function isRememberableCompanyPath(path: string): boolean {
+export function isRememberableКомпанияПуть(path: string): boolean {
   const pathname = path.split("?")[0] ?? "";
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length === 0) return true;
@@ -15,51 +15,51 @@ export function isRememberableCompanyPath(path: string): boolean {
   return true;
 }
 
-function findCompanyByPrefix<T extends { id: string; issuePrefix: string }>(params: {
+function findКомпанияByPrefix<T extends { id: string; issuePrefix: string }>(params: {
   companies: T[];
   companyPrefix: string;
 }): T | null {
-  const normalizedPrefix = normalizeCompanyPrefix(params.companyPrefix);
-  return params.companies.find((company) => normalizeCompanyPrefix(company.issuePrefix) === normalizedPrefix) ?? null;
+  const normalizedPrefix = normalizeКомпанияPrefix(params.companyPrefix);
+  return params.companies.find((company) => normalizeКомпанияPrefix(company.issuePrefix) === normalizedPrefix) ?? null;
 }
 
-export function getRememberedPathOwnerCompanyId<T extends { id: string; issuePrefix: string }>(params: {
+export function getRememberedПутьВладелецКомпанияId<T extends { id: string; issuePrefix: string }>(params: {
   companies: T[];
   pathname: string;
-  fallbackCompanyId: string | null;
+  fallbackКомпанияId: string | null;
 }): string | null {
-  const routeCompanyPrefix = extractCompanyPrefixFromPath(params.pathname);
-  if (!routeCompanyPrefix) {
-    return params.fallbackCompanyId;
+  const routeКомпанияPrefix = extractКомпанияPrefixFromПуть(params.pathname);
+  if (!routeКомпанияPrefix) {
+    return params.fallbackКомпанияId;
   }
 
-  return findCompanyByPrefix({
+  return findКомпанияByPrefix({
     companies: params.companies,
-    companyPrefix: routeCompanyPrefix,
+    companyPrefix: routeКомпанияPrefix,
   })?.id ?? null;
 }
 
-export function sanitizeRememberedPathForCompany(params: {
+export function sanitizeRememberedПутьForКомпания(params: {
   path: string | null | undefined;
   companyPrefix: string;
 }): string {
-  const relativePath = params.path ? toCompanyRelativePath(params.path) : "/dashboard";
-  if (!isRememberableCompanyPath(relativePath)) {
+  const relativeПуть = params.path ? toКомпанияRelativeПуть(params.path) : "/dashboard";
+  if (!isRememberableКомпанияПуть(relativeПуть)) {
     return "/dashboard";
   }
 
-  const pathname = relativePath.split("?")[0] ?? "";
+  const pathname = relativeПуть.split("?")[0] ?? "";
   const segments = pathname.split("/").filter(Boolean);
   const [root, entityId] = segments;
   if (root === "issues" && entityId) {
     const identifierMatch = /^([A-Za-z]+)-\d+$/.exec(entityId);
     if (
       identifierMatch &&
-      normalizeCompanyPrefix(identifierMatch[1] ?? "") !== normalizeCompanyPrefix(params.companyPrefix)
+      normalizeКомпанияPrefix(identifierMatch[1] ?? "") !== normalizeКомпанияPrefix(params.companyPrefix)
     ) {
       return "/dashboard";
     }
   }
 
-  return relativePath;
+  return relativeПуть;
 }

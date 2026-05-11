@@ -1,26 +1,26 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import type { IssueWorkMode } from "@paperclipai/shared";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactНетde } from "react";
+import type { ЗадачаРаботаMode } from "@paperclipai/shared";
 
-interface NewIssueDefaults {
+interface NewЗадачаПо умолчаниюs {
   status?: string;
-  workMode?: IssueWorkMode;
+  workMode?: ЗадачаРаботаMode;
   priority?: string;
   projectId?: string;
-  projectWorkspaceId?: string;
+  projectРабочая областьId?: string;
   goalId?: string;
   parentId?: string;
   parentIdentifier?: string;
-  parentTitle?: string;
-  executionWorkspaceId?: string;
-  executionWorkspaceMode?: string;
-  parentExecutionWorkspaceLabel?: string;
-  assigneeAgentId?: string;
+  parentНазвание?: string;
+  executionРабочая областьId?: string;
+  executionРабочая областьMode?: string;
+  parentExecutionРабочая областьLabel?: string;
+  assigneeАгентId?: string;
   assigneeUserId?: string;
   title?: string;
   description?: string;
 }
 
-interface NewGoalDefaults {
+interface NewЦельПо умолчаниюs {
   parentId?: string;
 }
 
@@ -29,62 +29,62 @@ interface OnboardingOptions {
   companyId?: string;
 }
 
-interface DialogContextValue {
-  newIssueOpen: boolean;
-  newIssueDefaults: NewIssueDefaults;
-  openNewIssue: (defaults?: NewIssueDefaults) => void;
-  closeNewIssue: () => void;
+interface DialogContextЗначение {
+  newЗадачаOpen: boolean;
+  newЗадачаПо умолчаниюs: NewЗадачаПо умолчаниюs;
+  openNewЗадача: (defaults?: NewЗадачаПо умолчаниюs) => void;
+  closeNewЗадача: () => void;
   newProjectOpen: boolean;
   openNewProject: () => void;
   closeNewProject: () => void;
-  newGoalOpen: boolean;
-  newGoalDefaults: NewGoalDefaults;
-  openNewGoal: (defaults?: NewGoalDefaults) => void;
-  closeNewGoal: () => void;
-  newAgentOpen: boolean;
-  openNewAgent: () => void;
-  closeNewAgent: () => void;
+  newЦельOpen: boolean;
+  newЦельПо умолчаниюs: NewЦельПо умолчаниюs;
+  openNewЦель: (defaults?: NewЦельПо умолчаниюs) => void;
+  closeNewЦель: () => void;
+  newАгентOpen: boolean;
+  openNewАгент: () => void;
+  closeNewАгент: () => void;
   onboardingOpen: boolean;
   onboardingOptions: OnboardingOptions;
   openOnboarding: (options?: OnboardingOptions) => void;
   closeOnboarding: () => void;
 }
 
-type DialogStateValue = Pick<
-  DialogContextValue,
-  | "newIssueOpen"
-  | "newIssueDefaults"
+type DialogStateЗначение = Pick<
+  DialogContextЗначение,
+  | "newЗадачаOpen"
+  | "newЗадачаПо умолчаниюs"
   | "newProjectOpen"
-  | "newGoalOpen"
-  | "newGoalDefaults"
-  | "newAgentOpen"
+  | "newЦельOpen"
+  | "newЦельПо умолчаниюs"
+  | "newАгентOpen"
   | "onboardingOpen"
   | "onboardingOptions"
 >;
 
-type DialogActionsValue = Omit<DialogContextValue, keyof DialogStateValue>;
+type DialogActionsЗначение = Omit<DialogContextЗначение, keyof DialogStateЗначение>;
 
-const DialogStateContext = createContext<DialogStateValue | null>(null);
-const DialogActionsContext = createContext<DialogActionsValue | null>(null);
+const DialogStateContext = createContext<DialogStateЗначение | null>(null);
+const DialogActionsContext = createContext<DialogActionsЗначение | null>(null);
 
-export function DialogProvider({ children }: { children: ReactNode }) {
-  const [newIssueOpen, setNewIssueOpen] = useState(false);
-  const [newIssueDefaults, setNewIssueDefaults] = useState<NewIssueDefaults>({});
+export function DialogПровайдер({ children }: { children: ReactНетde }) {
+  const [newЗадачаOpen, setNewЗадачаOpen] = useState(false);
+  const [newЗадачаПо умолчаниюs, setNewЗадачаПо умолчаниюs] = useState<NewЗадачаПо умолчаниюs>({});
   const [newProjectOpen, setNewProjectOpen] = useState(false);
-  const [newGoalOpen, setNewGoalOpen] = useState(false);
-  const [newGoalDefaults, setNewGoalDefaults] = useState<NewGoalDefaults>({});
-  const [newAgentOpen, setNewAgentOpen] = useState(false);
+  const [newЦельOpen, setNewЦельOpen] = useState(false);
+  const [newЦельПо умолчаниюs, setNewЦельПо умолчаниюs] = useState<NewЦельПо умолчаниюs>({});
+  const [newАгентOpen, setNewАгентOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingOptions, setOnboardingOptions] = useState<OnboardingOptions>({});
 
-  const openNewIssue = useCallback((defaults: NewIssueDefaults = {}) => {
-    setNewIssueDefaults(defaults);
-    setNewIssueOpen(true);
+  const openNewЗадача = useCallback((defaults: NewЗадачаПо умолчаниюs = {}) => {
+    setNewЗадачаПо умолчаниюs(defaults);
+    setNewЗадачаOpen(true);
   }, []);
 
-  const closeNewIssue = useCallback(() => {
-    setNewIssueOpen(false);
-    setNewIssueDefaults({});
+  const closeNewЗадача = useCallback(() => {
+    setNewЗадачаOpen(false);
+    setNewЗадачаПо умолчаниюs({});
   }, []);
 
   const openNewProject = useCallback(() => {
@@ -95,22 +95,22 @@ export function DialogProvider({ children }: { children: ReactNode }) {
     setNewProjectOpen(false);
   }, []);
 
-  const openNewGoal = useCallback((defaults: NewGoalDefaults = {}) => {
-    setNewGoalDefaults(defaults);
-    setNewGoalOpen(true);
+  const openNewЦель = useCallback((defaults: NewЦельПо умолчаниюs = {}) => {
+    setNewЦельПо умолчаниюs(defaults);
+    setNewЦельOpen(true);
   }, []);
 
-  const closeNewGoal = useCallback(() => {
-    setNewGoalOpen(false);
-    setNewGoalDefaults({});
+  const closeNewЦель = useCallback(() => {
+    setNewЦельOpen(false);
+    setNewЦельПо умолчаниюs({});
   }, []);
 
-  const openNewAgent = useCallback(() => {
-    setNewAgentOpen(true);
+  const openNewАгент = useCallback(() => {
+    setNewАгентOpen(true);
   }, []);
 
-  const closeNewAgent = useCallback(() => {
-    setNewAgentOpen(false);
+  const closeNewАгент = useCallback(() => {
+    setNewАгентOpen(false);
   }, []);
 
   const openOnboarding = useCallback((options: OnboardingOptions = {}) => {
@@ -123,69 +123,69 @@ export function DialogProvider({ children }: { children: ReactNode }) {
     setOnboardingOptions({});
   }, []);
 
-  const stateValue = useMemo<DialogStateValue>(
+  const stateЗначение = useMemo<DialogStateЗначение>(
     () => ({
-      newIssueOpen,
-      newIssueDefaults,
+      newЗадачаOpen,
+      newЗадачаПо умолчаниюs,
       newProjectOpen,
-      newGoalOpen,
-      newGoalDefaults,
-      newAgentOpen,
+      newЦельOpen,
+      newЦельПо умолчаниюs,
+      newАгентOpen,
       onboardingOpen,
       onboardingOptions,
     }),
     [
-      newIssueOpen,
-      newIssueDefaults,
+      newЗадачаOpen,
+      newЗадачаПо умолчаниюs,
       newProjectOpen,
-      newGoalOpen,
-      newGoalDefaults,
-      newAgentOpen,
+      newЦельOpen,
+      newЦельПо умолчаниюs,
+      newАгентOpen,
       onboardingOpen,
       onboardingOptions,
     ],
   );
 
-  const actionsValue = useMemo<DialogActionsValue>(
+  const actionsЗначение = useMemo<DialogActionsЗначение>(
     () => ({
-      openNewIssue,
-      closeNewIssue,
+      openNewЗадача,
+      closeNewЗадача,
       openNewProject,
       closeNewProject,
-      openNewGoal,
-      closeNewGoal,
-      openNewAgent,
-      closeNewAgent,
+      openNewЦель,
+      closeNewЦель,
+      openNewАгент,
+      closeNewАгент,
       openOnboarding,
       closeOnboarding,
     }),
     [
-      openNewIssue,
-      closeNewIssue,
+      openNewЗадача,
+      closeNewЗадача,
       openNewProject,
       closeNewProject,
-      openNewGoal,
-      closeNewGoal,
-      openNewAgent,
-      closeNewAgent,
+      openNewЦель,
+      closeNewЦель,
+      openNewАгент,
+      closeNewАгент,
       openOnboarding,
       closeOnboarding,
     ],
   );
 
   return (
-    <DialogActionsContext.Provider value={actionsValue}>
-      <DialogStateContext.Provider value={stateValue}>
+    <DialogActionsContext.Провайдер value={actionsЗначение}>
+      <DialogStateContext.Провайдер value={stateЗначение}>
         {children}
-      </DialogStateContext.Provider>
-    </DialogActionsContext.Provider>
+      </DialogStateContext.Провайдер>
+    </DialogActionsContext.Провайдер>
   );
 }
 
 export function useDialogActions() {
   const ctx = useContext(DialogActionsContext);
   if (!ctx) {
-    throw new Error("useDialogActions must be used within DialogProvider");
+    throw new Ошибка("useDialogActions must be used within DialogПровайдер");
   }
   return ctx;
 }
@@ -193,7 +193,7 @@ export function useDialogActions() {
 export function useDialogState() {
   const ctx = useContext(DialogStateContext);
   if (!ctx) {
-    throw new Error("useDialogState must be used within DialogProvider");
+    throw new Ошибка("useDialogState must be used within DialogПровайдер");
   }
   return ctx;
 }

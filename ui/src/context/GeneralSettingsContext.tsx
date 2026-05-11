@@ -1,28 +1,28 @@
-import type { ReactNode } from "react";
+import type { ReactНетde } from "react";
 import { createContext, useContext } from "react";
 
-export interface GeneralSettingsContextValue {
-  keyboardShortcutsEnabled: boolean;
+export interface ОбщиеНастройкиContextЗначение {
+  keyboardShortcutsВключитьd: boolean;
 }
 
-const GeneralSettingsContext = createContext<GeneralSettingsContextValue>({
-  keyboardShortcutsEnabled: false,
+const ОбщиеНастройкиContext = createContext<ОбщиеНастройкиContextЗначение>({
+  keyboardShortcutsВключитьd: false,
 });
 
-export function GeneralSettingsProvider({
+export function ОбщиеНастройкиПровайдер({
   value,
   children,
 }: {
-  value: GeneralSettingsContextValue;
-  children: ReactNode;
+  value: ОбщиеНастройкиContextЗначение;
+  children: ReactНетde;
 }) {
   return (
-    <GeneralSettingsContext.Provider value={value}>
+    <ОбщиеНастройкиContext.Провайдер value={value}>
       {children}
-    </GeneralSettingsContext.Provider>
+    </ОбщиеНастройкиContext.Провайдер>
   );
 }
 
-export function useGeneralSettings() {
-  return useContext(GeneralSettingsContext);
+export function useОбщиеНастройки() {
+  return useContext(ОбщиеНастройкиContext);
 }

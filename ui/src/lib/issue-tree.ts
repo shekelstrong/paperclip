@@ -1,8 +1,8 @@
-import type { Issue } from "@paperclipai/shared";
+import type { Задача } from "@paperclipai/shared";
 
-export interface IssueTree {
-  roots: Issue[];
-  childMap: Map<string, Issue[]>;
+export interface ЗадачаTree {
+  roots: Задача[];
+  childMap: Map<string, Задача[]>;
 }
 
 /**
@@ -12,10 +12,10 @@ export interface IssueTree {
  *   parent at all), so orphaned sub-tasks are always visible at root level.
  * - `childMap` maps each parent id to its direct children in list order.
  */
-export function buildIssueTree(items: Issue[]): IssueTree {
+export function buildЗадачаTree(items: Задача[]): ЗадачаTree {
   const itemIds = new Set(items.map((i) => i.id));
   const roots = items.filter((i) => !i.parentId || !itemIds.has(i.parentId));
-  const childMap = new Map<string, Issue[]>();
+  const childMap = new Map<string, Задача[]>();
   for (const item of items) {
     if (item.parentId && itemIds.has(item.parentId)) {
       const arr = childMap.get(item.parentId) ?? [];
@@ -30,35 +30,35 @@ export function buildIssueTree(items: Issue[]): IssueTree {
  * Returns the total number of descendants (all depths) of `id` in `childMap`.
  * Used to accurately label collapsed parent badges like "(3 sub-tasks)".
  */
-export function countDescendants(id: string, childMap: Map<string, Issue[]>): number {
+export function countDescendants(id: string, childMap: Map<string, Задача[]>): number {
   const children = childMap.get(id) ?? [];
   return children.reduce((sum, c) => sum + 1 + countDescendants(c.id, childMap), 0);
 }
 
 /**
- * Filters a flat issue list to only descendants of `rootId`.
+ * Фильтрs a flat issue list to only descendants of `rootId`.
  *
  * This is intentionally useful even when the list contains unrelated issues:
  * stale servers may ignore newer descendant-scoped query params, and the UI
  * must still avoid rendering global issue data in a sub-issue panel.
  */
-export function filterIssueDescendants(rootId: string, items: Issue[]): Issue[] {
-  const childrenByParentId = new Map<string, Issue[]>();
+export function filterЗадачаDescendants(rootId: string, items: Задача[]): Задача[] {
+  const childrenByРодительId = new Map<string, Задача[]>();
   for (const item of items) {
     if (!item.parentId) continue;
-    const siblings = childrenByParentId.get(item.parentId) ?? [];
+    const siblings = childrenByРодительId.get(item.parentId) ?? [];
     siblings.push(item);
-    childrenByParentId.set(item.parentId, siblings);
+    childrenByРодительId.set(item.parentId, siblings);
   }
 
-  const descendants: Issue[] = [];
+  const descendants: Задача[] = [];
   const seen = new Set<string>([rootId]);
   let frontier = [rootId];
 
   while (frontier.length > 0) {
     const nextFrontier: string[] = [];
     for (const parentId of frontier) {
-      for (const child of childrenByParentId.get(parentId) ?? []) {
+      for (const child of childrenByРодительId.get(parentId) ?? []) {
         if (seen.has(child.id)) continue;
         seen.add(child.id);
         descendants.push(child);

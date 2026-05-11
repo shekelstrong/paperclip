@@ -1,15 +1,15 @@
 import { useState } from "react";
-import type { Issue } from "@paperclipai/shared";
+import type { Задача } from "@paperclipai/shared";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { createIssueDetailPath, withIssueDetailHeaderSeed } from "../lib/issueDetailBreadcrumb";
-import { IssueQuicklookCard } from "./IssueLinkQuicklook";
+import { createЗадачаDetailПуть, withЗадачаDetailHeaderSeed } from "../lib/issueDetailBreadcrumb";
+import { ЗадачаQuicklookCard } from "./ЗадачаLinkQuicklook";
 
-interface IssuesQuicklookProps {
-  issue: Issue;
-  children: React.ReactNode;
+interface ЗадачиQuicklookProps {
+  issue: Задача;
+  children: React.ReactНетde;
 }
 
-export function IssuesQuicklook({ issue, children }: IssuesQuicklookProps) {
+export function ЗадачиQuicklook({ issue, children }: ЗадачиQuicklookProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -22,17 +22,17 @@ export function IssuesQuicklook({ issue, children }: IssuesQuicklookProps) {
         {children}
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 p-3"
+        classИмя="w-72 p-3"
         side="top"
         align="start"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        onOpenАвтоFocus={(e) => e.preventПо умолчанию()}
       >
-        <IssueQuicklookCard
+        <ЗадачаQuicklookCard
           issue={issue}
-          linkTo={createIssueDetailPath(issue.identifier ?? issue.id)}
-          linkState={withIssueDetailHeaderSeed(null, issue)}
+          linkTo={createЗадачаDetailПуть(issue.identifier ?? issue.id)}
+          linkState={withЗадачаDetailHeaderSeed(null, issue)}
         />
       </PopoverContent>
     </Popover>

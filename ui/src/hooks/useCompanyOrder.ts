@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Company } from "@paperclipai/shared";
+import type { Компания } from "@paperclipai/shared";
 import { sidebarPreferencesApi } from "../api/sidebarPreferences";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 
 function areEqual(a: string[], b: string[]) {
   if (a.length !== b.length) return false;
@@ -12,12 +12,12 @@ function areEqual(a: string[], b: string[]) {
   return true;
 }
 
-function sortCompaniesByOrder(companies: Company[], orderedIds: string[]): Company[] {
+function sortКомпанииByOrder(companies: Компания[], orderedIds: string[]): Компания[] {
   if (companies.length === 0) return [];
   if (orderedIds.length === 0) return companies;
 
   const byId = new Map(companies.map((company) => [company.id, company]));
-  const sorted: Company[] = [];
+  const sorted: Компания[] = [];
 
   for (const id of orderedIds) {
     const company = byId.get(id);
@@ -31,25 +31,25 @@ function sortCompaniesByOrder(companies: Company[], orderedIds: string[]): Compa
   return sorted;
 }
 
-function buildOrderIds(companies: Company[], orderedIds: string[]) {
-  return sortCompaniesByOrder(companies, orderedIds).map((company) => company.id);
+function buildOrderIds(companies: Компания[], orderedIds: string[]) {
+  return sortКомпанииByOrder(companies, orderedIds).map((company) => company.id);
 }
 
-type UseCompanyOrderParams = {
-  companies: Company[];
+type UseКомпанияOrderParams = {
+  companies: Компания[];
   userId: string | null | undefined;
 };
 
-export function useCompanyOrder({ companies, userId }: UseCompanyOrderParams) {
+export function useКомпанияOrder({ companies, userId }: UseКомпанияOrderParams) {
   const queryClient = useQueryClient();
-  const queryKey = useMemo(
-    () => queryKeys.sidebarPreferences.companyOrder(userId ?? "__anon__"),
+  const queryКлюч = useMemo(
+    () => queryКлючs.sidebarPreferences.companyOrder(userId ?? "__anon__"),
     [userId],
   );
 
   const { data } = useQuery({
-    queryKey,
-    queryFn: () => sidebarPreferencesApi.getCompanyOrder(),
+    queryКлюч,
+    queryFn: () => sidebarPreferencesApi.getКомпанияOrder(),
     enabled: Boolean(userId),
   });
 
@@ -61,14 +61,14 @@ export function useCompanyOrder({ companies, userId }: UseCompanyOrderParams) {
   }, [companies, data?.orderedIds]);
 
   const mutation = useMutation({
-    mutationFn: (nextIds: string[]) => sidebarPreferencesApi.updateCompanyOrder({ orderedIds: nextIds }),
-    onSuccess: (preference) => {
-      queryClient.setQueryData(queryKey, preference);
+    mutationFn: (nextIds: string[]) => sidebarPreferencesApi.updateКомпанияOrder({ orderedIds: nextIds }),
+    onУспешно: (preference) => {
+      queryClient.setQueryData(queryКлюч, preference);
     },
   });
 
-  const orderedCompanies = useMemo(
-    () => sortCompaniesByOrder(companies, orderedIds),
+  const orderedКомпании = useMemo(
+    () => sortКомпанииByOrder(companies, orderedIds),
     [companies, orderedIds],
   );
 
@@ -83,17 +83,17 @@ export function useCompanyOrder({ companies, userId }: UseCompanyOrderParams) {
       setOrderedIds((current) => (areEqual(current, filtered) ? current : filtered));
       if (!userId) return;
 
-      queryClient.setQueryData(queryKey, (current: { orderedIds?: string[]; updatedAt?: Date | null } | undefined) => ({
+      queryClient.setQueryData(queryКлюч, (current: { orderedIds?: string[]; updatedAt?: Date | null } | undefined) => ({
         orderedIds: filtered,
         updatedAt: current?.updatedAt ?? null,
       }));
       mutation.mutate(filtered);
     },
-    [companies, mutation, queryClient, queryKey, userId],
+    [companies, mutation, queryClient, queryКлюч, userId],
   );
 
   return {
-    orderedCompanies,
+    orderedКомпании,
     orderedIds,
     persistOrder,
   };

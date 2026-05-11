@@ -1,7 +1,7 @@
 import { cn } from "../lib/utils";
 
 interface HermesIconProps {
-  className?: string;
+  classИмя?: string;
 }
 
 /**
@@ -10,7 +10,7 @@ interface HermesIconProps {
  *
  * ⚕️ inspired but as the proper caduceus (Hermes' symbol): staff + two snakes + wings.
  */
-export function HermesIcon({ className }: HermesIconProps) {
+export function HermesIcon({ classИмя }: HermesIconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -19,7 +19,7 @@ export function HermesIcon({ className }: HermesIconProps) {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn(className)}
+      classИмя={cn(classИмя)}
     >
       {/* Central staff */}
       <line x1="12" y1="6" x2="12" y2="23" />

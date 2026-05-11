@@ -1,217 +1,217 @@
 import { Link } from "@/lib/router";
-import type { ExecutionWorkspace, Issue } from "@paperclipai/shared";
+import type { ExecutionРабочая область, Задача } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
-import { CopyText } from "./CopyText";
-import { IssuesQuicklook } from "./IssuesQuicklook";
-import type { ProjectWorkspaceSummary } from "../lib/project-workspaces-tab";
-import { cn, projectWorkspaceUrl } from "../lib/utils";
+import { КопироватьText } from "./КопироватьText";
+import { ЗадачиQuicklook } from "./ЗадачиQuicklook";
+import type { ProjectРабочая областьSummary } from "../lib/project-workspaces-tab";
+import { cn, projectРабочая областьUrl } from "../lib/utils";
 import { timeAgo } from "../lib/timeAgo";
-import { Copy, ExternalLink, FolderOpen, GitBranch, Loader2, Play, Square } from "lucide-react";
+import { Копировать, ExternalLink, ПапкаOpen, GitВетка, Loader2, Play, Square } from "lucide-react";
 
-function workspaceKindLabel(kind: ProjectWorkspaceSummary["kind"]) {
+function workspaceKindLabel(kind: ProjectРабочая областьSummary["kind"]) {
   return kind === "execution_workspace" ? "Execution workspace" : "Project workspace";
 }
 
-function truncatePath(path: string) {
+function truncateПуть(path: string) {
   const parts = path.split("/").filter(Boolean);
   if (parts.length <= 3) return path;
   return `…/${parts.slice(-3).join("/")}`;
 }
 
-interface ProjectWorkspaceSummaryCardProps {
+interface ProjectРабочая областьSummaryCardProps {
   projectRef: string;
-  summary: ProjectWorkspaceSummary;
-  runtimeActionKey: string | null;
-  runtimeActionPending: boolean;
-  onRuntimeAction: (input: {
+  summary: ProjectРабочая областьSummary;
+  runtimeActionКлюч: string | null;
+  runtimeActionОжидание: boolean;
+  onЗапуститьtimeAction: (input: {
     key: string;
     kind: "project_workspace" | "execution_workspace";
     workspaceId: string;
     action: "start" | "stop" | "restart";
   }) => void;
-  onCloseWorkspace: (input: {
+  onЗакрытьРабочая область: (input: {
     id: string;
     name: string;
-    status: ExecutionWorkspace["status"];
+    status: ExecutionРабочая область["status"];
   }) => void;
 }
 
-export function ProjectWorkspaceSummaryCard({
+export function ProjectРабочая областьSummaryCard({
   projectRef,
   summary,
-  runtimeActionKey,
-  runtimeActionPending,
-  onRuntimeAction,
-  onCloseWorkspace,
-}: ProjectWorkspaceSummaryCardProps) {
-  const visibleIssues = summary.issues.slice(0, 4);
-  const hiddenIssueCount = Math.max(summary.issues.length - visibleIssues.length, 0);
+  runtimeActionКлюч,
+  runtimeActionОжидание,
+  onЗапуститьtimeAction,
+  onЗакрытьРабочая область,
+}: ProjectРабочая областьSummaryCardProps) {
+  const visibleЗадачи = summary.issues.slice(0, 4);
+  const hiddenЗадачаCount = Math.max(summary.issues.length - visibleЗадачи.length, 0);
   const workspaceHref =
     summary.kind === "project_workspace"
-      ? projectWorkspaceUrl({ id: projectRef, urlKey: projectRef }, summary.workspaceId)
+      ? projectРабочая областьUrl({ id: projectRef, urlКлюч: projectRef }, summary.workspaceId)
       : `/execution-workspaces/${summary.workspaceId}`;
-  const hasRunningServices = summary.runningServiceCount > 0;
-  const actionKey = `${summary.key}:${hasRunningServices ? "stop" : "start"}`;
+  const hasВыполняетсяServices = summary.runningServiceCount > 0;
+  const actionКлюч = `${summary.key}:${hasВыполняетсяServices ? "stop" : "start"}`;
 
   return (
-    <div className="rounded-lg border border-border bg-background p-4 shadow-sm sm:p-5">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+    <div classИмя="rounded-lg border border-border bg-background p-4 shadow-sm sm:p-5">
+      <div classИмя="flex flex-col gap-4">
+        <div classИмя="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div classИмя="min-w-0 space-y-2">
+            <div classИмя="flex flex-wrap items-center gap-2">
+              <span classИмя="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 {workspaceKindLabel(summary.kind)}
               </span>
-              <span className="inline-flex items-center rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground">
-                Updated {timeAgo(summary.lastUpdatedAt)}
+              <span classИмя="inline-flex items-center rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                Обновлено {timeAgo(summary.lastОбновленоAt)}
               </span>
               {summary.serviceCount > 0 ? (
                 <span
-                  className={cn(
+                  classИмя={cn(
                     "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs",
-                    hasRunningServices
+                    hasВыполняетсяServices
                       ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                       : "border-border/70 bg-background text-muted-foreground",
                   )}
                 >
                   <span
-                    className={cn(
+                    classИмя={cn(
                       "h-1.5 w-1.5 rounded-full",
-                      hasRunningServices ? "bg-emerald-500" : "bg-muted-foreground/40",
+                      hasВыполняетсяServices ? "bg-emerald-500" : "bg-muted-foreground/40",
                     )}
                   />
                   {summary.runningServiceCount}/{summary.serviceCount} services
                 </span>
               ) : null}
-              {summary.executionWorkspaceStatus ? (
-                <span className="inline-flex items-center rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground">
-                  {summary.executionWorkspaceStatus.replace(/_/g, " ")}
+              {summary.executionРабочая областьСтатус ? (
+                <span classИмя="inline-flex items-center rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                  {summary.executionРабочая областьСтатус.replace(/_/g, " ")}
                 </span>
               ) : null}
             </div>
             <Link
               to={workspaceHref}
-              className="block break-words text-base font-semibold leading-6 text-foreground hover:underline"
+              classИмя="block break-words text-base font-semibold leading-6 text-foreground hover:underline"
             >
-              {summary.workspaceName}
+              {summary.workspaceИмя}
             </Link>
           </div>
 
           <div
-            className="flex flex-col gap-2 min-[420px]:flex-row lg:w-auto lg:justify-end"
+            classИмя="flex flex-col gap-2 min-[420px]:flex-row lg:w-auto lg:justify-end"
             data-testid="workspace-summary-actions"
           >
-            {summary.hasRuntimeConfig ? (
+            {summary.hasЗапуститьtimeConfig ? (
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 justify-center px-3 text-xs"
-                disabled={runtimeActionPending}
+                classИмя="h-9 justify-center px-3 text-xs"
+                disabled={runtimeActionОжидание}
                 onClick={() =>
-                  onRuntimeAction({
+                  onЗапуститьtimeAction({
                     key: summary.key,
                     kind: summary.kind,
                     workspaceId: summary.workspaceId,
-                    action: hasRunningServices ? "stop" : "start",
+                    action: hasВыполняетсяServices ? "stop" : "start",
                   })
                 }
               >
-                {runtimeActionKey === actionKey ? (
-                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                ) : hasRunningServices ? (
-                  <Square className="mr-2 h-3.5 w-3.5" />
+                {runtimeActionКлюч === actionКлюч ? (
+                  <Loader2 classИмя="mr-2 h-3.5 w-3.5 animate-spin" />
+                ) : hasВыполняетсяServices ? (
+                  <Square classИмя="mr-2 h-3.5 w-3.5" />
                 ) : (
-                  <Play className="mr-2 h-3.5 w-3.5" />
+                  <Play classИмя="mr-2 h-3.5 w-3.5" />
                 )}
-                {hasRunningServices ? "Stop services" : "Start services"}
+                {hasВыполняетсяServices ? "Остановить службы" : "Запустить службы"}
               </Button>
             ) : null}
-            {summary.kind === "execution_workspace" && summary.executionWorkspaceId && summary.executionWorkspaceStatus ? (
+            {summary.kind === "execution_workspace" && summary.executionРабочая областьId && summary.executionРабочая областьСтатус ? (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-9 px-3 text-xs text-muted-foreground"
-                onClick={() => onCloseWorkspace({
-                  id: summary.executionWorkspaceId!,
-                  name: summary.workspaceName,
-                  status: summary.executionWorkspaceStatus!,
+                classИмя="h-9 px-3 text-xs text-muted-foreground"
+                onClick={() => onЗакрытьРабочая область({
+                  id: summary.executionРабочая областьId!,
+                  name: summary.workspaceИмя,
+                  status: summary.executionРабочая областьСтатус!,
                 })}
               >
-                {summary.executionWorkspaceStatus === "cleanup_failed" ? "Retry close" : "Close workspace"}
+                {summary.executionРабочая областьСтатус === "cleanup_failed" ? "Повторить close" : "Закрыть workspace"}
               </Button>
             ) : null}
           </div>
         </div>
 
-        <div className="rounded-lg border border-border/70 bg-background px-3 py-3">
-          <div className="space-y-2 text-sm">
-            {summary.branchName ? (
-              <div className="flex items-start gap-2">
-                <GitBranch className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Branch</div>
-                  <div className="flex items-start gap-2">
-                    <CopyText
-                      text={summary.branchName}
-                      containerClassName="min-w-0"
-                      className="min-w-0 break-all text-left font-mono text-xs text-foreground"
-                      copiedLabel="Branch copied"
+        <div classИмя="rounded-lg border border-border/70 bg-background px-3 py-3">
+          <div classИмя="space-y-2 text-sm">
+            {summary.branchИмя ? (
+              <div classИмя="flex items-start gap-2">
+                <GitВетка classИмя="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <div classИмя="min-w-0 flex-1">
+                  <div classИмя="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Ветка</div>
+                  <div classИмя="flex items-start gap-2">
+                    <КопироватьText
+                      text={summary.branchИмя}
+                      containerClassИмя="min-w-0"
+                      classИмя="min-w-0 break-all text-left font-mono text-xs text-foreground"
+                      copiedLabel="Ветка copied"
                     >
-                      {summary.branchName}
-                    </CopyText>
-                    <CopyText
-                      text={summary.branchName}
-                      ariaLabel="Copy branch"
-                      className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
-                      copiedLabel="Branch copied"
+                      {summary.branchИмя}
+                    </КопироватьText>
+                    <КопироватьText
+                      text={summary.branchИмя}
+                      ariaLabel="Копировать branch"
+                      classИмя="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
+                      copiedLabel="Ветка copied"
                     >
-                      <Copy className="h-3.5 w-3.5" />
-                    </CopyText>
+                      <Копировать classИмя="h-3.5 w-3.5" />
+                    </КопироватьText>
                   </div>
                 </div>
               </div>
             ) : null}
 
             {summary.cwd ? (
-              <div className="flex items-start gap-2">
-                <FolderOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Path</div>
-                  <div className="flex items-start gap-2">
-                    <CopyText
+              <div classИмя="flex items-start gap-2">
+                <ПапкаOpen classИмя="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <div classИмя="min-w-0 flex-1">
+                  <div classИмя="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Путь</div>
+                  <div classИмя="flex items-start gap-2">
+                    <КопироватьText
                       text={summary.cwd}
                       title={summary.cwd}
-                      containerClassName="min-w-0"
-                      className="min-w-0 break-all text-left font-mono text-xs text-foreground"
-                      copiedLabel="Path copied"
+                      containerClassИмя="min-w-0"
+                      classИмя="min-w-0 break-all text-left font-mono text-xs text-foreground"
+                      copiedLabel="Путь copied"
                     >
-                      {truncatePath(summary.cwd)}
-                    </CopyText>
-                    <CopyText
+                      {truncateПуть(summary.cwd)}
+                    </КопироватьText>
+                    <КопироватьText
                       text={summary.cwd}
-                      ariaLabel="Copy path"
-                      className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
-                      copiedLabel="Path copied"
+                      ariaLabel="Копировать path"
+                      classИмя="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
+                      copiedLabel="Путь copied"
                     >
-                      <Copy className="h-3.5 w-3.5" />
-                    </CopyText>
+                      <Копировать classИмя="h-3.5 w-3.5" />
+                    </КопироватьText>
                   </div>
                 </div>
               </div>
             ) : null}
 
             {summary.primaryServiceUrl ? (
-              <div className="flex items-start gap-2">
-                <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Service</div>
+              <div classИмя="flex items-start gap-2">
+                <ExternalLink classИмя="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <div classИмя="min-w-0">
+                  <div classИмя="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Service</div>
                   <a
                     href={summary.primaryServiceUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className={cn(
+                    classИмя={cn(
                       "break-all font-mono text-xs hover:underline",
-                      summary.primaryServiceUrlRunning
+                      summary.primaryServiceUrlВыполняется
                         ? "text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
                         : "text-foreground",
                     )}
@@ -225,20 +225,20 @@ export function ProjectWorkspaceSummaryCard({
         </div>
 
         {summary.issues.length > 0 ? (
-          <div className="space-y-2">
-            <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          <div classИмя="space-y-2">
+            <div classИмя="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
               Linked issues
             </div>
-            <div className="flex flex-wrap gap-2">
-              {visibleIssues.map((issue) => (
-                <IssuePill key={issue.id} issue={issue} />
+            <div classИмя="flex flex-wrap gap-2">
+              {visibleЗадачи.map((issue) => (
+                <ЗадачаPill key={issue.id} issue={issue} />
               ))}
-              {hiddenIssueCount > 0 ? (
+              {hiddenЗадачаCount > 0 ? (
                 <Link
                   to={workspaceHref}
-                  className="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  classИмя="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
                 >
-                  +{hiddenIssueCount} more
+                  +{hiddenЗадачаCount} more
                 </Link>
               ) : null}
             </div>
@@ -249,15 +249,15 @@ export function ProjectWorkspaceSummaryCard({
   );
 }
 
-function IssuePill({ issue }: { issue: Issue }) {
+function ЗадачаPill({ issue }: { issue: Задача }) {
   return (
-    <IssuesQuicklook issue={issue}>
+    <ЗадачиQuicklook issue={issue}>
       <Link
         to={`/issues/${issue.identifier ?? issue.id}`}
-        className="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 font-mono text-xs text-foreground transition-colors hover:border-foreground/30 hover:text-foreground hover:underline"
+        classИмя="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 font-mono text-xs text-foreground transition-colors hover:border-foreground/30 hover:text-foreground hover:underline"
       >
         {issue.identifier ?? issue.id.slice(0, 8)}
       </Link>
-    </IssuesQuicklook>
+    </ЗадачиQuicklook>
   );
 }

@@ -1,6 +1,6 @@
-import type { CompanyPortabilityFileEntry } from "@paperclipai/shared";
+import type { КомпанияПортabilityFileEntry } from "@paperclipai/shared";
 
-const contentTypeByExtension: Record<string, string> = {
+const contentТипByExtension: Record<string, string> = {
   ".gif": "image/gif",
   ".jpeg": "image/jpeg",
   ".jpg": "image/jpeg",
@@ -9,33 +9,33 @@ const contentTypeByExtension: Record<string, string> = {
   ".webp": "image/webp",
 };
 
-export function getPortableFileText(entry: CompanyPortabilityFileEntry | null | undefined) {
+export function getПортableFileText(entry: КомпанияПортabilityFileEntry | null | undefined) {
   return typeof entry === "string" ? entry : null;
 }
 
-export function getPortableFileContentType(
-  filePath: string,
-  entry: CompanyPortabilityFileEntry | null | undefined,
+export function getПортableFileContentТип(
+  fileПуть: string,
+  entry: КомпанияПортabilityFileEntry | null | undefined,
 ) {
-  if (entry && typeof entry === "object" && entry.contentType) return entry.contentType;
-  const extensionIndex = filePath.toLowerCase().lastIndexOf(".");
+  if (entry && typeof entry === "object" && entry.contentТип) return entry.contentТип;
+  const extensionIndex = fileПуть.toНизкийerCase().lastIndexOf(".");
   if (extensionIndex === -1) return null;
-  return contentTypeByExtension[filePath.toLowerCase().slice(extensionIndex)] ?? null;
+  return contentТипByExtension[fileПуть.toНизкийerCase().slice(extensionIndex)] ?? null;
 }
 
-export function getPortableFileDataUrl(
-  filePath: string,
-  entry: CompanyPortabilityFileEntry | null | undefined,
+export function getПортableFileDataUrl(
+  fileПуть: string,
+  entry: КомпанияПортabilityFileEntry | null | undefined,
 ) {
   if (!entry || typeof entry === "string") return null;
-  const contentType = getPortableFileContentType(filePath, entry) ?? "application/octet-stream";
-  return `data:${contentType};base64,${entry.data}`;
+  const contentТип = getПортableFileContentТип(fileПуть, entry) ?? "application/octet-stream";
+  return `data:${contentТип};base64,${entry.data}`;
 }
 
-export function isPortableImageFile(
-  filePath: string,
-  entry: CompanyPortabilityFileEntry | null | undefined,
+export function isПортableImageFile(
+  fileПуть: string,
+  entry: КомпанияПортabilityFileEntry | null | undefined,
 ) {
-  const contentType = getPortableFileContentType(filePath, entry);
-  return typeof contentType === "string" && contentType.startsWith("image/");
+  const contentТип = getПортableFileContentТип(fileПуть, entry);
+  return typeof contentТип === "string" && contentТип.startsWith("image/");
 }

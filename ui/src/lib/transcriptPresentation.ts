@@ -1,6 +1,6 @@
 type TranscriptDensity = "comfortable" | "compact";
 
-type TranscriptActivity = {
+type TranscriptАктивность = {
   activityId?: string;
   name: string;
   status: "running" | "completed";
@@ -40,7 +40,7 @@ function stripWrappedShell(command: string): string {
   return compactWhitespace(quoted?.[2] ?? inner);
 }
 
-function formatUnknown(value: unknown): string {
+function formatНеизвестно(value: unknown): string {
   if (typeof value === "string") return value;
   if (value === null || value === undefined) return "";
   try {
@@ -64,17 +64,17 @@ function parseStructuredToolResult(result: string | undefined) {
   if (!result) return null;
   const lines = result.split(/\r?\n/);
   const metadata = new Map<string, string>();
-  let bodyStartIndex = lines.findIndex((line) => line.trim() === "");
-  if (bodyStartIndex === -1) bodyStartIndex = lines.length;
+  let bodyНачатьIndex = lines.findIndex((line) => line.trim() === "");
+  if (bodyНачатьIndex === -1) bodyНачатьIndex = lines.length;
 
-  for (let index = 0; index < bodyStartIndex; index += 1) {
+  for (let index = 0; index < bodyНачатьIndex; index += 1) {
     const match = lines[index]?.match(/^([a-z_]+):\s*(.+)$/i);
     if (match) {
-      metadata.set(match[1].toLowerCase(), compactWhitespace(match[2]));
+      metadata.set(match[1].toНизкийerCase(), compactWhitespace(match[2]));
     }
   }
 
-  const body = lines.slice(Math.min(bodyStartIndex + 1, lines.length))
+  const body = lines.slice(Math.min(bodyНачатьIndex + 1, lines.length))
     .map((line) => compactWhitespace(line))
     .filter(Boolean)
     .join("\n");
@@ -95,7 +95,7 @@ export function formatToolPayload(value: unknown): string {
       return value;
     }
   }
-  return formatUnknown(value);
+  return formatНеизвестно(value);
 }
 
 export function parseToolPayload(value: string): unknown {
@@ -106,7 +106,7 @@ export function parseToolPayload(value: string): unknown {
   }
 }
 
-export function isCommandTool(name: string, input: unknown): boolean {
+export function isКомандаTool(name: string, input: unknown): boolean {
   if (name === "command_execution" || name === "shell" || name === "shellToolCall" || name === "bash") {
     return true;
   }
@@ -117,8 +117,8 @@ export function isCommandTool(name: string, input: unknown): boolean {
   return Boolean(record && (typeof record.command === "string" || typeof record.cmd === "string"));
 }
 
-export function displayToolName(name: string, input: unknown): string {
-  if (isCommandTool(name, input)) return "Executing command";
+export function displayToolИмя(name: string, input: unknown): string {
+  if (isКомандаTool(name, input)) return "Executing command";
   return humanizeLabel(name);
 }
 
@@ -129,12 +129,12 @@ export function summarizeToolInput(
 ): string {
   const compactMax = density === "compact" ? 72 : 120;
   if (typeof input === "string") {
-    const normalized = isCommandTool(name, input) ? stripWrappedShell(input) : compactWhitespace(input);
+    const normalized = isКомандаTool(name, input) ? stripWrappedShell(input) : compactWhitespace(input);
     return truncate(normalized, compactMax);
   }
   const record = asRecord(input);
   if (!record) {
-    const serialized = compactWhitespace(formatUnknown(input));
+    const serialized = compactWhitespace(formatНеизвестно(input));
     return serialized ? truncate(serialized, compactMax) : `Inspect ${name} input`;
   }
 
@@ -143,18 +143,18 @@ export function summarizeToolInput(
     : typeof record.cmd === "string"
       ? record.cmd
       : null;
-  const humanDescription =
+  const humanОписание =
     summarizeRecord(record, ["description", "summary", "reason", "goal", "intent", "action", "task"])
     ?? null;
-  if (humanDescription) {
-    return truncate(humanDescription, compactMax);
+  if (humanОписание) {
+    return truncate(humanОписание, compactMax);
   }
-  if (command && isCommandTool(name, record)) {
+  if (command && isКомандаTool(name, record)) {
     return truncate(stripWrappedShell(command), compactMax);
   }
 
   const direct =
-    summarizeRecord(record, ["path", "filePath", "file_path", "query", "url", "prompt", "message"])
+    summarizeRecord(record, ["path", "fileПуть", "file_path", "query", "url", "prompt", "message"])
     ?? summarizeRecord(record, ["pattern", "name", "title", "target", "tool", "command", "cmd"])
     ?? null;
   if (direct) return truncate(direct, compactMax);
@@ -167,12 +167,12 @@ export function summarizeToolInput(
   }
 
   const keys = Object.keys(record);
-  if (keys.length === 0) return `No ${name} input`;
+  if (keys.length === 0) return `Нет ${name} input`;
   if (keys.length === 1) return truncate(`${keys[0]} payload`, compactMax);
   return truncate(`${keys.length} fields: ${keys.slice(0, 3).join(", ")}`, compactMax);
 }
 
-function readToolDetailValue(value: unknown, max = 200): string | null {
+function readToolDetailЗначение(value: unknown, max = 200): string | null {
   if (typeof value === "string") {
     const normalized = compactWhitespace(value);
     return normalized ? truncate(normalized, max) : null;
@@ -185,8 +185,8 @@ function readToolDetailValue(value: unknown, max = 200): string | null {
 
 export function describeToolInput(name: string, input: unknown): ToolInputDetail[] {
   if (typeof input === "string") {
-    const summary = compactWhitespace(isCommandTool(name, input) ? stripWrappedShell(input) : input);
-    return summary ? [{ label: isCommandTool(name, input) ? "Command" : "Input", value: truncate(summary, 200), tone: "code" }] : [];
+    const summary = compactWhitespace(isКомандаTool(name, input) ? stripWrappedShell(input) : input);
+    return summary ? [{ label: isКомандаTool(name, input) ? "Команда" : "Input", value: truncate(summary, 200), tone: "code" }] : [];
   }
 
   const record = asRecord(input);
@@ -206,13 +206,13 @@ export function describeToolInput(name: string, input: unknown): ToolInputDetail
     "Intent",
     summarizeRecord(record, ["description", "summary", "reason", "goal", "intent", "action", "task"]) ?? null,
   );
-  pushDetail("Path", readToolDetailValue(record.path) ?? readToolDetailValue(record.filePath) ?? readToolDetailValue(record.file_path));
-  pushDetail("Directory", readToolDetailValue(record.cwd));
-  pushDetail("Query", readToolDetailValue(record.query));
-  pushDetail("Target", readToolDetailValue(record.url) ?? readToolDetailValue(record.target));
-  pushDetail("Prompt", readToolDetailValue(record.prompt) ?? readToolDetailValue(record.message));
-  pushDetail("Pattern", readToolDetailValue(record.pattern));
-  pushDetail("Name", readToolDetailValue(record.name) ?? readToolDetailValue(record.title));
+  pushDetail("Путь", readToolDetailЗначение(record.path) ?? readToolDetailЗначение(record.fileПуть) ?? readToolDetailЗначение(record.file_path));
+  pushDetail("Directory", readToolDetailЗначение(record.cwd));
+  pushDetail("Query", readToolDetailЗначение(record.query));
+  pushDetail("Цель", readToolDetailЗначение(record.url) ?? readToolDetailЗначение(record.target));
+  pushDetail("Prompt", readToolDetailЗначение(record.prompt) ?? readToolDetailЗначение(record.message));
+  pushDetail("Pattern", readToolDetailЗначение(record.pattern));
+  pushDetail("Имя", readToolDetailЗначение(record.name) ?? readToolDetailЗначение(record.title));
 
   if (Array.isArray(record.paths) && record.paths.length > 0) {
     const paths = record.paths
@@ -221,7 +221,7 @@ export function describeToolInput(name: string, input: unknown): ToolInputDetail
       .join(", ");
     if (paths) {
       const suffix = record.paths.length > 3 ? `, +${record.paths.length - 3} more` : "";
-      pushDetail("Paths", `${paths}${suffix}`);
+      pushDetail("Путьs", `${paths}${suffix}`);
     }
   }
 
@@ -230,8 +230,8 @@ export function describeToolInput(name: string, input: unknown): ToolInputDetail
     : typeof record.cmd === "string"
       ? record.cmd
       : null;
-  if (command && isCommandTool(name, record) && !details.some((detail) => detail.label === "Intent")) {
-    pushDetail("Command", truncate(stripWrappedShell(command), 200), "code");
+  if (command && isКомандаTool(name, record) && !details.some((detail) => detail.label === "Intent")) {
+    pushDetail("Команда", truncate(stripWrappedShell(command), 200), "code");
   }
 
   return details;
@@ -239,18 +239,18 @@ export function describeToolInput(name: string, input: unknown): ToolInputDetail
 
 export function summarizeToolResult(
   result: string | undefined,
-  isError: boolean | undefined,
+  isОшибка: boolean | undefined,
   density: TranscriptDensity = "comfortable",
 ): string {
-  if (!result) return isError ? "Tool failed" : "Waiting for result";
+  if (!result) return isОшибка ? "Tool failed" : "Waiting for result";
   const structured = parseStructuredToolResult(result);
   if (structured) {
     if (structured.body) {
       return truncate(structured.body.split("\n")[0] ?? structured.body, density === "compact" ? 84 : 140);
     }
-    if (structured.status === "completed") return "Completed";
+    if (structured.status === "completed") return "Завершён";
     if (structured.status === "failed" || structured.status === "error") {
-      return structured.exitCode ? `Failed with exit code ${structured.exitCode}` : "Failed";
+      return structured.exitCode ? `Ошибка with exit code ${structured.exitCode}` : "Ошибка";
     }
   }
   const lines = result
@@ -261,21 +261,21 @@ export function summarizeToolResult(
   return truncate(firstLine, density === "compact" ? 84 : 140);
 }
 
-export function parseSystemActivity(text: string): TranscriptActivity | null {
+export function parseSystemАктивность(text: string): TranscriptАктивность | null {
   const match = text.match(/^item (started|completed):\s*([a-z0-9_-]+)(?:\s+\(id=([^)]+)\))?$/i);
   if (!match) return null;
   return {
-    status: match[1].toLowerCase() === "started" ? "running" : "completed",
-    name: humanizeLabel(match[2] ?? "Activity"),
+    status: match[1].toНизкийerCase() === "started" ? "running" : "completed",
+    name: humanizeLabel(match[2] ?? "Активность"),
     activityId: match[3] || undefined,
   };
 }
 
 export function shouldHideNiceModeStderr(text: string): boolean {
-  const normalized = compactWhitespace(text).toLowerCase();
+  const normalized = compactWhitespace(text).toНизкийerCase();
   return normalized.startsWith("[paperclip] skipping saved session resume");
 }
 
-export function summarizeNotice(text: string, max = 160): string {
+export function summarizeНетtice(text: string, max = 160): string {
   return truncate(compactWhitespace(text), max);
 }

@@ -1,93 +1,93 @@
-import { createRootEditorSubscription$, realmPlugin } from "@mdxeditor/editor";
-import { $isLinkNode, type LinkNode } from "@lexical/link";
+import { createRootИзменитьorSubscription$, realmPlugin } from "@mdxeditor/editor";
+import { $isLinkНетde, type LinkНетde } from "@lexical/link";
 import {
   $getSelection,
-  $isElementNode,
-  $isNodeSelection,
+  $isElementНетde,
+  $isНетdeSelection,
   $isRangeSelection,
-  $isTextNode,
+  $isTextНетde,
   COMMAND_PRIORITY_HIGH,
   KEY_BACKSPACE_COMMAND,
   KEY_DELETE_COMMAND,
-  type LexicalNode,
-  type PointType,
+  type LexicalНетde,
+  type PointТип,
 } from "lexical";
 import { parseMentionChipHref } from "./mention-chips";
 
 export type MentionDeletionDirection = "backward" | "forward";
 
-function isMentionLinkNode(node: LexicalNode | null | undefined): node is LinkNode {
-  return Boolean(node && $isLinkNode(node) && parseMentionChipHref(node.getURL()));
+function isMentionLinkНетde(node: LexicalНетde | null | undefined): node is LinkНетde {
+  return Boolean(node && $isLinkНетde(node) && parseMentionChipHref(node.getURL()));
 }
 
-function findMentionLinkNode(node: LexicalNode | null | undefined): LinkNode | null {
+function findMentionLinkНетde(node: LexicalНетde | null | undefined): LinkНетde | null {
   if (!node) return null;
-  if (isMentionLinkNode(node)) return node;
+  if (isMentionLinkНетde(node)) return node;
 
-  let parent = node.getParent();
+  let parent = node.getРодитель();
   while (parent) {
-    if (isMentionLinkNode(parent)) return parent;
-    parent = parent.getParent();
+    if (isMentionLinkНетde(parent)) return parent;
+    parent = parent.getРодитель();
   }
 
   return null;
 }
 
-function findMentionLinkNodeAtPoint(point: PointType, direction: MentionDeletionDirection): LinkNode | null {
-  const node = point.getNode();
-  const directMention = findMentionLinkNode(node);
+function findMentionLinkНетdeAtPoint(point: PointТип, direction: MentionDeletionDirection): LinkНетde | null {
+  const node = point.getНетde();
+  const directMention = findMentionLinkНетde(node);
   if (directMention) return directMention;
 
-  if (point.type === "element" && $isElementNode(node)) {
+  if (point.type === "element" && $isElementНетde(node)) {
     const childIndex = direction === "backward" ? point.offset - 1 : point.offset;
     if (childIndex < 0) return null;
-    return findMentionLinkNode(node.getChildAtIndex(childIndex));
+    return findMentionLinkНетde(node.getChildAtIndex(childIndex));
   }
 
-  if (point.type === "text" && $isTextNode(node)) {
+  if (point.type === "text" && $isTextНетde(node)) {
     if (direction === "backward" && point.offset === 0) {
-      return findMentionLinkNode(node.getPreviousSibling());
+      return findMentionLinkНетde(node.getPreviousSibling());
     }
 
     if (direction === "forward" && point.offset === node.getTextContentSize()) {
-      return findMentionLinkNode(node.getNextSibling());
+      return findMentionLinkНетde(node.getДалееSibling());
     }
   }
 
   return null;
 }
 
-export function findMentionLinkForDeletion(direction: MentionDeletionDirection): LinkNode | null {
+export function findMentionLinkForDeletion(direction: MentionDeletionDirection): LinkНетde | null {
   const selection = $getSelection();
   if (!selection) return null;
 
-  if ($isNodeSelection(selection)) {
-    const [selectedNode] = selection.getNodes();
-    return selectedNode ? findMentionLinkNode(selectedNode) : null;
+  if ($isНетdeSelection(selection)) {
+    const [selectedНетde] = selection.getНетdes();
+    return selectedНетde ? findMentionLinkНетde(selectedНетde) : null;
   }
 
   if (!$isRangeSelection(selection)) return null;
 
-  const anchorMention = findMentionLinkNode(selection.anchor.getNode());
-  const focusMention = findMentionLinkNode(selection.focus.getNode());
+  const anchorMention = findMentionLinkНетde(selection.anchor.getНетde());
+  const focusMention = findMentionLinkНетde(selection.focus.getНетde());
   if (anchorMention && focusMention && anchorMention.is(focusMention)) {
     return anchorMention;
   }
 
   if (!selection.isCollapsed()) return null;
 
-  return findMentionLinkNodeAtPoint(selection.anchor, direction);
+  return findMentionLinkНетdeAtPoint(selection.anchor, direction);
 }
 
 export function deleteSelectedMentionChip(direction: MentionDeletionDirection): boolean {
-  const mentionNode = findMentionLinkForDeletion(direction);
-  if (!mentionNode) return false;
+  const mentionНетde = findMentionLinkForDeletion(direction);
+  if (!mentionНетde) return false;
 
-  const previousSibling = mentionNode.getPreviousSibling();
-  const nextSibling = mentionNode.getNextSibling();
-  const parent = mentionNode.getParentOrThrow();
+  const previousSibling = mentionНетde.getPreviousSibling();
+  const nextSibling = mentionНетde.getДалееSibling();
+  const parent = mentionНетde.getРодительOrThrow();
 
-  mentionNode.remove();
+  mentionНетde.remove();
 
   if (direction === "backward") {
     if (previousSibling) {
@@ -95,15 +95,15 @@ export function deleteSelectedMentionChip(direction: MentionDeletionDirection): 
       return true;
     }
     if (nextSibling) {
-      nextSibling.selectStart();
+      nextSibling.selectНачать();
       return true;
     }
-    parent.selectStart();
+    parent.selectНачать();
     return true;
   }
 
   if (nextSibling) {
-    nextSibling.selectStart();
+    nextSibling.selectНачать();
     return true;
   }
   if (previousSibling) {
@@ -114,28 +114,28 @@ export function deleteSelectedMentionChip(direction: MentionDeletionDirection): 
   return true;
 }
 
-function handleMentionDelete(direction: MentionDeletionDirection, event: KeyboardEvent | null): boolean {
-  const didDelete = deleteSelectedMentionChip(direction);
-  if (!didDelete) return false;
+function handleMentionУдалить(direction: MentionDeletionDirection, event: КлючboardEvent | null): boolean {
+  const didУдалить = deleteSelectedMentionChip(direction);
+  if (!didУдалить) return false;
 
-  event?.preventDefault();
+  event?.preventПо умолчанию();
   event?.stopPropagation();
   return true;
 }
 
 export const mentionDeletionPlugin = realmPlugin({
   init(realm) {
-    realm.pub(createRootEditorSubscription$, [
+    realm.pub(createRootИзменитьorSubscription$, [
       (editor) =>
-        editor.registerCommand(
+        editor.registerКоманда(
           KEY_BACKSPACE_COMMAND,
-          (event) => handleMentionDelete("backward", event as KeyboardEvent | null),
+          (event) => handleMentionУдалить("backward", event as КлючboardEvent | null),
           COMMAND_PRIORITY_HIGH,
         ),
       (editor) =>
-        editor.registerCommand(
+        editor.registerКоманда(
           KEY_DELETE_COMMAND,
-          (event) => handleMentionDelete("forward", event as KeyboardEvent | null),
+          (event) => handleMentionУдалить("forward", event as КлючboardEvent | null),
           COMMAND_PRIORITY_HIGH,
         ),
     ]);

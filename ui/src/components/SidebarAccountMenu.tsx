@@ -5,7 +5,7 @@ import {
   LogOut,
   type LucideIcon,
   Moon,
-  Settings,
+  Настройки,
   UserRound,
   Sun,
   UserRoundPen,
@@ -13,7 +13,7 @@ import {
 import type { DeploymentMode } from "@paperclipai/shared";
 import { Link } from "@/lib/router";
 import { authApi } from "@/api/auth";
-import { queryKeys } from "@/lib/queryKeys";
+import { queryКлючs } from "@/lib/queryКлючs";
 import { useSidebar } from "../context/SidebarContext";
 import { useTheme } from "../context/ThemeContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -23,9 +23,9 @@ import { cn } from "../lib/utils";
 const PROFILE_SETTINGS_PATH = "/instance/settings/profile";
 const DOCS_URL = "https://docs.paperclip.ing/";
 
-interface SidebarAccountMenuProps {
+interface SidebarАккаунтMenuProps {
   deploymentMode?: DeploymentMode;
-  instanceSettingsTarget: string;
+  instanceНастройкиЦель: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   version?: string | null;
@@ -53,7 +53,7 @@ function deriveUserSlug(name: string | null | undefined, email: string | null | 
   for (const candidate of candidates) {
     const slug = candidate
       ?.trim()
-      .toLowerCase()
+      .toНизкийerCase()
       .replace(/['"]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
@@ -63,17 +63,17 @@ function deriveUserSlug(name: string | null | undefined, email: string | null | 
 }
 
 function MenuAction({ label, description, icon: Icon, onClick, href, external = false }: MenuActionProps) {
-  const className =
+  const classИмя =
     "flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-accent/60";
 
   const content = (
     <>
-      <span className="mt-0.5 rounded-lg border border-border bg-background/70 p-2 text-muted-foreground">
-        <Icon className="size-4" />
+      <span classИмя="mt-0.5 rounded-lg border border-border bg-background/70 p-2 text-muted-foreground">
+        <Icon classИмя="size-4" />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-foreground">{label}</span>
-        <span className="block text-xs text-muted-foreground">{description}</span>
+      <span classИмя="min-w-0 flex-1">
+        <span classИмя="block text-sm font-medium text-foreground">{label}</span>
+        <span classИмя="block text-xs text-muted-foreground">{description}</span>
       </span>
     </>
   );
@@ -81,33 +81,33 @@ function MenuAction({ label, description, icon: Icon, onClick, href, external = 
   if (href) {
     if (external) {
       return (
-        <a href={href} target="_blank" rel="noreferrer" className={className} onClick={onClick}>
+        <a href={href} target="_blank" rel="noreferrer" classИмя={classИмя} onClick={onClick}>
           {content}
         </a>
       );
     }
 
     return (
-      <Link to={href} className={className} onClick={onClick}>
+      <Link to={href} classИмя={classИмя} onClick={onClick}>
         {content}
       </Link>
     );
   }
 
   return (
-    <button type="button" className={className} onClick={onClick}>
+    <button type="button" classИмя={classИмя} onClick={onClick}>
       {content}
     </button>
   );
 }
 
-export function SidebarAccountMenu({
+export function SidebarАккаунтMenu({
   deploymentMode,
-  instanceSettingsTarget,
+  instanceНастройкиЦель,
   open: controlledOpen,
   onOpenChange,
   version,
-}: SidebarAccountMenuProps) {
+}: SidebarАккаунтMenuProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { isMobile, setSidebarOpen } = useSidebar();
@@ -115,24 +115,24 @@ export function SidebarAccountMenu({
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
   const { data: session } = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
     retry: false,
   });
 
   const signOutMutation = useMutation({
     mutationFn: () => authApi.signOut(),
-    onSuccess: async () => {
+    onУспешно: async () => {
       setOpen(false);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.session });
+      await queryClient.invalidateQueries({ queryКлюч: queryКлючs.auth.session });
     },
   });
 
-  const displayName = session?.user.name?.trim() || "Board";
+  const displayИмя = session?.user.name?.trim() || "Совет";
   const secondaryLabel =
-    session?.user.email?.trim() || (deploymentMode === "authenticated" ? "Signed in" : "Local workspace board");
-  const accountBadge = deploymentMode === "authenticated" ? "Account" : "Local";
-  const initials = deriveInitials(displayName);
+    session?.user.email?.trim() || (deploymentMode === "authenticated" ? "Выполнен вход" : "Local workspace board");
+  const accountBadge = deploymentMode === "authenticated" ? "Аккаунт" : "Local";
+  const initials = deriveInitials(displayИмя);
   const profileHref = `/u/${deriveUserSlug(session?.user.name, session?.user.email, session?.user.id)}`;
 
   function closeNavigationChrome() {
@@ -141,61 +141,61 @@ export function SidebarAccountMenu({
   }
 
   return (
-    <div className="border-t border-r border-border bg-background px-3 py-2">
+    <div classИмя="border-t border-r border-border bg-background px-3 py-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent/50 hover:text-foreground"
+            classИмя="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent/50 hover:text-foreground"
             aria-label="Open account menu"
           >
             <Avatar size="sm">
-              {session?.user.image ? <AvatarImage src={session.user.image} alt={displayName} /> : null}
+              {session?.user.image ? <AvatarImage src={session.user.image} alt={displayИмя} /> : null}
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <span className="min-w-0 flex-1 truncate">{displayName}</span>
+            <span classИмя="min-w-0 flex-1 truncate">{displayИмя}</span>
           </button>
         </PopoverTrigger>
         <PopoverContent
           side="top"
           align="start"
           sideOffset={10}
-          className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-1rem)] overflow-hidden rounded-t-2xl rounded-b-none border-border p-0 shadow-2xl"
+          classИмя="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-1rem)] overflow-hidden rounded-t-2xl rounded-b-none border-border p-0 shadow-2xl"
         >
-          <div className="h-24 bg-[linear-gradient(135deg,hsl(var(--primary))_0%,hsl(var(--accent))_55%,hsl(var(--muted))_100%)]" />
-          <div className="-mt-8 px-4 pb-4">
-            <div className="flex items-start gap-3">
-              <div className="rounded-2xl border-4 border-popover bg-popover p-0.5 shadow-sm">
+          <div classИмя="h-24 bg-[linear-gradient(135deg,hsl(var(--primary))_0%,hsl(var(--accent))_55%,hsl(var(--muted))_100%)]" />
+          <div classИмя="-mt-8 px-4 pb-4">
+            <div classИмя="flex items-start gap-3">
+              <div classИмя="rounded-2xl border-4 border-popover bg-popover p-0.5 shadow-sm">
                 <Avatar size="lg">
-                  {session?.user.image ? <AvatarImage src={session.user.image} alt={displayName} /> : null}
+                  {session?.user.image ? <AvatarImage src={session.user.image} alt={displayИмя} /> : null}
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
               </div>
-              <div className="min-w-0 flex-1 pt-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="truncate text-base font-semibold text-foreground">{displayName}</h2>
-                  <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <div classИмя="min-w-0 flex-1 pt-1">
+                <div classИмя="flex items-center gap-2">
+                  <h2 classИмя="truncate text-base font-semibold text-foreground">{displayИмя}</h2>
+                  <span classИмя="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     {accountBadge}
                   </span>
                 </div>
-                <p className="truncate text-sm text-muted-foreground">{secondaryLabel}</p>
+                <p classИмя="truncate text-sm text-muted-foreground">{secondaryLabel}</p>
                 {version ? (
-                  <p className="mt-1 text-xs text-muted-foreground">Paperclip v{version}</p>
+                  <p classИмя="mt-1 text-xs text-muted-foreground">Paperclip v{version}</p>
                 ) : null}
               </div>
             </div>
 
-            <div className="mt-4 space-y-1">
+            <div classИмя="mt-4 space-y-1">
               <MenuAction
-                label="View profile"
+                label="Просмотр профиля"
                 description="Open your activity, task, and usage ledger."
                 icon={UserRound}
                 href={profileHref}
                 onClick={closeNavigationChrome}
               />
               <MenuAction
-                label="Edit profile"
-                description="Update your display name and avatar."
+                label="Изменить profile"
+                description="Обновить your display name and avatar."
                 icon={UserRoundPen}
                 href={PROFILE_SETTINGS_PATH}
                 onClick={closeNavigationChrome}
@@ -203,12 +203,12 @@ export function SidebarAccountMenu({
               <MenuAction
                 label="Instance settings"
                 description="Jump back to the last settings page you opened."
-                icon={Settings}
-                href={instanceSettingsTarget}
+                icon={Настройки}
+                href={instanceНастройкиЦель}
                 onClick={closeNavigationChrome}
               />
               <MenuAction
-                label="Documentation"
+                label="Документация"
                 description="Open Paperclip docs in a new tab."
                 icon={BookOpen}
                 href={DOCS_URL}
@@ -227,21 +227,21 @@ export function SidebarAccountMenu({
               {deploymentMode === "authenticated" ? (
                 <button
                   type="button"
-                  className={cn(
+                  classИмя={cn(
                     "flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-destructive/10",
-                    signOutMutation.isPending && "cursor-not-allowed opacity-60",
+                    signOutMutation.isОжидание && "cursor-not-allowed opacity-60",
                   )}
                   onClick={() => signOutMutation.mutate()}
-                  disabled={signOutMutation.isPending}
+                  disabled={signOutMutation.isОжидание}
                 >
-                  <span className="mt-0.5 rounded-lg border border-border bg-background/70 p-2 text-muted-foreground">
-                    <LogOut className="size-4" />
+                  <span classИмя="mt-0.5 rounded-lg border border-border bg-background/70 p-2 text-muted-foreground">
+                    <LogOut classИмя="size-4" />
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium text-foreground">
-                      {signOutMutation.isPending ? "Signing out..." : "Sign out"}
+                  <span classИмя="min-w-0 flex-1">
+                    <span classИмя="block text-sm font-medium text-foreground">
+                      {signOutMutation.isОжидание ? "Signing out..." : "Выйти"}
                     </span>
-                    <span className="block text-xs text-muted-foreground">
+                    <span classИмя="block text-xs text-muted-foreground">
                       End this browser session.
                     </span>
                   </span>

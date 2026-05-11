@@ -1,21 +1,21 @@
-import type { Issue, IssueComment } from "@paperclipai/shared";
+import type { Задача, ЗадачаComment } from "@paperclipai/shared";
 
-export interface IssueCommentReassignment {
-  assigneeAgentId: string | null;
+export interface ЗадачаCommentReassignment {
+  assigneeАгентId: string | null;
   assigneeUserId: string | null;
 }
 
-export interface OptimisticIssueComment extends IssueComment {
+export interface OptimisticЗадачаComment extends ЗадачаComment {
   clientId: string;
-  clientStatus: "pending" | "queued";
-  queueTargetRunId?: string | null;
+  clientСтатус: "pending" | "queued";
+  queueЦельЗапуститьId?: string | null;
 }
 
-export type IssueTimelineComment = IssueComment | OptimisticIssueComment;
-export type LocallyQueuedIssueComment<T extends IssueComment> = T & {
-  clientStatus: "queued";
+export type ЗадачаTimelineComment = ЗадачаComment | OptimisticЗадачаComment;
+export type LocallyQueuedЗадачаComment<T extends ЗадачаComment> = T & {
+  clientСтатус: "queued";
   queueState: "queued";
-  queueTargetRunId: string;
+  queueЦельЗапуститьId: string;
 };
 
 function toTimestamp(value: Date | string) {
@@ -30,7 +30,7 @@ function createOptimisticCommentId() {
   return `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function sortIssueComments<T extends { createdAt: Date | string; id: string }>(comments: T[]) {
+export function sortЗадачаКомментарии<T extends { createdAt: Date | string; id: string }>(comments: T[]) {
   return [...comments].sort((a, b) => {
     const createdAtDiff = toTimestamp(a.createdAt) - toTimestamp(b.createdAt);
     if (createdAtDiff !== 0) return createdAtDiff;
@@ -38,18 +38,18 @@ export function sortIssueComments<T extends { createdAt: Date | string; id: stri
   });
 }
 
-function sortIssueCommentsDesc<T extends { createdAt: Date | string; id: string }>(comments: T[]) {
-  return sortIssueComments(comments).reverse();
+function sortЗадачаКомментарииDesc<T extends { createdAt: Date | string; id: string }>(comments: T[]) {
+  return sortЗадачаКомментарии(comments).reverse();
 }
 
-export function createOptimisticIssueComment(params: {
+export function createOptimisticЗадачаComment(params: {
   companyId: string;
   issueId: string;
   body: string;
   authorUserId: string | null;
-  clientStatus?: OptimisticIssueComment["clientStatus"];
-  queueTargetRunId?: string | null;
-}): OptimisticIssueComment {
+  clientСтатус?: OptimisticЗадачаComment["clientСтатус"];
+  queueЦельЗапуститьId?: string | null;
+}): OptimisticЗадачаComment {
   const now = new Date();
   const clientId = createOptimisticCommentId();
   return {
@@ -57,86 +57,86 @@ export function createOptimisticIssueComment(params: {
     clientId,
     companyId: params.companyId,
     issueId: params.issueId,
-    authorType: "user",
-    authorAgentId: null,
+    authorТип: "user",
+    authorАгентId: null,
     authorUserId: params.authorUserId,
     body: params.body,
     presentation: null,
     metadata: null,
-    clientStatus: params.clientStatus ?? "pending",
-    queueTargetRunId: params.queueTargetRunId ?? null,
+    clientСтатус: params.clientСтатус ?? "pending",
+    queueЦельЗапуститьId: params.queueЦельЗапуститьId ?? null,
     createdAt: now,
     updatedAt: now,
   };
 }
 
-export function isQueuedIssueComment(params: {
-  comment: Pick<IssueTimelineComment, "createdAt"> &
-    Partial<Pick<OptimisticIssueComment, "clientStatus">> & {
+export function isQueuedЗадачаComment(params: {
+  comment: Pick<ЗадачаTimelineComment, "createdAt"> &
+    Partial<Pick<OptimisticЗадачаComment, "clientСтатус">> & {
       id?: string;
-      authorAgentId?: string | null;
+      authorАгентId?: string | null;
     };
-  activeRunStartedAt?: Date | string | null;
-  activeRunAgentId?: string | null;
-  activeRunCommentId?: string | null;
-  activeRunWakeCommentId?: string | null;
+  activeЗапуститьЗапущенAt?: Date | string | null;
+  activeЗапуститьАгентId?: string | null;
+  activeЗапуститьCommentId?: string | null;
+  activeЗапуститьWakeCommentId?: string | null;
   runId?: string | null;
-  interruptedRunId?: string | null;
+  interruptedЗапуститьId?: string | null;
 }) {
   if (params.runId) return false;
-  if (params.interruptedRunId) return false;
+  if (params.interruptedЗапуститьId) return false;
   if (
     params.comment.id &&
-    (params.comment.id === params.activeRunWakeCommentId || params.comment.id === params.activeRunCommentId)
+    (params.comment.id === params.activeЗапуститьWakeCommentId || params.comment.id === params.activeЗапуститьCommentId)
   ) {
     return false;
   }
-  if (params.comment.authorAgentId && params.activeRunAgentId && params.comment.authorAgentId === params.activeRunAgentId) {
+  if (params.comment.authorАгентId && params.activeЗапуститьАгентId && params.comment.authorАгентId === params.activeЗапуститьАгентId) {
     return false;
   }
-  if (params.comment.clientStatus === "queued") return true;
-  if (!params.activeRunStartedAt) return false;
-  return toTimestamp(params.comment.createdAt) >= toTimestamp(params.activeRunStartedAt);
+  if (params.comment.clientСтатус === "queued") return true;
+  if (!params.activeЗапуститьЗапущенAt) return false;
+  return toTimestamp(params.comment.createdAt) >= toTimestamp(params.activeЗапуститьЗапущенAt);
 }
 
-export function applyLocalQueuedIssueCommentState<T extends IssueComment>(
+export function applyLocalQueuedЗадачаCommentState<T extends ЗадачаComment>(
   comment: T,
   params: {
-    queuedTargetRunId?: string | null;
-    targetRunIsLive: boolean;
-    runningRunId?: string | null;
+    queuedЦельЗапуститьId?: string | null;
+    targetЗапуститьIsLive: boolean;
+    runningЗапуститьId?: string | null;
   },
-): T | LocallyQueuedIssueComment<T> {
-  const queuedTargetRunId = params.queuedTargetRunId ?? null;
-  if (!queuedTargetRunId || !params.targetRunIsLive) return comment;
-  if (params.runningRunId && params.runningRunId !== queuedTargetRunId) return comment;
+): T | LocallyQueuedЗадачаComment<T> {
+  const queuedЦельЗапуститьId = params.queuedЦельЗапуститьId ?? null;
+  if (!queuedЦельЗапуститьId || !params.targetЗапуститьIsLive) return comment;
+  if (params.runningЗапуститьId && params.runningЗапуститьId !== queuedЦельЗапуститьId) return comment;
 
   return {
     ...comment,
-    clientStatus: "queued",
+    clientСтатус: "queued",
     queueState: "queued",
-    queueTargetRunId: queuedTargetRunId,
+    queueЦельЗапуститьId: queuedЦельЗапуститьId,
   };
 }
 
-export function mergeIssueComments(
-  comments: IssueComment[] | undefined,
-  optimisticComments: OptimisticIssueComment[],
-): IssueTimelineComment[] {
+export function mergeЗадачаКомментарии(
+  comments: ЗадачаComment[] | undefined,
+  optimisticКомментарии: OptimisticЗадачаComment[],
+): ЗадачаTimelineComment[] {
   const merged = [...(comments ?? [])];
   const existingIds = new Set(merged.map((comment) => comment.id));
-  for (const comment of optimisticComments) {
+  for (const comment of optimisticКомментарии) {
     if (!existingIds.has(comment.id)) {
       merged.push(comment);
     }
   }
-  return sortIssueComments(merged);
+  return sortЗадачаКомментарии(merged);
 }
 
-export function takeOptimisticIssueComment(
-  comments: OptimisticIssueComment[],
+export function takeOptimisticЗадачаComment(
+  comments: OptimisticЗадачаComment[],
   clientId: string,
-): { comments: OptimisticIssueComment[]; comment: OptimisticIssueComment | null } {
+): { comments: OptimisticЗадачаComment[]; comment: OptimisticЗадачаComment | null } {
   const index = comments.findIndex((comment) => comment.clientId === clientId);
   if (index === -1) {
     return { comments, comment: null };
@@ -148,21 +148,21 @@ export function takeOptimisticIssueComment(
   };
 }
 
-export function flattenIssueCommentPages(
-  pages: ReadonlyArray<ReadonlyArray<IssueComment>> | undefined,
-): IssueComment[] {
-  return sortIssueComments((pages ?? []).flatMap((page) => page));
+export function flattenЗадачаCommentPages(
+  pages: ReadonlyArray<ReadonlyArray<ЗадачаComment>> | undefined,
+): ЗадачаComment[] {
+  return sortЗадачаКомментарии((pages ?? []).flatMap((page) => page));
 }
 
-export function getNextIssueCommentPageParam(
-  lastPage: ReadonlyArray<IssueComment> | undefined,
+export function getДалееЗадачаCommentPageParam(
+  lastPage: ReadonlyArray<ЗадачаComment> | undefined,
   pageSize: number,
 ): string | undefined {
   if (!lastPage || lastPage.length < pageSize) return undefined;
   return lastPage[lastPage.length - 1]?.id;
 }
 
-function getNextPageCursor<T extends { id: string }>(
+function getДалееPageCursor<T extends { id: string }>(
   lastPage: ReadonlyArray<T> | undefined,
   pageSize: number,
 ): string | undefined {
@@ -170,7 +170,7 @@ function getNextPageCursor<T extends { id: string }>(
   return lastPage[lastPage.length - 1]?.id;
 }
 
-export async function loadRemainingIssueCommentPages<T extends { id: string }>(params: {
+export async function loadRemainingЗадачаCommentPages<T extends { id: string }>(params: {
   pages: ReadonlyArray<ReadonlyArray<T>> | undefined;
   pageParams: ReadonlyArray<string | null> | undefined;
   pageSize: number;
@@ -188,7 +188,7 @@ export async function loadRemainingIssueCommentPages<T extends { id: string }>(p
 
   if (params.pageSize <= 0) return { pages, pageParams };
 
-  let cursor = getNextPageCursor(pages[pages.length - 1], params.pageSize);
+  let cursor = getДалееPageCursor(pages[pages.length - 1], params.pageSize);
   const maxPages = Math.max(0, params.maxPages ?? Number.POSITIVE_INFINITY);
   const seenCursors = new Set<string>();
   while (cursor && !seenCursors.has(cursor) && seenCursors.size < maxPages) {
@@ -197,155 +197,155 @@ export async function loadRemainingIssueCommentPages<T extends { id: string }>(p
     pages.push(nextPage);
     pageParams.push(cursor);
 
-    cursor = getNextPageCursor(nextPage, params.pageSize);
+    cursor = getДалееPageCursor(nextPage, params.pageSize);
   }
 
   return { pages, pageParams };
 }
 
-export function shouldAutoloadOlderIssueComments(params: {
+export function shouldАвтоloadOlderЗадачаКомментарии(params: {
   activeDetailTab: string;
-  hasOlderComments: boolean;
+  hasOlderКомментарии: boolean;
   loadedCommentCount: number;
-  initialPageLoading: boolean;
-  olderPageLoading: boolean;
+  initialPageЗагрузка: boolean;
+  olderPageЗагрузка: boolean;
   autoLoadLimit: number;
 }) {
   if (params.activeDetailTab !== "chat") return false;
-  if (!params.hasOlderComments) return false;
-  if (params.initialPageLoading || params.olderPageLoading) return false;
+  if (!params.hasOlderКомментарии) return false;
+  if (params.initialPageЗагрузка || params.olderPageЗагрузка) return false;
   if (params.loadedCommentCount === 0) return false;
   return params.loadedCommentCount < params.autoLoadLimit;
 }
 
-export function upsertIssueComment(
-  comments: IssueComment[] | undefined,
-  nextComment: IssueComment,
-): IssueComment[] {
+export function upsertЗадачаComment(
+  comments: ЗадачаComment[] | undefined,
+  nextComment: ЗадачаComment,
+): ЗадачаComment[] {
   const current = comments ?? [];
   const existingIndex = current.findIndex((comment) => comment.id === nextComment.id);
   if (existingIndex === -1) {
-    return sortIssueComments([...current, nextComment]);
+    return sortЗадачаКомментарии([...current, nextComment]);
   }
 
   const updated = [...current];
   updated[existingIndex] = nextComment;
-  return sortIssueComments(updated);
+  return sortЗадачаКомментарии(updated);
 }
 
-export function applyOptimisticIssueCommentUpdate(
-  issue: Issue | undefined,
+export function applyOptimisticЗадачаCommentОбновить(
+  issue: Задача | undefined,
   params: {
     reopen?: boolean;
-    reassignment?: IssueCommentReassignment;
+    reassignment?: ЗадачаCommentReassignment;
   },
 ) {
   if (!issue) return issue;
-  const nextIssue: Issue = { ...issue };
+  const nextЗадача: Задача = { ...issue };
 
   if (params.reopen === true && (issue.status === "done" || issue.status === "cancelled" || issue.status === "blocked")) {
-    nextIssue.status = "todo";
+    nextЗадача.status = "todo";
   }
 
   if (params.reassignment) {
-    nextIssue.assigneeAgentId = params.reassignment.assigneeAgentId;
-    nextIssue.assigneeUserId = params.reassignment.assigneeUserId;
+    nextЗадача.assigneeАгентId = params.reassignment.assigneeАгентId;
+    nextЗадача.assigneeUserId = params.reassignment.assigneeUserId;
   }
 
-  return nextIssue;
+  return nextЗадача;
 }
 
-export function applyOptimisticIssueFieldUpdate(
-  issue: Issue | undefined,
+export function applyOptimisticЗадачаFieldОбновить(
+  issue: Задача | undefined,
   data: Record<string, unknown>,
 ) {
   if (!issue) return issue;
 
-  const nextIssue: Issue = {
+  const nextЗадача: Задача = {
     ...issue,
     updatedAt: new Date(),
   };
   const hasOwn = (key: string) => Object.prototype.hasOwnProperty.call(data, key);
-  const assign = <K extends keyof Issue>(key: K) => {
+  const assign = <K extends keyof Задача>(key: K) => {
     if (hasOwn(key)) {
-      nextIssue[key] = data[key] as Issue[K];
+      nextЗадача[key] = data[key] as Задача[K];
     }
   };
 
   assign("status");
   assign("priority");
-  assign("assigneeAgentId");
+  assign("assigneeАгентId");
   assign("assigneeUserId");
   assign("projectId");
   assign("parentId");
-  assign("projectWorkspaceId");
-  assign("executionWorkspaceId");
-  assign("executionWorkspacePreference");
-  assign("executionWorkspaceSettings");
+  assign("projectРабочая областьId");
+  assign("executionРабочая областьId");
+  assign("executionРабочая областьPreference");
+  assign("executionРабочая областьНастройки");
   assign("hiddenAt");
 
   if (hasOwn("labelIds") && Array.isArray(data.labelIds)) {
     const nextLabelIds = data.labelIds.filter((value): value is string => typeof value === "string");
-    nextIssue.labelIds = nextLabelIds;
+    nextЗадача.labelIds = nextLabelIds;
     if (issue.labels) {
-      nextIssue.labels = issue.labels.filter((label) => nextLabelIds.includes(label.id));
+      nextЗадача.labels = issue.labels.filter((label) => nextLabelIds.includes(label.id));
     }
   }
 
-  if (hasOwn("blockedByIssueIds") && Array.isArray(data.blockedByIssueIds) && issue.blockedBy) {
-    const nextBlockedByIds = new Set(
-      data.blockedByIssueIds.filter((value): value is string => typeof value === "string"),
+  if (hasOwn("blockedByЗадачаIds") && Array.isArray(data.blockedByЗадачаIds) && issue.blockedBy) {
+    const nextЗаблокированByIds = new Set(
+      data.blockedByЗадачаIds.filter((value): value is string => typeof value === "string"),
     );
-    nextIssue.blockedBy = issue.blockedBy.filter((relation) => nextBlockedByIds.has(relation.id));
+    nextЗадача.blockedBy = issue.blockedBy.filter((relation) => nextЗаблокированByIds.has(relation.id));
   }
 
   if (hasOwn("projectId")) {
-    nextIssue.project = issue.project?.id === nextIssue.projectId ? issue.project : null;
+    nextЗадача.project = issue.project?.id === nextЗадача.projectId ? issue.project : null;
   }
 
   if (hasOwn("parentId")) {
-    nextIssue.ancestors = undefined;
+    nextЗадача.ancestors = undefined;
   }
 
-  if (hasOwn("executionWorkspaceId")) {
-    nextIssue.currentExecutionWorkspace =
-      issue.currentExecutionWorkspace?.id === nextIssue.executionWorkspaceId
-        ? issue.currentExecutionWorkspace
+  if (hasOwn("executionРабочая областьId")) {
+    nextЗадача.currentExecutionРабочая область =
+      issue.currentExecutionРабочая область?.id === nextЗадача.executionРабочая областьId
+        ? issue.currentExecutionРабочая область
         : null;
   }
 
-  return nextIssue;
+  return nextЗадача;
 }
 
-export function matchesIssueRef(
-  issue: Pick<Issue, "id" | "identifier">,
+export function matchesЗадачаRef(
+  issue: Pick<Задача, "id" | "identifier">,
   refs: Iterable<string>,
 ) {
   const refSet = refs instanceof Set ? refs : new Set(refs);
   return refSet.has(issue.id) || (!!issue.identifier && refSet.has(issue.identifier));
 }
 
-export function applyOptimisticIssueFieldUpdateToCollection(
-  issues: Issue[] | undefined,
+export function applyOptimisticЗадачаFieldОбновитьToCollection(
+  issues: Задача[] | undefined,
   refs: Iterable<string>,
   data: Record<string, unknown>,
 ) {
   if (!issues) return issues;
 
   let changed = false;
-  const nextIssues = issues.map((issue) => {
-    if (!matchesIssueRef(issue, refs)) return issue;
+  const nextЗадачи = issues.map((issue) => {
+    if (!matchesЗадачаRef(issue, refs)) return issue;
     changed = true;
-    return applyOptimisticIssueFieldUpdate(issue, data) ?? issue;
+    return applyOptimisticЗадачаFieldОбновить(issue, data) ?? issue;
   });
 
-  return changed ? nextIssues : issues;
+  return changed ? nextЗадачи : issues;
 }
 
-export function upsertIssueCommentInPages(
-  pages: ReadonlyArray<ReadonlyArray<IssueComment>> | undefined,
-  nextComment: IssueComment,
-): IssueComment[][] {
+export function upsertЗадачаCommentInPages(
+  pages: ReadonlyArray<ReadonlyArray<ЗадачаComment>> | undefined,
+  nextComment: ЗадачаComment,
+): ЗадачаComment[][] {
   if (!pages || pages.length === 0) {
     return [[nextComment]];
   }
@@ -355,18 +355,18 @@ export function upsertIssueCommentInPages(
     const existingIndex = nextPages[pageIndex]!.findIndex((comment) => comment.id === nextComment.id);
     if (existingIndex === -1) continue;
     nextPages[pageIndex]![existingIndex] = nextComment;
-    nextPages[pageIndex] = sortIssueCommentsDesc(nextPages[pageIndex]!);
+    nextPages[pageIndex] = sortЗадачаКомментарииDesc(nextPages[pageIndex]!);
     return nextPages;
   }
 
-  nextPages[0] = sortIssueCommentsDesc([...nextPages[0]!, nextComment]);
+  nextPages[0] = sortЗадачаКомментарииDesc([...nextPages[0]!, nextComment]);
   return nextPages;
 }
 
-export function removeIssueCommentFromPages(
-  pages: ReadonlyArray<ReadonlyArray<IssueComment>> | undefined,
+export function removeЗадачаCommentFromPages(
+  pages: ReadonlyArray<ReadonlyArray<ЗадачаComment>> | undefined,
   commentId: string,
-): IssueComment[][] {
+): ЗадачаComment[][] {
   if (!pages || pages.length === 0) {
     return [];
   }

@@ -1,5 +1,5 @@
 import {
-  AssistantRuntimeProvider,
+  AssistantЗапуститьtimeПровайдер,
   useAui,
 } from "@assistant-ui/react";
 import type {
@@ -24,49 +24,49 @@ import {
   useState,
   type ChangeEvent,
   type DragEvent as ReactDragEvent,
-  type ErrorInfo,
+  type ОшибкаInfo,
   type Ref,
-  type ReactNode,
+  type ReactНетde,
 } from "react";
 import { Link, useLocation } from "@/lib/router";
 import type {
-  Agent,
+  Агент,
   FeedbackDataSharingPreference,
   FeedbackVote,
-  FeedbackVoteValue,
-  IssueAttachment,
-  IssueBlockerAttention,
-  IssueRelationIssueSummary,
-  SuccessfulRunHandoffState,
-  IssueWorkMode,
+  FeedbackVoteЗначение,
+  ЗадачаAttachment,
+  ЗадачаBlockerAttention,
+  ЗадачаRelationЗадачаSummary,
+  УспешноfulЗапуститьHandoffState,
+  ЗадачаРаботаMode,
 } from "@paperclipai/shared";
-import type { ActiveRunForIssue, LiveRunForIssue } from "../api/heartbeats";
-import { useLiveRunTranscripts } from "./transcript/useLiveRunTranscripts";
-import { usePaperclipIssueRuntime, type PaperclipIssueRuntimeReassignment } from "../hooks/usePaperclipIssueRuntime";
+import type { АктивенЗапуститьForЗадача, LiveЗапуститьForЗадача } from "../api/heartbeats";
+import { useLiveЗапуститьTranscripts } from "./transcript/useLiveЗапуститьTranscripts";
+import { usePaperclipЗадачаЗапуститьtime, type PaperclipЗадачаЗапуститьtimeReassignment } from "../hooks/usePaperclipЗадачаЗапуститьtime";
 import {
-  buildIssueChatMessages,
+  buildЗадачаChatMessages,
   formatDurationWords,
   stabilizeThreadMessages,
-  type IssueChatComment,
-  type IssueChatLinkedRun,
+  type ЗадачаChatComment,
+  type ЗадачаChatLinkedЗапустить,
   type StableThreadMessageCacheEntry,
-  type IssueChatTranscriptEntry,
+  type ЗадачаChatTranscriptEntry,
   type SegmentTiming,
 } from "../lib/issue-chat-messages";
 import type {
   AskUserQuestionsAnswer,
   AskUserQuestionsInteraction,
-  IssueThreadInteraction,
-  RequestConfirmationInteraction,
-  SuggestTasksInteraction,
+  ЗадачаThreadInteraction,
+  RequestПодтвердитьationInteraction,
+  SuggestЗадачиInteraction,
 } from "../lib/issue-thread-interactions";
-import { buildIssueThreadInteractionSummary, isIssueThreadInteraction } from "../lib/issue-thread-interactions";
-import { resolveIssueChatTranscriptRuns } from "../lib/issueChatTranscriptRuns";
+import { buildЗадачаThreadInteractionSummary, isЗадачаThreadInteraction } from "../lib/issue-thread-interactions";
+import { resolveЗадачаChatTranscriptЗапуститьs } from "../lib/issueChatTranscriptЗапуститьs";
 import {
-  formatTimelineWorkspaceLabel,
-  type IssueTimelineAssignee,
-  type IssueTimelineEvent,
-  type IssueTimelineWorkspace,
+  formatTimelineРабочая областьLabel,
+  type ЗадачаTimelineИсполнитель,
+  type ЗадачаTimelineEvent,
+  type ЗадачаTimelineРабочая область,
 } from "../lib/issue-timeline-events";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,10 +74,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogОписание,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogНазвание,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -86,43 +86,43 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MarkdownBody } from "./MarkdownBody";
-import { MarkdownEditor, type MentionOption, type MarkdownEditorRef } from "./MarkdownEditor";
+import { MarkdownИзменитьor, type MentionOption, type MarkdownИзменитьorRef } from "./MarkdownИзменитьor";
 import { Identity } from "./Identity";
 import { InlineEntitySelector, type InlineEntityOption } from "./InlineEntitySelector";
-import { IssueThreadInteractionCard } from "./IssueThreadInteractionCard";
-import { AgentIcon } from "./AgentIconPicker";
-import { restoreSubmittedCommentDraft } from "../lib/comment-submit-draft";
+import { ЗадачаThreadInteractionCard } from "./ЗадачаThreadInteractionCard";
+import { АгентIcon } from "./АгентIconPicker";
+import { restoreОтправитьtedCommentЧерновик } from "../lib/comment-submit-draft";
 import {
   captureComposerViewportSnapshot,
   restoreComposerViewportSnapshot,
   shouldPreserveComposerViewport,
 } from "../lib/issue-chat-scroll";
-import { formatAssigneeUserLabel } from "../lib/assignees";
-import { useOptionalToastActions } from "../context/ToastContext";
-import type { CompanyUserProfile } from "../lib/company-members";
+import { formatИсполнительUserLabel } from "../lib/assignees";
+import { useОпциональноToastActions } from "../context/ToastContext";
+import type { КомпанияUserПрофиль } from "../lib/company-members";
 import { timeAgo } from "../lib/timeAgo";
 import {
-  isSuccessfulRunHandoffComment,
-  isSuccessfulRunHandoffEscalationComment,
+  isУспешноfulЗапуститьHandoffComment,
+  isУспешноfulЗапуститьHandoffEscalationComment,
 } from "../lib/successful-run-handoff";
 import {
-  SystemNotice,
-  type SystemNoticeMetadataRow,
-  type SystemNoticeMetadataSection,
-} from "./SystemNotice";
+  SystemНетtice,
+  type SystemНетticeMetadataRow,
+  type SystemНетticeMetadataSection,
+} from "./SystemНетtice";
 import {
-  buildSystemNoticeProps,
-  mapCommentMetadataToSystemNoticeSections,
+  buildSystemНетticeProps,
+  mapCommentMetadataToSystemНетticeSections,
 } from "../lib/system-notice-comment";
 import type {
-  IssueCommentMetadata,
-  IssueCommentPresentation,
+  ЗадачаCommentMetadata,
+  ЗадачаCommentPresentation,
 } from "@paperclipai/shared";
 import {
   describeToolInput,
-  displayToolName,
+  displayToolИмя,
   formatToolPayload,
-  isCommandTool,
+  isКомандаTool,
   parseToolPayload,
   summarizeToolInput,
   summarizeToolResult,
@@ -131,53 +131,53 @@ import { cn, formatDateTime, formatShortDate } from "../lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, ArrowRight, Brain, Check, ChevronDown, ClipboardList, Copy, Hammer, Loader2, MoreHorizontal, Paperclip, PauseCircle, Search, Square, ThumbsDown, ThumbsUp } from "lucide-react";
-import { IssueBlockedNotice } from "./IssueBlockedNotice";
-import { IssueAssignedBacklogNotice } from "./IssueAssignedBacklogNotice";
+import { AlertTriangle, ArrowRight, Brain, Check, ChevronDown, ClipboardList, Копировать, Hammer, Loader2, MoreHorizontal, Paperclip, ПаузаCircle, Поиск, Square, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ЗадачаЗаблокированНетtice } from "./ЗадачаЗаблокированНетtice";
+import { ЗадачаAssignedНазадlogНетtice } from "./ЗадачаAssignedНазадlogНетtice";
 
-interface IssueChatMessageContext {
+interface ЗадачаChatMessageContext {
   feedbackDataSharingPreference: FeedbackDataSharingPreference;
   feedbackTermsUrl: string | null;
-  agentMap?: Map<string, Agent>;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
-  userProfileMap?: ReadonlyMap<string, CompanyUserProfile> | null;
+  userПрофильMap?: ReadonlyMap<string, КомпанияUserПрофиль> | null;
   onVote?: (
     commentId: string,
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     options?: { allowSharing?: boolean; reason?: string },
   ) => Promise<void>;
-  onStopRun?: (runId: string) => Promise<void>;
-  stopRunLabel?: string;
-  stoppingRunLabel?: string;
-  stopRunVariant?: "stop" | "pause";
+  onОстановитьЗапустить?: (runId: string) => Promise<void>;
+  stopЗапуститьLabel?: string;
+  stoppingЗапуститьLabel?: string;
+  stopЗапуститьVariant?: "stop" | "pause";
   onInterruptQueued?: (runId: string) => Promise<void>;
-  onCancelQueued?: (commentId: string) => void;
+  onОтменаQueued?: (commentId: string) => void;
   onImageClick?: (src: string) => void;
-  onAcceptInteraction?: (
-    interaction: SuggestTasksInteraction | RequestConfirmationInteraction,
-    selectedClientKeys?: string[],
+  onПринятьInteraction?: (
+    interaction: SuggestЗадачиInteraction | RequestПодтвердитьationInteraction,
+    selectedClientКлючs?: string[],
   ) => Promise<void> | void;
-  onRejectInteraction?: (
-    interaction: SuggestTasksInteraction | RequestConfirmationInteraction,
+  onОтклонитьInteraction?: (
+    interaction: SuggestЗадачиInteraction | RequestПодтвердитьationInteraction,
     reason?: string,
   ) => Promise<void> | void;
-  onSubmitInteractionAnswers?: (
+  onОтправитьInteractionAnswers?: (
     interaction: AskUserQuestionsInteraction,
     answers: AskUserQuestionsAnswer[],
   ) => Promise<void> | void;
-  onCancelInteraction?: (
+  onОтменаInteraction?: (
     interaction: AskUserQuestionsInteraction,
   ) => Promise<void> | void;
-  issueStatus?: string;
-  successfulRunHandoff?: SuccessfulRunHandoffState | null;
+  issueСтатус?: string;
+  successfulЗапуститьHandoff?: УспешноfulЗапуститьHandoffState | null;
 }
 
-const IssueChatCtx = createContext<IssueChatMessageContext>({
+const ЗадачаChatCtx = createContext<ЗадачаChatMessageContext>({
   feedbackDataSharingPreference: "prompt",
   feedbackTermsUrl: null,
-  issueStatus: undefined,
-  successfulRunHandoff: null,
+  issueСтатус: undefined,
+  successfulЗапуститьHandoff: null,
 });
 
 export function resolveAssistantMessageFoldedState(args: {
@@ -201,15 +201,15 @@ export function resolveAssistantMessageFoldedState(args: {
   return currentFolded;
 }
 
-export function canStopIssueChatRun(args: {
+export function canОстановитьЗадачаChatЗапустить(args: {
   runId: string | null;
-  runStatus: string | null;
-  activeRunIds: ReadonlySet<string>;
+  runСтатус: string | null;
+  activeЗапуститьIds: ReadonlySet<string>;
 }) {
-  const { runId, runStatus, activeRunIds } = args;
+  const { runId, runСтатус, activeЗапуститьIds } = args;
   if (!runId) return false;
-  if (activeRunIds.has(runId)) return true;
-  return runStatus === "queued" || runStatus === "running";
+  if (activeЗапуститьIds.has(runId)) return true;
+  return runСтатус === "queued" || runСтатус === "running";
 }
 
 function findCoTSegmentIndex(
@@ -258,151 +258,151 @@ function useStableEvent<T extends (...args: never[]) => unknown>(callback: T | u
 }
 
 interface CommentReassignment {
-  assigneeAgentId: string | null;
+  assigneeАгентId: string | null;
   assigneeUserId: string | null;
 }
 
-export interface IssueChatComposerHandle {
+export interface ЗадачаChatComposerHandle {
   focus: () => void;
-  restoreDraft: (submittedBody: string) => void;
+  restoreЧерновик: (submittedBody: string) => void;
 }
 
-interface IssueChatComposerProps {
-  onImageUpload?: (file: File) => Promise<string>;
-  onAttachImage?: (file: File) => Promise<IssueAttachment | void>;
-  draftKey?: string;
+interface ЗадачаChatComposerProps {
+  onImageЗагрузить?: (file: File) => Promise<string>;
+  onAttachImage?: (file: File) => Promise<ЗадачаAttachment | void>;
+  draftКлюч?: string;
   enableReassign?: boolean;
   reassignOptions?: InlineEntityOption[];
-  currentAssigneeValue?: string;
-  suggestedAssigneeValue?: string;
+  currentИсполнительЗначение?: string;
+  suggestedИсполнительЗначение?: string;
   mentions?: MentionOption[];
-  agentMap?: Map<string, Agent>;
-  composerDisabledReason?: string | null;
+  agentMap?: Map<string, Агент>;
+  composerОтключитьdReason?: string | null;
   composerHint?: string | null;
-  issueStatus?: string;
-  issueWorkMode?: IssueWorkMode;
-  onWorkModeChange?: (workMode: IssueWorkMode) => Promise<void> | void;
+  issueСтатус?: string;
+  issueРаботаMode?: ЗадачаРаботаMode;
+  onРаботаModeChange?: (workMode: ЗадачаРаботаMode) => Promise<void> | void;
 }
 
-interface IssueChatThreadProps {
-  comments: IssueChatComment[];
-  interactions?: IssueThreadInteraction[];
+interface ЗадачаChatThreadProps {
+  comments: ЗадачаChatComment[];
+  interactions?: ЗадачаThreadInteraction[];
   feedbackVotes?: FeedbackVote[];
   feedbackDataSharingPreference?: FeedbackDataSharingPreference;
   feedbackTermsUrl?: string | null;
-  linkedRuns?: IssueChatLinkedRun[];
-  timelineEvents?: IssueTimelineEvent[];
-  liveRuns?: LiveRunForIssue[];
-  activeRun?: ActiveRunForIssue | null;
-  blockedBy?: IssueRelationIssueSummary[];
-  blockerAttention?: IssueBlockerAttention | null;
-  successfulRunHandoff?: SuccessfulRunHandoffState | null;
+  linkedЗапуститьs?: ЗадачаChatLinkedЗапустить[];
+  timelineEvents?: ЗадачаTimelineEvent[];
+  liveЗапуститьs?: LiveЗапуститьForЗадача[];
+  activeЗапустить?: АктивенЗапуститьForЗадача | null;
+  blockedBy?: ЗадачаRelationЗадачаSummary[];
+  blockerAttention?: ЗадачаBlockerAttention | null;
+  successfulЗапуститьHandoff?: УспешноfulЗапуститьHandoffState | null;
   assigneeUserId?: string | null;
-  onResumeFromBacklog?: () => Promise<void> | void;
-  resumeFromBacklogPending?: boolean;
+  onПродолжитьFromНазадlog?: () => Promise<void> | void;
+  resumeFromНазадlogОжидание?: boolean;
   companyId?: string | null;
   projectId?: string | null;
-  issueStatus?: string;
-  agentMap?: Map<string, Agent>;
+  issueСтатус?: string;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
-  userProfileMap?: ReadonlyMap<string, CompanyUserProfile> | null;
+  userПрофильMap?: ReadonlyMap<string, КомпанияUserПрофиль> | null;
   onVote?: (
     commentId: string,
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     options?: { allowSharing?: boolean; reason?: string },
   ) => Promise<void>;
-  onAdd: (body: string, reopen?: boolean, reassignment?: CommentReassignment) => Promise<void>;
-  onCancelRun?: () => Promise<void>;
-  onStopRun?: (runId: string) => Promise<void>;
-  stopRunLabel?: string;
-  stoppingRunLabel?: string;
-  stopRunVariant?: "stop" | "pause";
-  imageUploadHandler?: (file: File) => Promise<string>;
-  onAttachImage?: (file: File) => Promise<IssueAttachment | void>;
-  draftKey?: string;
+  onДобавить: (body: string, reopen?: boolean, reassignment?: CommentReassignment) => Promise<void>;
+  onОтменаЗапустить?: () => Promise<void>;
+  onОстановитьЗапустить?: (runId: string) => Promise<void>;
+  stopЗапуститьLabel?: string;
+  stoppingЗапуститьLabel?: string;
+  stopЗапуститьVariant?: "stop" | "pause";
+  imageЗагрузитьHandler?: (file: File) => Promise<string>;
+  onAttachImage?: (file: File) => Promise<ЗадачаAttachment | void>;
+  draftКлюч?: string;
   enableReassign?: boolean;
   reassignOptions?: InlineEntityOption[];
-  currentAssigneeValue?: string;
-  suggestedAssigneeValue?: string;
+  currentИсполнительЗначение?: string;
+  suggestedИсполнительЗначение?: string;
   mentions?: MentionOption[];
-  composerDisabledReason?: string | null;
+  composerОтключитьdReason?: string | null;
   composerHint?: string | null;
-  onWorkModeChange?: (workMode: IssueWorkMode) => Promise<void> | void;
+  onРаботаModeChange?: (workMode: ЗадачаРаботаMode) => Promise<void> | void;
   showComposer?: boolean;
   showJumpToLatest?: boolean;
   emptyMessage?: string;
   variant?: "full" | "embedded";
   enableLiveTranscriptPolling?: boolean;
-  transcriptsByRunId?: ReadonlyMap<string, readonly IssueChatTranscriptEntry[]>;
-  hasOutputForRun?: (runId: string) => boolean;
-  includeSucceededRunsWithoutOutput?: boolean;
+  transcriptsByЗапуститьId?: ReadonlyMap<string, readonly ЗадачаChatTranscriptEntry[]>;
+  hasOutputForЗапустить?: (runId: string) => boolean;
+  includeSucceededЗапуститьsWithoutOutput?: boolean;
   onInterruptQueued?: (runId: string) => Promise<void>;
-  onCancelQueued?: (commentId: string) => void;
-  interruptingQueuedRunId?: string | null;
-  stoppingRunId?: string | null;
+  onОтменаQueued?: (commentId: string) => void;
+  interruptingQueuedЗапуститьId?: string | null;
+  stoppingЗапуститьId?: string | null;
   onImageClick?: (src: string) => void;
-  onAcceptInteraction?: (
-    interaction: SuggestTasksInteraction | RequestConfirmationInteraction,
-    selectedClientKeys?: string[],
+  onПринятьInteraction?: (
+    interaction: SuggestЗадачиInteraction | RequestПодтвердитьationInteraction,
+    selectedClientКлючs?: string[],
   ) => Promise<void> | void;
-  onRejectInteraction?: (
-    interaction: SuggestTasksInteraction | RequestConfirmationInteraction,
+  onОтклонитьInteraction?: (
+    interaction: SuggestЗадачиInteraction | RequestПодтвердитьationInteraction,
     reason?: string,
   ) => Promise<void> | void;
-  onSubmitInteractionAnswers?: (
+  onОтправитьInteractionAnswers?: (
     interaction: AskUserQuestionsInteraction,
     answers: AskUserQuestionsAnswer[],
   ) => Promise<void> | void;
-  onCancelInteraction?: (
+  onОтменаInteraction?: (
     interaction: AskUserQuestionsInteraction,
   ) => Promise<void> | void;
-  composerRef?: Ref<IssueChatComposerHandle>;
-  issueWorkMode?: IssueWorkMode;
+  composerRef?: Ref<ЗадачаChatComposerHandle>;
+  issueРаботаMode?: ЗадачаРаботаMode;
   /**
    * Hook for the parent to refetch comments when the user explicitly asks
    * to jump to the latest comment. Used to make sure the absolute newest
    * comment is in the loaded set before we scroll to it.
    */
-  onRefreshLatestComments?: () => Promise<unknown> | void;
+  onОбновитьLatestКомментарии?: () => Promise<unknown> | void;
 }
 
-type IssueChatErrorBoundaryProps = {
-  resetKey: string;
+type ЗадачаChatОшибкаBoundaryProps = {
+  resetКлюч: string;
   messages: readonly ThreadMessage[];
   emptyMessage: string;
   variant: "full" | "embedded";
-  children: ReactNode;
+  children: ReactНетde;
 };
 
-type IssueChatErrorBoundaryState = {
-  hasError: boolean;
+type ЗадачаChatОшибкаBoundaryState = {
+  hasОшибка: boolean;
 };
 
-class IssueChatErrorBoundary extends Component<IssueChatErrorBoundaryProps, IssueChatErrorBoundaryState> {
-  override state: IssueChatErrorBoundaryState = { hasError: false };
+class ЗадачаChatОшибкаBoundary extends Component<ЗадачаChatОшибкаBoundaryProps, ЗадачаChatОшибкаBoundaryState> {
+  override state: ЗадачаChatОшибкаBoundaryState = { hasОшибка: false };
 
-  static getDerivedStateFromError(): IssueChatErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromОшибка(): ЗадачаChatОшибкаBoundaryState {
+    return { hasОшибка: true };
   }
 
-  override componentDidCatch(error: unknown, info: ErrorInfo): void {
-    console.error("Issue chat renderer failed; falling back to safe transcript view", {
+  override componentDidCatch(error: unknown, info: ОшибкаInfo): void {
+    console.error("Задача chat renderer failed; falling back to safe transcript view", {
       error,
       info: info.componentStack,
     });
   }
 
-  override componentDidUpdate(prevProps: IssueChatErrorBoundaryProps): void {
-    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
-      this.setState({ hasError: false });
+  override componentDidОбновить(prevProps: ЗадачаChatОшибкаBoundaryProps): void {
+    if (this.state.hasОшибка && prevProps.resetКлюч !== this.props.resetКлюч) {
+      this.setState({ hasОшибка: false });
     }
   }
 
   override render() {
-    if (this.state.hasError) {
+    if (this.state.hasОшибка) {
       return (
-        <IssueChatFallbackThread
+        <ЗадачаChatFallbackThread
           messages={this.props.messages}
           emptyMessage={this.props.emptyMessage}
           variant={this.props.variant}
@@ -413,7 +413,7 @@ class IssueChatErrorBoundary extends Component<IssueChatErrorBoundaryProps, Issu
   }
 }
 
-function IssueAssigneePausedNotice({ agent }: { agent: Agent | null }) {
+function ЗадачаИсполнительПриостановленНетtice({ agent }: { agent: Агент | null }) {
   if (!agent || agent.status !== "paused") return null;
 
   const pauseDetail =
@@ -424,11 +424,11 @@ function IssueAssigneePausedNotice({ agent }: { agent: Agent | null }) {
         : "It was paused manually.";
 
   return (
-    <div className="mb-3 rounded-md border border-orange-300/70 bg-orange-50/90 px-3 py-2.5 text-sm text-orange-950 shadow-sm dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-100">
-      <div className="flex items-start gap-2">
-        <PauseCircle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600 dark:text-orange-300" />
-        <p className="min-w-0 leading-5">
-          <span className="font-medium">{agent.name}</span> is paused. New runs will not start until the agent is resumed. {pauseDetail}
+    <div classИмя="mb-3 rounded-md border border-orange-300/70 bg-orange-50/90 px-3 py-2.5 text-sm text-orange-950 shadow-sm dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-100">
+      <div classИмя="flex items-start gap-2">
+        <ПаузаCircle classИмя="mt-0.5 h-4 w-4 shrink-0 text-orange-600 dark:text-orange-300" />
+        <p classИмя="min-w-0 leading-5">
+          <span classИмя="font-medium">{agent.name}</span> is paused. New runs will not start until the agent is resumed. {pauseDetail}
         </p>
       </div>
     </div>
@@ -437,9 +437,9 @@ function IssueAssigneePausedNotice({ agent }: { agent: Agent | null }) {
 
 function fallbackAuthorLabel(message: ThreadMessage) {
   const custom = message.metadata?.custom as Record<string, unknown> | undefined;
-  if (typeof custom?.["authorName"] === "string") return custom["authorName"];
-  if (typeof custom?.["runAgentName"] === "string") return custom["runAgentName"];
-  if (message.role === "assistant") return "Agent";
+  if (typeof custom?.["authorИмя"] === "string") return custom["authorИмя"];
+  if (typeof custom?.["runАгентИмя"] === "string") return custom["runАгентИмя"];
+  if (message.role === "assistant") return "Агент";
   if (message.role === "user") return "You";
   return "System";
 }
@@ -452,7 +452,7 @@ function fallbackTextParts(message: ThreadMessage) {
       continue;
     }
     if (part.type === "tool-call") {
-      const lines = [`Tool: ${part.toolName}`];
+      const lines = [`Tool: ${part.toolИмя}`];
       if (part.argsText?.trim()) lines.push(`Args:\n${part.argsText}`);
       if (typeof part.result === "string" && part.result.trim()) lines.push(`Result:\n${part.result}`);
       contentLines.push(lines.join("\n\n"));
@@ -466,7 +466,7 @@ function fallbackTextParts(message: ThreadMessage) {
   return contentLines;
 }
 
-function IssueChatFallbackThread({
+function ЗадачаChatFallbackThread({
   messages,
   emptyMessage,
   variant,
@@ -476,13 +476,13 @@ function IssueChatFallbackThread({
   variant: "full" | "embedded";
 }) {
   return (
-    <div className={cn(variant === "embedded" ? "space-y-3" : "space-y-4")}>
-      <div className="rounded-xl border border-amber-300/60 bg-amber-50/80 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200">
-        <div className="flex items-start gap-2">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <div className="space-y-1">
-            <p className="font-medium">Chat renderer hit an internal state error.</p>
-            <p className="text-xs opacity-80">
+    <div classИмя={cn(variant === "embedded" ? "space-y-3" : "space-y-4")}>
+      <div classИмя="rounded-xl border border-amber-300/60 bg-amber-50/80 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200">
+        <div classИмя="flex items-start gap-2">
+          <AlertTriangle classИмя="mt-0.5 h-4 w-4 shrink-0" />
+          <div classИмя="space-y-1">
+            <p classИмя="font-medium">Chat renderer hit an internal state error.</p>
+            <p classИмя="text-xs opacity-80">
               Showing a safe fallback transcript instead of crashing the issues page.
             </p>
           </div>
@@ -490,7 +490,7 @@ function IssueChatFallbackThread({
       </div>
 
       {messages.length === 0 ? (
-        <div className={cn(
+        <div classИмя={cn(
           "text-center text-sm text-muted-foreground",
           variant === "embedded"
             ? "rounded-xl border border-dashed border-border/70 bg-background/60 px-4 py-6"
@@ -499,24 +499,24 @@ function IssueChatFallbackThread({
           {emptyMessage}
         </div>
       ) : (
-        <div className={cn(variant === "embedded" ? "space-y-3" : "space-y-4")}>
+        <div classИмя={cn(variant === "embedded" ? "space-y-3" : "space-y-4")}>
           {messages.map((message) => {
             const lines = fallbackTextParts(message);
             return (
-              <div key={message.id} className="rounded-xl border border-border/60 bg-card/70 px-4 py-3">
-                <div className="mb-2 flex items-center gap-2 text-sm">
-                  <span className="font-medium text-foreground">{fallbackAuthorLabel(message)}</span>
+              <div key={message.id} classИмя="rounded-xl border border-border/60 bg-card/70 px-4 py-3">
+                <div classИмя="mb-2 flex items-center gap-2 text-sm">
+                  <span classИмя="font-medium text-foreground">{fallbackAuthorLabel(message)}</span>
                   {message.createdAt ? (
-                    <span className="text-[11px] text-muted-foreground">
+                    <span classИмя="text-[11px] text-muted-foreground">
                       {commentDateLabel(message.createdAt)}
                     </span>
                   ) : null}
                 </div>
-                <div className="space-y-2">
+                <div classИмя="space-y-2">
                   {lines.length > 0 ? lines.map((line, index) => (
                     <MarkdownBody key={`${message.id}:fallback:${index}`}>{line}</MarkdownBody>
                   )) : (
-                    <p className="text-sm text-muted-foreground">No message content.</p>
+                    <p classИмя="text-sm text-muted-foreground">Нет message content.</p>
                   )}
                 </div>
               </div>
@@ -538,12 +538,12 @@ type ComposerAttachmentItem = {
   size: number;
   status: "uploading" | "attached" | "error";
   inline: boolean;
-  contentPath?: string;
+  contentПуть?: string;
   error?: string;
 };
 
 function hasFilePayload(evt: ReactDragEvent<HTMLDivElement>) {
-  return Array.from(evt.dataTransfer?.types ?? []).includes("Files");
+  return Array.from(evt.dataTransfer?.types ?? []).includes("Файлы");
 }
 
 function formatAttachmentSize(bytes: number) {
@@ -558,55 +558,55 @@ function toIsoString(value: string | Date | null | undefined): string | null {
   return typeof value === "string" ? value : value.toISOString();
 }
 
-function loadDraft(draftKey: string): string {
+function loadЧерновик(draftКлюч: string): string {
   try {
-    return localStorage.getItem(draftKey) ?? "";
+    return localStorage.getItem(draftКлюч) ?? "";
   } catch {
     return "";
   }
 }
 
-function saveDraft(draftKey: string, value: string) {
+function saveЧерновик(draftКлюч: string, value: string) {
   try {
     if (value.trim()) {
-      localStorage.setItem(draftKey, value);
+      localStorage.setItem(draftКлюч, value);
     } else {
-      localStorage.removeItem(draftKey);
+      localStorage.removeItem(draftКлюч);
     }
   } catch {
     // Ignore localStorage failures.
   }
 }
 
-function clearDraft(draftKey: string) {
+function clearЧерновик(draftКлюч: string) {
   try {
-    localStorage.removeItem(draftKey);
+    localStorage.removeItem(draftКлюч);
   } catch {
     // Ignore localStorage failures.
   }
 }
 
-function parseReassignment(target: string): PaperclipIssueRuntimeReassignment | null {
+function parseReassignment(target: string): PaperclipЗадачаЗапуститьtimeReassignment | null {
   if (!target || target === "__none__") {
-    return { assigneeAgentId: null, assigneeUserId: null };
+    return { assigneeАгентId: null, assigneeUserId: null };
   }
   if (target.startsWith("agent:")) {
-    const assigneeAgentId = target.slice("agent:".length);
-    return assigneeAgentId ? { assigneeAgentId, assigneeUserId: null } : null;
+    const assigneeАгентId = target.slice("agent:".length);
+    return assigneeАгентId ? { assigneeАгентId, assigneeUserId: null } : null;
   }
   if (target.startsWith("user:")) {
     const assigneeUserId = target.slice("user:".length);
-    return assigneeUserId ? { assigneeAgentId: null, assigneeUserId } : null;
+    return assigneeUserId ? { assigneeАгентId: null, assigneeUserId } : null;
   }
   return null;
 }
 
-function shouldImplicitlyReopenComment(issueStatus: string | undefined, assigneeValue: string) {
-  const resumesToTodo = issueStatus === "done" || issueStatus === "cancelled" || issueStatus === "blocked";
-  return resumesToTodo && assigneeValue.startsWith("agent:");
+function shouldImplicitlyReopenComment(issueСтатус: string | undefined, assigneeЗначение: string) {
+  const resumesToTodo = issueСтатус === "done" || issueСтатус === "cancelled" || issueСтатус === "blocked";
+  return resumesToTodo && assigneeЗначение.startsWith("agent:");
 }
 
-function isUnassignedReassignValue(value: string): boolean {
+function isНе назначенReassignЗначение(value: string): boolean {
   return !value || value === "__none__";
 }
 
@@ -619,14 +619,14 @@ function commentDateLabel(date: Date | string | undefined): string {
   return formatShortDate(date);
 }
 
-const IssueChatTextPart = memo(function IssueChatTextPart({ text, recessed }: { text: string; recessed?: boolean }) {
-  const { onImageClick } = useContext(IssueChatCtx);
-  if (isSuccessfulRunHandoffComment(text)) {
-    return <SuccessfulRunHandoffCommentCallout text={text} recessed={recessed} onImageClick={onImageClick} />;
+const ЗадачаChatTextPart = memo(function ЗадачаChatTextPart({ text, recessed }: { text: string; recessed?: boolean }) {
+  const { onImageClick } = useContext(ЗадачаChatCtx);
+  if (isУспешноfulЗапуститьHandoffComment(text)) {
+    return <УспешноfulЗапуститьHandoffCommentCallout text={text} recessed={recessed} onImageClick={onImageClick} />;
   }
   return (
     <MarkdownBody
-      className="text-sm leading-6"
+      classИмя="text-sm leading-6"
       style={recessed ? { opacity: 0.55 } : undefined}
       softBreaks
       onImageClick={onImageClick}
@@ -636,7 +636,7 @@ const IssueChatTextPart = memo(function IssueChatTextPart({ text, recessed }: { 
   );
 });
 
-export function SuccessfulRunHandoffCommentCallout({
+export function УспешноfulЗапуститьHandoffCommentCallout({
   text,
   recessed,
   onImageClick,
@@ -645,10 +645,10 @@ export function SuccessfulRunHandoffCommentCallout({
   recessed?: boolean;
   onImageClick?: (src: string) => void;
 }) {
-  const escalated = isSuccessfulRunHandoffEscalationComment(text);
+  const escalated = isУспешноfulЗапуститьHandoffEscalationComment(text);
   return (
     <div
-      className={cn(
+      classИмя={cn(
         "rounded-md border px-3 py-2.5 text-sm shadow-sm",
         escalated
           ? "border-red-500/35 bg-red-500/10 text-red-950 dark:text-red-100"
@@ -656,14 +656,14 @@ export function SuccessfulRunHandoffCommentCallout({
       )}
       style={recessed ? { opacity: 0.55 } : undefined}
     >
-      <div className="flex items-start gap-2">
+      <div classИмя="flex items-start gap-2">
         <AlertTriangle
-          className={cn(
+          classИмя={cn(
             "mt-1 h-4 w-4 shrink-0",
             escalated ? "text-red-600 dark:text-red-300" : "text-amber-600 dark:text-amber-300",
           )}
         />
-        <MarkdownBody className="min-w-0 text-sm leading-6" softBreaks onImageClick={onImageClick}>
+        <MarkdownBody classИмя="min-w-0 text-sm leading-6" softBreaks onImageClick={onImageClick}>
           {text}
         </MarkdownBody>
       </div>
@@ -671,14 +671,14 @@ export function SuccessfulRunHandoffCommentCallout({
   );
 }
 
-function humanizeValue(value: string | null) {
-  if (!value) return "None";
+function humanizeЗначение(value: string | null) {
+  if (!value) return "Нет";
   return value.replace(/_/g, " ");
 }
 
-function formatTimelineAssigneeLabel(
-  assignee: IssueTimelineAssignee,
-  agentMap?: Map<string, Agent>,
+function formatTimelineИсполнительLabel(
+  assignee: ЗадачаTimelineИсполнитель,
+  agentMap?: Map<string, Агент>,
   currentUserId?: string | null,
   userLabelMap?: ReadonlyMap<string, string> | null,
 ) {
@@ -686,12 +686,12 @@ function formatTimelineAssigneeLabel(
     return agentMap?.get(assignee.agentId)?.name ?? assignee.agentId.slice(0, 8);
   }
   if (assignee.userId) {
-    return formatAssigneeUserLabel(assignee.userId, currentUserId, userLabelMap) ?? "Board";
+    return formatИсполнительUserLabel(assignee.userId, currentUserId, userLabelMap) ?? "Совет";
   }
-  return "Unassigned";
+  return "Не назначен";
 }
 
-function initialsForName(name: string) {
+function initialsForИмя(name: string) {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -702,7 +702,7 @@ function initialsForName(name: string) {
 function formatInteractionActorLabel(args: {
   agentId?: string | null;
   userId?: string | null;
-  agentMap?: Map<string, Agent>;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
 }) {
@@ -710,33 +710,33 @@ function formatInteractionActorLabel(args: {
   if (agentId) return agentMap?.get(agentId)?.name ?? agentId.slice(0, 8);
   if (userId) {
     return userLabelMap?.get(userId)
-      ?? formatAssigneeUserLabel(userId, currentUserId, userLabelMap)
-      ?? "Board";
+      ?? formatИсполнительUserLabel(userId, currentUserId, userLabelMap)
+      ?? "Совет";
   }
   return "System";
 }
 
-export function resolveIssueChatHumanAuthor(args: {
-  authorName?: string | null;
+export function resolveЗадачаChatЧеловекAuthor(args: {
+  authorИмя?: string | null;
   authorUserId?: string | null;
   currentUserId?: string | null;
-  userProfileMap?: ReadonlyMap<string, CompanyUserProfile> | null;
+  userПрофильMap?: ReadonlyMap<string, КомпанияUserПрофиль> | null;
 }) {
-  const { authorName, authorUserId, currentUserId, userProfileMap } = args;
-  const profile = authorUserId ? userProfileMap?.get(authorUserId) ?? null : null;
+  const { authorИмя, authorUserId, currentUserId, userПрофильMap } = args;
+  const profile = authorUserId ? userПрофильMap?.get(authorUserId) ?? null : null;
   const isCurrentUser = Boolean(authorUserId && currentUserId && authorUserId === currentUserId);
-  const resolvedAuthorName = profile?.label?.trim()
-    || authorName?.trim()
-    || (authorUserId === "local-board" ? "Board" : (isCurrentUser ? "You" : "User"));
+  const resolvedAuthorИмя = profile?.label?.trim()
+    || authorИмя?.trim()
+    || (authorUserId === "local-board" ? "Совет" : (isCurrentUser ? "You" : "User"));
 
   return {
     isCurrentUser,
-    authorName: resolvedAuthorName,
+    authorИмя: resolvedAuthorИмя,
     avatarUrl: profile?.image ?? null,
   };
 }
 
-function formatRunStatusLabel(status: string) {
+function formatЗапуститьСтатусLabel(status: string) {
   switch (status) {
     case "timed_out":
       return "timed out";
@@ -745,7 +745,7 @@ function formatRunStatusLabel(status: string) {
   }
 }
 
-function runStatusClass(status: string) {
+function runСтатусClass(status: string) {
   switch (status) {
     case "succeeded":
       return "text-green-700 dark:text-green-300";
@@ -771,7 +771,7 @@ function toolCountSummary(toolParts: ToolCallMessagePart[]): string | null {
   let commands = 0;
   let other = 0;
   for (const tool of toolParts) {
-    if (isCommandTool(tool.toolName, tool.args)) commands++;
+    if (isКомандаTool(tool.toolИмя, tool.args)) commands++;
     else other++;
   }
   const parts: string[] = [];
@@ -781,30 +781,30 @@ function toolCountSummary(toolParts: ToolCallMessagePart[]): string | null {
 }
 
 function cleanToolDisplayText(tool: ToolCallMessagePart): string {
-  const name = displayToolName(tool.toolName, tool.args);
-  if (isCommandTool(tool.toolName, tool.args)) return name;
+  const name = displayToolИмя(tool.toolИмя, tool.args);
+  if (isКомандаTool(tool.toolИмя, tool.args)) return name;
   const summary = tool.result === undefined
-    ? summarizeToolInput(tool.toolName, tool.args)
+    ? summarizeToolInput(tool.toolИмя, tool.args)
     : null;
   return summary ? `${name} ${summary}` : name;
 }
 
-type IssueChatCoTPart = ReasoningMessagePart | ToolCallMessagePart;
+type ЗадачаChatCoTPart = ReasoningMessagePart | ToolCallMessagePart;
 
-function IssueChatChainOfThought({
+function ЗадачаChatChainOfThought({
   message,
   cotParts,
 }: {
   message: ThreadMessage;
-  cotParts: readonly IssueChatCoTPart[];
+  cotParts: readonly ЗадачаChatCoTPart[];
 }) {
-  const { agentMap } = useContext(IssueChatCtx);
+  const { agentMap } = useContext(ЗадачаChatCtx);
   const custom = message.metadata.custom as Record<string, unknown>;
-  const runAgentId = typeof custom.runAgentId === "string" ? custom.runAgentId : null;
-  const authorAgentId = typeof custom.authorAgentId === "string" ? custom.authorAgentId : null;
-  const agentId = authorAgentId ?? runAgentId;
+  const runАгентId = typeof custom.runАгентId === "string" ? custom.runАгентId : null;
+  const authorАгентId = typeof custom.authorАгентId === "string" ? custom.authorАгентId : null;
+  const agentId = authorАгентId ?? runАгентId;
   const agentIcon = agentId ? agentMap?.get(agentId)?.icon : undefined;
-  const isMessageRunning = message.role === "assistant" && message.status?.type === "running";
+  const isMessageВыполняется = message.role === "assistant" && message.status?.type === "running";
 
   const myIndex = useMemo(
     () => findCoTSegmentIndex(message.content, cotParts),
@@ -819,31 +819,31 @@ function IssueChatChainOfThought({
     (p): p is ToolCallMessagePart => p.type === "tool-call",
   );
 
-  const isActive = isMessageRunning;
-  const [expanded, setExpanded] = useState(isActive);
+  const isАктивен = isMessageВыполняется;
+  const [expanded, setExpanded] = useState(isАктивен);
 
   const rawSegments = Array.isArray(custom.chainOfThoughtSegments)
     ? (custom.chainOfThoughtSegments as SegmentTiming[])
     : [];
   const segmentTiming = myIndex >= 0 ? rawSegments[myIndex] ?? null : null;
-  const liveElapsed = useLiveElapsed(segmentTiming?.startMs, isActive);
+  const liveElapsed = useLiveElapsed(segmentTiming?.startMs, isАктивен);
 
   useEffect(() => {
-    if (isActive) setExpanded(true);
-  }, [isActive]);
+    if (isАктивен) setExpanded(true);
+  }, [isАктивен]);
 
   let headerVerb: string;
   let headerSuffix: string | null = null;
-  if (isActive) {
-    headerVerb = "Working";
+  if (isАктивен) {
+    headerVerb = "Работаing";
     if (liveElapsed) headerSuffix = `for ${liveElapsed}`;
   } else if (segmentTiming) {
     const durationMs = segmentTiming.endMs - segmentTiming.startMs;
     const durationText = formatDurationWords(durationMs);
-    headerVerb = "Worked";
+    headerVerb = "Работаed";
     if (durationText) headerSuffix = `for ${durationText}`;
   } else {
-    headerVerb = "Worked";
+    headerVerb = "Работаed";
   }
 
   const toolSummary = toolCountSummary(toolParts);
@@ -853,53 +853,53 @@ function IssueChatChainOfThought({
     <div>
       <button
         type="button"
-        className="group flex w-full items-center gap-2.5 rounded-lg px-1 py-2 text-left transition-colors hover:bg-accent/5"
+        classИмя="group flex w-full items-center gap-2.5 rounded-lg px-1 py-2 text-left transition-colors hover:bg-accent/5"
         onClick={() => hasContent && setExpanded((v) => !v)}
       >
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground/80">
+        <span classИмя="inline-flex items-center gap-2 text-sm font-medium text-foreground/80">
           {agentIcon ? (
-            <AgentIcon icon={agentIcon} className="h-4 w-4 shrink-0" />
-          ) : isActive ? (
-            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+            <АгентIcon icon={agentIcon} classИмя="h-4 w-4 shrink-0" />
+          ) : isАктивен ? (
+            <Loader2 classИмя="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
           ) : (
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/70" />
+            <span classИмя="flex h-4 w-4 shrink-0 items-center justify-center">
+              <span classИмя="h-1.5 w-1.5 rounded-full bg-emerald-500/70" />
             </span>
           )}
-          {isActive ? (
-            <span className="shimmer-text">{headerVerb}</span>
+          {isАктивен ? (
+            <span classИмя="shimmer-text">{headerVerb}</span>
           ) : (
             headerVerb
           )}
         </span>
         {headerSuffix ? (
-          <span className="text-xs text-muted-foreground/60">{headerSuffix}</span>
+          <span classИмя="text-xs text-muted-foreground/60">{headerSuffix}</span>
         ) : null}
         {toolSummary ? (
-          <span className="text-xs text-muted-foreground/40">· {toolSummary}</span>
+          <span classИмя="text-xs text-muted-foreground/40">· {toolSummary}</span>
         ) : null}
         {hasContent ? (
-          <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform", expanded && "rotate-180")} />
+          <ChevronDown classИмя={cn("ml-auto h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform", expanded && "rotate-180")} />
         ) : null}
       </button>
       {expanded && hasContent ? (
-        <div className="space-y-1 py-1">
-          {isActive ? (
+        <div classИмя="space-y-1 py-1">
+          {isАктивен ? (
             <>
-              {allReasoningText ? <IssueChatReasoningPart text={allReasoningText} /> : null}
-              {toolParts.length > 0 ? <IssueChatRollingToolPart toolParts={toolParts} /> : null}
+              {allReasoningText ? <ЗадачаChatReasoningPart text={allReasoningText} /> : null}
+              {toolParts.length > 0 ? <ЗадачаChatRollingToolPart toolParts={toolParts} /> : null}
             </>
           ) : (
             <>
-              {allReasoningText ? <IssueChatReasoningPart text={allReasoningText} /> : null}
+              {allReasoningText ? <ЗадачаChatReasoningPart text={allReasoningText} /> : null}
               {toolParts.map((tool) => (
-                <IssueChatToolPart
+                <ЗадачаChatToolPart
                   key={tool.toolCallId}
-                  toolName={tool.toolName}
+                  toolИмя={tool.toolИмя}
                   args={tool.args}
                   argsText={tool.argsText}
                   result={tool.result}
-                  isError={false}
+                  isОшибка={false}
                 />
               ))}
             </>
@@ -910,7 +910,7 @@ function IssueChatChainOfThought({
   );
 }
 
-function IssueChatReasoningPart({ text }: { text: string }) {
+function ЗадачаChatReasoningPart({ text }: { text: string }) {
   const lines = text.split("\n").filter((l) => l.trim());
   const lastLine = lines[lines.length - 1] ?? text.slice(-200);
   const prevRef = useRef(lastLine);
@@ -929,15 +929,15 @@ function IssueChatReasoningPart({ text }: { text: string }) {
   }, [lastLine]);
 
   return (
-    <div className="flex gap-2 px-1">
-      <div className="flex flex-col items-center pt-0.5">
-        <Brain className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+    <div classИмя="flex gap-2 px-1">
+      <div classИмя="flex flex-col items-center pt-0.5">
+        <Brain classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
       </div>
-      <div className="relative h-5 min-w-0 flex-1 overflow-hidden">
+      <div classИмя="relative h-5 min-w-0 flex-1 overflow-hidden">
         {ticker.exiting !== null && (
           <span
             key={`out-${ticker.key}`}
-            className="cot-line-exit absolute inset-x-0 truncate text-[13px] italic leading-5 text-muted-foreground/70"
+            classИмя="cot-line-exit absolute inset-x-0 truncate text-[13px] italic leading-5 text-muted-foreground/70"
             onAnimationEnd={() => setTicker((t) => ({ ...t, exiting: null }))}
           >
             {ticker.exiting}
@@ -945,7 +945,7 @@ function IssueChatReasoningPart({ text }: { text: string }) {
         )}
         <span
           key={`in-${ticker.key}`}
-          className={cn(
+          classИмя={cn(
             "absolute inset-x-0 truncate text-[13px] italic leading-5 text-muted-foreground/70",
             ticker.key > 0 && "cot-line-enter",
           )}
@@ -957,7 +957,7 @@ function IssueChatReasoningPart({ text }: { text: string }) {
   );
 }
 
-function IssueChatRollingToolPart({ toolParts }: { toolParts: ToolCallMessagePart[] }) {
+function ЗадачаChatRollingToolPart({ toolParts }: { toolParts: ToolCallMessagePart[] }) {
   const latest = toolParts[toolParts.length - 1];
   if (!latest) return null;
 
@@ -978,23 +978,23 @@ function IssueChatRollingToolPart({ toolParts }: { toolParts: ToolCallMessagePar
     }
   }, [fullText]);
 
-  const ToolIcon = getToolIcon(latest.toolName);
-  const isRunning = latest.result === undefined;
+  const ToolIcon = getToolIcon(latest.toolИмя);
+  const isВыполняется = latest.result === undefined;
 
   return (
-    <div className="flex gap-2 px-1">
-      <div className="flex flex-col items-center pt-0.5">
-        {isRunning ? (
-          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground/50" />
+    <div classИмя="flex gap-2 px-1">
+      <div classИмя="flex flex-col items-center pt-0.5">
+        {isВыполняется ? (
+          <Loader2 classИмя="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground/50" />
         ) : (
-          <ToolIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+          <ToolIcon classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
         )}
       </div>
-      <div className="relative h-5 min-w-0 flex-1 overflow-hidden">
+      <div classИмя="relative h-5 min-w-0 flex-1 overflow-hidden">
         {ticker.exiting !== null && (
           <span
             key={`out-${ticker.key}`}
-            className="cot-line-exit absolute inset-x-0 truncate text-[13px] leading-5 text-muted-foreground/70"
+            classИмя="cot-line-exit absolute inset-x-0 truncate text-[13px] leading-5 text-muted-foreground/70"
             onAnimationEnd={() => setTicker((t) => ({ ...t, exiting: null }))}
           >
             {ticker.exiting}
@@ -1002,7 +1002,7 @@ function IssueChatRollingToolPart({ toolParts }: { toolParts: ToolCallMessagePar
         )}
         <span
           key={`in-${ticker.key}`}
-          className={cn(
+          classИмя={cn(
             "absolute inset-x-0 truncate text-[13px] leading-5 text-muted-foreground/70",
             ticker.key > 0 && "cot-line-enter",
           )}
@@ -1014,19 +1014,19 @@ function IssueChatRollingToolPart({ toolParts }: { toolParts: ToolCallMessagePar
   );
 }
 
-function CopyablePreBlock({ children, className }: { children: string; className?: string }) {
+function КопироватьablePreBlock({ children, classИмя }: { children: string; classИмя?: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="group/pre relative">
-      <pre className={className}>{children}</pre>
+    <div classИмя="group/pre relative">
+      <pre classИмя={classИмя}>{children}</pre>
       <button
         type="button"
-        className={cn(
+        classИмя={cn(
           "absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-0 backdrop-blur-sm transition-opacity hover:text-foreground group-hover/pre:opacity-100",
           copied && "opacity-100",
         )}
-        title="Copy"
-        aria-label="Copy"
+        title="Копировать"
+        aria-label="Копировать"
         onClick={() => {
           void navigator.clipboard.writeText(children).then(() => {
             setCopied(true);
@@ -1034,32 +1034,32 @@ function CopyablePreBlock({ children, className }: { children: string; className
           });
         }}
       >
-        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+        {copied ? <Check classИмя="h-3 w-3" /> : <Копировать classИмя="h-3 w-3" />}
       </button>
     </div>
   );
 }
 
-const TOOL_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+const TOOL_ICON_MAP: Record<string, React.ComponentТип<{ classИмя?: string }>> = {
   // Extend with specific tool icons as they become known
 };
 
-function getToolIcon(toolName: string): React.ComponentType<{ className?: string }> {
-  return TOOL_ICON_MAP[toolName] ?? Hammer;
+function getToolIcon(toolИмя: string): React.ComponentТип<{ classИмя?: string }> {
+  return TOOL_ICON_MAP[toolИмя] ?? Hammer;
 }
 
-function IssueChatToolPart({
-  toolName,
+function ЗадачаChatToolPart({
+  toolИмя,
   args,
   argsText,
   result,
-  isError,
+  isОшибка,
 }: {
-  toolName: string;
+  toolИмя: string;
   args?: unknown;
   argsText?: string;
   result?: unknown;
-  isError?: boolean;
+  isОшибка?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const rawArgsText = argsText ?? "";
@@ -1070,57 +1070,57 @@ function IssueChatToolPart({
       : result === undefined
         ? ""
         : formatToolPayload(result);
-  const inputDetails = describeToolInput(toolName, parsedArgs);
-  const displayName = displayToolName(toolName, parsedArgs);
-  const isCommand = isCommandTool(toolName, parsedArgs);
-  const summary = isCommand
+  const inputДетали = describeToolInput(toolИмя, parsedArgs);
+  const displayИмя = displayToolИмя(toolИмя, parsedArgs);
+  const isКоманда = isКомандаTool(toolИмя, parsedArgs);
+  const summary = isКоманда
     ? null
     : result === undefined
-      ? summarizeToolInput(toolName, parsedArgs)
+      ? summarizeToolInput(toolИмя, parsedArgs)
       : summarizeToolResult(resultText, false);
-  const ToolIcon = getToolIcon(toolName);
+  const ToolIcon = getToolIcon(toolИмя);
 
-  const intentDetail = inputDetails.find((d) => d.label === "Intent");
-  const title = intentDetail?.value ?? displayName;
-  const nonIntentDetails = inputDetails.filter((d) => d.label !== "Intent");
+  const intentDetail = inputДетали.find((d) => d.label === "Intent");
+  const title = intentDetail?.value ?? displayИмя;
+  const nonIntentДетали = inputДетали.filter((d) => d.label !== "Intent");
 
   return (
-    <div className="flex gap-2 px-1">
-      <div className="flex flex-col items-center pt-1">
-        <ToolIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
-        {open ? <div className="mt-1 w-px flex-1 bg-border/40" /> : null}
+    <div classИмя="flex gap-2 px-1">
+      <div classИмя="flex flex-col items-center pt-1">
+        <ToolIcon classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+        {open ? <div classИмя="mt-1 w-px flex-1 bg-border/40" /> : null}
       </div>
 
-      <div className="min-w-0 flex-1">
+      <div classИмя="min-w-0 flex-1">
         <button
           type="button"
-          className="flex w-full items-center gap-2 rounded-md py-0.5 text-left transition-colors hover:bg-accent/5"
+          classИмя="flex w-full items-center gap-2 rounded-md py-0.5 text-left transition-colors hover:bg-accent/5"
           onClick={() => setOpen((current) => !current)}
         >
-          <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground/80">
+          <span classИмя="min-w-0 flex-1 truncate text-[13px] text-muted-foreground/80">
             {title}
-            {!intentDetail && summary ? <span className="ml-1.5 text-muted-foreground/50">{summary}</span> : null}
+            {!intentDetail && summary ? <span classИмя="ml-1.5 text-muted-foreground/50">{summary}</span> : null}
           </span>
           {result === undefined ? (
-            <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground/50" />
+            <Loader2 classИмя="h-3 w-3 shrink-0 animate-spin text-muted-foreground/50" />
           ) : null}
-          <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-transform", open && "rotate-180")} />
+          <ChevronDown classИмя={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-transform", open && "rotate-180")} />
         </button>
 
         {open ? (
-          <div className="mt-1 space-y-2 pb-1">
-            {nonIntentDetails.length > 0 ? (
+          <div classИмя="mt-1 space-y-2 pb-1">
+            {nonIntentДетали.length > 0 ? (
               <div>
-                <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
+                <div classИмя="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
                   Input
                 </div>
-                <dl className="space-y-1.5">
-                  {nonIntentDetails.map((detail) => (
+                <dl classИмя="space-y-1.5">
+                  {nonIntentДетали.map((detail) => (
                     <div key={`${detail.label}:${detail.value}`}>
-                      <dt className="text-[10px] font-medium text-muted-foreground/60">
+                      <dt classИмя="text-[10px] font-medium text-muted-foreground/60">
                         {detail.label}
                       </dt>
-                      <dd className={cn("text-xs leading-5 text-foreground/70", detail.tone === "code" && "font-mono text-[11px]")}>
+                      <dd classИмя={cn("text-xs leading-5 text-foreground/70", detail.tone === "code" && "font-mono text-[11px]")}>
                         {detail.value}
                       </dd>
                     </div>
@@ -1129,18 +1129,18 @@ function IssueChatToolPart({
               </div>
             ) : rawArgsText ? (
               <div>
-                <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
+                <div classИмя="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
                   Input
                 </div>
-                <CopyablePreBlock className="overflow-x-auto rounded-md bg-accent/30 p-2 text-[11px] leading-4 text-foreground/70">{rawArgsText}</CopyablePreBlock>
+                <КопироватьablePreBlock classИмя="overflow-x-auto rounded-md bg-accent/30 p-2 text-[11px] leading-4 text-foreground/70">{rawArgsText}</КопироватьablePreBlock>
               </div>
             ) : null}
             {result !== undefined ? (
               <div>
-                <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
+                <div classИмя="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
                   Result
                 </div>
-                <CopyablePreBlock className="overflow-x-auto rounded-md bg-accent/30 p-2 text-[11px] leading-4 text-foreground/70">{resultText}</CopyablePreBlock>
+                <КопироватьablePreBlock classИмя="overflow-x-auto rounded-md bg-accent/30 p-2 text-[11px] leading-4 text-foreground/70">{resultText}</КопироватьablePreBlock>
               </div>
             ) : null}
           </div>
@@ -1150,14 +1150,14 @@ function IssueChatToolPart({
   );
 }
 
-function getThreadMessageCopyText(message: ThreadMessage) {
+function getThreadMessageКопироватьText(message: ThreadMessage) {
   return message.content
     .filter((part): part is TextMessagePart => part.type === "text")
     .map((part) => part.text)
     .join("\n\n");
 }
 
-const IssueChatTextParts = memo(function IssueChatTextParts({
+const ЗадачаChatTextParts = memo(function ЗадачаChatTextParts({
   message,
   recessed = false,
 }: {
@@ -1169,7 +1169,7 @@ const IssueChatTextParts = memo(function IssueChatTextParts({
       {message.content
         .filter((part): part is TextMessagePart => part.type === "text")
         .map((part, index) => (
-          <IssueChatTextPart
+          <ЗадачаChatTextPart
             key={`${message.id}:text:${index}`}
             text={part.text}
             recessed={recessed}
@@ -1183,25 +1183,25 @@ function groupAssistantParts(
   content: readonly ThreadMessage["content"][number][],
 ): Array<
   | { type: "text"; part: TextMessagePart; index: number }
-  | { type: "cot"; parts: IssueChatCoTPart[]; startIndex: number }
+  | { type: "cot"; parts: ЗадачаChatCoTPart[]; startIndex: number }
 > {
   const groups: Array<
     | { type: "text"; part: TextMessagePart; index: number }
-    | { type: "cot"; parts: IssueChatCoTPart[]; startIndex: number }
+    | { type: "cot"; parts: ЗадачаChatCoTPart[]; startIndex: number }
   > = [];
-  let pendingCoT: IssueChatCoTPart[] = [];
-  let pendingStartIndex = -1;
+  let pendingCoT: ЗадачаChatCoTPart[] = [];
+  let pendingНачатьIndex = -1;
 
   const flushCoT = () => {
     if (pendingCoT.length === 0) return;
-    groups.push({ type: "cot", parts: pendingCoT, startIndex: pendingStartIndex });
+    groups.push({ type: "cot", parts: pendingCoT, startIndex: pendingНачатьIndex });
     pendingCoT = [];
-    pendingStartIndex = -1;
+    pendingНачатьIndex = -1;
   };
 
   content.forEach((part, index) => {
     if (part.type === "reasoning" || part.type === "tool-call") {
-      if (pendingCoT.length === 0) pendingStartIndex = index;
+      if (pendingCoT.length === 0) pendingНачатьIndex = index;
       pendingCoT.push(part);
       return;
     }
@@ -1215,7 +1215,7 @@ function groupAssistantParts(
   return groups;
 }
 
-const IssueChatAssistantParts = memo(function IssueChatAssistantParts({
+const ЗадачаChatAssistantParts = memo(function ЗадачаChatAssistantParts({
   message,
   hasCoT,
 }: {
@@ -1228,7 +1228,7 @@ const IssueChatAssistantParts = memo(function IssueChatAssistantParts({
       {groupedParts.map((group) => {
         if (group.type === "text") {
           return (
-            <IssueChatTextPart
+            <ЗадачаChatTextPart
               key={`${message.id}:text:${group.index}`}
               text={group.part.text}
               recessed={hasCoT}
@@ -1236,7 +1236,7 @@ const IssueChatAssistantParts = memo(function IssueChatAssistantParts({
           );
         }
         return (
-          <IssueChatChainOfThought
+          <ЗадачаChatChainOfThought
             key={`${message.id}:cot:${group.startIndex}`}
             message={message}
             cotParts={group.parts}
@@ -1247,59 +1247,59 @@ const IssueChatAssistantParts = memo(function IssueChatAssistantParts({
   );
 });
 
-function IssueChatUserMessage({
+function ЗадачаChatUserMessage({
   message,
-  isInterruptingQueuedRun,
+  isInterruptingQueuedЗапустить,
 }: {
   message: ThreadMessage;
-  isInterruptingQueuedRun: boolean;
+  isInterruptingQueuedЗапустить: boolean;
 }) {
   const {
     onInterruptQueued,
-    onCancelQueued,
+    onОтменаQueued,
     currentUserId,
-    userProfileMap,
-  } = useContext(IssueChatCtx);
+    userПрофильMap,
+  } = useContext(ЗадачаChatCtx);
   const custom = message.metadata.custom as Record<string, unknown>;
   const anchorId = typeof custom.anchorId === "string" ? custom.anchorId : undefined;
   const commentId = typeof custom.commentId === "string" ? custom.commentId : message.id;
-  const authorName = typeof custom.authorName === "string" ? custom.authorName : null;
+  const authorИмя = typeof custom.authorИмя === "string" ? custom.authorИмя : null;
   const authorUserId = typeof custom.authorUserId === "string" ? custom.authorUserId : null;
-  const queued = custom.queueState === "queued" || custom.clientStatus === "queued";
+  const queued = custom.queueState === "queued" || custom.clientСтатус === "queued";
   const followUpRequested = custom.followUpRequested === true;
   const queueReason = typeof custom.queueReason === "string" ? custom.queueReason : null;
   const queueBadgeLabel = queueReason === "hold" ? "\u23f8 Deferred wake" : "Queued";
-  const pending = custom.clientStatus === "pending";
-  const queueTargetRunId = typeof custom.queueTargetRunId === "string" ? custom.queueTargetRunId : null;
+  const pending = custom.clientСтатус === "pending";
+  const queueЦельЗапуститьId = typeof custom.queueЦельЗапуститьId === "string" ? custom.queueЦельЗапуститьId : null;
   const [copied, setCopied] = useState(false);
   const {
     isCurrentUser,
-    authorName: resolvedAuthorName,
+    authorИмя: resolvedAuthorИмя,
     avatarUrl,
-  } = resolveIssueChatHumanAuthor({
-    authorName,
+  } = resolveЗадачаChatЧеловекAuthor({
+    authorИмя,
     authorUserId,
     currentUserId,
-    userProfileMap,
+    userПрофильMap,
   });
   const authorAvatar = (
-    <Avatar size="sm" className="shrink-0">
-      {avatarUrl ? <AvatarImage src={avatarUrl} alt={resolvedAuthorName} /> : null}
-      <AvatarFallback>{initialsForName(resolvedAuthorName)}</AvatarFallback>
+    <Avatar size="sm" classИмя="shrink-0">
+      {avatarUrl ? <AvatarImage src={avatarUrl} alt={resolvedAuthorИмя} /> : null}
+      <AvatarFallback>{initialsForИмя(resolvedAuthorИмя)}</AvatarFallback>
     </Avatar>
   );
   const messageBody = (
-    <div className={cn("flex min-w-0 max-w-[85%] flex-col", isCurrentUser && "items-end")}>
-      <div className={cn("mb-1 flex items-center gap-2 px-1", isCurrentUser ? "justify-end" : "justify-start")}>
-        <span className="text-sm font-medium text-foreground">{resolvedAuthorName}</span>
+    <div classИмя={cn("flex min-w-0 max-w-[85%] flex-col", isCurrentUser && "items-end")}>
+      <div classИмя={cn("mb-1 flex items-center gap-2 px-1", isCurrentUser ? "justify-end" : "justify-start")}>
+        <span classИмя="text-sm font-medium text-foreground">{resolvedAuthorИмя}</span>
         {followUpRequested ? (
-          <Badge variant="outline" className="text-[10px] uppercase tracking-[0.14em]">
+          <Badge variant="outline" classИмя="text-[10px] uppercase tracking-[0.14em]">
             Follow-up
           </Badge>
         ) : null}
       </div>
       <div
-        className={cn(
+        classИмя={cn(
           "min-w-0 max-w-full overflow-hidden break-all rounded-2xl px-4 py-2.5",
           queued
             ? "bg-amber-50/80 dark:bg-amber-500/10"
@@ -1308,45 +1308,45 @@ function IssueChatUserMessage({
         )}
       >
         {queued ? (
-          <div className="mb-1.5 flex items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/20 dark:text-amber-200">
+          <div classИмя="mb-1.5 flex items-center gap-2">
+            <span classИмя="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/20 dark:text-amber-200">
               {queueBadgeLabel}
             </span>
-            {queueTargetRunId && onInterruptQueued ? (
+            {queueЦельЗапуститьId && onInterruptQueued ? (
               <Button
                 size="sm"
                 variant="outline"
-                className="h-6 border-red-300 px-2 text-[11px] text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
-                disabled={isInterruptingQueuedRun}
-                onClick={() => void onInterruptQueued(queueTargetRunId)}
+                classИмя="h-6 border-red-300 px-2 text-[11px] text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
+                disabled={isInterruptingQueuedЗапустить}
+                onClick={() => void onInterruptQueued(queueЦельЗапуститьId)}
               >
-                {isInterruptingQueuedRun ? "Interrupting..." : "Interrupt"}
+                {isInterruptingQueuedЗапустить ? "Interrupting..." : "Interrupt"}
               </Button>
             ) : null}
-            {onCancelQueued ? (
+            {onОтменаQueued ? (
               <Button
                 size="sm"
                 variant="outline"
-                className="h-6 border-amber-300 px-2 text-[11px] text-amber-900 hover:bg-amber-100/80 hover:text-amber-950 dark:border-amber-500/40 dark:text-amber-100 dark:hover:bg-amber-500/10"
-                onClick={() => onCancelQueued(commentId)}
+                classИмя="h-6 border-amber-300 px-2 text-[11px] text-amber-900 hover:bg-amber-100/80 hover:text-amber-950 dark:border-amber-500/40 dark:text-amber-100 dark:hover:bg-amber-500/10"
+                onClick={() => onОтменаQueued(commentId)}
               >
-                Cancel
+                Отмена
               </Button>
             ) : null}
           </div>
         ) : null}
-        <div className="min-w-0 max-w-full space-y-3">
-          <IssueChatTextParts message={message} />
+        <div classИмя="min-w-0 max-w-full space-y-3">
+          <ЗадачаChatTextParts message={message} />
         </div>
       </div>
 
       {pending ? (
-        <div className={cn("mt-1 flex px-1 text-[11px] text-muted-foreground", isCurrentUser ? "justify-end" : "justify-start")}>
-          Sending...
+        <div classИмя={cn("mt-1 flex px-1 text-[11px] text-muted-foreground", isCurrentUser ? "justify-end" : "justify-start")}>
+          Отправитьing...
         </div>
       ) : (
         <div
-          className={cn(
+          classИмя={cn(
             "mt-1 flex items-center gap-1.5 px-1 opacity-0 transition-opacity group-hover:opacity-100",
             isCurrentUser ? "justify-end" : "justify-start",
           )}
@@ -1355,20 +1355,20 @@ function IssueChatUserMessage({
             <TooltipTrigger asChild>
               <a
                 href={anchorId ? `#${anchorId}` : undefined}
-                className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                classИмя="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
               >
                 {message.createdAt ? commentDateLabel(message.createdAt) : ""}
               </a>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
+            <TooltipContent side="bottom" classИмя="text-xs">
               {message.createdAt ? formatDateTime(message.createdAt) : ""}
             </TooltipContent>
           </Tooltip>
           <button
             type="button"
-            className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-            title="Copy message"
-            aria-label="Copy message"
+            classИмя="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            title="Копировать message"
+            aria-label="Копировать message"
             onClick={() => {
               const text = message.content
                 .filter((p): p is { type: "text"; text: string } => p.type === "text")
@@ -1380,7 +1380,7 @@ function IssueChatUserMessage({
               });
             }}
           >
-            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? <Check classИмя="h-3.5 w-3.5" /> : <Копировать classИмя="h-3.5 w-3.5" />}
           </button>
         </div>
       )}
@@ -1389,7 +1389,7 @@ function IssueChatUserMessage({
 
   return (
     <div id={anchorId}>
-      <div className={cn("group flex items-start gap-2.5", isCurrentUser && "justify-end")}>
+      <div classИмя={cn("group flex items-start gap-2.5", isCurrentUser && "justify-end")}>
         {isCurrentUser ? (
           <>
             {messageBody}
@@ -1406,75 +1406,75 @@ function IssueChatUserMessage({
   );
 }
 
-function IssueChatAssistantMessage({
+function ЗадачаChatAssistantMessage({
   message,
   activeVote,
-  isRunActive,
-  isStoppingRun,
+  isЗапуститьАктивен,
+  isОстановитьpingЗапустить,
 }: {
   message: ThreadMessage;
-  activeVote: FeedbackVoteValue | null;
-  isRunActive: boolean;
-  isStoppingRun: boolean;
+  activeVote: FeedbackVoteЗначение | null;
+  isЗапуститьАктивен: boolean;
+  isОстановитьpingЗапустить: boolean;
 }) {
   const {
     feedbackDataSharingPreference,
     feedbackTermsUrl,
     onVote,
     agentMap,
-    onStopRun,
-    stopRunLabel = "Stop run",
-    stoppingRunLabel = "Stopping...",
-    stopRunVariant = "stop",
-  } = useContext(IssueChatCtx);
+    onОстановитьЗапустить,
+    stopЗапуститьLabel = "Остановить run",
+    stoppingЗапуститьLabel = "Остановитьping...",
+    stopЗапуститьVariant = "stop",
+  } = useContext(ЗадачаChatCtx);
   const custom = message.metadata.custom as Record<string, unknown>;
   const anchorId = typeof custom.anchorId === "string" ? custom.anchorId : undefined;
-  const authorName = typeof custom.authorName === "string"
-    ? custom.authorName
-    : typeof custom.runAgentName === "string"
-      ? custom.runAgentName
-      : "Agent";
-  const authorAgentId = typeof custom.authorAgentId === "string" ? custom.authorAgentId : null;
+  const authorИмя = typeof custom.authorИмя === "string"
+    ? custom.authorИмя
+    : typeof custom.runАгентИмя === "string"
+      ? custom.runАгентИмя
+      : "Агент";
+  const authorАгентId = typeof custom.authorАгентId === "string" ? custom.authorАгентId : null;
   const runId = typeof custom.runId === "string" ? custom.runId : null;
-  const runAgentId = typeof custom.runAgentId === "string" ? custom.runAgentId : null;
-  const runStatus = typeof custom.runStatus === "string" ? custom.runStatus : null;
-  const agentId = authorAgentId ?? runAgentId;
+  const runАгентId = typeof custom.runАгентId === "string" ? custom.runАгентId : null;
+  const runСтатус = typeof custom.runСтатус === "string" ? custom.runСтатус : null;
+  const agentId = authorАгентId ?? runАгентId;
   const agentIcon = agentId ? agentMap?.get(agentId)?.icon : undefined;
   const commentId = typeof custom.commentId === "string" ? custom.commentId : null;
   const notices = Array.isArray(custom.notices)
     ? custom.notices.filter((notice): notice is string => typeof notice === "string" && notice.length > 0)
     : [];
   const waitingText = typeof custom.waitingText === "string" ? custom.waitingText : "";
-  const isRunning = message.role === "assistant" && message.status?.type === "running";
-  const runHref = runId && runAgentId ? `/agents/${runAgentId}/runs/${runId}` : null;
-  const canStopRun = Boolean(runId) && (isRunActive || runStatus === "queued" || runStatus === "running");
+  const isВыполняется = message.role === "assistant" && message.status?.type === "running";
+  const runHref = runId && runАгентId ? `/agents/${runАгентId}/runs/${runId}` : null;
+  const canОстановитьЗапустить = Boolean(runId) && (isЗапуститьАктивен || runСтатус === "queued" || runСтатус === "running");
   const chainOfThoughtLabel = typeof custom.chainOfThoughtLabel === "string" ? custom.chainOfThoughtLabel : null;
   const hasCoT = message.content.some((p) => p.type === "reasoning" || p.type === "tool-call");
-  const isFoldable = !isRunning && !!chainOfThoughtLabel;
+  const isFoldable = !isВыполняется && !!chainOfThoughtLabel;
   const [folded, setFolded] = useState(isFoldable);
-  const [prevFoldKey, setPrevFoldKey] = useState({ messageId: message.id, isFoldable });
+  const [prevFoldКлюч, setPrevFoldКлюч] = useState({ messageId: message.id, isFoldable });
   const [copied, setCopied] = useState(false);
-  const copyText = getThreadMessageCopyText(message);
+  const copyText = getThreadMessageКопироватьText(message);
 
   // Derive fold state synchronously during render (not in useEffect) so the
   // browser never paints the un-folded intermediate state — prevents the
   // visible "jump" when loading a page with already-folded work sections.
-  if (message.id !== prevFoldKey.messageId || isFoldable !== prevFoldKey.isFoldable) {
+  if (message.id !== prevFoldКлюч.messageId || isFoldable !== prevFoldКлюч.isFoldable) {
     const nextFolded = resolveAssistantMessageFoldedState({
       messageId: message.id,
       currentFolded: folded,
       isFoldable,
-      previousMessageId: prevFoldKey.messageId,
-      previousIsFoldable: prevFoldKey.isFoldable,
+      previousMessageId: prevFoldКлюч.messageId,
+      previousIsFoldable: prevFoldКлюч.isFoldable,
     });
-    setPrevFoldKey({ messageId: message.id, isFoldable });
+    setPrevFoldКлюч({ messageId: message.id, isFoldable });
     if (nextFolded !== folded) {
       setFolded(nextFolded);
     }
   }
 
   const handleVote = async (
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     options?: { allowSharing?: boolean; reason?: string },
   ) => {
     if (!commentId || !onVote) return;
@@ -1485,45 +1485,45 @@ function IssueChatAssistantMessage({
 
   return (
     <div id={anchorId}>
-      <div className="flex items-start gap-2.5 py-1.5">
-        <Avatar size="sm" className="shrink-0">
+      <div classИмя="flex items-start gap-2.5 py-1.5">
+        <Avatar size="sm" classИмя="shrink-0">
           {agentIcon ? (
-            <AvatarFallback><AgentIcon icon={agentIcon} className="h-3.5 w-3.5" /></AvatarFallback>
+            <AvatarFallback><АгентIcon icon={agentIcon} classИмя="h-3.5 w-3.5" /></AvatarFallback>
           ) : (
-            <AvatarFallback>{initialsForName(authorName)}</AvatarFallback>
+            <AvatarFallback>{initialsForИмя(authorИмя)}</AvatarFallback>
           )}
         </Avatar>
 
-        <div className="min-w-0 flex-1">
+        <div classИмя="min-w-0 flex-1">
           {isFoldable ? (
             <button
               type="button"
-              className="group flex w-full items-center gap-2 py-0.5 text-left"
+              classИмя="group flex w-full items-center gap-2 py-0.5 text-left"
               onClick={() => setFolded((v) => !v)}
             >
-              <span className="text-sm font-medium text-foreground">{authorName}</span>
-              <span className="text-xs text-muted-foreground/60">{chainOfThoughtLabel?.toLowerCase()}</span>
-              <span className="ml-auto flex items-center gap-1.5">
+              <span classИмя="text-sm font-medium text-foreground">{authorИмя}</span>
+              <span classИмя="text-xs text-muted-foreground/60">{chainOfThoughtLabel?.toНизкийerCase()}</span>
+              <span classИмя="ml-auto flex items-center gap-1.5">
                 {message.createdAt ? (
-                  <span className="text-[11px] text-muted-foreground/50">
+                  <span classИмя="text-[11px] text-muted-foreground/50">
                     {commentDateLabel(message.createdAt)}
                   </span>
                 ) : null}
-                <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/40 transition-transform", !folded && "rotate-180")} />
+                <ChevronDown classИмя={cn("h-3.5 w-3.5 text-muted-foreground/40 transition-transform", !folded && "rotate-180")} />
               </span>
             </button>
           ) : (
-            <div className="mb-1.5 flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">{authorName}</span>
+            <div classИмя="mb-1.5 flex items-center gap-2">
+              <span classИмя="text-sm font-medium text-foreground">{authorИмя}</span>
               {followUpRequested ? (
-                <Badge variant="outline" className="text-[10px] uppercase tracking-[0.14em]">
+                <Badge variant="outline" classИмя="text-[10px] uppercase tracking-[0.14em]">
                   Follow-up
                 </Badge>
               ) : null}
-              {isRunning ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-cyan-700 dark:text-cyan-200">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Running
+              {isВыполняется ? (
+                <span classИмя="inline-flex items-center gap-1 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-cyan-700 dark:text-cyan-200">
+                  <Loader2 classИмя="h-3 w-3 animate-spin" />
+                  Выполняется
                 </span>
               ) : null}
             </div>
@@ -1531,26 +1531,26 @@ function IssueChatAssistantMessage({
 
           {!folded ? (
             <>
-              <div className="space-y-3">
-                <IssueChatAssistantParts message={message} hasCoT={hasCoT} />
+              <div classИмя="space-y-3">
+                <ЗадачаChatAssistantParts message={message} hasCoT={hasCoT} />
                 {message.content.length === 0 && waitingText ? (
-                  <div className="flex items-center gap-2.5 rounded-lg px-1 py-2">
-                    <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground/80">
+                  <div classИмя="flex items-center gap-2.5 rounded-lg px-1 py-2">
+                    <span classИмя="inline-flex items-center gap-2 text-sm font-medium text-foreground/80">
                       {agentIcon ? (
-                        <AgentIcon icon={agentIcon} className="h-4 w-4 shrink-0" />
+                        <АгентIcon icon={agentIcon} classИмя="h-4 w-4 shrink-0" />
                       ) : (
-                        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+                        <Loader2 classИмя="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
                       )}
-                      <span className="shimmer-text">{waitingText}</span>
+                      <span classИмя="shimmer-text">{waitingText}</span>
                     </span>
                   </div>
                 ) : null}
                 {notices.length > 0 ? (
-                  <div className="space-y-2">
+                  <div classИмя="space-y-2">
                     {notices.map((notice, index) => (
                       <div
                         key={`${message.id}:notice:${index}`}
-                        className="rounded-sm border border-border/60 bg-accent/20 px-3 py-2 text-sm text-muted-foreground"
+                        classИмя="rounded-sm border border-border/60 bg-accent/20 px-3 py-2 text-sm text-muted-foreground"
                       >
                         {notice}
                       </div>
@@ -1559,12 +1559,12 @@ function IssueChatAssistantMessage({
                 ) : null}
               </div>
 
-              <div className="mt-2 flex items-center gap-1">
+              <div classИмя="mt-2 flex items-center gap-1">
                 <button
                   type="button"
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  title="Copy message"
-                  aria-label="Copy message"
+                  classИмя="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  title="Копировать message"
+                  aria-label="Копировать message"
                   onClick={() => {
                     void navigator.clipboard.writeText(copyText).then(() => {
                       setCopied(true);
@@ -1572,10 +1572,10 @@ function IssueChatAssistantMessage({
                     });
                   }}
                 >
-                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? <Check classИмя="h-3.5 w-3.5" /> : <Копировать classИмя="h-3.5 w-3.5" />}
                 </button>
                 {commentId && onVote ? (
-                  <IssueChatFeedbackButtons
+                  <ЗадачаChatFeedbackButtons
                     activeVote={activeVote}
                     sharingPreference={feedbackDataSharingPreference}
                     termsUrl={feedbackTermsUrl ?? null}
@@ -1586,12 +1586,12 @@ function IssueChatAssistantMessage({
                   <TooltipTrigger asChild>
                     <a
                       href={anchorId ? `#${anchorId}` : undefined}
-                      className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                      classИмя="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
                     >
                       {message.createdAt ? commentDateLabel(message.createdAt) : ""}
                     </a>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">
+                  <TooltipContent side="bottom" classИмя="text-xs">
                     {message.createdAt ? formatDateTime(message.createdAt) : ""}
                   </TooltipContent>
                 </Tooltip>
@@ -1600,11 +1600,11 @@ function IssueChatAssistantMessage({
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      className="text-muted-foreground hover:text-foreground"
+                      classИмя="text-muted-foreground hover:text-foreground"
                       title="More actions"
                       aria-label="More actions"
                     >
-                      <MoreHorizontal className="h-3.5 w-3.5" />
+                      <MoreHorizontal classИмя="h-3.5 w-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -1613,34 +1613,34 @@ function IssueChatAssistantMessage({
                         void navigator.clipboard.writeText(copyText);
                       }}
                     >
-                      <Copy className="mr-2 h-3.5 w-3.5" />
-                      Copy message
+                      <Копировать classИмя="mr-2 h-3.5 w-3.5" />
+                      Копировать message
                     </DropdownMenuItem>
-                    {canStopRun && onStopRun && runId ? (
+                    {canОстановитьЗапустить && onОстановитьЗапустить && runId ? (
                       <DropdownMenuItem
-                        disabled={isStoppingRun}
-                        className={cn(
-                          stopRunVariant === "pause"
+                        disabled={isОстановитьpingЗапустить}
+                        classИмя={cn(
+                          stopЗапуститьVariant === "pause"
                             ? "text-amber-700 focus:text-amber-800 dark:text-amber-300 dark:focus:text-amber-200"
                             : "text-red-700 focus:text-red-800 dark:text-red-300 dark:focus:text-red-200",
                         )}
                         onSelect={() => {
-                          void onStopRun(runId);
+                          void onОстановитьЗапустить(runId);
                         }}
                       >
-                        {stopRunVariant === "pause" ? (
-                          <PauseCircle className="mr-2 h-3.5 w-3.5" />
+                        {stopЗапуститьVariant === "pause" ? (
+                          <ПаузаCircle classИмя="mr-2 h-3.5 w-3.5" />
                         ) : (
-                          <Square className="mr-2 h-3.5 w-3.5 fill-current" />
+                          <Square classИмя="mr-2 h-3.5 w-3.5 fill-current" />
                         )}
-                        {isStoppingRun ? stoppingRunLabel : stopRunLabel}
+                        {isОстановитьpingЗапустить ? stoppingЗапуститьLabel : stopЗапуститьLabel}
                       </DropdownMenuItem>
                     ) : null}
                     {runHref ? (
                       <DropdownMenuItem asChild>
                         <Link to={runHref} target="_blank" rel="noreferrer noopener">
-                          <Search className="mr-2 h-3.5 w-3.5" />
-                          View run
+                          <Поиск classИмя="mr-2 h-3.5 w-3.5" />
+                          Просмотр запуска
                         </Link>
                       </DropdownMenuItem>
                     ) : null}
@@ -1655,23 +1655,23 @@ function IssueChatAssistantMessage({
   );
 }
 
-function IssueChatFeedbackButtons({
+function ЗадачаChatFeedbackButtons({
   activeVote,
   sharingPreference = "prompt",
   termsUrl,
   onVote,
 }: {
-  activeVote: FeedbackVoteValue | null;
+  activeVote: FeedbackVoteЗначение | null;
   sharingPreference: FeedbackDataSharingPreference;
   termsUrl: string | null;
-  onVote: (vote: FeedbackVoteValue, options?: { allowSharing?: boolean; reason?: string }) => Promise<void>;
+  onVote: (vote: FeedbackVoteЗначение, options?: { allowSharing?: boolean; reason?: string }) => Promise<void>;
 }) {
   const [isSaving, setIsSaving] = useState(false);
-  const [optimisticVote, setOptimisticVote] = useState<FeedbackVoteValue | null>(null);
+  const [optimisticVote, setOptimisticVote] = useState<FeedbackVoteЗначение | null>(null);
   const [reasonOpen, setReasonOpen] = useState(false);
   const [downvoteReason, setDownvoteReason] = useState("");
-  const [pendingSharingDialog, setPendingSharingDialog] = useState<{
-    vote: FeedbackVoteValue;
+  const [pendingSharingDialog, setОжиданиеSharingDialog] = useState<{
+    vote: FeedbackVoteЗначение;
     reason?: string;
   } | null>(null);
   const visibleVote = optimisticVote ?? activeVote ?? null;
@@ -1681,7 +1681,7 @@ function IssueChatFeedbackButtons({
   }, [activeVote, optimisticVote]);
 
   async function doVote(
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     options?: { allowSharing?: boolean; reason?: string },
   ) {
     setIsSaving(true);
@@ -1694,10 +1694,10 @@ function IssueChatFeedbackButtons({
     }
   }
 
-  function handleVote(vote: FeedbackVoteValue, reason?: string) {
+  function handleVote(vote: FeedbackVoteЗначение, reason?: string) {
     setOptimisticVote(vote);
     if (sharingPreference === "prompt") {
-      setPendingSharingDialog({ vote, ...(reason ? { reason } : {}) });
+      setОжиданиеSharingDialog({ vote, ...(reason ? { reason } : {}) });
       return;
     }
     const allowSharing = sharingPreference === "allowed";
@@ -1714,15 +1714,15 @@ function IssueChatFeedbackButtons({
   function handleThumbsDown() {
     setOptimisticVote("down");
     setReasonOpen(true);
-    // Submit the initial down vote right away
+    // Отправить the initial down vote right away
     handleVote("down");
   }
 
-  function handleSubmitReason() {
+  function handleОтправитьReason() {
     if (!downvoteReason.trim()) return;
     // Re-submit with reason attached
     if (sharingPreference === "prompt") {
-      setPendingSharingDialog({ vote: "down", reason: downvoteReason });
+      setОжиданиеSharingDialog({ vote: "down", reason: downvoteReason });
     } else {
       const allowSharing = sharingPreference === "allowed";
       void doVote("down", {
@@ -1739,7 +1739,7 @@ function IssueChatFeedbackButtons({
       <button
         type="button"
         disabled={isSaving}
-        className={cn(
+        classИмя={cn(
           "inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors",
           visibleVote === "up"
             ? "text-green-600 dark:text-green-400"
@@ -1749,14 +1749,14 @@ function IssueChatFeedbackButtons({
         aria-label="Helpful"
         onClick={handleThumbsUp}
       >
-        <ThumbsUp className="h-3.5 w-3.5" />
+        <ThumbsUp classИмя="h-3.5 w-3.5" />
       </button>
       <Popover open={reasonOpen} onOpenChange={setReasonOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
             disabled={isSaving}
-            className={cn(
+            classИмя={cn(
               "inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors",
               visibleVote === "down"
                 ? "text-amber-600 dark:text-amber-400"
@@ -1766,19 +1766,19 @@ function IssueChatFeedbackButtons({
             aria-label="Needs work"
             onClick={handleThumbsDown}
           >
-            <ThumbsDown className="h-3.5 w-3.5" />
+            <ThumbsDown classИмя="h-3.5 w-3.5" />
           </button>
         </PopoverTrigger>
-        <PopoverContent side="top" align="start" className="w-80 p-3">
-          <div className="mb-2 text-sm font-medium">What could have been better?</div>
+        <PopoverContent side="top" align="start" classИмя="w-80 p-3">
+          <div classИмя="mb-2 text-sm font-medium">What could have been better?</div>
           <Textarea
             value={downvoteReason}
             onChange={(event) => setDownvoteReason(event.target.value)}
-            placeholder="Add a short note"
-            className="min-h-20 resize-y bg-background text-sm"
+            placeholder="Добавить a short note"
+            classИмя="min-h-20 resize-y bg-background text-sm"
             disabled={isSaving}
           />
-          <div className="mt-2 flex items-center justify-end gap-2">
+          <div classИмя="mt-2 flex items-center justify-end gap-2">
             <Button
               type="button"
               size="sm"
@@ -1789,15 +1789,15 @@ function IssueChatFeedbackButtons({
                 setDownvoteReason("");
               }}
             >
-              Dismiss
+              Закрыть
             </Button>
             <Button
               type="button"
               size="sm"
               disabled={isSaving || !downvoteReason.trim()}
-              onClick={handleSubmitReason}
+              onClick={handleОтправитьReason}
             >
-              {isSaving ? "Saving..." : "Save note"}
+              {isSaving ? "Saving..." : "Сохранить note"}
             </Button>
           </div>
         </PopoverContent>
@@ -1807,34 +1807,34 @@ function IssueChatFeedbackButtons({
         open={Boolean(pendingSharingDialog)}
         onOpenChange={(open) => {
           if (!open && !isSaving) {
-            setPendingSharingDialog(null);
+            setОжиданиеSharingDialog(null);
             setOptimisticVote(null);
           }
         }}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save your feedback sharing preference</DialogTitle>
-            <DialogDescription>
+            <DialogНазвание>Сохранить your feedback sharing preference</DialogНазвание>
+            <DialogОписание>
               Choose whether voted AI outputs can be shared with Paperclip Labs. This
               answer becomes the default for future thumbs up and thumbs down votes.
-            </DialogDescription>
+            </DialogОписание>
           </DialogHeader>
-          <div className="space-y-3 text-sm text-muted-foreground">
+          <div classИмя="space-y-3 text-sm text-muted-foreground">
             <p>This vote is always saved locally.</p>
             <p>
-              Choose <span className="font-medium text-foreground">Always allow</span> to share
+              Choose <span classИмя="font-medium text-foreground">Always allow</span> to share
               this vote and future voted AI outputs. Choose{" "}
-              <span className="font-medium text-foreground">Don't allow</span> to keep this vote
+              <span classИмя="font-medium text-foreground">Don't allow</span> to keep this vote
               and future votes local.
             </p>
-            <p>You can change this later in Instance Settings &gt; General.</p>
+            <p>You can change this later in Instance Настройки &gt; Общие.</p>
             {termsUrl ? (
               <a
                 href={termsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex text-sm text-foreground underline underline-offset-4"
+                classИмя="inline-flex text-sm text-foreground underline underline-offset-4"
               >
                 Read our terms of service
               </a>
@@ -1850,7 +1850,7 @@ function IssueChatFeedbackButtons({
                 void doVote(
                   pendingSharingDialog.vote,
                   pendingSharingDialog.reason ? { reason: pendingSharingDialog.reason } : undefined,
-                ).then(() => setPendingSharingDialog(null));
+                ).then(() => setОжиданиеSharingDialog(null));
               }}
             >
               {isSaving ? "Saving..." : "Don't allow"}
@@ -1863,7 +1863,7 @@ function IssueChatFeedbackButtons({
                 void doVote(pendingSharingDialog.vote, {
                   allowSharing: true,
                   ...(pendingSharingDialog.reason ? { reason: pendingSharingDialog.reason } : {}),
-                }).then(() => setPendingSharingDialog(null));
+                }).then(() => setОжиданиеSharingDialog(null));
               }}
             >
               {isSaving ? "Saving..." : "Always allow"}
@@ -1875,67 +1875,67 @@ function IssueChatFeedbackButtons({
   );
 }
 
-function ExpiredRequestConfirmationActivity({
+function ExpiredRequestПодтвердитьationАктивность({
   message,
   anchorId,
   interaction,
 }: {
   message: ThreadMessage;
   anchorId?: string;
-  interaction: RequestConfirmationInteraction;
+  interaction: RequestПодтвердитьationInteraction;
 }) {
   const {
     agentMap,
     currentUserId,
     userLabelMap,
-    onAcceptInteraction,
-    onRejectInteraction,
-    onCancelInteraction,
-  } = useContext(IssueChatCtx);
+    onПринятьInteraction,
+    onОтклонитьInteraction,
+    onОтменаInteraction,
+  } = useContext(ЗадачаChatCtx);
   const [expanded, setExpanded] = useState(false);
-  const hasResolvedActor = Boolean(interaction.resolvedByAgentId || interaction.resolvedByUserId);
-  const actorAgentId = hasResolvedActor
-    ? interaction.resolvedByAgentId ?? null
-    : interaction.createdByAgentId ?? null;
+  const hasResolvedActor = Boolean(interaction.resolvedByАгентId || interaction.resolvedByUserId);
+  const actorАгентId = hasResolvedActor
+    ? interaction.resolvedByАгентId ?? null
+    : interaction.createdByАгентId ?? null;
   const actorUserId = hasResolvedActor
     ? interaction.resolvedByUserId ?? null
     : interaction.createdByUserId ?? null;
-  const actorName = formatInteractionActorLabel({
-    agentId: actorAgentId,
+  const actorИмя = formatInteractionActorLabel({
+    agentId: actorАгентId,
     userId: actorUserId,
     agentMap,
     currentUserId,
     userLabelMap,
   });
-  const actorIcon = actorAgentId ? agentMap?.get(actorAgentId)?.icon : undefined;
+  const actorIcon = actorАгентId ? agentMap?.get(actorАгентId)?.icon : undefined;
   const isCurrentUser = Boolean(actorUserId && currentUserId && actorUserId === currentUserId);
   const detailsId = anchorId ? `${anchorId}-details` : `${interaction.id}-details`;
-  const summary = buildIssueThreadInteractionSummary(interaction);
+  const summary = buildЗадачаThreadInteractionSummary(interaction);
 
   const rowContent = (
-    <div className="min-w-0 flex-1">
-      <div className={cn("flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs", isCurrentUser && "justify-end")}>
-        <span className="font-medium text-foreground">{actorName}</span>
-        <span className="text-muted-foreground">updated this task</span>
+    <div classИмя="min-w-0 flex-1">
+      <div classИмя={cn("flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs", isCurrentUser && "justify-end")}>
+        <span classИмя="font-medium text-foreground">{actorИмя}</span>
+        <span classИмя="text-muted-foreground">updated this task</span>
         <a
           href={anchorId ? `#${anchorId}` : undefined}
-          className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
+          classИмя="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
         >
           {timeAgo(message.createdAt)}
         </a>
         <button
           type="button"
-          className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-background/70 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          classИмя="inline-flex items-center gap-1 rounded-md border border-border/70 bg-background/70 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-expanded={expanded}
           aria-controls={detailsId}
           onClick={() => setExpanded((current) => !current)}
         >
-          <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
+          <ChevronDown classИмя={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
           {expanded ? "Hide confirmation" : "Expired confirmation"}
         </button>
       </div>
       {expanded ? (
-        <p className={cn("mt-1 text-xs text-muted-foreground", isCurrentUser && "text-right")}>
+        <p classИмя={cn("mt-1 text-xs text-muted-foreground", isCurrentUser && "text-right")}>
           {summary}
         </p>
       ) : null}
@@ -1945,31 +1945,31 @@ function ExpiredRequestConfirmationActivity({
   return (
     <div id={anchorId}>
       {isCurrentUser ? (
-        <div className="flex items-start justify-end gap-2 py-1">
+        <div classИмя="flex items-start justify-end gap-2 py-1">
           {rowContent}
         </div>
       ) : (
-        <div className="flex items-start gap-2.5 py-1">
-          <Avatar size="sm" className="mt-0.5">
+        <div classИмя="flex items-start gap-2.5 py-1">
+          <Avatar size="sm" classИмя="mt-0.5">
             {actorIcon ? (
-              <AvatarFallback><AgentIcon icon={actorIcon} className="h-3.5 w-3.5" /></AvatarFallback>
+              <AvatarFallback><АгентIcon icon={actorIcon} classИмя="h-3.5 w-3.5" /></AvatarFallback>
             ) : (
-              <AvatarFallback>{initialsForName(actorName)}</AvatarFallback>
+              <AvatarFallback>{initialsForИмя(actorИмя)}</AvatarFallback>
             )}
           </Avatar>
           {rowContent}
         </div>
       )}
       {expanded ? (
-        <div id={detailsId} className="mt-2">
-          <IssueThreadInteractionCard
+        <div id={detailsId} classИмя="mt-2">
+          <ЗадачаThreadInteractionCard
             interaction={interaction}
             agentMap={agentMap}
             currentUserId={currentUserId}
             userLabelMap={userLabelMap}
-            onAcceptInteraction={onAcceptInteraction}
-            onRejectInteraction={onRejectInteraction}
-            onCancelInteraction={onCancelInteraction}
+            onПринятьInteraction={onПринятьInteraction}
+            onОтклонитьInteraction={onОтклонитьInteraction}
+            onОтменаInteraction={onОтменаInteraction}
           />
         </div>
       ) : null}
@@ -1977,24 +1977,24 @@ function ExpiredRequestConfirmationActivity({
   );
 }
 
-function isIssueCommentPresentation(value: unknown): value is IssueCommentPresentation {
+function isЗадачаCommentPresentation(value: unknown): value is ЗадачаCommentPresentation {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
   return v.kind === "system_notice" || v.kind === "message";
 }
 
-function isIssueCommentMetadata(value: unknown): value is IssueCommentMetadata {
+function isЗадачаCommentMetadata(value: unknown): value is ЗадачаCommentMetadata {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
   return v.version === 1 && Array.isArray(v.sections);
 }
 
-function issueStatusIsTerminalDisposition(issueStatus: string | undefined) {
-  return issueStatus === "done" || issueStatus === "cancelled";
+function issueСтатусIsTerminalDisposition(issueСтатус: string | undefined) {
+  return issueСтатус === "done" || issueСтатус === "cancelled";
 }
 
-function sourceRunIdFromSuccessfulRunHandoffMetadata(metadata: IssueCommentMetadata | null) {
-  if (metadata?.sourceRunId) return metadata.sourceRunId;
+function sourceЗапуститьIdFromУспешноfulЗапуститьHandoffMetadata(metadata: ЗадачаCommentMetadata | null) {
+  if (metadata?.sourceЗапуститьId) return metadata.sourceЗапуститьId;
   const runLinks = [];
   for (const section of metadata?.sections ?? []) {
     for (const row of section.rows) {
@@ -2004,24 +2004,24 @@ function sourceRunIdFromSuccessfulRunHandoffMetadata(metadata: IssueCommentMetad
   return runLinks.length === 1 ? runLinks[0] : null;
 }
 
-function isStaleSuccessfulRunHandoffNotice(input: {
+function isStaleУспешноfulЗапуститьHandoffНетtice(input: {
   bodyText: string;
-  issueStatus?: string;
-  successfulRunHandoff?: SuccessfulRunHandoffState | null;
+  issueСтатус?: string;
+  successfulЗапуститьHandoff?: УспешноfulЗапуститьHandoffState | null;
   runId?: string | null;
-  metadata: IssueCommentMetadata | null;
+  metadata: ЗадачаCommentMetadata | null;
 }) {
-  if (!isSuccessfulRunHandoffComment(input.bodyText)) return false;
+  if (!isУспешноfulЗапуститьHandoffComment(input.bodyText)) return false;
 
-  const currentHandoff = input.successfulRunHandoff ?? null;
+  const currentHandoff = input.successfulЗапуститьHandoff ?? null;
   if (currentHandoff?.state === "resolved") return true;
-  if (issueStatusIsTerminalDisposition(input.issueStatus)) return true;
+  if (issueСтатусIsTerminalDisposition(input.issueСтатус)) return true;
 
-  const noticeSourceRunId = sourceRunIdFromSuccessfulRunHandoffMetadata(input.metadata) ?? input.runId ?? null;
+  const noticeSourceЗапуститьId = sourceЗапуститьIdFromУспешноfulЗапуститьHandoffMetadata(input.metadata) ?? input.runId ?? null;
   if (
-    noticeSourceRunId
-    && currentHandoff?.sourceRunId
-    && noticeSourceRunId !== currentHandoff.sourceRunId
+    noticeSourceЗапуститьId
+    && currentHandoff?.sourceЗапуститьId
+    && noticeSourceЗапуститьId !== currentHandoff.sourceЗапуститьId
   ) {
     return true;
   }
@@ -2029,9 +2029,9 @@ function isStaleSuccessfulRunHandoffNotice(input: {
   return false;
 }
 
-function StaleDispositionWarningMetadataRow({ row }: { row: SystemNoticeMetadataRow }) {
+function StaleDispositionПредупреждениеMetadataRow({ row }: { row: SystemНетticeMetadataRow }) {
   const label = (
-    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+    <span classИмя="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
       {row.label}
     </span>
   );
@@ -2041,7 +2041,7 @@ function StaleDispositionWarningMetadataRow({ row }: { row: SystemNoticeMetadata
         return <span>{row.value}</span>;
       case "code":
         return (
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
+          <code classИмя="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
             {row.value}
           </code>
         );
@@ -2049,55 +2049,55 @@ function StaleDispositionWarningMetadataRow({ row }: { row: SystemNoticeMetadata
         const content = (
           <>
             <span>{row.identifier}</span>
-            {row.title ? <span className="text-muted-foreground"> - {row.title}</span> : null}
+            {row.title ? <span classИмя="text-muted-foreground"> - {row.title}</span> : null}
           </>
         );
         return row.href ? (
-          <a href={row.href} className="font-medium text-foreground underline-offset-2 hover:underline">
+          <a href={row.href} classИмя="font-medium text-foreground underline-offset-2 hover:underline">
             {content}
           </a>
         ) : (
-          <span className="font-medium text-foreground">{content}</span>
+          <span classИмя="font-medium text-foreground">{content}</span>
         );
       }
       case "agent":
         return row.href ? (
-          <a href={row.href} className="font-medium text-foreground underline-offset-2 hover:underline">
+          <a href={row.href} classИмя="font-medium text-foreground underline-offset-2 hover:underline">
             {row.name}
           </a>
         ) : (
-          <span className="font-medium text-foreground">{row.name}</span>
+          <span classИмя="font-medium text-foreground">{row.name}</span>
         );
       case "run": {
         const runShort = row.runId.length > 12 ? `${row.runId.slice(0, 8)}...` : row.runId;
         const content = (
           <>
-            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
+            <code classИмя="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
               {runShort}
             </code>
             {row.status ? <span>{row.status}</span> : null}
           </>
         );
         return row.href ? (
-          <a href={row.href} className="inline-flex items-center gap-1.5 underline-offset-2 hover:underline">
+          <a href={row.href} classИмя="inline-flex items-center gap-1.5 underline-offset-2 hover:underline">
             {content}
           </a>
         ) : (
-          <span className="inline-flex items-center gap-1.5">{content}</span>
+          <span classИмя="inline-flex items-center gap-1.5">{content}</span>
         );
       }
     }
   })();
 
   return (
-    <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs leading-5">
+    <div classИмя="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs leading-5">
       {label}
-      <div className="min-w-0 break-words text-foreground/80">{value}</div>
+      <div classИмя="min-w-0 break-words text-foreground/80">{value}</div>
     </div>
   );
 }
 
-function metadataRowKey(row: SystemNoticeMetadataRow) {
+function metadataRowКлюч(row: SystemНетticeMetadataRow) {
   switch (row.kind) {
     case "issue":
       return `issue:${row.label}:${row.identifier}:${row.href ?? ""}:${row.title ?? ""}`;
@@ -2110,50 +2110,50 @@ function metadataRowKey(row: SystemNoticeMetadataRow) {
   }
 }
 
-function metadataSectionKey(section: SystemNoticeMetadataSection) {
-  return `${section.title ?? "details"}:${section.rows.map(metadataRowKey).join("|")}`;
+function metadataSectionКлюч(section: SystemНетticeMetadataSection) {
+  return `${section.title ?? "details"}:${section.rows.map(metadataRowКлюч).join("|")}`;
 }
 
 function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === "string";
 }
 
-function isTimelineWorkspace(value: unknown): value is IssueTimelineWorkspace {
+function isTimelineРабочая область(value: unknown): value is ЗадачаTimelineРабочая область {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const workspace = value as Record<string, unknown>;
   return isNullableString(workspace.label)
-    && isNullableString(workspace.projectWorkspaceId)
-    && isNullableString(workspace.executionWorkspaceId)
+    && isNullableString(workspace.projectРабочая областьId)
+    && isNullableString(workspace.executionРабочая областьId)
     && isNullableString(workspace.mode);
 }
 
-function isTimelineWorkspaceChange(value: unknown): value is NonNullable<IssueTimelineEvent["workspaceChange"]> {
+function isTimelineРабочая областьChange(value: unknown): value is НетnNullable<ЗадачаTimelineEvent["workspaceChange"]> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const change = value as Record<string, unknown>;
-  return isTimelineWorkspace(change.from) && isTimelineWorkspace(change.to);
+  return isTimelineРабочая область(change.from) && isTimelineРабочая область(change.to);
 }
 
-function StaleDispositionWarningDetails({
+function StaleDispositionПредупреждениеДетали({
   sections,
 }: {
-  sections: SystemNoticeMetadataSection[];
+  sections: SystemНетticeMetadataSection[];
 }) {
   if (sections.length === 0) {
-    return <div className="text-xs leading-5 text-muted-foreground">No additional details.</div>;
+    return <div classИмя="text-xs leading-5 text-muted-foreground">Нет additional details.</div>;
   }
 
   return (
-    <div className="space-y-3 text-left">
+    <div classИмя="space-y-3 text-left">
       {sections.map((section) => (
-        <div key={metadataSectionKey(section)} className="space-y-1.5">
+        <div key={metadataSectionКлюч(section)} classИмя="space-y-1.5">
           {section.title ? (
-            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <div classИмя="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               {section.title}
             </div>
           ) : null}
-          <div className="space-y-1">
+          <div classИмя="space-y-1">
             {section.rows.map((row) => (
-              <StaleDispositionWarningMetadataRow key={metadataRowKey(row)} row={row} />
+              <StaleDispositionПредупреждениеMetadataRow key={metadataRowКлюч(row)} row={row} />
             ))}
           </div>
         </div>
@@ -2162,47 +2162,47 @@ function StaleDispositionWarningDetails({
   );
 }
 
-function StaleDispositionWarningRow({
+function StaleDispositionПредупреждениеRow({
   anchorId,
   message,
   metadata,
-  runAgentId,
+  runАгентId,
 }: {
   anchorId?: string;
   message: ThreadMessage;
-  metadata: IssueCommentMetadata | null;
-  runAgentId?: string | null;
+  metadata: ЗадачаCommentMetadata | null;
+  runАгентId?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const detailsId = useId();
-  const sections = mapCommentMetadataToSystemNoticeSections(metadata, { runAgentId });
+  const sections = mapCommentMetadataToSystemНетticeSections(metadata, { runАгентId });
 
   return (
     <div id={anchorId} data-testid="stale-disposition-warning">
-      <div className="flex items-start gap-2.5 py-1.5">
-        <span className="size-6 shrink-0" aria-hidden />
-        <div className="min-w-0 flex-1">
+      <div classИмя="flex items-start gap-2.5 py-1.5">
+        <span classИмя="size-6 shrink-0" aria-hidden />
+        <div classИмя="min-w-0 flex-1">
           <button
             type="button"
             aria-expanded={open}
             aria-controls={detailsId}
-            className="group flex w-full items-center gap-2 py-0.5 text-left"
+            classИмя="group flex w-full items-center gap-2 py-0.5 text-left"
             onClick={() => setOpen((value) => !value)}
           >
-            <span className="text-sm font-medium text-foreground/80">
+            <span classИмя="text-sm font-medium text-foreground/80">
               Stale disposition warning
             </span>
-            <span className="ml-auto flex items-center gap-1.5">
+            <span classИмя="ml-auto flex items-center gap-1.5">
               {message.createdAt ? (
-                <span data-testid="stale-disposition-warning-time" className="text-[11px] text-muted-foreground/50">
+                <span data-testid="stale-disposition-warning-time" classИмя="text-[11px] text-muted-foreground/50">
                   {commentDateLabel(message.createdAt)}
                 </span>
               ) : null}
-              <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/40 transition-transform", open && "rotate-180")} />
+              <ChevronDown classИмя={cn("h-3.5 w-3.5 text-muted-foreground/40 transition-transform", open && "rotate-180")} />
             </span>
           </button>
-          <div id={detailsId} hidden={!open} className="space-y-1 py-1">
-            <StaleDispositionWarningDetails sections={sections} />
+          <div id={detailsId} hidden={!open} classИмя="space-y-1 py-1">
+            <StaleDispositionПредупреждениеДетали sections={sections} />
           </div>
         </div>
       </div>
@@ -2210,29 +2210,29 @@ function StaleDispositionWarningRow({
   );
 }
 
-function SystemNoticeCommentRow({
+function SystemНетticeCommentRow({
   message,
   anchorId,
 }: {
   message: ThreadMessage;
   anchorId?: string;
 }) {
-  const { onImageClick, agentMap, issueStatus, successfulRunHandoff } = useContext(IssueChatCtx);
+  const { onImageClick, agentMap, issueСтатус, successfulЗапуститьHandoff } = useContext(ЗадачаChatCtx);
   const custom = message.metadata.custom as Record<string, unknown>;
-  const presentation = isIssueCommentPresentation(custom.presentation) ? custom.presentation : null;
-  const commentMetadata = isIssueCommentMetadata(custom.commentMetadata) ? custom.commentMetadata : null;
-  const runAgentId = typeof custom.runAgentId === "string" ? custom.runAgentId : null;
+  const presentation = isЗадачаCommentPresentation(custom.presentation) ? custom.presentation : null;
+  const commentMetadata = isЗадачаCommentMetadata(custom.commentMetadata) ? custom.commentMetadata : null;
+  const runАгентId = typeof custom.runАгентId === "string" ? custom.runАгентId : null;
   const runId = typeof custom.runId === "string" ? custom.runId : null;
-  const authorType = typeof custom.authorType === "string" ? custom.authorType : null;
-  const authorName = typeof custom.authorName === "string" ? custom.authorName : null;
+  const authorТип = typeof custom.authorТип === "string" ? custom.authorТип : null;
+  const authorИмя = typeof custom.authorИмя === "string" ? custom.authorИмя : null;
   const bodyText = message.content
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
     .map((p) => p.text)
     .join("\n\n");
-  const staleSuccessfulRunHandoffNotice = isStaleSuccessfulRunHandoffNotice({
+  const staleУспешноfulЗапуститьHandoffНетtice = isStaleУспешноfulЗапуститьHandoffНетtice({
     bodyText,
-    issueStatus,
-    successfulRunHandoff,
+    issueСтатус,
+    successfulЗапуститьHandoff,
     runId,
     metadata: commentMetadata,
   });
@@ -2240,40 +2240,40 @@ function SystemNoticeCommentRow({
   const [copiedLink, setCopiedLink] = useState(false);
 
   const source = (() => {
-    const runAgentName = runAgentId ? agentMap?.get(runAgentId)?.name ?? null : null;
-    if (authorType === "system") {
-      const label = runAgentName ?? "Paperclip";
-      if (runAgentId && runId) return { label, href: `/agents/${runAgentId}/runs/${runId}` };
+    const runАгентИмя = runАгентId ? agentMap?.get(runАгентId)?.name ?? null : null;
+    if (authorТип === "system") {
+      const label = runАгентИмя ?? "Paperclip";
+      if (runАгентId && runId) return { label, href: `/agents/${runАгентId}/runs/${runId}` };
       return { label };
     }
-    if (runAgentId && runId) {
-      return { label: authorName ?? runAgentName ?? "Paperclip", href: `/agents/${runAgentId}/runs/${runId}` };
+    if (runАгентId && runId) {
+      return { label: authorИмя ?? runАгентИмя ?? "Paperclip", href: `/agents/${runАгентId}/runs/${runId}` };
     }
-    if (authorName) return { label: authorName };
+    if (authorИмя) return { label: authorИмя };
     return undefined;
   })();
 
-  const props = buildSystemNoticeProps({
+  const props = buildSystemНетticeProps({
     presentation,
     metadata: commentMetadata,
     body: (
-      <MarkdownBody className="text-sm leading-6" softBreaks onImageClick={onImageClick}>
+      <MarkdownBody classИмя="text-sm leading-6" softBreaks onImageClick={onImageClick}>
         {bodyText}
       </MarkdownBody>
     ),
     timestamp: message.createdAt ? new Date(message.createdAt).toISOString() : undefined,
     source,
-    runAgentId,
+    runАгентId,
   });
 
-  const handleCopy = () => {
+  const handleКопировать = () => {
     void navigator.clipboard.writeText(bodyText).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
 
-  const handleCopyLink = () => {
+  const handleКопироватьLink = () => {
     if (!anchorId || typeof window === "undefined") return;
     const url = `${window.location.origin}${window.location.pathname}#${anchorId}`;
     void navigator.clipboard.writeText(url).then(() => {
@@ -2282,54 +2282,54 @@ function SystemNoticeCommentRow({
     });
   };
 
-  if (staleSuccessfulRunHandoffNotice) {
+  if (staleУспешноfulЗапуститьHandoffНетtice) {
     return (
-      <StaleDispositionWarningRow
+      <StaleDispositionПредупреждениеRow
         anchorId={anchorId}
         message={message}
         metadata={commentMetadata}
-        runAgentId={runAgentId}
+        runАгентId={runАгентId}
       />
     );
   }
 
   return (
-    <div id={anchorId} className="group">
-      <div className="py-1">
-        <SystemNotice {...props} />
-        <div className="mt-1 flex items-center justify-end gap-1.5 px-1 opacity-0 transition-opacity group-hover:opacity-100">
+    <div id={anchorId} classИмя="group">
+      <div classИмя="py-1">
+        <SystemНетtice {...props} />
+        <div classИмя="mt-1 flex items-center justify-end gap-1.5 px-1 opacity-0 transition-opacity group-hover:opacity-100">
           <Tooltip>
             <TooltipTrigger asChild>
               <a
                 href={anchorId ? `#${anchorId}` : undefined}
-                className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                classИмя="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
               >
                 {message.createdAt ? commentDateLabel(message.createdAt) : ""}
               </a>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
+            <TooltipContent side="bottom" classИмя="text-xs">
               {message.createdAt ? formatDateTime(message.createdAt) : ""}
             </TooltipContent>
           </Tooltip>
           {anchorId ? (
             <button
               type="button"
-              className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-              title="Copy link"
-              aria-label="Copy link to system notice"
-              onClick={handleCopyLink}
+              classИмя="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+              title="Копировать link"
+              aria-label="Копировать link to system notice"
+              onClick={handleКопироватьLink}
             >
-              {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Paperclip className="h-3.5 w-3.5" />}
+              {copiedLink ? <Check classИмя="h-3.5 w-3.5" /> : <Paperclip classИмя="h-3.5 w-3.5" />}
             </button>
           ) : null}
           <button
             type="button"
-            className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-            title="Copy notice text"
-            aria-label="Copy system notice"
-            onClick={handleCopy}
+            classИмя="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            title="Копировать notice text"
+            aria-label="Копировать system notice"
+            onClick={handleКопировать}
           >
-            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? <Check classИмя="h-3.5 w-3.5" /> : <Копировать classИмя="h-3.5 w-3.5" />}
           </button>
         </div>
       </div>
@@ -2337,42 +2337,42 @@ function SystemNoticeCommentRow({
   );
 }
 
-function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
+function ЗадачаChatSystemMessage({ message }: { message: ThreadMessage }) {
   const {
     agentMap,
     currentUserId,
     userLabelMap,
-    onAcceptInteraction,
-    onRejectInteraction,
-    onSubmitInteractionAnswers,
-    onCancelInteraction,
-  } = useContext(IssueChatCtx);
+    onПринятьInteraction,
+    onОтклонитьInteraction,
+    onОтправитьInteractionAnswers,
+    onОтменаInteraction,
+  } = useContext(ЗадачаChatCtx);
   const custom = message.metadata.custom as Record<string, unknown>;
   const anchorId = typeof custom.anchorId === "string" ? custom.anchorId : undefined;
   const runId = typeof custom.runId === "string" ? custom.runId : null;
-  const runAgentId = typeof custom.runAgentId === "string" ? custom.runAgentId : null;
-  const runAgentName = typeof custom.runAgentName === "string" ? custom.runAgentName : null;
-  const runStatus = typeof custom.runStatus === "string" ? custom.runStatus : null;
-  const actorName = typeof custom.actorName === "string" ? custom.actorName : null;
-  const actorType = typeof custom.actorType === "string" ? custom.actorType : null;
+  const runАгентId = typeof custom.runАгентId === "string" ? custom.runАгентId : null;
+  const runАгентИмя = typeof custom.runАгентИмя === "string" ? custom.runАгентИмя : null;
+  const runСтатус = typeof custom.runСтатус === "string" ? custom.runСтатус : null;
+  const actorИмя = typeof custom.actorИмя === "string" ? custom.actorИмя : null;
+  const actorТип = typeof custom.actorТип === "string" ? custom.actorТип : null;
   const actorId = typeof custom.actorId === "string" ? custom.actorId : null;
   const statusChange = typeof custom.statusChange === "object" && custom.statusChange
     ? custom.statusChange as { from: string | null; to: string | null }
     : null;
   const assigneeChange = typeof custom.assigneeChange === "object" && custom.assigneeChange
     ? custom.assigneeChange as {
-        from: IssueTimelineAssignee;
-        to: IssueTimelineAssignee;
+        from: ЗадачаTimelineИсполнитель;
+        to: ЗадачаTimelineИсполнитель;
       }
     : null;
-  const workspaceChange = isTimelineWorkspaceChange(custom.workspaceChange) ? custom.workspaceChange : null;
-  const interaction = isIssueThreadInteraction(custom.interaction)
+  const workspaceChange = isTimelineРабочая областьChange(custom.workspaceChange) ? custom.workspaceChange : null;
+  const interaction = isЗадачаThreadInteraction(custom.interaction)
     ? custom.interaction
     : null;
 
   if (custom.kind === "system_notice") {
     return (
-      <SystemNoticeCommentRow
+      <SystemНетticeCommentRow
         message={message}
         anchorId={anchorId}
       />
@@ -2382,7 +2382,7 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
   if (custom.kind === "interaction" && interaction) {
     if (interaction.kind === "request_confirmation" && interaction.status === "expired") {
       return (
-        <ExpiredRequestConfirmationActivity
+        <ExpiredRequestПодтвердитьationАктивность
           message={message}
           anchorId={anchorId}
           interaction={interaction}
@@ -2392,79 +2392,79 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
 
     return (
       <div id={anchorId}>
-        <div className="py-1.5">
-          <IssueThreadInteractionCard
+        <div classИмя="py-1.5">
+          <ЗадачаThreadInteractionCard
             interaction={interaction}
             agentMap={agentMap}
             currentUserId={currentUserId}
             userLabelMap={userLabelMap}
-            onAcceptInteraction={onAcceptInteraction}
-            onRejectInteraction={onRejectInteraction}
-            onSubmitInteractionAnswers={onSubmitInteractionAnswers}
-            onCancelInteraction={onCancelInteraction}
+            onПринятьInteraction={onПринятьInteraction}
+            onОтклонитьInteraction={onОтклонитьInteraction}
+            onОтправитьInteractionAnswers={onОтправитьInteractionAnswers}
+            onОтменаInteraction={onОтменаInteraction}
           />
         </div>
       </div>
     );
   }
 
-  if (custom.kind === "event" && actorName) {
-    const isCurrentUser = actorType === "user" && !!currentUserId && actorId === currentUserId;
-    const isAgent = actorType === "agent";
-    const agentIcon = isAgent && actorId ? agentMap?.get(actorId)?.icon : undefined;
+  if (custom.kind === "event" && actorИмя) {
+    const isCurrentUser = actorТип === "user" && !!currentUserId && actorId === currentUserId;
+    const isАгент = actorТип === "agent";
+    const agentIcon = isАгент && actorId ? agentMap?.get(actorId)?.icon : undefined;
 
     const eventContent = (
-      <div className="min-w-0 space-y-1">
-        <div className={cn("flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-xs", isCurrentUser && "justify-end")}>
-          <span className="font-medium text-foreground">{actorName}</span>
-          <span className="text-muted-foreground">
+      <div classИмя="min-w-0 space-y-1">
+        <div classИмя={cn("flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-xs", isCurrentUser && "justify-end")}>
+          <span classИмя="font-medium text-foreground">{actorИмя}</span>
+          <span classИмя="text-muted-foreground">
             {custom.followUpRequested === true ? "requested follow-up" : "updated this task"}
           </span>
           <a
             href={anchorId ? `#${anchorId}` : undefined}
-            className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
+            classИмя="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
           >
             {timeAgo(message.createdAt)}
           </a>
         </div>
 
         {statusChange ? (
-          <div className={cn("flex flex-wrap items-center gap-1.5 text-xs", isCurrentUser && "justify-end")}>
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Status
+          <div classИмя={cn("flex flex-wrap items-center gap-1.5 text-xs", isCurrentUser && "justify-end")}>
+            <span classИмя="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Статус
             </span>
-            <span className="text-muted-foreground">{humanizeValue(statusChange.from)}</span>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
-            <span className="font-medium text-foreground">{humanizeValue(statusChange.to)}</span>
+            <span classИмя="text-muted-foreground">{humanizeЗначение(statusChange.from)}</span>
+            <ArrowRight classИмя="h-3 w-3 text-muted-foreground" />
+            <span classИмя="font-medium text-foreground">{humanizeЗначение(statusChange.to)}</span>
           </div>
         ) : null}
 
         {assigneeChange ? (
-          <div className={cn("flex flex-wrap items-center gap-1.5 text-xs", isCurrentUser && "justify-end")}>
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Assignee
+          <div classИмя={cn("flex flex-wrap items-center gap-1.5 text-xs", isCurrentUser && "justify-end")}>
+            <span classИмя="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Исполнитель
             </span>
-            <span className="text-muted-foreground">
-              {formatTimelineAssigneeLabel(assigneeChange.from, agentMap, currentUserId, userLabelMap)}
+            <span classИмя="text-muted-foreground">
+              {formatTimelineИсполнительLabel(assigneeChange.from, agentMap, currentUserId, userLabelMap)}
             </span>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
-            <span className="font-medium text-foreground">
-              {formatTimelineAssigneeLabel(assigneeChange.to, agentMap, currentUserId, userLabelMap)}
+            <ArrowRight classИмя="h-3 w-3 text-muted-foreground" />
+            <span classИмя="font-medium text-foreground">
+              {formatTimelineИсполнительLabel(assigneeChange.to, agentMap, currentUserId, userLabelMap)}
             </span>
           </div>
         ) : null}
 
         {workspaceChange ? (
-          <div className={cn("flex flex-wrap items-center gap-1.5 text-xs", isCurrentUser && "justify-end")}>
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Workspace
+          <div classИмя={cn("flex flex-wrap items-center gap-1.5 text-xs", isCurrentUser && "justify-end")}>
+            <span classИмя="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Рабочая область
             </span>
-            <span className="text-muted-foreground">
-              {formatTimelineWorkspaceLabel(workspaceChange.from)}
+            <span classИмя="text-muted-foreground">
+              {formatTimelineРабочая областьLabel(workspaceChange.from)}
             </span>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
-            <span className="font-medium text-foreground">
-              {formatTimelineWorkspaceLabel(workspaceChange.to)}
+            <ArrowRight classИмя="h-3 w-3 text-muted-foreground" />
+            <span classИмя="font-medium text-foreground">
+              {formatTimelineРабочая областьLabel(workspaceChange.to)}
             </span>
           </div>
         ) : null}
@@ -2474,7 +2474,7 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
     if (isCurrentUser) {
       return (
         <div id={anchorId}>
-          <div className="flex items-start justify-end gap-2 py-1">
+          <div classИмя="flex items-start justify-end gap-2 py-1">
             {eventContent}
           </div>
         </div>
@@ -2483,15 +2483,15 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
 
     return (
       <div id={anchorId}>
-        <div className="flex items-start gap-2.5 py-1">
-          <Avatar size="sm" className="mt-0.5">
+        <div classИмя="flex items-start gap-2.5 py-1">
+          <Avatar size="sm" classИмя="mt-0.5">
             {agentIcon ? (
-              <AvatarFallback><AgentIcon icon={agentIcon} className="h-3.5 w-3.5" /></AvatarFallback>
+              <AvatarFallback><АгентIcon icon={agentIcon} classИмя="h-3.5 w-3.5" /></AvatarFallback>
             ) : (
-              <AvatarFallback>{initialsForName(actorName)}</AvatarFallback>
+              <AvatarFallback>{initialsForИмя(actorИмя)}</AvatarFallback>
             )}
           </Avatar>
-          <div className="flex-1">
+          <div classИмя="flex-1">
             {eventContent}
           </div>
         </div>
@@ -2499,38 +2499,38 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
     );
   }
 
-  const displayedRunAgentName = runAgentName ?? (runAgentId ? agentMap?.get(runAgentId)?.name ?? runAgentId.slice(0, 8) : null);
-  const runAgentIcon = runAgentId ? agentMap?.get(runAgentId)?.icon : undefined;
-  if (custom.kind === "run" && runId && runAgentId && displayedRunAgentName && runStatus) {
+  const displayedЗапуститьАгентИмя = runАгентИмя ?? (runАгентId ? agentMap?.get(runАгентId)?.name ?? runАгентId.slice(0, 8) : null);
+  const runАгентIcon = runАгентId ? agentMap?.get(runАгентId)?.icon : undefined;
+  if (custom.kind === "run" && runId && runАгентId && displayedЗапуститьАгентИмя && runСтатус) {
     return (
       <div id={anchorId}>
-        <div className="flex items-center gap-2.5 py-1">
+        <div classИмя="flex items-center gap-2.5 py-1">
           <Avatar size="sm">
-            {runAgentIcon ? (
-              <AvatarFallback><AgentIcon icon={runAgentIcon} className="h-3.5 w-3.5" /></AvatarFallback>
+            {runАгентIcon ? (
+              <AvatarFallback><АгентIcon icon={runАгентIcon} classИмя="h-3.5 w-3.5" /></AvatarFallback>
             ) : (
-              <AvatarFallback>{initialsForName(displayedRunAgentName)}</AvatarFallback>
+              <AvatarFallback>{initialsForИмя(displayedЗапуститьАгентИмя)}</AvatarFallback>
             )}
           </Avatar>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
-              <Link to={`/agents/${runAgentId}`} className="font-medium text-foreground transition-colors hover:underline">
-                {displayedRunAgentName}
+          <div classИмя="min-w-0 flex-1">
+            <div classИмя="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
+              <Link to={`/agents/${runАгентId}`} classИмя="font-medium text-foreground transition-colors hover:underline">
+                {displayedЗапуститьАгентИмя}
               </Link>
-              <span className="text-muted-foreground">run</span>
+              <span classИмя="text-muted-foreground">run</span>
               <Link
-                to={`/agents/${runAgentId}/runs/${runId}`}
-                className="inline-flex items-center rounded-md border border-border bg-accent/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+                to={`/agents/${runАгентId}/runs/${runId}`}
+                classИмя="inline-flex items-center rounded-md border border-border bg-accent/40 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
               >
                 {runId.slice(0, 8)}
               </Link>
-              <span className={cn("font-medium", runStatusClass(runStatus))}>
-                {formatRunStatusLabel(runStatus)}
+              <span classИмя={cn("font-medium", runСтатусClass(runСтатус))}>
+                {formatЗапуститьСтатусLabel(runСтатус)}
               </span>
               <a
                 href={anchorId ? `#${anchorId}` : undefined}
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
+                classИмя="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
               >
                 {timeAgo(message.createdAt)}
               </a>
@@ -2544,60 +2544,60 @@ function IssueChatSystemMessage({ message }: { message: ThreadMessage }) {
   return null;
 }
 
-function issueChatMessageCustom(message: ThreadMessage): Record<string, unknown> {
+function issueChatMessageСвой(message: ThreadMessage): Record<string, unknown> {
   return (message.metadata?.custom ?? {}) as Record<string, unknown>;
 }
 
 function issueChatMessageKind(message: ThreadMessage): string {
-  const custom = issueChatMessageCustom(message);
+  const custom = issueChatMessageСвой(message);
   return typeof custom.kind === "string" ? custom.kind : message.role;
 }
 
 function issueChatMessageCommentId(message: ThreadMessage): string | null {
-  const custom = issueChatMessageCustom(message);
+  const custom = issueChatMessageСвой(message);
   return typeof custom.commentId === "string" ? custom.commentId : null;
 }
 
-function issueChatMessageRunId(message: ThreadMessage): string | null {
-  const custom = issueChatMessageCustom(message);
+function issueChatMessageЗапуститьId(message: ThreadMessage): string | null {
+  const custom = issueChatMessageСвой(message);
   return typeof custom.runId === "string" ? custom.runId : null;
 }
 
-function issueChatMessageQueueTargetRunId(message: ThreadMessage): string | null {
-  const custom = issueChatMessageCustom(message);
-  return typeof custom.queueTargetRunId === "string" ? custom.queueTargetRunId : null;
+function issueChatMessageQueueЦельЗапуститьId(message: ThreadMessage): string | null {
+  const custom = issueChatMessageСвой(message);
+  return typeof custom.queueЦельЗапуститьId === "string" ? custom.queueЦельЗапуститьId : null;
 }
 
-function issueChatMessageActiveVote(
+function issueChatMessageАктивенVote(
   message: ThreadMessage,
-  feedbackVoteByTargetId: ReadonlyMap<string, FeedbackVoteValue>,
-): FeedbackVoteValue | null {
+  feedbackVoteByЦельId: ReadonlyMap<string, FeedbackVoteЗначение>,
+): FeedbackVoteЗначение | null {
   const commentId = issueChatMessageCommentId(message);
-  return commentId ? feedbackVoteByTargetId.get(commentId) ?? null : null;
+  return commentId ? feedbackVoteByЦельId.get(commentId) ?? null : null;
 }
 
-function issueChatMessageRunIsActive(
+function issueChatMessageЗапуститьIsАктивен(
   message: ThreadMessage,
-  activeRunIds: ReadonlySet<string>,
+  activeЗапуститьIds: ReadonlySet<string>,
 ): boolean {
-  const runId = issueChatMessageRunId(message);
-  return Boolean(runId && activeRunIds.has(runId));
+  const runId = issueChatMessageЗапуститьId(message);
+  return Boolean(runId && activeЗапуститьIds.has(runId));
 }
 
-function issueChatMessageRunIsStopping(
+function issueChatMessageЗапуститьIsОстановитьping(
   message: ThreadMessage,
-  stoppingRunId: string | null | undefined,
+  stoppingЗапуститьId: string | null | undefined,
 ): boolean {
-  const runId = issueChatMessageRunId(message);
-  return Boolean(runId && stoppingRunId === runId);
+  const runId = issueChatMessageЗапуститьId(message);
+  return Boolean(runId && stoppingЗапуститьId === runId);
 }
 
-function issueChatMessageQueuedRunIsInterrupting(
+function issueChatMessageQueuedЗапуститьIsInterrupting(
   message: ThreadMessage,
-  interruptingQueuedRunId: string | null | undefined,
+  interruptingQueuedЗапуститьId: string | null | undefined,
 ): boolean {
-  const queueTargetRunId = issueChatMessageQueueTargetRunId(message);
-  return Boolean(queueTargetRunId && interruptingQueuedRunId === queueTargetRunId);
+  const queueЦельЗапуститьId = issueChatMessageQueueЦельЗапуститьId(message);
+  return Boolean(queueЦельЗапуститьId && interruptingQueuedЗапуститьId === queueЦельЗапуститьId);
 }
 
 // Above ~150 merged rows the direct render path forces React to mount and
@@ -2612,16 +2612,16 @@ const VIRTUALIZED_THREAD_ROW_ESTIMATE_PX = 220;
 const VIRTUALIZED_THREAD_GAP_FULL_PX = 16;
 const VIRTUALIZED_THREAD_GAP_EMBEDDED_PX = 12;
 
-interface VirtualizedIssueChatThreadListProps {
+interface VirtualizedЗадачаChatThreadListProps {
   messages: readonly ThreadMessage[];
-  feedbackVoteByTargetId: ReadonlyMap<string, FeedbackVoteValue>;
-  activeRunIds: ReadonlySet<string>;
-  stoppingRunId?: string | null;
-  interruptingQueuedRunId?: string | null;
+  feedbackVoteByЦельId: ReadonlyMap<string, FeedbackVoteЗначение>;
+  activeЗапуститьIds: ReadonlySet<string>;
+  stoppingЗапуститьId?: string | null;
+  interruptingQueuedЗапуститьId?: string | null;
   variant: "full" | "embedded";
 }
 
-interface VirtualizedIssueChatThreadListHandle {
+interface VirtualizedЗадачаChatThreadListHandle {
   scrollToIndex: (
     index: number,
     options?: { align?: "start" | "center" | "end" | "auto"; behavior?: ScrollBehavior },
@@ -2659,18 +2659,18 @@ type VirtualizedScrollMode =
 
 type SimpleVirtualItem = {
   index: number;
-  key: React.Key;
+  key: React.Ключ;
   start: number;
   size: number;
 };
 
-function useIssueThreadVirtualizer({
+function useЗадачаThreadVirtualizer({
   count,
   estimateSize,
   overscan,
   scrollMargin,
   gap,
-  getItemKey,
+  getItemКлюч,
   mode,
 }: {
   count: number;
@@ -2678,24 +2678,24 @@ function useIssueThreadVirtualizer({
   overscan: number;
   scrollMargin: number;
   gap: number;
-  getItemKey: (index: number) => React.Key;
+  getItemКлюч: (index: number) => React.Ключ;
   mode: VirtualizedScrollMode;
 }) {
-  const measuredSizeByKeyRef = useRef(new Map<React.Key, number>());
+  const measuredSizeByКлючRef = useRef(new Map<React.Ключ, number>());
   const [, rerender] = useState(0);
   const estimatedSize = estimateSize();
 
-  const itemStarts: number[] = [];
+  const itemНачатьs: number[] = [];
   const itemSizes: number[] = [];
-  let nextStart = scrollMargin;
+  let nextНачать = scrollMargin;
   for (let index = 0; index < count; index += 1) {
-    const key = getItemKey(index);
-    const size = measuredSizeByKeyRef.current.get(key) ?? estimatedSize;
-    itemStarts.push(nextStart);
+    const key = getItemКлюч(index);
+    const size = measuredSizeByКлючRef.current.get(key) ?? estimatedSize;
+    itemНачатьs.push(nextНачать);
     itemSizes.push(size);
-    nextStart += size + gap;
+    nextНачать += size + gap;
   }
-  const totalSize = Math.max(0, nextStart - scrollMargin - gap);
+  const totalSize = Math.max(0, nextНачать - scrollMargin - gap);
 
   const viewportHeight = () => (mode.kind === "window" ? window.innerHeight : mode.element.clientHeight);
   const scrollOffset = () => (mode.kind === "window" ? window.scrollY : mode.element.scrollTop);
@@ -2718,27 +2718,27 @@ function useIssueThreadVirtualizer({
     };
   }, [mode]);
 
-  const rawStart = Math.max(scrollMargin, scrollOffset());
-  const rawEnd = rawStart + viewportHeight();
-  let visibleStartIndex = 0;
+  const rawНачать = Math.max(scrollMargin, scrollOffset());
+  const rawEnd = rawНачать + viewportHeight();
+  let visibleНачатьIndex = 0;
   while (
-    visibleStartIndex < count - 1
-    && itemStarts[visibleStartIndex] + itemSizes[visibleStartIndex] < rawStart
+    visibleНачатьIndex < count - 1
+    && itemНачатьs[visibleНачатьIndex] + itemSizes[visibleНачатьIndex] < rawНачать
   ) {
-    visibleStartIndex += 1;
+    visibleНачатьIndex += 1;
   }
-  let visibleEndIndex = visibleStartIndex;
-  while (visibleEndIndex < count - 1 && itemStarts[visibleEndIndex] <= rawEnd) {
+  let visibleEndIndex = visibleНачатьIndex;
+  while (visibleEndIndex < count - 1 && itemНачатьs[visibleEndIndex] <= rawEnd) {
     visibleEndIndex += 1;
   }
-  const startIndex = Math.max(0, visibleStartIndex - overscan);
+  const startIndex = Math.max(0, visibleНачатьIndex - overscan);
   const endIndex = Math.min(count - 1, visibleEndIndex + overscan);
   const virtualItems: SimpleVirtualItem[] = [];
   for (let index = startIndex; index <= endIndex; index += 1) {
     virtualItems.push({
       index,
-      key: getItemKey(index),
-      start: itemStarts[index] ?? scrollMargin,
+      key: getItemКлюч(index),
+      start: itemНачатьs[index] ?? scrollMargin,
       size: itemSizes[index] ?? estimatedSize,
     });
   }
@@ -2749,7 +2749,7 @@ function useIssueThreadVirtualizer({
   ) => {
     const clampedIndex = Math.max(0, Math.min(index, count - 1));
     const targetMax = maxScrollOffset();
-    let top = itemStarts[clampedIndex] ?? scrollMargin;
+    let top = itemНачатьs[clampedIndex] ?? scrollMargin;
     if (options?.align === "center") {
       top = top - viewportHeight() / 2 + (itemSizes[clampedIndex] ?? estimatedSize) / 2;
     } else if (options?.align === "end") {
@@ -2775,10 +2775,10 @@ function useIssueThreadVirtualizer({
       if (!Number.isInteger(index) || index < 0 || index >= count) return;
       const measuredSize = element.getBoundingClientRect().height || element.offsetHeight;
       if (!Number.isFinite(measuredSize) || measuredSize <= 0) return;
-      const key = getItemKey(index);
-      const previousSize = measuredSizeByKeyRef.current.get(key) ?? estimatedSize;
+      const key = getItemКлюч(index);
+      const previousSize = measuredSizeByКлючRef.current.get(key) ?? estimatedSize;
       if (Math.abs(previousSize - measuredSize) < 1) return;
-      measuredSizeByKeyRef.current.set(key, measuredSize);
+      measuredSizeByКлючRef.current.set(key, measuredSize);
       rerender((value) => value + 1);
     },
   };
@@ -2803,11 +2803,11 @@ function findScrollContainer(el: HTMLElement | null): HTMLElement | null {
   return null;
 }
 
-const VirtualizedIssueChatThreadList = forwardRef<VirtualizedIssueChatThreadListHandle, VirtualizedIssueChatThreadListProps>(function VirtualizedIssueChatThreadList(props, ref) {
+const VirtualizedЗадачаChatThreadList = forwardRef<VirtualizedЗадачаChatThreadListHandle, VirtualizedЗадачаChatThreadListProps>(function VirtualizedЗадачаChatThreadList(props, ref) {
   const probeRef = useRef<HTMLDivElement | null>(null);
-  // Default to window scroll on first render so the imperative handle is
+  // По умолчанию to window scroll on first render so the imperative handle is
   // available immediately for hash-target / submit-scroll effects. After mount
-  // we probe the DOM and remount via key={modeKey} if the actual scroll
+  // we probe the DOM and remount via key={modeКлюч} if the actual scroll
   // container is an element ancestor (e.g. desktop <main id="main-content">).
   const [mode, setMode] = useState<VirtualizedScrollMode>({ kind: "window" });
 
@@ -2833,7 +2833,7 @@ const VirtualizedIssueChatThreadList = forwardRef<VirtualizedIssueChatThreadList
   }, []);
 
   return (
-    <VirtualizedIssueChatThreadListInner
+    <VirtualizedЗадачаChatThreadListInner
       key={mode.kind === "window" ? "window" : "element"}
       ref={ref}
       probeRef={probeRef}
@@ -2843,20 +2843,20 @@ const VirtualizedIssueChatThreadList = forwardRef<VirtualizedIssueChatThreadList
   );
 });
 
-interface VirtualizedIssueChatThreadListInnerProps extends VirtualizedIssueChatThreadListProps {
+interface VirtualizedЗадачаChatThreadListInnerProps extends VirtualizedЗадачаChatThreadListProps {
   mode: VirtualizedScrollMode;
   probeRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
-const VirtualizedIssueChatThreadListInner = forwardRef<
-  VirtualizedIssueChatThreadListHandle,
-  VirtualizedIssueChatThreadListInnerProps
->(function VirtualizedIssueChatThreadListInner({
+const VirtualizedЗадачаChatThreadListInner = forwardRef<
+  VirtualizedЗадачаChatThreadListHandle,
+  VirtualizedЗадачаChatThreadListInnerProps
+>(function VirtualizedЗадачаChatThreadListInner({
   messages,
-  feedbackVoteByTargetId,
-  activeRunIds,
-  stoppingRunId,
-  interruptingQueuedRunId,
+  feedbackVoteByЦельId,
+  activeЗапуститьIds,
+  stoppingЗапуститьId,
+  interruptingQueuedЗапуститьId,
   variant,
   mode,
   probeRef,
@@ -2892,13 +2892,13 @@ const VirtualizedIssueChatThreadListInner = forwardRef<
     ? VIRTUALIZED_THREAD_GAP_EMBEDDED_PX
     : VIRTUALIZED_THREAD_GAP_FULL_PX;
 
-  const virtualizer = useIssueThreadVirtualizer({
+  const virtualizer = useЗадачаThreadVirtualizer({
     count: messages.length,
     estimateSize: () => VIRTUALIZED_THREAD_ROW_ESTIMATE_PX,
     overscan: VIRTUALIZED_THREAD_OVERSCAN,
     scrollMargin,
     gap,
-    getItemKey: (index) => messages[index]?.id ?? index,
+    getItemКлюч: (index) => messages[index]?.id ?? index,
     mode,
   });
 
@@ -2927,7 +2927,7 @@ const VirtualizedIssueChatThreadListInner = forwardRef<
       const element = parentRef.current;
       if (!element || typeof window === "undefined") return;
       const rows = Array.from(
-        element.querySelectorAll<HTMLElement>("[data-anchor-id][data-index]"),
+        element.querySelectorВсе<HTMLElement>("[data-anchor-id][data-index]"),
       );
       const visibleRow = rows.find((row) => row.getBoundingClientRect().bottom >= 0);
       if (!visibleRow) return;
@@ -2990,16 +2990,16 @@ const VirtualizedIssueChatThreadListInner = forwardRef<
               if (element) virtualizer.measureElement(element);
             }}
             onLoadCapture={(event) => {
-              virtualizer.measureElement(event.currentTarget);
+              virtualizer.measureElement(event.currentЦель);
             }}
             onClickCapture={(event) => {
-              const row = event.currentTarget;
+              const row = event.currentЦель;
               requestAnimationFrame(() => {
                 virtualizer.measureElement(row);
               });
             }}
             onTransitionEndCapture={(event) => {
-              virtualizer.measureElement(event.currentTarget);
+              virtualizer.measureElement(event.currentЦель);
             }}
             style={{
               position: "absolute",
@@ -3009,12 +3009,12 @@ const VirtualizedIssueChatThreadListInner = forwardRef<
               transform: `translateY(${virtualItem.start - scrollMargin}px)`,
             }}
           >
-            <IssueChatMessageRow
+            <ЗадачаChatMessageRow
               message={message}
-              feedbackVoteByTargetId={feedbackVoteByTargetId}
-              activeRunIds={activeRunIds}
-              stoppingRunId={stoppingRunId}
-              interruptingQueuedRunId={interruptingQueuedRunId}
+              feedbackVoteByЦельId={feedbackVoteByЦельId}
+              activeЗапуститьIds={activeЗапуститьIds}
+              stoppingЗапуститьId={stoppingЗапуститьId}
+              interruptingQueuedЗапуститьId={interruptingQueuedЗапуститьId}
             />
           </div>
         );
@@ -3023,43 +3023,43 @@ const VirtualizedIssueChatThreadListInner = forwardRef<
   );
 });
 
-interface IssueChatMessageRowProps {
+interface ЗадачаChatMessageRowProps {
   message: ThreadMessage;
-  feedbackVoteByTargetId: ReadonlyMap<string, FeedbackVoteValue>;
-  activeRunIds: ReadonlySet<string>;
-  stoppingRunId?: string | null;
-  interruptingQueuedRunId?: string | null;
+  feedbackVoteByЦельId: ReadonlyMap<string, FeedbackVoteЗначение>;
+  activeЗапуститьIds: ReadonlySet<string>;
+  stoppingЗапуститьId?: string | null;
+  interruptingQueuedЗапуститьId?: string | null;
 }
 
-const IssueChatMessageRow = memo(function IssueChatMessageRow({
+const ЗадачаChatMessageRow = memo(function ЗадачаChatMessageRow({
   message,
-  feedbackVoteByTargetId,
-  activeRunIds,
-  stoppingRunId,
-  interruptingQueuedRunId,
-}: IssueChatMessageRowProps) {
+  feedbackVoteByЦельId,
+  activeЗапуститьIds,
+  stoppingЗапуститьId,
+  interruptingQueuedЗапуститьId,
+}: ЗадачаChatMessageRowProps) {
   const kind = issueChatMessageKind(message);
-  const activeVote = issueChatMessageActiveVote(message, feedbackVoteByTargetId);
-  const isRunActive = issueChatMessageRunIsActive(message, activeRunIds);
-  const isStoppingRun = issueChatMessageRunIsStopping(message, stoppingRunId);
-  const isInterruptingQueuedRun = issueChatMessageQueuedRunIsInterrupting(message, interruptingQueuedRunId);
+  const activeVote = issueChatMessageАктивенVote(message, feedbackVoteByЦельId);
+  const isЗапуститьАктивен = issueChatMessageЗапуститьIsАктивен(message, activeЗапуститьIds);
+  const isОстановитьpingЗапустить = issueChatMessageЗапуститьIsОстановитьping(message, stoppingЗапуститьId);
+  const isInterruptingQueuedЗапустить = issueChatMessageQueuedЗапуститьIsInterrupting(message, interruptingQueuedЗапуститьId);
   const renderedMessage = message.role === "user"
     ? (
-      <IssueChatUserMessage
+      <ЗадачаChatUserMessage
         message={message}
-        isInterruptingQueuedRun={isInterruptingQueuedRun}
+        isInterruptingQueuedЗапустить={isInterruptingQueuedЗапустить}
       />
     )
     : message.role === "assistant"
       ? (
-        <IssueChatAssistantMessage
+        <ЗадачаChatAssistantMessage
           message={message}
           activeVote={activeVote}
-          isRunActive={isRunActive}
-          isStoppingRun={isStoppingRun}
+          isЗапуститьАктивен={isЗапуститьАктивен}
+          isОстановитьpingЗапустить={isОстановитьpingЗапустить}
         />
       )
-      : <IssueChatSystemMessage message={message} />;
+      : <ЗадачаChatSystemMessage message={message} />;
 
   return (
     <div
@@ -3070,58 +3070,58 @@ const IssueChatMessageRow = memo(function IssueChatMessageRow({
       {renderedMessage}
     </div>
   );
-}, areIssueChatMessageRowPropsEqual);
+}, areЗадачаChatMessageRowPropsEqual);
 
-function areIssueChatMessageRowPropsEqual(
-  prev: IssueChatMessageRowProps,
-  next: IssueChatMessageRowProps,
+function areЗадачаChatMessageRowPropsEqual(
+  prev: ЗадачаChatMessageRowProps,
+  next: ЗадачаChatMessageRowProps,
 ) {
   if (prev.message !== next.message) return false;
-  if (issueChatMessageActiveVote(prev.message, prev.feedbackVoteByTargetId) !== issueChatMessageActiveVote(next.message, next.feedbackVoteByTargetId)) return false;
-  if (issueChatMessageRunIsActive(prev.message, prev.activeRunIds) !== issueChatMessageRunIsActive(next.message, next.activeRunIds)) return false;
-  if (issueChatMessageRunIsStopping(prev.message, prev.stoppingRunId) !== issueChatMessageRunIsStopping(next.message, next.stoppingRunId)) return false;
-  if (issueChatMessageQueuedRunIsInterrupting(prev.message, prev.interruptingQueuedRunId) !== issueChatMessageQueuedRunIsInterrupting(next.message, next.interruptingQueuedRunId)) return false;
+  if (issueChatMessageАктивенVote(prev.message, prev.feedbackVoteByЦельId) !== issueChatMessageАктивенVote(next.message, next.feedbackVoteByЦельId)) return false;
+  if (issueChatMessageЗапуститьIsАктивен(prev.message, prev.activeЗапуститьIds) !== issueChatMessageЗапуститьIsАктивен(next.message, next.activeЗапуститьIds)) return false;
+  if (issueChatMessageЗапуститьIsОстановитьping(prev.message, prev.stoppingЗапуститьId) !== issueChatMessageЗапуститьIsОстановитьping(next.message, next.stoppingЗапуститьId)) return false;
+  if (issueChatMessageQueuedЗапуститьIsInterrupting(prev.message, prev.interruptingQueuedЗапуститьId) !== issueChatMessageQueuedЗапуститьIsInterrupting(next.message, next.interruptingQueuedЗапуститьId)) return false;
   return true;
 }
 
-const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerProps>(function IssueChatComposer({
-  onImageUpload,
+const ЗадачаChatComposer = forwardRef<ЗадачаChatComposerHandle, ЗадачаChatComposerProps>(function ЗадачаChatComposer({
+  onImageЗагрузить,
   onAttachImage,
-  draftKey,
+  draftКлюч,
   enableReassign = false,
   reassignOptions = [],
-  currentAssigneeValue = "",
-  suggestedAssigneeValue,
+  currentИсполнительЗначение = "",
+  suggestedИсполнительЗначение,
   mentions = [],
   agentMap,
-  composerDisabledReason = null,
+  composerОтключитьdReason = null,
   composerHint = null,
-  issueStatus,
-  issueWorkMode,
-  onWorkModeChange,
+  issueСтатус,
+  issueРаботаMode,
+  onРаботаModeChange,
 }, forwardedRef) {
   const api = useAui();
-  const toastActions = useOptionalToastActions();
+  const toastActions = useОпциональноToastActions();
   const [body, setBody] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setОтправитьting] = useState(false);
   const [attaching, setAttaching] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [composerAttachments, setComposerAttachments] = useState<ComposerAttachmentItem[]>([]);
   const dragDepthRef = useRef(0);
-  const effectiveSuggestedAssigneeValue = suggestedAssigneeValue ?? currentAssigneeValue;
-  const [reassignTarget, setReassignTarget] = useState(effectiveSuggestedAssigneeValue);
-  const [unassignedConfirmed, setUnassignedConfirmed] = useState(false);
-  const resolvedIssueWorkMode: IssueWorkMode = issueWorkMode ?? "standard";
-  const [pendingWorkMode, setPendingWorkMode] = useState<IssueWorkMode>(resolvedIssueWorkMode);
-  const [workModeMenuOpen, setWorkModeMenuOpen] = useState(false);
-  const canToggleWorkMode = typeof onWorkModeChange === "function";
+  const effectiveSuggestedИсполнительЗначение = suggestedИсполнительЗначение ?? currentИсполнительЗначение;
+  const [reassignЦель, setReassignЦель] = useState(effectiveSuggestedИсполнительЗначение);
+  const [unassignedПодтвердитьed, setНе назначенПодтвердитьed] = useState(false);
+  const resolvedЗадачаРаботаMode: ЗадачаРаботаMode = issueРаботаMode ?? "standard";
+  const [pendingРаботаMode, setОжиданиеРаботаMode] = useState<ЗадачаРаботаMode>(resolvedЗадачаРаботаMode);
+  const [workModeMenuOpen, setРаботаModeMenuOpen] = useState(false);
+  const canToggleРаботаMode = typeof onРаботаModeChange === "function";
   const attachInputRef = useRef<HTMLInputElement | null>(null);
-  const editorRef = useRef<MarkdownEditorRef>(null);
+  const editorRef = useRef<MarkdownИзменитьorRef>(null);
   const composerContainerRef = useRef<HTMLDivElement | null>(null);
-  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const canAcceptFiles = Boolean(onImageUpload || onAttachImage);
+  const draftTimer = useRef<ReturnТип<typeof setTimeout> | null>(null);
+  const canПринятьФайлы = Boolean(onImageЗагрузить || onAttachImage);
 
-  function queueViewportRestore(snapshot: ReturnType<typeof captureComposerViewportSnapshot>) {
+  function queueViewportRestore(snapshot: ReturnТип<typeof captureComposerViewportSnapshot>) {
     if (!snapshot) return;
     requestAnimationFrame(() => {
       restoreComposerViewportSnapshot(snapshot, composerContainerRef.current);
@@ -3139,17 +3139,17 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
   }
 
   useEffect(() => {
-    if (!draftKey) return;
-    setBody(loadDraft(draftKey));
-  }, [draftKey]);
+    if (!draftКлюч) return;
+    setBody(loadЧерновик(draftКлюч));
+  }, [draftКлюч]);
 
   useEffect(() => {
-    if (!draftKey) return;
+    if (!draftКлюч) return;
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
-      saveDraft(draftKey, body);
+      saveЧерновик(draftКлюч, body);
     }, DRAFT_DEBOUNCE_MS);
-  }, [body, draftKey]);
+  }, [body, draftКлюч]);
 
   useEffect(() => {
     return () => {
@@ -3158,22 +3158,22 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
   }, []);
 
   useEffect(() => {
-    setReassignTarget(effectiveSuggestedAssigneeValue);
-  }, [effectiveSuggestedAssigneeValue]);
+    setReassignЦель(effectiveSuggestedИсполнительЗначение);
+  }, [effectiveSuggestedИсполнительЗначение]);
 
   useEffect(() => {
-    setUnassignedConfirmed(false);
-  }, [reassignTarget]);
+    setНе назначенПодтвердитьed(false);
+  }, [reassignЦель]);
 
   useEffect(() => {
-    setPendingWorkMode(resolvedIssueWorkMode);
-  }, [resolvedIssueWorkMode]);
+    setОжиданиеРаботаMode(resolvedЗадачаРаботаMode);
+  }, [resolvedЗадачаРаботаMode]);
 
   useImperativeHandle(forwardedRef, () => ({
     focus: focusComposer,
-    restoreDraft: (submittedBody: string) => {
+    restoreЧерновик: (submittedBody: string) => {
       setBody((current) =>
-        restoreSubmittedCommentDraft({
+        restoreОтправитьtedCommentЧерновик({
           currentBody: current,
           submittedBody,
         }),
@@ -3182,42 +3182,42 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
     },
   }), []);
 
-  async function handleSubmit() {
+  async function handleОтправить() {
     const trimmed = body.trim();
     if (!trimmed || submitting) return;
 
-    const composerHasAssigneePicker = enableReassign && reassignOptions.length > 0;
+    const composerHasИсполнительPicker = enableReassign && reassignOptions.length > 0;
     if (
-      composerHasAssigneePicker
-      && isUnassignedReassignValue(reassignTarget)
-      && !unassignedConfirmed
+      composerHasИсполнительPicker
+      && isНе назначенReassignЗначение(reassignЦель)
+      && !unassignedПодтвердитьed
     ) {
       toastActions?.pushToast({
-        title: "No assignee selected",
-        body: "Pick an assignee or click Send again to post without one.",
+        title: "Нет assignee selected",
+        body: "Pick an assignee or click Отправить again to post without one.",
         tone: "warn",
-        dedupeKey: `issue-chat-no-assignee:${draftKey ?? ""}`,
+        dedupeКлюч: `issue-chat-no-assignee:${draftКлюч ?? ""}`,
       });
-      setUnassignedConfirmed(true);
+      setНе назначенПодтвердитьed(true);
       return;
     }
 
-    const hasReassignment = enableReassign && reassignTarget !== currentAssigneeValue;
-    const reassignment = hasReassignment ? parseReassignment(reassignTarget) : undefined;
+    const hasReassignment = enableReassign && reassignЦель !== currentИсполнительЗначение;
+    const reassignment = hasReassignment ? parseReassignment(reassignЦель) : undefined;
     const reopen = shouldImplicitlyReopenComment(
-      issueStatus,
-      hasReassignment ? reassignTarget : currentAssigneeValue,
+      issueСтатус,
+      hasReassignment ? reassignЦель : currentИсполнительЗначение,
     ) ? true : undefined;
     const submittedBody = trimmed;
     const viewportSnapshot = captureComposerViewportSnapshot(composerContainerRef.current);
 
-    const workModeChanged = pendingWorkMode !== resolvedIssueWorkMode;
-    setSubmitting(true);
+    const workModeChanged = pendingРаботаMode !== resolvedЗадачаРаботаMode;
+    setОтправитьting(true);
     setBody("");
-    setUnassignedConfirmed(false);
+    setНе назначенПодтвердитьed(false);
     try {
-      if (workModeChanged && onWorkModeChange) {
-        await onWorkModeChange(pendingWorkMode);
+      if (workModeChanged && onРаботаModeChange) {
+        await onРаботаModeChange(pendingРаботаMode);
       }
       const appendPromise = api.thread().append({
         role: "user",
@@ -3233,25 +3233,25 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
       });
       queueViewportRestore(viewportSnapshot);
       await appendPromise;
-      if (draftKey) clearDraft(draftKey);
+      if (draftКлюч) clearЧерновик(draftКлюч);
       setComposerAttachments([]);
-      setReassignTarget(effectiveSuggestedAssigneeValue);
+      setReassignЦель(effectiveSuggestedИсполнительЗначение);
     } catch {
       setBody((current) =>
-        restoreSubmittedCommentDraft({
+        restoreОтправитьtedCommentЧерновик({
           currentBody: current,
           submittedBody,
         }),
       );
     } finally {
-      setSubmitting(false);
+      setОтправитьting(false);
       queueViewportRestore(viewportSnapshot);
     }
   }
 
   async function attachFile(file: File) {
     const attachmentId = `${file.name}:${file.size}:${file.lastModified}:${Math.random().toString(36).slice(2)}`;
-    const inline = Boolean(onImageUpload && file.type.startsWith("image/"));
+    const inline = Boolean(onImageЗагрузить && file.type.startsWith("image/"));
     setComposerAttachments((prev) => [
       ...prev,
       {
@@ -3264,14 +3264,14 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
     ]);
 
     try {
-      if (onImageUpload && file.type.startsWith("image/")) {
-        const url = await onImageUpload(file);
-        const safeName = file.name.replace(/[[\]]/g, "\\$&");
-        const markdown = `![${safeName}](${url})`;
+      if (onImageЗагрузить && file.type.startsWith("image/")) {
+        const url = await onImageЗагрузить(file);
+        const safeИмя = file.name.replace(/[[\]]/g, "\\$&");
+        const markdown = `![${safeИмя}](${url})`;
         setBody((prev) => prev ? `${prev}\n\n${markdown}` : markdown);
         setComposerAttachments((prev) => prev.map((item) =>
           item.id === attachmentId
-            ? { ...item, status: "attached", contentPath: url }
+            ? { ...item, status: "attached", contentПуть: url }
             : item,
         ));
       } else if (onAttachImage) {
@@ -3281,7 +3281,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
             ? {
                 ...item,
                 status: "attached",
-                contentPath: attachment?.contentPath,
+                contentПуть: attachment?.contentПуть,
                 name: attachment?.originalFilename ?? item.name,
               }
             : item,
@@ -3299,7 +3299,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
           ? {
               ...item,
               status: "error",
-              error: err instanceof Error ? err.message : "Upload failed",
+              error: err instanceof Ошибка ? err.message : "Загрузить failed",
             }
           : item,
       ));
@@ -3318,7 +3318,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
     }
   }
 
-  async function handleDroppedFiles(files: FileList | null | undefined) {
+  async function handleDroppedФайлы(files: FileList | null | undefined) {
     if (!files || files.length === 0) return;
     setAttaching(true);
     try {
@@ -3336,54 +3336,54 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
   }
 
   function handleFileDragEnter(evt: ReactDragEvent<HTMLDivElement>) {
-    if (!canAcceptFiles || !hasFilePayload(evt)) return;
-    evt.preventDefault();
+    if (!canПринятьФайлы || !hasFilePayload(evt)) return;
+    evt.preventПо умолчанию();
     evt.stopPropagation();
     dragDepthRef.current += 1;
     setIsDragOver(true);
   }
 
   function handleFileDragOver(evt: ReactDragEvent<HTMLDivElement>) {
-    if (!canAcceptFiles || !hasFilePayload(evt)) return;
-    evt.preventDefault();
+    if (!canПринятьФайлы || !hasFilePayload(evt)) return;
+    evt.preventПо умолчанию();
     evt.stopPropagation();
     evt.dataTransfer.dropEffect = "copy";
   }
 
   function handleFileDragLeave(evt: ReactDragEvent<HTMLDivElement>) {
-    if (!canAcceptFiles || !hasFilePayload(evt)) return;
-    evt.preventDefault();
+    if (!canПринятьФайлы || !hasFilePayload(evt)) return;
+    evt.preventПо умолчанию();
     evt.stopPropagation();
     dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
     if (dragDepthRef.current === 0) setIsDragOver(false);
   }
 
   function handleFileDrop(evt: ReactDragEvent<HTMLDivElement>) {
-    if (!canAcceptFiles || !hasFilePayload(evt)) return;
-    evt.preventDefault();
+    if (!canПринятьФайлы || !hasFilePayload(evt)) return;
+    evt.preventПо умолчанию();
     evt.stopPropagation();
     resetDragState();
-    void handleDroppedFiles(evt.dataTransfer?.files);
+    void handleDroppedФайлы(evt.dataTransfer?.files);
   }
 
-  const canSubmit = !submitting && !!body.trim();
+  const canОтправить = !submitting && !!body.trim();
 
-  if (composerDisabledReason) {
+  if (composerОтключитьdReason) {
     return (
-      <div className="rounded-md border border-amber-300/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
-        {composerDisabledReason}
+      <div classИмя="rounded-md border border-amber-300/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+        {composerОтключитьdReason}
       </div>
     );
   }
 
-  const isPlanning = pendingWorkMode === "planning";
+  const isPlanning = pendingРаботаMode === "planning";
 
   return (
     <div
       ref={composerContainerRef}
       data-testid="issue-chat-composer"
-      data-pending-work-mode={pendingWorkMode}
-      className={cn(
+      data-pending-work-mode={pendingРаботаMode}
+      classИмя={cn(
         "relative rounded-md border border-border/70 bg-background/95 p-[15px] shadow-[0_-12px_28px_rgba(15,23,42,0.08)] backdrop-blur transition-[border-color,background-color,box-shadow] duration-150 supports-[backdrop-filter]:bg-background/85 dark:shadow-[0_-12px_28px_rgba(0,0,0,0.28)]",
         isPlanning && "border-amber-500/60 bg-amber-50/60 supports-[backdrop-filter]:bg-amber-50/40 dark:border-amber-500/50 dark:bg-amber-500/[0.07] dark:supports-[backdrop-filter]:bg-amber-500/[0.07]",
         isDragOver && "border-primary/45 bg-background shadow-[0_-12px_28px_rgba(15,23,42,0.08),0_0_0_1px_hsl(var(--primary)/0.16)]",
@@ -3393,18 +3393,18 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
       onDragLeaveCapture={handleFileDragLeave}
       onDropCapture={handleFileDrop}
     >
-      {isDragOver && canAcceptFiles ? (
+      {isDragOver && canПринятьФайлы ? (
         <div
           data-testid="issue-chat-composer-drop-overlay"
-          className="pointer-events-none absolute inset-2 z-30 flex items-center justify-center rounded-sm border border-dashed border-primary/55 bg-background/75 px-4 py-3 text-center shadow-sm backdrop-blur-[2px] dark:bg-background/65"
+          classИмя="pointer-events-none absolute inset-2 z-30 flex items-center justify-center rounded-sm border border-dashed border-primary/55 bg-background/75 px-4 py-3 text-center shadow-sm backdrop-blur-[2px] dark:bg-background/65"
         >
-          <div className="flex max-w-md items-center gap-3 rounded-md bg-background/80 px-3 py-2 text-left shadow-sm ring-1 ring-border/60">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <Paperclip className="h-4 w-4" />
+          <div classИмя="flex max-w-md items-center gap-3 rounded-md bg-background/80 px-3 py-2 text-left shadow-sm ring-1 ring-border/60">
+            <span classИмя="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Paperclip classИмя="h-4 w-4" />
             </span>
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-foreground">Drop to upload</div>
-              <div className="mt-0.5 text-xs leading-5 text-muted-foreground">
+            <div classИмя="min-w-0">
+              <div classИмя="text-sm font-medium text-foreground">Drop to upload</div>
+              <div classИмя="mt-0.5 text-xs leading-5 text-muted-foreground">
                 Images insert into the reply. Other files are added to this issue.
               </div>
             </div>
@@ -3412,21 +3412,21 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
         </div>
       ) : null}
 
-      <MarkdownEditor
+      <MarkdownИзменитьor
         ref={editorRef}
         value={body}
         onChange={setBody}
         placeholder="Reply"
         mentions={mentions}
-        onSubmit={handleSubmit}
-        imageUploadHandler={onImageUpload}
-        fileDropTarget="parent"
+        onОтправить={handleОтправить}
+        imageЗагрузитьHandler={onImageЗагрузить}
+        fileDropЦель="parent"
         bordered={false}
-        contentClassName="max-h-[28dvh] overflow-y-auto pr-1 pb-2 text-sm scrollbar-auto-hide"
+        contentClassИмя="max-h-[28dvh] overflow-y-auto pr-1 pb-2 text-sm scrollbar-auto-hide"
       />
 
       {composerHint ? (
-        <div className="inline-flex items-center rounded-full border border-border/70 bg-muted/30 px-2 py-1 text-[11px] text-muted-foreground">
+        <div classИмя="inline-flex items-center rounded-full border border-border/70 bg-muted/30 px-2 py-1 text-[11px] text-muted-foreground">
           {composerHint}
         </div>
       ) : null}
@@ -3434,22 +3434,22 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
       {composerAttachments.length > 0 ? (
         <div
           data-testid="issue-chat-composer-attachments"
-          className="mb-3 mt-2 space-y-1.5 rounded-md border border-dashed border-border/80 bg-muted/20 p-2"
+          classИмя="mb-3 mt-2 space-y-1.5 rounded-md border border-dashed border-border/80 bg-muted/20 p-2"
         >
           {composerAttachments.map((attachment) => {
             const sizeLabel = formatAttachmentSize(attachment.size);
             const statusLabel =
               attachment.status === "uploading"
-                ? "Uploading to issue"
+                ? "Загрузитьing to issue"
                 : attachment.status === "error"
-                  ? attachment.error ?? "Upload failed"
+                  ? attachment.error ?? "Загрузить failed"
                   : attachment.inline
                     ? "Inserted inline"
                     : "Attached to issue";
             return (
               <div
                 key={attachment.id}
-                className={cn(
+                classИмя={cn(
                   "flex min-w-0 items-center gap-2 rounded-sm px-2 py-1.5 text-xs",
                   attachment.status === "error"
                     ? "bg-destructive/10 text-destructive"
@@ -3457,33 +3457,33 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
                 )}
               >
                 {attachment.status === "uploading" ? (
-                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                  <Loader2 classИмя="h-3.5 w-3.5 shrink-0 animate-spin" />
                 ) : attachment.status === "attached" ? (
-                  <Check className="h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" />
+                  <Check classИмя="h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" />
                 ) : (
-                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  <AlertTriangle classИмя="h-3.5 w-3.5 shrink-0" />
                 )}
-                <span className="min-w-0 flex-1 truncate font-medium text-foreground">
+                <span classИмя="min-w-0 flex-1 truncate font-medium text-foreground">
                   {attachment.name}
                 </span>
                 {sizeLabel ? (
-                  <span className="shrink-0 text-muted-foreground">{sizeLabel}</span>
+                  <span classИмя="shrink-0 text-muted-foreground">{sizeLabel}</span>
                 ) : null}
-                <span className="shrink-0 text-muted-foreground">{statusLabel}</span>
+                <span classИмя="shrink-0 text-muted-foreground">{statusLabel}</span>
               </div>
             );
           })}
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <div className="mr-auto flex items-center gap-2">
-          {(onImageUpload || onAttachImage) ? (
+      <div classИмя="flex flex-wrap items-center justify-end gap-3">
+        <div classИмя="mr-auto flex items-center gap-2">
+          {(onImageЗагрузить || onAttachImage) ? (
             <>
               <input
                 ref={attachInputRef}
                 type="file"
-                className="hidden"
+                classИмя="hidden"
                 onChange={handleAttachFile}
               />
               <Button
@@ -3493,12 +3493,12 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
                 disabled={attaching}
                 title="Attach file"
               >
-                <Paperclip className="h-4 w-4" />
+                <Paperclip classИмя="h-4 w-4" />
               </Button>
             </>
           ) : null}
-          {canToggleWorkMode ? (
-            <Popover open={workModeMenuOpen} onOpenChange={setWorkModeMenuOpen}>
+          {canToggleРаботаMode ? (
+            <Popover open={workModeMenuOpen} onOpenChange={setРаботаModeMenuOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
@@ -3506,44 +3506,44 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
                   data-testid="issue-chat-composer-work-mode-menu"
                   title="More composer options"
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal classИмя="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-44 p-1" align="start">
+              <PopoverContent classИмя="w-44 p-1" align="start">
                 <button
                   type="button"
                   data-testid="issue-chat-composer-work-mode-menu-toggle"
-                  data-pending-work-mode={pendingWorkMode}
-                  className={cn(
+                  data-pending-work-mode={pendingРаботаMode}
+                  classИмя={cn(
                     "flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent/50",
                     isPlanning ? "text-amber-700 dark:text-amber-300" : "text-foreground",
                   )}
                   onClick={() => {
-                    setPendingWorkMode((prev) => (prev === "planning" ? "standard" : "planning"));
-                    setWorkModeMenuOpen(false);
+                    setОжиданиеРаботаMode((prev) => (prev === "planning" ? "standard" : "planning"));
+                    setРаботаModeMenuOpen(false);
                   }}
                 >
                   {isPlanning ? (
-                    <Hammer className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <Hammer classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                   ) : (
-                    <ClipboardList className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
+                    <ClipboardList classИмя="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
                   )}
                   <span>{isPlanning ? "Switch to standard" : "Switch to planning"}</span>
                 </button>
               </PopoverContent>
             </Popover>
           ) : null}
-          {canToggleWorkMode && isPlanning ? (
+          {canToggleРаботаMode && isPlanning ? (
             <button
               type="button"
               data-testid="issue-chat-composer-work-mode-toggle"
-              data-pending-work-mode={pendingWorkMode}
+              data-pending-work-mode={pendingРаботаMode}
               aria-pressed
               title="Planning mode is on for this submission. Click to switch to Standard."
-              onClick={() => setPendingWorkMode("standard")}
-              className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/60 bg-amber-500/15 px-2 py-1 text-xs text-amber-800 transition-colors hover:bg-amber-500/25 dark:border-amber-500/50 dark:bg-amber-500/15 dark:text-amber-200 dark:hover:bg-amber-500/25"
+              onClick={() => setОжиданиеРаботаMode("standard")}
+              classИмя="inline-flex items-center gap-1.5 rounded-md border border-amber-500/60 bg-amber-500/15 px-2 py-1 text-xs text-amber-800 transition-colors hover:bg-amber-500/25 dark:border-amber-500/50 dark:bg-amber-500/15 dark:text-amber-200 dark:hover:bg-amber-500/25"
             >
-              <ClipboardList className="h-3.5 w-3.5" aria-hidden />
+              <ClipboardList classИмя="h-3.5 w-3.5" aria-hidden />
               <span>Planning</span>
             </button>
           ) : null}
@@ -3551,166 +3551,166 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
 
         {enableReassign && reassignOptions.length > 0 ? (
           <InlineEntitySelector
-            value={reassignTarget}
+            value={reassignЦель}
             options={reassignOptions}
-            placeholder="Assignee"
-            noneLabel="No assignee"
-            searchPlaceholder="Search assignees..."
-            emptyMessage="No assignees found."
-            onChange={setReassignTarget}
-            className="h-8 text-xs"
-            renderTriggerValue={(option) => {
-              if (!option) return <span className="text-muted-foreground">Assignee</span>;
+            placeholder="Исполнитель"
+            noneLabel="Нет assignee"
+            searchPlaceholder="Поиск assignees..."
+            emptyMessage="Нет assignees found."
+            onChange={setReassignЦель}
+            classИмя="h-8 text-xs"
+            renderTriggerЗначение={(option) => {
+              if (!option) return <span classИмя="text-muted-foreground">Исполнитель</span>;
               const agentId = option.id.startsWith("agent:") ? option.id.slice("agent:".length) : null;
               const agent = agentId ? agentMap?.get(agentId) : null;
               return (
                 <>
                   {agent ? (
-                    <AgentIcon icon={agent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <АгентIcon icon={agent.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   ) : null}
-                  <span className="truncate">{option.label}</span>
+                  <span classИмя="truncate">{option.label}</span>
                 </>
               );
             }}
             renderOption={(option) => {
-              if (!option.id) return <span className="truncate">{option.label}</span>;
+              if (!option.id) return <span classИмя="truncate">{option.label}</span>;
               const agentId = option.id.startsWith("agent:") ? option.id.slice("agent:".length) : null;
               const agent = agentId ? agentMap?.get(agentId) : null;
               return (
                 <>
                   {agent ? (
-                    <AgentIcon icon={agent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <АгентIcon icon={agent.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   ) : null}
-                  <span className="truncate">{option.label}</span>
+                  <span classИмя="truncate">{option.label}</span>
                 </>
               );
             }}
           />
         ) : null}
 
-        <Button size="sm" disabled={!canSubmit} onClick={() => void handleSubmit()}>
-          {submitting ? "Posting..." : "Send"}
+        <Button size="sm" disabled={!canОтправить} onClick={() => void handleОтправить()}>
+          {submitting ? "Posting..." : "Отправить"}
         </Button>
       </div>
     </div>
   );
 });
 
-export function IssueChatThread({
+export function ЗадачаChatThread({
   comments,
   interactions = [],
   feedbackVotes = [],
   feedbackDataSharingPreference = "prompt",
   feedbackTermsUrl = null,
-  linkedRuns = [],
+  linkedЗапуститьs = [],
   timelineEvents = [],
-  liveRuns = [],
-  activeRun = null,
+  liveЗапуститьs = [],
+  activeЗапустить = null,
   blockedBy = [],
   blockerAttention = null,
-  successfulRunHandoff = null,
+  successfulЗапуститьHandoff = null,
   companyId,
   projectId,
-  issueStatus,
+  issueСтатус,
   agentMap,
   currentUserId,
   userLabelMap,
-  userProfileMap,
+  userПрофильMap,
   onVote,
-  onAdd,
-  onCancelRun,
-  onStopRun,
-  stopRunLabel,
-  stoppingRunLabel,
-  stopRunVariant,
-  imageUploadHandler,
+  onДобавить,
+  onОтменаЗапустить,
+  onОстановитьЗапустить,
+  stopЗапуститьLabel,
+  stoppingЗапуститьLabel,
+  stopЗапуститьVariant,
+  imageЗагрузитьHandler,
   onAttachImage,
-  draftKey,
+  draftКлюч,
   enableReassign = false,
   reassignOptions = [],
-  currentAssigneeValue = "",
-  suggestedAssigneeValue,
+  currentИсполнительЗначение = "",
+  suggestedИсполнительЗначение,
   mentions = [],
-  composerDisabledReason = null,
+  composerОтключитьdReason = null,
   composerHint = null,
   showComposer = true,
   showJumpToLatest,
   emptyMessage,
   variant = "full",
   enableLiveTranscriptPolling = true,
-  transcriptsByRunId,
-  hasOutputForRun: hasOutputForRunOverride,
-  includeSucceededRunsWithoutOutput = false,
+  transcriptsByЗапуститьId,
+  hasOutputForЗапустить: hasOutputForЗапуститьOverride,
+  includeSucceededЗапуститьsWithoutOutput = false,
   onInterruptQueued,
-  onCancelQueued,
-  interruptingQueuedRunId = null,
-  stoppingRunId = null,
+  onОтменаQueued,
+  interruptingQueuedЗапуститьId = null,
+  stoppingЗапуститьId = null,
   onImageClick,
-  onAcceptInteraction,
-  onRejectInteraction,
-  onSubmitInteractionAnswers,
-  onCancelInteraction,
+  onПринятьInteraction,
+  onОтклонитьInteraction,
+  onОтправитьInteractionAnswers,
+  onОтменаInteraction,
   composerRef,
-  issueWorkMode,
-  onWorkModeChange,
-  onRefreshLatestComments,
+  issueРаботаMode,
+  onРаботаModeChange,
+  onОбновитьLatestКомментарии,
   assigneeUserId = null,
-  onResumeFromBacklog,
-  resumeFromBacklogPending = false,
-}: IssueChatThreadProps) {
+  onПродолжитьFromНазадlog,
+  resumeFromНазадlogОжидание = false,
+}: ЗадачаChatThreadProps) {
   const location = useLocation();
   const lastScrolledHashRef = useRef<string | null>(null);
-  const virtualizedThreadRef = useRef<VirtualizedIssueChatThreadListHandle | null>(null);
+  const virtualizedThreadRef = useRef<VirtualizedЗадачаChatThreadListHandle | null>(null);
   const bottomAnchorRef = useRef<HTMLDivElement | null>(null);
   const composerViewportAnchorRef = useRef<HTMLDivElement | null>(null);
-  const composerViewportSnapshotRef = useRef<ReturnType<typeof captureComposerViewportSnapshot>>(null);
+  const composerViewportSnapshotRef = useRef<ReturnТип<typeof captureComposerViewportSnapshot>>(null);
   const preserveComposerViewportRef = useRef(false);
-  const pendingSubmitScrollRef = useRef(false);
+  const pendingОтправитьScrollRef = useRef(false);
   const lastUserMessageIdRef = useRef<string | null>(null);
   const spacerBaselineAnchorRef = useRef<string | null>(null);
   const spacerInitialReserveRef = useRef(0);
   const latestSettleTimeoutsRef = useRef<number[]>([]);
   const latestSettleCleanupRef = useRef<(() => void) | null>(null);
-  const [bottomSpacerHeight, setBottomSpacerHeight] = useState(0);
-  const displayLiveRuns = useMemo(() => {
-    const deduped = new Map<string, LiveRunForIssue>();
-    for (const run of liveRuns) {
+  const [bottomSpacerHeight, setБотtomSpacerHeight] = useState(0);
+  const displayLiveЗапуститьs = useMemo(() => {
+    const deduped = new Map<string, LiveЗапуститьForЗадача>();
+    for (const run of liveЗапуститьs) {
       deduped.set(run.id, run);
     }
-    if (activeRun) {
-      deduped.set(activeRun.id, {
-        id: activeRun.id,
-        status: activeRun.status,
-        invocationSource: activeRun.invocationSource,
-        triggerDetail: activeRun.triggerDetail,
-        startedAt: toIsoString(activeRun.startedAt),
-        finishedAt: toIsoString(activeRun.finishedAt),
-        createdAt: toIsoString(activeRun.createdAt) ?? new Date().toISOString(),
-        agentId: activeRun.agentId,
-        agentName: activeRun.agentName,
-        adapterType: activeRun.adapterType,
-        logBytes: activeRun.logBytes,
-        lastOutputBytes: activeRun.lastOutputBytes,
+    if (activeЗапустить) {
+      deduped.set(activeЗапустить.id, {
+        id: activeЗапустить.id,
+        status: activeЗапустить.status,
+        invocationSource: activeЗапустить.invocationSource,
+        triggerDetail: activeЗапустить.triggerDetail,
+        startedAt: toIsoString(activeЗапустить.startedAt),
+        finishedAt: toIsoString(activeЗапустить.finishedAt),
+        createdAt: toIsoString(activeЗапустить.createdAt) ?? new Date().toISOString(),
+        agentId: activeЗапустить.agentId,
+        agentИмя: activeЗапустить.agentИмя,
+        adapterТип: activeЗапустить.adapterТип,
+        logBytes: activeЗапустить.logBytes,
+        lastOutputBytes: activeЗапустить.lastOutputBytes,
       });
     }
     return [...deduped.values()].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }, [activeRun, liveRuns]);
-  const transcriptRuns = useMemo(() => {
-    return resolveIssueChatTranscriptRuns({
-      linkedRuns,
-      liveRuns: displayLiveRuns,
-      activeRun,
+  }, [activeЗапустить, liveЗапуститьs]);
+  const transcriptЗапуститьs = useMemo(() => {
+    return resolveЗадачаChatTranscriptЗапуститьs({
+      linkedЗапуститьs,
+      liveЗапуститьs: displayLiveЗапуститьs,
+      activeЗапустить,
     });
-  }, [activeRun, displayLiveRuns, linkedRuns]);
-  const activeRunIds = useMemo(() => {
+  }, [activeЗапустить, displayLiveЗапуститьs, linkedЗапуститьs]);
+  const activeЗапуститьIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const run of displayLiveRuns) {
+    for (const run of displayLiveЗапуститьs) {
       if (run.status === "queued" || run.status === "running") {
         ids.add(run.id);
       }
     }
     return ids;
-  }, [displayLiveRuns]);
+  }, [displayLiveЗапуститьs]);
   const clearLatestSettleTimeouts = useCallback(() => {
     for (const timeout of latestSettleTimeoutsRef.current) {
       window.clearTimeout(timeout);
@@ -3722,24 +3722,24 @@ export function IssueChatThread({
 
   useEffect(() => clearLatestSettleTimeouts, [clearLatestSettleTimeouts]);
 
-  const { transcriptByRun, hasOutputForRun } = useLiveRunTranscripts({
-    runs: enableLiveTranscriptPolling ? transcriptRuns : [],
+  const { transcriptByЗапустить, hasOutputForЗапустить } = useLiveЗапуститьTranscripts({
+    runs: enableLiveTranscriptPolling ? transcriptЗапуститьs : [],
     companyId,
   });
-  const resolvedTranscriptByRun = transcriptsByRunId ?? transcriptByRun;
-  const resolvedHasOutputForRun = hasOutputForRunOverride ?? hasOutputForRun;
+  const resolvedTranscriptByЗапустить = transcriptsByЗапуститьId ?? transcriptByЗапустить;
+  const resolvedHasOutputForЗапустить = hasOutputForЗапуститьOverride ?? hasOutputForЗапустить;
   const rawMessages = useMemo(
     () =>
-      buildIssueChatMessages({
+      buildЗадачаChatMessages({
         comments,
         interactions,
         timelineEvents,
-        linkedRuns,
-        liveRuns,
-        activeRun,
-        transcriptsByRunId: resolvedTranscriptByRun,
-        hasOutputForRun: resolvedHasOutputForRun,
-        includeSucceededRunsWithoutOutput,
+        linkedЗапуститьs,
+        liveЗапуститьs,
+        activeЗапустить,
+        transcriptsByЗапуститьId: resolvedTranscriptByЗапустить,
+        hasOutputForЗапустить: resolvedHasOutputForЗапустить,
+        includeSucceededЗапуститьsWithoutOutput,
         companyId,
         projectId,
         agentMap,
@@ -3750,12 +3750,12 @@ export function IssueChatThread({
       comments,
       interactions,
       timelineEvents,
-      linkedRuns,
-      liveRuns,
-      activeRun,
-      resolvedTranscriptByRun,
-      resolvedHasOutputForRun,
-      includeSucceededRunsWithoutOutput,
+      linkedЗапуститьs,
+      liveЗапуститьs,
+      activeЗапустить,
+      resolvedTranscriptByЗапустить,
+      resolvedHasOutputForЗапустить,
+      includeSucceededЗапуститьsWithoutOutput,
       companyId,
       projectId,
       agentMap,
@@ -3778,20 +3778,20 @@ export function IssueChatThread({
   const latestMessagesRef = useRef<readonly ThreadMessage[]>(messages);
   latestMessagesRef.current = messages;
 
-  const isRunning = displayLiveRuns.some((run) => run.status === "queued" || run.status === "running");
+  const isВыполняется = displayLiveЗапуститьs.some((run) => run.status === "queued" || run.status === "running");
   const unresolvedBlockers = useMemo(
     () => blockedBy.filter((blocker) => blocker.status !== "done" && blocker.status !== "cancelled"),
     [blockedBy],
   );
-  const assignedAgent = useMemo(() => {
-    if (!currentAssigneeValue.startsWith("agent:")) return null;
-    const assigneeAgentId = currentAssigneeValue.slice("agent:".length);
-    return agentMap?.get(assigneeAgentId) ?? null;
-  }, [agentMap, currentAssigneeValue]);
-  const feedbackVoteByTargetId = useMemo(() => {
-    const map = new Map<string, FeedbackVoteValue>();
+  const assignedАгент = useMemo(() => {
+    if (!currentИсполнительЗначение.startsWith("agent:")) return null;
+    const assigneeАгентId = currentИсполнительЗначение.slice("agent:".length);
+    return agentMap?.get(assigneeАгентId) ?? null;
+  }, [agentMap, currentИсполнительЗначение]);
+  const feedbackVoteByЦельId = useMemo(() => {
+    const map = new Map<string, FeedbackVoteЗначение>();
     for (const feedbackVote of feedbackVotes) {
-      if (feedbackVote.targetType !== "issue_comment") continue;
+      if (feedbackVote.targetТип !== "issue_comment") continue;
       map.set(feedbackVote.targetId, feedbackVote.vote);
     }
     return map;
@@ -3838,14 +3838,14 @@ export function IssueChatThread({
     return true;
   }
 
-  const runtime = usePaperclipIssueRuntime({
+  const runtime = usePaperclipЗадачаЗапуститьtime({
     messages,
-    isRunning,
-    onSend: ({ body, reopen, reassignment }) => {
-      pendingSubmitScrollRef.current = true;
-      return onAdd(body, reopen, reassignment);
+    isВыполняется,
+    onОтправить: ({ body, reopen, reassignment }) => {
+      pendingОтправитьScrollRef.current = true;
+      return onДобавить(body, reopen, reassignment);
     },
-    onCancel: onCancelRun,
+    onОтмена: onОтменаЗапустить,
   });
 
   useEffect(() => {
@@ -3853,18 +3853,18 @@ export function IssueChatThread({
     const lastUserId = lastUserMessage?.id ?? null;
 
     if (
-      pendingSubmitScrollRef.current
+      pendingОтправитьScrollRef.current
       && lastUserId
       && lastUserId !== lastUserMessageIdRef.current
     ) {
-      pendingSubmitScrollRef.current = false;
+      pendingОтправитьScrollRef.current = false;
       const custom = lastUserMessage?.metadata.custom as { anchorId?: unknown } | undefined;
       const anchorId = typeof custom?.anchorId === "string" ? custom.anchorId : null;
       if (anchorId) {
         const reserve = Math.round(window.innerHeight * SUBMIT_SCROLL_RESERVE_VH);
         spacerBaselineAnchorRef.current = anchorId;
         spacerInitialReserveRef.current = reserve;
-        setBottomSpacerHeight(reserve);
+        setБотtomSpacerHeight(reserve);
         requestAnimationFrame(() => {
           scrollToThreadAnchor(anchorId, { align: "start", behavior: "smooth" });
         });
@@ -3885,7 +3885,7 @@ export function IssueChatThread({
       bottomEl.getBoundingClientRect().top - userEl.getBoundingClientRect().bottom,
     );
     const next = Math.max(0, spacerInitialReserveRef.current - contentBelow);
-    setBottomSpacerHeight((prev) => (prev === next ? prev : next));
+    setБотtomSpacerHeight((prev) => (prev === next ? prev : next));
     if (next === 0) {
       spacerBaselineAnchorRef.current = null;
       spacerInitialReserveRef.current = 0;
@@ -3988,7 +3988,7 @@ export function IssueChatThread({
     clearLatestSettleTimeouts();
     const resolveScrollContainer = (): HTMLElement | null =>
       (document.getElementById("main-content") as HTMLElement | null);
-    const cancelTarget = resolveScrollContainer() ?? window;
+    const cancelЦель = resolveScrollContainer() ?? window;
 
     let lastScrollTop = -1;
     let lastScrollHeight = -1;
@@ -4000,12 +4000,12 @@ export function IssueChatThread({
     };
 
     const cleanup = () => {
-      cancelTarget.removeEventListener("wheel", cancel);
-      cancelTarget.removeEventListener("touchstart", cancel);
+      cancelЦель.removeEventListener("wheel", cancel);
+      cancelЦель.removeEventListener("touchstart", cancel);
     };
 
-    cancelTarget.addEventListener("wheel", cancel, { once: true, passive: true });
-    cancelTarget.addEventListener("touchstart", cancel, { once: true, passive: true });
+    cancelЦель.addEventListener("wheel", cancel, { once: true, passive: true });
+    cancelЦель.addEventListener("touchstart", cancel, { once: true, passive: true });
     latestSettleCleanupRef.current = cleanup;
 
     const finish = () => {
@@ -4050,13 +4050,13 @@ export function IssueChatThread({
       }
 
       const container = resolveScrollContainer();
-      const containerBottom = container
+      const containerБотtom = container
         ? container.getBoundingClientRect().bottom
         : window.innerHeight;
-      const elBottom = el.getBoundingClientRect().bottom;
-      const offBottom = elBottom - containerBottom;
+      const elБотtom = el.getBoundingClientRect().bottom;
+      const offБотtom = elБотtom - containerБотtom;
 
-      if (Math.abs(offBottom) > TOLERANCE_PX) {
+      if (Math.abs(offБотtom) > TOLERANCE_PX) {
         el.scrollIntoView({ behavior: "smooth", block: "end" });
       }
 
@@ -4064,8 +4064,8 @@ export function IssueChatThread({
       const currentScrollHeight = container?.scrollHeight ?? document.documentElement.scrollHeight;
       const scrollStable = Math.abs(currentScrollTop - lastScrollTop) < 1;
       const heightStable = currentScrollHeight === lastScrollHeight;
-      const atBottom = Math.abs(offBottom) <= TOLERANCE_PX;
-      if (scrollStable && heightStable && atBottom) {
+      const atБотtom = Math.abs(offБотtom) <= TOLERANCE_PX;
+      if (scrollStable && heightStable && atБотtom) {
         stableTicks += 1;
         if (stableTicks >= 3) {
           finish();
@@ -4086,13 +4086,13 @@ export function IssueChatThread({
   }
 
   function handleJumpToLatest() {
-    if (onRefreshLatestComments) {
+    if (onОбновитьLatestКомментарии) {
       // Refetching the comments query (page 0 first) brings any comment that
       // arrived after the initial load — including ones live updates may
       // have missed during reconnects — into the loaded set before we
       // resolve the latest target. Otherwise we'd land on the latest
       // *loaded* comment but not the absolute newest. (PAP-2672 follow-up.)
-      const refreshed = onRefreshLatestComments();
+      const refreshed = onОбновитьLatestКомментарии();
       if (refreshed && typeof (refreshed as Promise<unknown>).then === "function") {
         (refreshed as Promise<unknown>).then(
           () => scrollToLatestCommentWithSettle(latestMessagesRef.current),
@@ -4105,37 +4105,37 @@ export function IssueChatThread({
   }
 
   const stableOnVote = useStableEvent(onVote);
-  const stableOnStopRun = useStableEvent(onStopRun);
+  const stableOnОстановитьЗапустить = useStableEvent(onОстановитьЗапустить);
   const stableOnInterruptQueued = useStableEvent(onInterruptQueued);
-  const stableOnCancelQueued = useStableEvent(onCancelQueued);
+  const stableOnОтменаQueued = useStableEvent(onОтменаQueued);
   const stableOnImageClick = useStableEvent(onImageClick);
-  const stableOnAcceptInteraction = useStableEvent(onAcceptInteraction);
-  const stableOnRejectInteraction = useStableEvent(onRejectInteraction);
-  const stableOnSubmitInteractionAnswers = useStableEvent(onSubmitInteractionAnswers);
-  const stableOnCancelInteraction = useStableEvent(onCancelInteraction);
+  const stableOnПринятьInteraction = useStableEvent(onПринятьInteraction);
+  const stableOnОтклонитьInteraction = useStableEvent(onОтклонитьInteraction);
+  const stableOnОтправитьInteractionAnswers = useStableEvent(onОтправитьInteractionAnswers);
+  const stableOnОтменаInteraction = useStableEvent(onОтменаInteraction);
 
-  const chatCtx = useMemo<IssueChatMessageContext>(
+  const chatCtx = useMemo<ЗадачаChatMessageContext>(
     () => ({
       feedbackDataSharingPreference,
       feedbackTermsUrl,
       agentMap,
       currentUserId,
       userLabelMap,
-      userProfileMap,
+      userПрофильMap,
       onVote: stableOnVote,
-      onStopRun: stableOnStopRun,
-      stopRunLabel,
-      stoppingRunLabel,
-      stopRunVariant,
+      onОстановитьЗапустить: stableOnОстановитьЗапустить,
+      stopЗапуститьLabel,
+      stoppingЗапуститьLabel,
+      stopЗапуститьVariant,
       onInterruptQueued: stableOnInterruptQueued,
-      onCancelQueued: stableOnCancelQueued,
+      onОтменаQueued: stableOnОтменаQueued,
       onImageClick: stableOnImageClick,
-      onAcceptInteraction: stableOnAcceptInteraction,
-      onRejectInteraction: stableOnRejectInteraction,
-      onSubmitInteractionAnswers: stableOnSubmitInteractionAnswers,
-      onCancelInteraction: stableOnCancelInteraction,
-      issueStatus,
-      successfulRunHandoff,
+      onПринятьInteraction: stableOnПринятьInteraction,
+      onОтклонитьInteraction: stableOnОтклонитьInteraction,
+      onОтправитьInteractionAnswers: stableOnОтправитьInteractionAnswers,
+      onОтменаInteraction: stableOnОтменаInteraction,
+      issueСтатус,
+      successfulЗапуститьHandoff,
     }),
     [
       feedbackDataSharingPreference,
@@ -4143,55 +4143,55 @@ export function IssueChatThread({
       agentMap,
       currentUserId,
       userLabelMap,
-      userProfileMap,
+      userПрофильMap,
       stableOnVote,
-      stableOnStopRun,
-      stopRunLabel,
-      stoppingRunLabel,
-      stopRunVariant,
+      stableOnОстановитьЗапустить,
+      stopЗапуститьLabel,
+      stoppingЗапуститьLabel,
+      stopЗапуститьVariant,
       stableOnInterruptQueued,
-      stableOnCancelQueued,
+      stableOnОтменаQueued,
       stableOnImageClick,
-      stableOnAcceptInteraction,
-      stableOnRejectInteraction,
-      stableOnSubmitInteractionAnswers,
-      stableOnCancelInteraction,
-      issueStatus,
-      successfulRunHandoff,
+      stableOnПринятьInteraction,
+      stableOnОтклонитьInteraction,
+      stableOnОтправитьInteractionAnswers,
+      stableOnОтменаInteraction,
+      issueСтатус,
+      successfulЗапуститьHandoff,
     ],
   );
 
   const resolvedShowJumpToLatest = showJumpToLatest ?? variant === "full";
   const resolvedEmptyMessage = emptyMessage
     ?? (variant === "embedded"
-      ? "No run output yet."
-      : "This issue conversation is empty. Start with a message below.");
-  const previousErrorBoundaryMessagesRef = useRef<readonly ThreadMessage[] | null>(null);
-  const errorBoundaryResetVersionRef = useRef(0);
-  if (previousErrorBoundaryMessagesRef.current !== messages) {
-    previousErrorBoundaryMessagesRef.current = messages;
-    errorBoundaryResetVersionRef.current += 1;
+      ? "Нет run output yet."
+      : "This issue conversation is empty. Начать with a message below.");
+  const previousОшибкаBoundaryMessagesRef = useRef<readonly ThreadMessage[] | null>(null);
+  const errorBoundaryСброситьВерсияRef = useRef(0);
+  if (previousОшибкаBoundaryMessagesRef.current !== messages) {
+    previousОшибкаBoundaryMessagesRef.current = messages;
+    errorBoundaryСброситьВерсияRef.current += 1;
   }
-  const errorBoundaryResetKey = String(errorBoundaryResetVersionRef.current);
+  const errorBoundaryСброситьКлюч = String(errorBoundaryСброситьВерсияRef.current);
 
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      <IssueChatCtx.Provider value={chatCtx}>
-      <div className={cn(variant === "embedded" ? "space-y-3" : "space-y-4")}>
+    <AssistantЗапуститьtimeПровайдер runtime={runtime}>
+      <ЗадачаChatCtx.Провайдер value={chatCtx}>
+      <div classИмя={cn(variant === "embedded" ? "space-y-3" : "space-y-4")}>
         {resolvedShowJumpToLatest ? (
-          <div className="flex justify-end">
+          <div classИмя="flex justify-end">
             <button
               type="button"
               onClick={handleJumpToLatest}
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              classИмя="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               Jump to latest
             </button>
           </div>
         ) : null}
 
-        <IssueChatErrorBoundary
-          resetKey={errorBoundaryResetKey}
+        <ЗадачаChatОшибкаBoundary
+          resetКлюч={errorBoundaryСброситьКлюч}
           messages={messages}
           emptyMessage={resolvedEmptyMessage}
           variant={variant}
@@ -4199,10 +4199,10 @@ export function IssueChatThread({
           <div data-testid="thread-root">
             <div
               data-testid="thread-viewport"
-              className={variant === "embedded" ? "space-y-3" : "space-y-4"}
+              classИмя={variant === "embedded" ? "space-y-3" : "space-y-4"}
             >
               {messages.length === 0 ? (
-                <div className={cn(
+                <div classИмя={cn(
                   "text-center text-sm text-muted-foreground",
                   variant === "embedded"
                     ? "rounded-xl border border-dashed border-border/70 bg-background/60 px-4 py-6"
@@ -4211,13 +4211,13 @@ export function IssueChatThread({
                   {resolvedEmptyMessage}
                 </div>
               ) : messages.length >= VIRTUALIZED_THREAD_ROW_THRESHOLD ? (
-                <VirtualizedIssueChatThreadList
+                <VirtualizedЗадачаChatThreadList
                   ref={virtualizedThreadRef}
                   messages={messages}
-                  feedbackVoteByTargetId={feedbackVoteByTargetId}
-                  activeRunIds={activeRunIds}
-                  stoppingRunId={stoppingRunId}
-                  interruptingQueuedRunId={interruptingQueuedRunId}
+                  feedbackVoteByЦельId={feedbackVoteByЦельId}
+                  activeЗапуститьIds={activeЗапуститьIds}
+                  stoppingЗапуститьId={stoppingЗапуститьId}
+                  interruptingQueuedЗапуститьId={interruptingQueuedЗапуститьId}
                   variant={variant}
                 />
               ) : (
@@ -4225,37 +4225,37 @@ export function IssueChatThread({
                 // index-scoped message providers; live transcripts can shrink
                 // or regroup while the runtime still holds stale indices.
                 messages.map((message) => (
-                  <IssueChatMessageRow
+                  <ЗадачаChatMessageRow
                     key={message.id}
                     message={message}
-                    feedbackVoteByTargetId={feedbackVoteByTargetId}
-                    activeRunIds={activeRunIds}
-                    stoppingRunId={stoppingRunId}
-                    interruptingQueuedRunId={interruptingQueuedRunId}
+                    feedbackVoteByЦельId={feedbackVoteByЦельId}
+                    activeЗапуститьIds={activeЗапуститьIds}
+                    stoppingЗапуститьId={stoppingЗапуститьId}
+                    interruptingQueuedЗапуститьId={interruptingQueuedЗапуститьId}
                   />
               ))
             )}
               {showComposer ? (
-                <div data-testid="issue-chat-thread-notices" className="space-y-2">
-                  <IssueAssignedBacklogNotice
-                    issueStatus={issueStatus ?? ""}
-                    assigneeAgent={assignedAgent}
+                <div data-testid="issue-chat-thread-notices" classИмя="space-y-2">
+                  <ЗадачаAssignedНазадlogНетtice
+                    issueСтатус={issueСтатус ?? ""}
+                    assigneeАгент={assignedАгент}
                     assigneeUserId={assigneeUserId}
-                    onResume={onResumeFromBacklog}
-                    resuming={resumeFromBacklogPending}
+                    onПродолжить={onПродолжитьFromНазадlog}
+                    resuming={resumeFromНазадlogОжидание}
                   />
-                  <IssueBlockedNotice
-                    issueStatus={issueStatus}
+                  <ЗадачаЗаблокированНетtice
+                    issueСтатус={issueСтатус}
                     blockers={unresolvedBlockers}
                     blockerAttention={blockerAttention}
-                    successfulRunHandoff={successfulRunHandoff}
-                    agentName={
-                      successfulRunHandoff?.assigneeAgentId
-                        ? agentMap?.get(successfulRunHandoff.assigneeAgentId)?.name ?? null
+                    successfulЗапуститьHandoff={successfulЗапуститьHandoff}
+                    agentИмя={
+                      successfulЗапуститьHandoff?.assigneeАгентId
+                        ? agentMap?.get(successfulЗапуститьHandoff.assigneeАгентId)?.name ?? null
                         : null
                     }
                   />
-                  <IssueAssigneePausedNotice agent={assignedAgent} />
+                  <ЗадачаИсполнительПриостановленНетtice agent={assignedАгент} />
                 </div>
               ) : null}
               <div ref={bottomAnchorRef} />
@@ -4268,35 +4268,35 @@ export function IssueChatThread({
               ) : null}
             </div>
           </div>
-        </IssueChatErrorBoundary>
+        </ЗадачаChatОшибкаBoundary>
 
         {showComposer ? (
           <div
             ref={composerViewportAnchorRef}
             data-testid="issue-chat-composer-dock"
-            className="sticky bottom-[calc(env(safe-area-inset-bottom)+20px)] z-20 space-y-2 bg-gradient-to-t from-background via-background/95 to-background/0 pt-6"
+            classИмя="sticky bottom-[calc(env(safe-area-inset-bottom)+20px)] z-20 space-y-2 bg-gradient-to-t from-background via-background/95 to-background/0 pt-6"
           >
-            <IssueChatComposer
+            <ЗадачаChatComposer
               ref={composerRef}
-              onImageUpload={imageUploadHandler}
+              onImageЗагрузить={imageЗагрузитьHandler}
               onAttachImage={onAttachImage}
-              draftKey={draftKey}
+              draftКлюч={draftКлюч}
               enableReassign={enableReassign}
               reassignOptions={reassignOptions}
-              currentAssigneeValue={currentAssigneeValue}
-              suggestedAssigneeValue={suggestedAssigneeValue}
+              currentИсполнительЗначение={currentИсполнительЗначение}
+              suggestedИсполнительЗначение={suggestedИсполнительЗначение}
               mentions={mentions}
               agentMap={agentMap}
-              composerDisabledReason={composerDisabledReason}
+              composerОтключитьdReason={composerОтключитьdReason}
               composerHint={composerHint}
-              issueStatus={issueStatus}
-              issueWorkMode={issueWorkMode}
-              onWorkModeChange={onWorkModeChange}
+              issueСтатус={issueСтатус}
+              issueРаботаMode={issueРаботаMode}
+              onРаботаModeChange={onРаботаModeChange}
             />
           </div>
         ) : null}
       </div>
-      </IssueChatCtx.Provider>
-    </AssistantRuntimeProvider>
+      </ЗадачаChatCtx.Провайдер>
+    </AssistantЗапуститьtimeПровайдер>
   );
 }

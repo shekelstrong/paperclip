@@ -1,61 +1,61 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Outlet, useLocation, useNavigate, useNavigationType, useParams } from "@/lib/router";
+import { Outlet, useLocation, useNavigate, useNavigationТип, useParams } from "@/lib/router";
 import { Sidebar } from "./Sidebar";
 import { InstanceSidebar } from "./InstanceSidebar";
-import { CompanySettingsSidebar } from "./CompanySettingsSidebar";
+import { КомпанияНастройкиSidebar } from "./КомпанияНастройкиSidebar";
 import { BreadcrumbBar } from "./BreadcrumbBar";
 import { PropertiesPanel } from "./PropertiesPanel";
-import { CommandPalette } from "./CommandPalette";
-import { NewIssueDialog } from "./NewIssueDialog";
+import { КомандаPalette } from "./КомандаPalette";
+import { NewЗадачаDialog } from "./NewЗадачаDialog";
 import { NewProjectDialog } from "./NewProjectDialog";
-import { NewGoalDialog } from "./NewGoalDialog";
-import { NewAgentDialog } from "./NewAgentDialog";
-import { KeyboardShortcutsCheatsheet } from "./KeyboardShortcutsCheatsheet";
+import { NewЦельDialog } from "./NewЦельDialog";
+import { NewАгентDialog } from "./NewАгентDialog";
+import { КлючboardShortcutsCheatsheet } from "./КлючboardShortcutsCheatsheet";
 import { ToastViewport } from "./ToastViewport";
-import { MobileBottomNav } from "./MobileBottomNav";
-import { WorktreeBanner } from "./WorktreeBanner";
-import { DevRestartBanner } from "./DevRestartBanner";
+import { MobileБотtomNav } from "./MobileБотtomNav";
+import { РаботаtreeBanner } from "./РаботаtreeBanner";
+import { DevПерезапуститьBanner } from "./DevПерезапуститьBanner";
 import { ResizableSidebarPane } from "./ResizableSidebarPane";
-import { SidebarAccountMenu } from "./SidebarAccountMenu";
+import { SidebarАккаунтMenu } from "./SidebarАккаунтMenu";
 import { useDialogActions } from "../context/DialogContext";
-import { GeneralSettingsProvider } from "../context/GeneralSettingsContext";
+import { ОбщиеНастройкиПровайдер } from "../context/ОбщиеНастройкиContext";
 import { usePanel } from "../context/PanelContext";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useSidebar } from "../context/SidebarContext";
-import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
-import { useCompanyPageMemory } from "../hooks/useCompanyPageMemory";
+import { useКлючboardShortcuts } from "../hooks/useКлючboardShortcuts";
+import { useКомпанияPageMemory } from "../hooks/useКомпанияPageMemory";
 import { healthApi } from "../api/health";
-import { instanceSettingsApi } from "../api/instanceSettings";
-import { shouldSyncCompanySelectionFromRoute } from "../lib/company-selection";
+import { instanceНастройкиApi } from "../api/instanceНастройки";
+import { shouldSyncКомпанияSelectionFromRoute } from "../lib/company-selection";
 import {
   DEFAULT_INSTANCE_SETTINGS_PATH,
-  normalizeRememberedInstanceSettingsPath,
+  normalizeRememberedInstanceНастройкиПуть,
 } from "../lib/instance-settings";
 import {
   resetNavigationScroll,
-  shouldResetScrollOnNavigation,
+  shouldСброситьScrollOnNavigation,
 } from "../lib/navigation-scroll";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import { scheduleMainContentFocus } from "../lib/main-content-focus";
 import { cn } from "../lib/utils";
-import { NotFoundPage } from "../pages/NotFound";
+import { НетtFoundPage } from "../pages/НетtFound";
 import { PluginSlotMount, resolveRouteSidebarSlot, usePluginSlots } from "../plugins/slots";
 
-const INSTANCE_SETTINGS_MEMORY_KEY = "paperclip.lastInstanceSettingsPath";
+const INSTANCE_SETTINGS_MEMORY_KEY = "paperclip.lastInstanceНастройкиПуть";
 
-function getCompanyRouteSegment(pathname: string, companyPrefix: string | undefined): string | null {
+function getКомпанияRouteSegment(pathname: string, companyPrefix: string | undefined): string | null {
   if (!companyPrefix) return null;
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length < 2) return null;
   if (segments[0]?.toUpperCase() !== companyPrefix.toUpperCase()) return null;
-  return segments[1]?.toLowerCase() ?? null;
+  return segments[1]?.toНизкийerCase() ?? null;
 }
 
-function readRememberedInstanceSettingsPath(): string {
+function readRememberedInstanceНастройкиПуть(): string {
   if (typeof window === "undefined") return DEFAULT_INSTANCE_SETTINGS_PATH;
   try {
-    return normalizeRememberedInstanceSettingsPath(window.localStorage.getItem(INSTANCE_SETTINGS_MEMORY_KEY));
+    return normalizeRememberedInstanceНастройкиПуть(window.localStorage.getItem(INSTANCE_SETTINGS_MEMORY_KEY));
   } catch {
     return DEFAULT_INSTANCE_SETTINGS_PATH;
   }
@@ -63,149 +63,149 @@ function readRememberedInstanceSettingsPath(): string {
 
 export function Layout() {
   const { sidebarOpen, setSidebarOpen, toggleSidebar, isMobile } = useSidebar();
-  const { openNewIssue, openOnboarding } = useDialogActions();
+  const { openNewЗадача, openOnboarding } = useDialogActions();
   const { togglePanelVisible } = usePanel();
   const {
     companies,
-    loading: companiesLoading,
-    selectedCompany,
-    selectedCompanyId,
+    loading: companiesЗагрузка,
+    selectedКомпания,
+    selectedКомпанияId,
     selectionSource,
-    setSelectedCompanyId,
-  } = useCompany();
+    setSelectedКомпанияId,
+  } = useКомпания();
   const { companyPrefix } = useParams<{ companyPrefix: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const navigationType = useNavigationType();
-  const isInstanceSettingsRoute = location.pathname.startsWith("/instance/");
-  const isCompanySettingsRoute = location.pathname.includes("/company/settings");
+  const navigationТип = useNavigationТип();
+  const isInstanceНастройкиRoute = location.pathname.startsWith("/instance/");
+  const isКомпанияНастройкиRoute = location.pathname.includes("/company/settings");
   const onboardingTriggered = useRef(false);
   const lastMainScrollTop = useRef(0);
-  const previousPathname = useRef<string | null>(null);
+  const previousПутьname = useRef<string | null>(null);
   const mainContentRef = useRef<HTMLElement | null>(null);
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
-  const [instanceSettingsTarget, setInstanceSettingsTarget] = useState<string>(() => readRememberedInstanceSettingsPath());
+  const [instanceНастройкиЦель, setInstanceНастройкиЦель] = useState<string>(() => readRememberedInstanceНастройкиПуть());
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const matchedCompany = useMemo(() => {
+  const matchedКомпания = useMemo(() => {
     if (!companyPrefix) return null;
     const requestedPrefix = companyPrefix.toUpperCase();
     return companies.find((company) => company.issuePrefix.toUpperCase() === requestedPrefix) ?? null;
   }, [companies, companyPrefix]);
-  const hasUnknownCompanyPrefix =
-    Boolean(companyPrefix) && !companiesLoading && companies.length > 0 && !matchedCompany;
-  const pluginRoutePath = useMemo(
-    () => getCompanyRouteSegment(location.pathname, companyPrefix),
+  const hasНеизвестноКомпанияPrefix =
+    Boolean(companyPrefix) && !companiesЗагрузка && companies.length > 0 && !matchedКомпания;
+  const pluginRouteПуть = useMemo(
+    () => getКомпанияRouteSegment(location.pathname, companyPrefix),
     [companyPrefix, location.pathname],
   );
-  const routeSidebarCompanyId = matchedCompany?.id ?? null;
-  const routeSidebarCompanyPrefix = matchedCompany?.issuePrefix ?? null;
+  const routeSidebarКомпанияId = matchedКомпания?.id ?? null;
+  const routeSidebarКомпанияPrefix = matchedКомпания?.issuePrefix ?? null;
   const { slots: routeSidebarSlots } = usePluginSlots({
-    slotTypes: ["page", "routeSidebar"],
-    companyId: routeSidebarCompanyId,
-    enabled: Boolean(routeSidebarCompanyId && pluginRoutePath),
+    slotТипs: ["page", "routeSidebar"],
+    companyId: routeSidebarКомпанияId,
+    enabled: Boolean(routeSidebarКомпанияId && pluginRouteПуть),
   });
   const routeSidebarSlot = useMemo(
-    () => resolveRouteSidebarSlot(routeSidebarSlots, pluginRoutePath),
-    [pluginRoutePath, routeSidebarSlots],
+    () => resolveRouteSidebarSlot(routeSidebarSlots, pluginRouteПуть),
+    [pluginRouteПуть, routeSidebarSlots],
   );
   const sidebarContext = useMemo(
     () => ({
-      companyId: routeSidebarCompanyId,
-      companyPrefix: routeSidebarCompanyPrefix,
+      companyId: routeSidebarКомпанияId,
+      companyPrefix: routeSidebarКомпанияPrefix,
     }),
-    [routeSidebarCompanyId, routeSidebarCompanyPrefix],
+    [routeSidebarКомпанияId, routeSidebarКомпанияPrefix],
   );
   const companySidebar = routeSidebarSlot ? (
     <PluginSlotMount
       slot={routeSidebarSlot}
       context={sidebarContext}
-      className="h-full w-full"
+      classИмя="h-full w-full"
       missingBehavior="placeholder"
     />
   ) : (
     <Sidebar />
   );
   const { data: health } = useQuery({
-    queryKey: queryKeys.health,
+    queryКлюч: queryКлючs.health,
     queryFn: () => healthApi.get(),
     retry: false,
     refetchInterval: (query) => {
       const data = query.state.data as { devServer?: { enabled?: boolean } } | undefined;
       return data?.devServer?.enabled ? 2000 : false;
     },
-    refetchIntervalInBackground: true,
+    refetchIntervalInНазадground: true,
   });
-  const keyboardShortcutsEnabled = useQuery({
-    queryKey: queryKeys.instance.generalSettings,
-    queryFn: () => instanceSettingsApi.getGeneral(),
+  const keyboardShortcutsВключитьd = useQuery({
+    queryКлюч: queryКлючs.instance.generalНастройки,
+    queryFn: () => instanceНастройкиApi.getОбщие(),
   }).data?.keyboardShortcuts === true;
 
   useEffect(() => {
-    if (companiesLoading || onboardingTriggered.current) return;
+    if (companiesЗагрузка || onboardingTriggered.current) return;
     if (health?.deploymentMode === "authenticated") return;
     if (companies.length === 0) {
       onboardingTriggered.current = true;
       openOnboarding();
     }
-  }, [companies, companiesLoading, openOnboarding, health?.deploymentMode]);
+  }, [companies, companiesЗагрузка, openOnboarding, health?.deploymentMode]);
 
   useEffect(() => {
-    if (!companyPrefix || companiesLoading || companies.length === 0) return;
+    if (!companyPrefix || companiesЗагрузка || companies.length === 0) return;
 
-    if (!matchedCompany) {
-      const fallback = (selectedCompanyId ? companies.find((company) => company.id === selectedCompanyId) : null)
+    if (!matchedКомпания) {
+      const fallback = (selectedКомпанияId ? companies.find((company) => company.id === selectedКомпанияId) : null)
         ?? companies[0]
         ?? null;
-      if (fallback && selectedCompanyId !== fallback.id) {
-        setSelectedCompanyId(fallback.id, { source: "route_sync" });
+      if (fallback && selectedКомпанияId !== fallback.id) {
+        setSelectedКомпанияId(fallback.id, { source: "route_sync" });
       }
       return;
     }
 
-    if (companyPrefix !== matchedCompany.issuePrefix) {
+    if (companyPrefix !== matchedКомпания.issuePrefix) {
       const suffix = location.pathname.replace(/^\/[^/]+/, "");
-      navigate(`/${matchedCompany.issuePrefix}${suffix}${location.search}`, { replace: true });
+      navigate(`/${matchedКомпания.issuePrefix}${suffix}${location.search}`, { replace: true });
       return;
     }
 
     if (
-      shouldSyncCompanySelectionFromRoute({
+      shouldSyncКомпанияSelectionFromRoute({
         selectionSource,
-        selectedCompanyId,
-        routeCompanyId: matchedCompany.id,
+        selectedКомпанияId,
+        routeКомпанияId: matchedКомпания.id,
       })
     ) {
-      setSelectedCompanyId(matchedCompany.id, { source: "route_sync" });
+      setSelectedКомпанияId(matchedКомпания.id, { source: "route_sync" });
     }
   }, [
     companyPrefix,
     companies,
-    companiesLoading,
-    matchedCompany,
+    companiesЗагрузка,
+    matchedКомпания,
     location.pathname,
     location.search,
     navigate,
     selectionSource,
-    selectedCompanyId,
-    setSelectedCompanyId,
+    selectedКомпанияId,
+    setSelectedКомпанияId,
   ]);
 
   const togglePanel = togglePanelVisible;
-  const openSearch = useCallback(() => {
-    document.dispatchEvent(new KeyboardEvent("keydown", {
+  const openПоиск = useCallback(() => {
+    document.dispatchEvent(new КлючboardEvent("keydown", {
       key: "k",
-      metaKey: true,
+      metaКлюч: true,
       bubbles: true,
       cancelable: true,
     }));
   }, []);
 
-  useCompanyPageMemory();
+  useКомпанияPageMemory();
 
-  useKeyboardShortcuts({
-    enabled: keyboardShortcutsEnabled,
-    onNewIssue: () => openNewIssue(),
-    onSearch: openSearch,
+  useКлючboardShortcuts({
+    enabled: keyboardShortcutsВключитьd,
+    onNewЗадача: () => openNewЗадача(),
+    onПоиск: openПоиск,
     onToggleSidebar: toggleSidebar,
     onTogglePanel: togglePanel,
     onShowShortcuts: () => setShortcutsOpen(true),
@@ -231,7 +231,7 @@ export function Layout() {
     let startX = 0;
     let startY = 0;
 
-    const onTouchStart = (e: TouchEvent) => {
+    const onTouchНачать = (e: TouchEvent) => {
       const t = e.touches[0]!;
       startX = t.clientX;
       startY = t.clientY;
@@ -256,11 +256,11 @@ export function Layout() {
       }
     };
 
-    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchstart", onTouchНачать, { passive: true });
     document.addEventListener("touchend", onTouchEnd, { passive: true });
 
     return () => {
-      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchstart", onTouchНачать);
       document.removeEventListener("touchend", onTouchEnd);
     };
   }, [isMobile, sidebarOpen, setSidebarOpen]);
@@ -311,13 +311,13 @@ export function Layout() {
   useEffect(() => {
     if (!location.pathname.startsWith("/instance/settings/")) return;
 
-    const nextPath = normalizeRememberedInstanceSettingsPath(
+    const nextПуть = normalizeRememberedInstanceНастройкиПуть(
       `${location.pathname}${location.search}${location.hash}`,
     );
-    setInstanceSettingsTarget(nextPath);
+    setInstanceНастройкиЦель(nextПуть);
 
     try {
-      window.localStorage.setItem(INSTANCE_SETTINGS_MEMORY_KEY, nextPath);
+      window.localStorage.setItem(INSTANCE_SETTINGS_MEMORY_KEY, nextПуть);
     } catch {
       // Ignore storage failures in restricted environments.
     }
@@ -330,112 +330,112 @@ export function Layout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    const shouldResetScroll = shouldResetScrollOnNavigation({
-      previousPathname: previousPathname.current,
+    const shouldСброситьScroll = shouldСброситьScrollOnNavigation({
+      previousПутьname: previousПутьname.current,
       pathname: location.pathname,
-      navigationType,
+      navigationТип,
       state: location.state,
     });
 
-    previousPathname.current = location.pathname;
+    previousПутьname.current = location.pathname;
 
-    if (!shouldResetScroll) return;
+    if (!shouldСброситьScroll) return;
     resetNavigationScroll(mainContentRef.current);
-  }, [location.pathname, navigationType]);
+  }, [location.pathname, navigationТип]);
 
   return (
-    <GeneralSettingsProvider value={{ keyboardShortcutsEnabled }}>
+    <ОбщиеНастройкиПровайдер value={{ keyboardShortcutsВключитьd }}>
       <div
-      className={cn(
+      classИмя={cn(
         "bg-background text-foreground pt-[env(safe-area-inset-top)]",
         isMobile ? "min-h-dvh" : "flex h-dvh flex-col overflow-hidden",
       )}
       >
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[200] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        classИмя="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[200] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Skip to Main Content
       </a>
-      <WorktreeBanner />
-      <DevRestartBanner devServer={health?.devServer} />
-      <div className={cn("min-h-0 flex-1", isMobile ? "w-full" : "flex overflow-hidden")}>
+      <РаботаtreeBanner />
+      <DevПерезапуститьBanner devServer={health?.devServer} />
+      <div classИмя={cn("min-h-0 flex-1", isMobile ? "w-full" : "flex overflow-hidden")}>
         {isMobile && sidebarOpen && (
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-black/50"
+            classИмя="fixed inset-0 z-40 bg-black/50"
             onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
+            aria-label="Закрыть sidebar"
           />
         )}
 
         {isMobile ? (
           <div
-            className={cn(
+            classИмя={cn(
               "fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)] transition-transform duration-100 ease-out",
               sidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}
           >
-            <div className="flex flex-1 min-h-0 overflow-hidden">
-              <div className="w-60 shrink-0 overflow-hidden">
-                {isInstanceSettingsRoute ? (
+            <div classИмя="flex flex-1 min-h-0 overflow-hidden">
+              <div classИмя="w-60 shrink-0 overflow-hidden">
+                {isInstanceНастройкиRoute ? (
                   <InstanceSidebar />
-                ) : isCompanySettingsRoute ? (
-                  <CompanySettingsSidebar />
+                ) : isКомпанияНастройкиRoute ? (
+                  <КомпанияНастройкиSidebar />
                 ) : (
                   companySidebar
                 )}
               </div>
             </div>
-            <SidebarAccountMenu
+            <SidebarАккаунтMenu
               deploymentMode={health?.deploymentMode}
-              instanceSettingsTarget={instanceSettingsTarget}
+              instanceНастройкиЦель={instanceНастройкиЦель}
               version={health?.version}
             />
           </div>
         ) : (
-          <div className="flex h-full flex-col shrink-0">
-            <div className="flex flex-1 min-h-0">
-              <ResizableSidebarPane open={sidebarOpen} resizable className="h-full shrink-0">
-                {isInstanceSettingsRoute ? (
+          <div classИмя="flex h-full flex-col shrink-0">
+            <div classИмя="flex flex-1 min-h-0">
+              <ResizableSidebarPane open={sidebarOpen} resizable classИмя="h-full shrink-0">
+                {isInstanceНастройкиRoute ? (
                   <InstanceSidebar />
-                ) : isCompanySettingsRoute ? (
-                  <CompanySettingsSidebar />
+                ) : isКомпанияНастройкиRoute ? (
+                  <КомпанияНастройкиSidebar />
                 ) : (
                   companySidebar
                 )}
               </ResizableSidebarPane>
             </div>
-            <SidebarAccountMenu
+            <SidebarАккаунтMenu
               deploymentMode={health?.deploymentMode}
-              instanceSettingsTarget={instanceSettingsTarget}
+              instanceНастройкиЦель={instanceНастройкиЦель}
               version={health?.version}
             />
           </div>
         )}
 
-        <div className={cn("flex min-w-0 flex-col", isMobile ? "w-full" : "h-full flex-1")}>
+        <div classИмя={cn("flex min-w-0 flex-col", isMobile ? "w-full" : "h-full flex-1")}>
           <div
-            className={cn(
+            classИмя={cn(
               isMobile && "sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85",
             )}
           >
             <BreadcrumbBar />
           </div>
-          <div className={cn(isMobile ? "block" : "flex flex-1 min-h-0")}>
+          <div classИмя={cn(isMobile ? "block" : "flex flex-1 min-h-0")}>
             <main
               id="main-content"
               ref={mainContentRef}
               tabIndex={-1}
-              className={cn(
+              classИмя={cn(
                 "flex-1 p-4 outline-none md:p-6",
                 isMobile ? "overflow-visible pb-[calc(5rem+env(safe-area-inset-bottom))]" : "overflow-auto",
               )}
             >
-              {hasUnknownCompanyPrefix ? (
-                <NotFoundPage
+              {hasНеизвестноКомпанияPrefix ? (
+                <НетtFoundPage
                   scope="invalid_company_prefix"
-                  requestedPrefix={companyPrefix ?? selectedCompany?.issuePrefix}
+                  requestedPrefix={companyPrefix ?? selectedКомпания?.issuePrefix}
                 />
               ) : (
                 <Outlet />
@@ -445,15 +445,15 @@ export function Layout() {
           </div>
         </div>
       </div>
-      {isMobile && <MobileBottomNav visible={mobileNavVisible} />}
-      <CommandPalette />
-      <NewIssueDialog />
+      {isMobile && <MobileБотtomNav visible={mobileNavVisible} />}
+      <КомандаPalette />
+      <NewЗадачаDialog />
       <NewProjectDialog />
-      <NewGoalDialog />
-      <NewAgentDialog />
-      <KeyboardShortcutsCheatsheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <NewЦельDialog />
+      <NewАгентDialog />
+      <КлючboardShortcutsCheatsheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       <ToastViewport />
       </div>
-    </GeneralSettingsProvider>
+    </ОбщиеНастройкиПровайдер>
   );
 }

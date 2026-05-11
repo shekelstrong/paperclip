@@ -1,48 +1,48 @@
-import type { ReactNode } from "react";
+import type { ReactНетde } from "react";
 import { ChevronRight } from "lucide-react";
 import { cn } from "../lib/utils";
 
-type IssueGroupHeaderProps = {
+type ЗадачаGroupHeaderProps = {
   label: string;
   collapsible?: boolean;
   collapsed?: boolean;
   onToggle?: () => void;
-  trailing?: ReactNode;
-  className?: string;
+  trailing?: ReactНетde;
+  classИмя?: string;
 };
 
-export function IssueGroupHeader({
+export function ЗадачаGroupHeader({
   label,
   collapsible = false,
   collapsed = false,
   onToggle,
   trailing,
-  className,
-}: IssueGroupHeaderProps) {
+  classИмя,
+}: ЗадачаGroupHeaderProps) {
   return (
-    <div className={cn("flex items-center py-1.5 pl-1 pr-3", className)}>
+    <div classИмя={cn("flex items-center py-1.5 pl-1 pr-3", classИмя)}>
       {collapsible ? (
         <button
           type="button"
-          className="flex min-w-0 items-center gap-1.5 text-left"
+          classИмя="flex min-w-0 items-center gap-1.5 text-left"
           aria-expanded={!collapsed}
           onClick={onToggle}
         >
           <ChevronRight
-            className={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform", !collapsed && "rotate-90")}
+            classИмя={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform", !collapsed && "rotate-90")}
           />
-          <span className="truncate text-sm font-semibold uppercase tracking-wide">
+          <span classИмя="truncate text-sm font-semibold uppercase tracking-wide">
             {label}
           </span>
         </button>
       ) : (
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className="truncate text-sm font-semibold uppercase tracking-wide">
+        <div classИмя="flex min-w-0 items-center gap-1.5">
+          <span classИмя="truncate text-sm font-semibold uppercase tracking-wide">
             {label}
           </span>
         </div>
       )}
-      {trailing ? <div className="ml-auto">{trailing}</div> : null}
+      {trailing ? <div classИмя="ml-auto">{trailing}</div> : null}
     </div>
   );
 }

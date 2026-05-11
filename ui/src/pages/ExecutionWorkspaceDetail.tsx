@@ -1,66 +1,66 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ExecutionWorkspace, Issue, Project, ProjectWorkspace, RoutineListItem } from "@paperclipai/shared";
-import { Copy, ExternalLink, Loader2, Play, Repeat } from "lucide-react";
+import type { ExecutionРабочая область, Задача, Project, ProjectРабочая область, ПроцедураListItem } from "@paperclipai/shared";
+import { Копировать, ExternalLink, Loader2, Play, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
+import { Card, CardContent, CardОписание, CardHeader, CardНазвание, CardAction } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { CopyText } from "../components/CopyText";
-import { ExecutionWorkspaceCloseDialog } from "../components/ExecutionWorkspaceCloseDialog";
+import { КопироватьText } from "../components/КопироватьText";
+import { ExecutionРабочая областьЗакрытьDialog } from "../components/ExecutionРабочая областьЗакрытьDialog";
 import { agentsApi } from "../api/agents";
-import { executionWorkspacesApi } from "../api/execution-workspaces";
+import { executionРабочие областиApi } from "../api/execution-workspaces";
 import { heartbeatsApi } from "../api/heartbeats";
 import { issuesApi } from "../api/issues";
 import { projectsApi } from "../api/projects";
 import { routinesApi } from "../api/routines";
-import { IssuesList } from "../components/IssuesList";
+import { ЗадачиList } from "../components/ЗадачиList";
 import { PageTabBar } from "../components/PageTabBar";
 import {
-  RoutineRunVariablesDialog,
-  type RoutineRunDialogSubmitData,
-} from "../components/RoutineRunVariablesDialog";
+  ПроцедураЗапуститьVariablesDialog,
+  type ПроцедураЗапуститьDialogОтправитьData,
+} from "../components/ПроцедураЗапуститьVariablesDialog";
 import {
-  buildWorkspaceRuntimeControlSections,
-  WorkspaceRuntimeQuickControls,
-  WorkspaceRuntimeControls,
-  type WorkspaceRuntimeControlRequest,
-} from "../components/WorkspaceRuntimeControls";
+  buildРабочая областьЗапуститьtimeControlSections,
+  Рабочая областьЗапуститьtimeQuickControls,
+  Рабочая областьЗапуститьtimeControls,
+  type Рабочая областьЗапуститьtimeControlRequest,
+} from "../components/Рабочая областьЗапуститьtimeControls";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useToastActions } from "../context/ToastContext";
-import { collectLiveIssueIds } from "../lib/liveIssueIds";
-import { queryKeys } from "../lib/queryKeys";
-import { cn, formatDateTime, issueUrl, projectRouteRef, projectWorkspaceUrl } from "../lib/utils";
+import { collectLiveЗадачаIds } from "../lib/liveЗадачаIds";
+import { queryКлючs } from "../lib/queryКлючs";
+import { cn, formatDateTime, issueUrl, projectRouteRef, projectРабочая областьUrl } from "../lib/utils";
 import {
-  getWorkspaceSpecificRoutineVariableNames,
-  routineHasWorkspaceSpecificVariables,
+  getРабочая областьSpecificПроцедураVariableИмяs,
+  routineHasРабочая областьSpecificVariables,
 } from "../lib/workspace-routines";
 
-type WorkspaceFormState = {
+type Рабочая областьFormState = {
   name: string;
   cwd: string;
   repoUrl: string;
   baseRef: string;
-  branchName: string;
+  branchИмя: string;
   providerRef: string;
-  provisionCommand: string;
-  teardownCommand: string;
-  cleanupCommand: string;
-  inheritRuntime: boolean;
-  workspaceRuntime: string;
+  provisionКоманда: string;
+  teardownКоманда: string;
+  cleanupКоманда: string;
+  inheritЗапуститьtime: boolean;
+  workspaceЗапуститьtime: string;
 };
 
-type ExecutionWorkspaceTab = "services" | "configuration" | "runtime_logs" | "issues" | "routines";
+type ExecutionРабочая областьTab = "services" | "configuration" | "runtime_logs" | "issues" | "routines";
 
-function resolveExecutionWorkspaceTab(pathname: string, workspaceId: string): ExecutionWorkspaceTab | null {
+function resolveExecutionРабочая областьTab(pathname: string, workspaceId: string): ExecutionРабочая областьTab | null {
   const segments = pathname.split("/").filter(Boolean);
-  const executionWorkspacesIndex = segments.indexOf("execution-workspaces");
-  if (executionWorkspacesIndex === -1 || segments[executionWorkspacesIndex + 1] !== workspaceId) return null;
-  const tab = segments[executionWorkspacesIndex + 2];
+  const executionРабочие областиIndex = segments.indexOf("execution-workspaces");
+  if (executionРабочие областиIndex === -1 || segments[executionРабочие областиIndex + 1] !== workspaceId) return null;
+  const tab = segments[executionРабочие областиIndex + 2];
   if (tab === "services") return "services";
   if (tab === "issues") return "issues";
   if (tab === "routines") return "routines";
@@ -69,19 +69,19 @@ function resolveExecutionWorkspaceTab(pathname: string, workspaceId: string): Ex
   return null;
 }
 
-function executionWorkspaceTabPath(workspaceId: string, tab: ExecutionWorkspaceTab) {
+function executionРабочая областьTabПуть(workspaceId: string, tab: ExecutionРабочая областьTab) {
   const segment = tab === "runtime_logs" ? "runtime-logs" : tab;
   return `/execution-workspaces/${workspaceId}/${segment}`;
 }
 
-function LegacyWorkspaceTabRedirect({ workspaceId }: { workspaceId: string }) {
+function LegacyРабочая областьTabRedirect({ workspaceId }: { workspaceId: string }) {
   useEffect(() => {
     try {
       localStorage.removeItem(`paperclip:execution-workspace-tab:${workspaceId}`);
     } catch {}
   }, [workspaceId]);
 
-  return <Navigate to={executionWorkspaceTabPath(workspaceId, "issues")} replace />;
+  return <Navigate to={executionРабочая областьTabПуть(workspaceId, "issues")} replace />;
 }
 
 function isSafeExternalUrl(value: string | null | undefined) {
@@ -103,8 +103,8 @@ function formatJson(value: Record<string, unknown> | null | undefined) {
   return JSON.stringify(value, null, 2);
 }
 
-function formatOptionalDateTime(value: Date | string | null | undefined) {
-  return value ? formatDateTime(value) : "Never";
+function formatОпциональноDateTime(value: Date | string | null | undefined) {
+  return value ? formatDateTime(value) : "Никогда";
 }
 
 function normalizeText(value: string) {
@@ -112,7 +112,7 @@ function normalizeText(value: string) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function parseWorkspaceRuntimeJson(value: string) {
+function parseРабочая областьЗапуститьtimeJson(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return { ok: true as const, value: null as Record<string, unknown> | null };
 
@@ -121,40 +121,40 @@ function parseWorkspaceRuntimeJson(value: string) {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {
         ok: false as const,
-        error: "Workspace commands JSON must be a JSON object.",
+        error: "Рабочая область commands JSON must be a JSON object.",
       };
     }
     return { ok: true as const, value: parsed as Record<string, unknown> };
   } catch (error) {
     return {
       ok: false as const,
-      error: error instanceof Error ? error.message : "Invalid JSON.",
+      error: error instanceof Ошибка ? error.message : "Invalid JSON.",
     };
   }
 }
 
-function formStateFromWorkspace(workspace: ExecutionWorkspace): WorkspaceFormState {
+function formStateFromРабочая область(workspace: ExecutionРабочая область): Рабочая областьFormState {
   return {
     name: workspace.name,
     cwd: readText(workspace.cwd),
     repoUrl: readText(workspace.repoUrl),
     baseRef: readText(workspace.baseRef),
-    branchName: readText(workspace.branchName),
+    branchИмя: readText(workspace.branchИмя),
     providerRef: readText(workspace.providerRef),
-    provisionCommand: readText(workspace.config?.provisionCommand),
-    teardownCommand: readText(workspace.config?.teardownCommand),
-    cleanupCommand: readText(workspace.config?.cleanupCommand),
-    inheritRuntime: !workspace.config?.workspaceRuntime,
-    workspaceRuntime: formatJson(workspace.config?.workspaceRuntime),
+    provisionКоманда: readText(workspace.config?.provisionКоманда),
+    teardownКоманда: readText(workspace.config?.teardownКоманда),
+    cleanupКоманда: readText(workspace.config?.cleanupКоманда),
+    inheritЗапуститьtime: !workspace.config?.workspaceЗапуститьtime,
+    workspaceЗапуститьtime: formatJson(workspace.config?.workspaceЗапуститьtime),
   };
 }
 
-function buildWorkspacePatch(initialState: WorkspaceFormState, nextState: WorkspaceFormState) {
+function buildРабочая областьPatch(initialState: Рабочая областьFormState, nextState: Рабочая областьFormState) {
   const patch: Record<string, unknown> = {};
   const configPatch: Record<string, unknown> = {};
 
   const maybeAssign = (
-    key: keyof Pick<WorkspaceFormState, "name" | "cwd" | "repoUrl" | "baseRef" | "branchName" | "providerRef">,
+    key: keyof Pick<Рабочая областьFormState, "name" | "cwd" | "repoUrl" | "baseRef" | "branchИмя" | "providerRef">,
   ) => {
     if (initialState[key] === nextState[key]) return;
     patch[key] = key === "name" ? (normalizeText(nextState[key]) ?? initialState.name) : normalizeText(nextState[key]);
@@ -164,22 +164,22 @@ function buildWorkspacePatch(initialState: WorkspaceFormState, nextState: Worksp
   maybeAssign("cwd");
   maybeAssign("repoUrl");
   maybeAssign("baseRef");
-  maybeAssign("branchName");
+  maybeAssign("branchИмя");
   maybeAssign("providerRef");
 
-  const maybeAssignConfigText = (key: keyof Pick<WorkspaceFormState, "provisionCommand" | "teardownCommand" | "cleanupCommand">) => {
+  const maybeAssignConfigText = (key: keyof Pick<Рабочая областьFormState, "provisionКоманда" | "teardownКоманда" | "cleanupКоманда">) => {
     if (initialState[key] === nextState[key]) return;
     configPatch[key] = normalizeText(nextState[key]);
   };
 
-  maybeAssignConfigText("provisionCommand");
-  maybeAssignConfigText("teardownCommand");
-  maybeAssignConfigText("cleanupCommand");
+  maybeAssignConfigText("provisionКоманда");
+  maybeAssignConfigText("teardownКоманда");
+  maybeAssignConfigText("cleanupКоманда");
 
-  if (initialState.inheritRuntime !== nextState.inheritRuntime || initialState.workspaceRuntime !== nextState.workspaceRuntime) {
-    const parsed = parseWorkspaceRuntimeJson(nextState.workspaceRuntime);
-    if (!parsed.ok) throw new Error(parsed.error);
-    configPatch.workspaceRuntime = nextState.inheritRuntime ? null : parsed.value;
+  if (initialState.inheritЗапуститьtime !== nextState.inheritЗапуститьtime || initialState.workspaceЗапуститьtime !== nextState.workspaceЗапуститьtime) {
+    const parsed = parseРабочая областьЗапуститьtimeJson(nextState.workspaceЗапуститьtime);
+    if (!parsed.ok) throw new Ошибка(parsed.error);
+    configPatch.workspaceЗапуститьtime = nextState.inheritЗапуститьtime ? null : parsed.value;
   }
 
   if (Object.keys(configPatch).length > 0) {
@@ -189,18 +189,18 @@ function buildWorkspacePatch(initialState: WorkspaceFormState, nextState: Worksp
   return patch;
 }
 
-function validateForm(form: WorkspaceFormState) {
+function validateForm(form: Рабочая областьFormState) {
   const repoUrl = normalizeText(form.repoUrl);
   if (repoUrl) {
     try {
       new URL(repoUrl);
     } catch {
-      return "Repo URL must be a valid URL.";
+      return "URL репозитория must be a valid URL.";
     }
   }
 
-  if (!form.inheritRuntime) {
-    const runtimeJson = parseWorkspaceRuntimeJson(form.workspaceRuntime);
+  if (!form.inheritЗапуститьtime) {
+    const runtimeJson = parseРабочая областьЗапуститьtimeJson(form.workspaceЗапуститьtime);
     if (!runtimeJson.ok) {
       return runtimeJson.error;
     }
@@ -216,98 +216,98 @@ function Field({
 }: {
   label: string;
   hint?: string;
-  children: React.ReactNode;
+  children: React.ReactНетde;
 }) {
   return (
-    <label className="block space-y-2">
-      <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-        <span className="text-sm font-medium text-foreground">{label}</span>
-        {hint ? <span className="text-xs text-muted-foreground sm:text-right">{hint}</span> : null}
+    <label classИмя="block space-y-2">
+      <div classИмя="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+        <span classИмя="text-sm font-medium text-foreground">{label}</span>
+        {hint ? <span classИмя="text-xs text-muted-foreground sm:text-right">{hint}</span> : null}
       </div>
       {children}
     </label>
   );
 }
 
-function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+function DetailRow({ label, children }: { label: string; children: React.ReactНетde }) {
   return (
-    <div className="flex flex-col gap-1.5 py-1.5 sm:flex-row sm:items-start sm:gap-3">
-      <div className="shrink-0 text-xs text-muted-foreground sm:w-32">{label}</div>
-      <div className="min-w-0 flex-1 text-sm">{children}</div>
+    <div classИмя="flex flex-col gap-1.5 py-1.5 sm:flex-row sm:items-start sm:gap-3">
+      <div classИмя="shrink-0 text-xs text-muted-foreground sm:w-32">{label}</div>
+      <div classИмя="min-w-0 flex-1 text-sm">{children}</div>
     </div>
   );
 }
 
-function StatusPill({ children, className }: { children: React.ReactNode; className?: string }) {
+function СтатусPill({ children, classИмя }: { children: React.ReactНетde; classИмя?: string }) {
   return (
-    <div className={cn("inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground", className)}>
+    <div classИмя={cn("inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground", classИмя)}>
       {children}
     </div>
   );
 }
 
-function MonoValue({ value, copy }: { value: string; copy?: boolean }) {
+function MonoЗначение({ value, copy }: { value: string; copy?: boolean }) {
   return (
-    <div className="inline-flex max-w-full items-start gap-2">
-      <span className="break-all font-mono text-xs">{value}</span>
+    <div classИмя="inline-flex max-w-full items-start gap-2">
+      <span classИмя="break-all font-mono text-xs">{value}</span>
       {copy ? (
-        <CopyText text={value} className="shrink-0 text-muted-foreground hover:text-foreground" copiedLabel="Copied">
-          <Copy className="h-3.5 w-3.5" />
-        </CopyText>
+        <КопироватьText text={value} classИмя="shrink-0 text-muted-foreground hover:text-foreground" copiedLabel="Copied">
+          <Копировать classИмя="h-3.5 w-3.5" />
+        </КопироватьText>
       ) : null}
     </div>
   );
 }
 
-function WorkspaceLink({
+function Рабочая областьLink({
   project,
   workspace,
 }: {
   project: Project;
-  workspace: ProjectWorkspace;
+  workspace: ProjectРабочая область;
 }) {
-  return <Link to={projectWorkspaceUrl(project, workspace.id)} className="hover:underline">{workspace.name}</Link>;
+  return <Link to={projectРабочая областьUrl(project, workspace.id)} classИмя="hover:underline">{workspace.name}</Link>;
 }
 
-function ExecutionWorkspaceIssuesList({
+function ExecutionРабочая областьЗадачиList({
   companyId,
   workspace,
   issues,
-  isLoading,
+  isЗагрузка,
   error,
   project,
 }: {
   companyId: string;
-  workspace: ExecutionWorkspace;
-  issues: Issue[];
-  isLoading: boolean;
-  error: Error | null;
+  workspace: ExecutionРабочая область;
+  issues: Задача[];
+  isЗагрузка: boolean;
+  error: Ошибка | null;
   project: Project | null;
 }) {
   const queryClient = useQueryClient();
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(companyId),
+    queryКлюч: queryКлючs.agents.list(companyId),
     queryFn: () => agentsApi.list(companyId),
     enabled: !!companyId,
   });
 
-  const { data: liveRuns } = useQuery({
-    queryKey: queryKeys.liveRuns(companyId),
-    queryFn: () => heartbeatsApi.liveRunsForCompany(companyId),
+  const { data: liveЗапуститьs } = useQuery({
+    queryКлюч: queryКлючs.liveЗапуститьs(companyId),
+    queryFn: () => heartbeatsApi.liveЗапуститьsForКомпания(companyId),
     enabled: !!companyId,
     refetchInterval: 5000,
   });
 
-  const liveIssueIds = useMemo(() => collectLiveIssueIds(liveRuns), [liveRuns]);
+  const liveЗадачаIds = useMemo(() => collectLiveЗадачаIds(liveЗапуститьs), [liveЗапуститьs]);
 
-  const updateIssue = useMutation({
+  const updateЗадача = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => issuesApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByExecutionWorkspace(companyId, workspace.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(companyId) });
+    onУспешно: () => {
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listByExecutionРабочая область(companyId, workspace.id) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(companyId) });
       if (project?.id) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByProject(companyId, project.id) });
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listByProject(companyId, project.id) });
       }
     },
   });
@@ -316,63 +316,63 @@ function ExecutionWorkspaceIssuesList({
     () => (project ? [{ id: project.id, name: project.name, workspaces: project.workspaces ?? [] }] : undefined),
     [project],
   );
-  const createIssueDefaults = useMemo(
+  const createЗадачаПо умолчаниюs = useMemo(
     () => ({
       projectId: workspace.projectId,
-      ...(workspace.projectWorkspaceId ? { projectWorkspaceId: workspace.projectWorkspaceId } : {}),
-      executionWorkspaceId: workspace.id,
-      executionWorkspaceMode: "reuse_existing",
+      ...(workspace.projectРабочая областьId ? { projectРабочая областьId: workspace.projectРабочая областьId } : {}),
+      executionРабочая областьId: workspace.id,
+      executionРабочая областьMode: "reuse_existing",
     }),
-    [workspace.id, workspace.projectId, workspace.projectWorkspaceId],
+    [workspace.id, workspace.projectId, workspace.projectРабочая областьId],
   );
 
   return (
-    <IssuesList
+    <ЗадачиList
       issues={issues}
-      isLoading={isLoading}
+      isЗагрузка={isЗагрузка}
       error={error}
       agents={agents}
       projects={projectOptions}
-      liveIssueIds={liveIssueIds}
+      liveЗадачаIds={liveЗадачаIds}
       projectId={project?.id}
-      viewStateKey="paperclip:execution-workspace-issues-view"
-      baseCreateIssueDefaults={createIssueDefaults}
-      onUpdateIssue={(id, data) => updateIssue.mutate({ id, data })}
+      viewStateКлюч="paperclip:execution-workspace-issues-view"
+      baseСоздатьЗадачаПо умолчаниюs={createЗадачаПо умолчаниюs}
+      onОбновитьЗадача={(id, data) => updateЗадача.mutate({ id, data })}
     />
   );
 }
 
-function WorkspaceRoutineRow({
+function Рабочая областьПроцедураRow({
   routine,
-  variableNames,
-  runningRoutineId,
-  onRunNow,
+  variableИмяs,
+  runningПроцедураId,
+  onЗапуститьСейчас,
 }: {
-  routine: RoutineListItem;
-  variableNames: string[];
-  runningRoutineId: string | null;
-  onRunNow: (routine: RoutineListItem) => void;
+  routine: ПроцедураListItem;
+  variableИмяs: string[];
+  runningПроцедураId: string | null;
+  onЗапуститьСейчас: (routine: ПроцедураListItem) => void;
 }) {
-  const isArchived = routine.status === "archived";
-  const isRunning = runningRoutineId === routine.id;
+  const isАрхивирован = routine.status === "archived";
+  const isВыполняется = runningПроцедураId === routine.id;
 
   return (
-    <div className="flex flex-col gap-3 border-b border-border px-3 py-3 last:border-b-0 sm:flex-row sm:items-center">
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Link to={`/routines/${routine.id}`} className="truncate text-sm font-medium hover:underline">
+    <div classИмя="flex flex-col gap-3 border-b border-border px-3 py-3 last:border-b-0 sm:flex-row sm:items-center">
+      <div classИмя="min-w-0 flex-1 space-y-1.5">
+        <div classИмя="flex flex-wrap items-center gap-2">
+          <Link to={`/routines/${routine.id}`} classИмя="truncate text-sm font-medium hover:underline">
             {routine.title}
           </Link>
           {routine.status !== "active" ? (
-            <span className="text-xs text-muted-foreground">{routine.status}</span>
+            <span classИмя="text-xs text-muted-foreground">{routine.status}</span>
           ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span>{routine.assigneeAgentId ? "Default agent set" : "Choose agent when running"}</span>
-          <span>Last run {formatOptionalDateTime(routine.lastRun?.triggeredAt ?? routine.lastTriggeredAt)}</span>
-          <span className="flex flex-wrap gap-1">
-            {variableNames.map((name) => (
-              <span key={name} className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+        <div classИмя="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span>{routine.assigneeАгентId ? "Агент по умолчанию задан" : "Choose agent when running"}</span>
+          <span>Last run {formatОпциональноDateTime(routine.lastЗапустить?.triggeredAt ?? routine.lastTriggeredAt)}</span>
+          <span classИмя="flex flex-wrap gap-1">
+            {variableИмяs.map((name) => (
+              <span key={name} classИмя="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                 {name}
               </span>
             ))}
@@ -382,81 +382,81 @@ function WorkspaceRoutineRow({
       <Button
         variant="outline"
         size="sm"
-        className="w-full sm:w-auto"
-        disabled={isArchived || isRunning}
-        onClick={() => onRunNow(routine)}
+        classИмя="w-full sm:w-auto"
+        disabled={isАрхивирован || isВыполняется}
+        onClick={() => onЗапуститьСейчас(routine)}
       >
-        {isRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-        {isRunning ? "Running..." : "Run now"}
+        {isВыполняется ? <Loader2 classИмя="mr-2 h-4 w-4 animate-spin" /> : <Play classИмя="mr-2 h-4 w-4" />}
+        {isВыполняется ? "Выполняется..." : "Запустить сейчас"}
       </Button>
     </div>
   );
 }
 
-function ExecutionWorkspaceRoutinesList({
+function ExecutionРабочая областьПроцедурыList({
   workspace,
   project,
 }: {
-  workspace: ExecutionWorkspace;
+  workspace: ExecutionРабочая область;
   project: Project | null;
 }) {
   const queryClient = useQueryClient();
   const { pushToast } = useToastActions();
-  const [runDialogRoutine, setRunDialogRoutine] = useState<RoutineListItem | null>(null);
-  const [runningRoutineId, setRunningRoutineId] = useState<string | null>(null);
+  const [runDialogПроцедура, setЗапуститьDialogПроцедура] = useState<ПроцедураListItem | null>(null);
+  const [runningПроцедураId, setВыполняетсяПроцедураId] = useState<string | null>(null);
 
-  const { data: routines, isLoading, error } = useQuery({
-    queryKey: queryKeys.routines.list(workspace.companyId, { projectId: workspace.projectId }),
+  const { data: routines, isЗагрузка, error } = useQuery({
+    queryКлюч: queryКлючs.routines.list(workspace.companyId, { projectId: workspace.projectId }),
     queryFn: () => routinesApi.list(workspace.companyId, { projectId: workspace.projectId }),
   });
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(workspace.companyId),
+    queryКлюч: queryКлючs.agents.list(workspace.companyId),
     queryFn: () => agentsApi.list(workspace.companyId),
   });
 
-  const workspaceRoutines = useMemo(
-    () => (routines ?? []).filter(routineHasWorkspaceSpecificVariables),
+  const workspaceПроцедуры = useMemo(
+    () => (routines ?? []).filter(routineHasРабочая областьSpecificVariables),
     [routines],
   );
 
-  const runRoutine = useMutation({
-    mutationFn: ({ id, data }: { id: string; data?: RoutineRunDialogSubmitData }) => routinesApi.run(id, {
+  const runПроцедура = useMutation({
+    mutationFn: ({ id, data }: { id: string; data?: ПроцедураЗапуститьDialogОтправитьData }) => routinesApi.run(id, {
       ...(data?.variables && Object.keys(data.variables).length > 0 ? { variables: data.variables } : {}),
-      ...(data?.assigneeAgentId !== undefined ? { assigneeAgentId: data.assigneeAgentId } : {}),
+      ...(data?.assigneeАгентId !== undefined ? { assigneeАгентId: data.assigneeАгентId } : {}),
       ...(data?.projectId !== undefined ? { projectId: data.projectId } : {}),
-      ...(data?.executionWorkspaceId !== undefined ? { executionWorkspaceId: data.executionWorkspaceId } : {}),
-      ...(data?.executionWorkspacePreference !== undefined
-        ? { executionWorkspacePreference: data.executionWorkspacePreference }
+      ...(data?.executionРабочая областьId !== undefined ? { executionРабочая областьId: data.executionРабочая областьId } : {}),
+      ...(data?.executionРабочая областьPreference !== undefined
+        ? { executionРабочая областьPreference: data.executionРабочая областьPreference }
         : {}),
-      ...(data?.executionWorkspaceSettings !== undefined
-        ? { executionWorkspaceSettings: data.executionWorkspaceSettings }
+      ...(data?.executionРабочая областьНастройки !== undefined
+        ? { executionРабочая областьНастройки: data.executionРабочая областьНастройки }
         : {}),
     }),
     onMutate: ({ id }) => {
-      setRunningRoutineId(id);
+      setВыполняетсяПроцедураId(id);
     },
-    onSuccess: async (_, { id }) => {
-      setRunDialogRoutine(null);
+    onУспешно: async (_, { id }) => {
+      setЗапуститьDialogПроцедура(null);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["routines", workspace.companyId] }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.routines.detail(id) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByExecutionWorkspace(workspace.companyId, workspace.id) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(workspace.companyId) }),
+        queryClient.invalidateQueries({ queryКлюч: ["routines", workspace.companyId] }),
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.routines.detail(id) }),
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listByExecutionРабочая область(workspace.companyId, workspace.id) }),
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(workspace.companyId) }),
       ]);
       pushToast({
-        title: "Routine started",
+        title: "Процедура started",
         body: "Paperclip created a run using this execution workspace.",
         tone: "success",
       });
     },
     onSettled: () => {
-      setRunningRoutineId(null);
+      setВыполняетсяПроцедураId(null);
     },
-    onError: (mutationError) => {
+    onОшибка: (mutationОшибка) => {
       pushToast({
-        title: "Routine run failed",
-        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not start the routine run.",
+        title: "Запуск процедуры не удался",
+        body: mutationОшибка instanceof Ошибка ? mutationОшибка.message : "Paperclip could not start the routine run.",
         tone: "error",
       });
     },
@@ -464,36 +464,36 @@ function ExecutionWorkspaceRoutinesList({
 
   return (
     <>
-      <Card className="rounded-none">
+      <Card classИмя="rounded-none">
         <CardHeader>
-          <CardTitle>Workspace routines</CardTitle>
-          <CardDescription>
-            Routines that use workspace-specific variables can be run against this execution workspace.
-          </CardDescription>
+          <CardНазвание>Рабочая область routines</CardНазвание>
+          <CardОписание>
+            Процедуры that use workspace-specific variables can be run against this execution workspace.
+          </CardОписание>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading routines...</p>
+          {isЗагрузка ? (
+            <p classИмя="text-sm text-muted-foreground">Загрузка routines...</p>
           ) : error ? (
-            <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : "Failed to load routines."}
+            <p classИмя="text-sm text-destructive">
+              {error instanceof Ошибка ? error.message : "Ошибка to load routines."}
             </p>
-          ) : workspaceRoutines.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-10 text-center">
-              <Repeat className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                No routines use workspace-specific variables yet.
+          ) : workspaceПроцедуры.length === 0 ? (
+            <div classИмя="flex flex-col items-center gap-2 py-10 text-center">
+              <Repeat classИмя="h-5 w-5 text-muted-foreground" />
+              <p classИмя="text-sm text-muted-foreground">
+                Нет routines use workspace-specific variables yet.
               </p>
             </div>
           ) : (
-            <div className="rounded-lg border border-border">
-              {workspaceRoutines.map((routine) => (
-                <WorkspaceRoutineRow
+            <div classИмя="rounded-lg border border-border">
+              {workspaceПроцедуры.map((routine) => (
+                <Рабочая областьПроцедураRow
                   key={routine.id}
                   routine={routine}
-                  variableNames={getWorkspaceSpecificRoutineVariableNames(routine)}
-                  runningRoutineId={runningRoutineId}
-                  onRunNow={setRunDialogRoutine}
+                  variableИмяs={getРабочая областьSpecificПроцедураVariableИмяs(routine)}
+                  runningПроцедураId={runningПроцедураId}
+                  onЗапуститьСейчас={setЗапуститьDialogПроцедура}
                 />
               ))}
             </div>
@@ -501,296 +501,296 @@ function ExecutionWorkspaceRoutinesList({
         </CardContent>
       </Card>
 
-      <RoutineRunVariablesDialog
-        open={runDialogRoutine !== null}
+      <ПроцедураЗапуститьVariablesDialog
+        open={runDialogПроцедура !== null}
         onOpenChange={(next) => {
-          if (!next) setRunDialogRoutine(null);
+          if (!next) setЗапуститьDialogПроцедура(null);
         }}
         companyId={workspace.companyId}
-        routineName={runDialogRoutine?.title ?? null}
+        routineИмя={runDialogПроцедура?.title ?? null}
         agents={agents ?? []}
         projects={project ? [project] : []}
         defaultProjectId={workspace.projectId}
-        defaultAssigneeAgentId={runDialogRoutine?.assigneeAgentId ?? null}
-        defaultExecutionWorkspace={workspace}
-        variables={runDialogRoutine?.variables ?? []}
-        isPending={runRoutine.isPending}
-        onSubmit={(data) => {
-          if (!runDialogRoutine) return;
-          runRoutine.mutate({ id: runDialogRoutine.id, data });
+        defaultИсполнительАгентId={runDialogПроцедура?.assigneeАгентId ?? null}
+        defaultExecutionРабочая область={workspace}
+        variables={runDialogПроцедура?.variables ?? []}
+        isОжидание={runПроцедура.isОжидание}
+        onОтправить={(data) => {
+          if (!runDialogПроцедура) return;
+          runПроцедура.mutate({ id: runDialogПроцедура.id, data });
         }}
       />
     </>
   );
 }
 
-export function ExecutionWorkspaceDetail() {
+export function ExecutionРабочая областьDetail() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setBreadcrumbs } = useBreadcrumbs();
-  const { selectedCompanyId, setSelectedCompanyId } = useCompany();
-  const [form, setForm] = useState<WorkspaceFormState | null>(null);
-  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [runtimeActionErrorMessage, setRuntimeActionErrorMessage] = useState<string | null>(null);
-  const [runtimeActionMessage, setRuntimeActionMessage] = useState<string | null>(null);
-  const activeTab = workspaceId ? resolveExecutionWorkspaceTab(location.pathname, workspaceId) : null;
+  const { selectedКомпанияId, setSelectedКомпанияId } = useКомпания();
+  const [form, setForm] = useState<Рабочая областьFormState | null>(null);
+  const [closeDialogOpen, setЗакрытьDialogOpen] = useState(false);
+  const [errorMessage, setОшибкаMessage] = useState<string | null>(null);
+  const [runtimeActionОшибкаMessage, setЗапуститьtimeActionОшибкаMessage] = useState<string | null>(null);
+  const [runtimeActionMessage, setЗапуститьtimeActionMessage] = useState<string | null>(null);
+  const activeTab = workspaceId ? resolveExecutionРабочая областьTab(location.pathname, workspaceId) : null;
 
   const workspaceQuery = useQuery({
-    queryKey: queryKeys.executionWorkspaces.detail(workspaceId!),
-    queryFn: () => executionWorkspacesApi.get(workspaceId!),
+    queryКлюч: queryКлючs.executionРабочие области.detail(workspaceId!),
+    queryFn: () => executionРабочие областиApi.get(workspaceId!),
     enabled: Boolean(workspaceId),
   });
   const workspace = workspaceQuery.data ?? null;
 
   const projectQuery = useQuery({
-    queryKey: workspace ? [...queryKeys.projects.detail(workspace.projectId), workspace.companyId] : ["projects", "detail", "__pending__"],
+    queryКлюч: workspace ? [...queryКлючs.projects.detail(workspace.projectId), workspace.companyId] : ["projects", "detail", "__pending__"],
     queryFn: () => projectsApi.get(workspace!.projectId, workspace!.companyId),
     enabled: Boolean(workspace?.projectId),
   });
   const project = projectQuery.data ?? null;
 
-  const sourceIssueQuery = useQuery({
-    queryKey: workspace?.sourceIssueId ? queryKeys.issues.detail(workspace.sourceIssueId) : ["issues", "detail", "__none__"],
-    queryFn: () => issuesApi.get(workspace!.sourceIssueId!),
-    enabled: Boolean(workspace?.sourceIssueId),
+  const sourceЗадачаQuery = useQuery({
+    queryКлюч: workspace?.sourceЗадачаId ? queryКлючs.issues.detail(workspace.sourceЗадачаId) : ["issues", "detail", "__none__"],
+    queryFn: () => issuesApi.get(workspace!.sourceЗадачаId!),
+    enabled: Boolean(workspace?.sourceЗадачаId),
   });
-  const sourceIssue = sourceIssueQuery.data ?? null;
+  const sourceЗадача = sourceЗадачаQuery.data ?? null;
 
-  const derivedWorkspaceQuery = useQuery({
-    queryKey: workspace?.derivedFromExecutionWorkspaceId
-      ? queryKeys.executionWorkspaces.detail(workspace.derivedFromExecutionWorkspaceId)
+  const derivedРабочая областьQuery = useQuery({
+    queryКлюч: workspace?.derivedFromExecutionРабочая областьId
+      ? queryКлючs.executionРабочие области.detail(workspace.derivedFromExecutionРабочая областьId)
       : ["execution-workspaces", "detail", "__none__"],
-    queryFn: () => executionWorkspacesApi.get(workspace!.derivedFromExecutionWorkspaceId!),
-    enabled: Boolean(workspace?.derivedFromExecutionWorkspaceId),
+    queryFn: () => executionРабочие областиApi.get(workspace!.derivedFromExecutionРабочая областьId!),
+    enabled: Boolean(workspace?.derivedFromExecutionРабочая областьId),
   });
-  const derivedWorkspace = derivedWorkspaceQuery.data ?? null;
-  const linkedIssuesQuery = useQuery({
-    queryKey: workspace
-      ? queryKeys.issues.listByExecutionWorkspace(workspace.companyId, workspace.id)
+  const derivedРабочая область = derivedРабочая областьQuery.data ?? null;
+  const linkedЗадачиQuery = useQuery({
+    queryКлюч: workspace
+      ? queryКлючs.issues.listByExecutionРабочая область(workspace.companyId, workspace.id)
       : ["issues", "__execution-workspace__", "__none__"],
-    queryFn: () => issuesApi.list(workspace!.companyId, { executionWorkspaceId: workspace!.id }),
+    queryFn: () => issuesApi.list(workspace!.companyId, { executionРабочая областьId: workspace!.id }),
     enabled: Boolean(workspace?.companyId),
   });
-  const linkedIssues = linkedIssuesQuery.data ?? [];
+  const linkedЗадачи = linkedЗадачиQuery.data ?? [];
 
-  const linkedProjectWorkspace = useMemo(
-    () => project?.workspaces.find((item) => item.id === workspace?.projectWorkspaceId) ?? null,
-    [project, workspace?.projectWorkspaceId],
+  const linkedProjectРабочая область = useMemo(
+    () => project?.workspaces.find((item) => item.id === workspace?.projectРабочая областьId) ?? null,
+    [project, workspace?.projectРабочая областьId],
   );
-  const inheritedRuntimeConfig = linkedProjectWorkspace?.runtimeConfig?.workspaceRuntime ?? null;
-  const effectiveRuntimeConfig = workspace?.config?.workspaceRuntime ?? inheritedRuntimeConfig;
+  const inheritedЗапуститьtimeConfig = linkedProjectРабочая область?.runtimeConfig?.workspaceЗапуститьtime ?? null;
+  const effectiveЗапуститьtimeConfig = workspace?.config?.workspaceЗапуститьtime ?? inheritedЗапуститьtimeConfig;
   const runtimeConfigSource =
-    workspace?.config?.workspaceRuntime
+    workspace?.config?.workspaceЗапуститьtime
       ? "execution_workspace"
-      : inheritedRuntimeConfig
+      : inheritedЗапуститьtimeConfig
         ? "project_workspace"
         : "none";
 
-  const initialState = useMemo(() => (workspace ? formStateFromWorkspace(workspace) : null), [workspace]);
+  const initialState = useMemo(() => (workspace ? formStateFromРабочая область(workspace) : null), [workspace]);
   const isDirty = Boolean(form && initialState && JSON.stringify(form) !== JSON.stringify(initialState));
   const projectRef = project ? projectRouteRef(project) : workspace?.projectId ?? "";
 
   useEffect(() => {
-    if (!workspace?.companyId || workspace.companyId === selectedCompanyId) return;
-    setSelectedCompanyId(workspace.companyId, { source: "route_sync" });
-  }, [workspace?.companyId, selectedCompanyId, setSelectedCompanyId]);
+    if (!workspace?.companyId || workspace.companyId === selectedКомпанияId) return;
+    setSelectedКомпанияId(workspace.companyId, { source: "route_sync" });
+  }, [workspace?.companyId, selectedКомпанияId, setSelectedКомпанияId]);
 
   useEffect(() => {
     if (!workspace) return;
-    setForm(formStateFromWorkspace(workspace));
-    setErrorMessage(null);
-    setRuntimeActionErrorMessage(null);
+    setForm(formStateFromРабочая область(workspace));
+    setОшибкаMessage(null);
+    setЗапуститьtimeActionОшибкаMessage(null);
   }, [workspace]);
 
   useEffect(() => {
     if (!workspace) return;
     const crumbs = [
-      { label: "Projects", href: "/projects" },
+      { label: "Проекты", href: "/projects" },
       ...(project ? [{ label: project.name, href: `/projects/${projectRef}` }] : []),
-      ...(project ? [{ label: "Workspaces", href: `/projects/${projectRef}/workspaces` }] : []),
+      ...(project ? [{ label: "Рабочие области", href: `/projects/${projectRef}/workspaces` }] : []),
       { label: workspace.name },
     ];
     setBreadcrumbs(crumbs);
   }, [setBreadcrumbs, workspace, project, projectRef]);
 
-  const updateWorkspace = useMutation({
-    mutationFn: (patch: Record<string, unknown>) => executionWorkspacesApi.update(workspace!.id, patch),
-    onSuccess: (nextWorkspace) => {
-      queryClient.setQueryData(queryKeys.executionWorkspaces.detail(nextWorkspace.id), nextWorkspace);
-      queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.closeReadiness(nextWorkspace.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.workspaceOperations(nextWorkspace.id) });
+  const updateРабочая область = useMutation({
+    mutationFn: (patch: Record<string, unknown>) => executionРабочие областиApi.update(workspace!.id, patch),
+    onУспешно: (nextРабочая область) => {
+      queryClient.setQueryData(queryКлючs.executionРабочие области.detail(nextРабочая область.id), nextРабочая область);
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.closeReadiness(nextРабочая область.id) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.workspaceOperations(nextРабочая область.id) });
       if (project) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(project.id) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(project.urlKey) });
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.detail(project.id) });
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.detail(project.urlКлюч) });
       }
-      if (sourceIssue) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(sourceIssue.id) });
+      if (sourceЗадача) {
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(sourceЗадача.id) });
       }
-      setErrorMessage(null);
+      setОшибкаMessage(null);
     },
-    onError: (error) => {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to save execution workspace.");
+    onОшибка: (error) => {
+      setОшибкаMessage(error instanceof Ошибка ? error.message : "Ошибка to save execution workspace.");
     },
   });
   const workspaceOperationsQuery = useQuery({
-    queryKey: queryKeys.executionWorkspaces.workspaceOperations(workspaceId!),
-    queryFn: () => executionWorkspacesApi.listWorkspaceOperations(workspaceId!),
+    queryКлюч: queryКлючs.executionРабочие области.workspaceOperations(workspaceId!),
+    queryFn: () => executionРабочие областиApi.listРабочая областьOperations(workspaceId!),
     enabled: Boolean(workspaceId),
   });
-  const controlRuntimeServices = useMutation({
-    mutationFn: (request: WorkspaceRuntimeControlRequest) =>
-      executionWorkspacesApi.controlRuntimeCommands(workspace!.id, request.action, request),
-    onSuccess: (result, request) => {
-      queryClient.setQueryData(queryKeys.executionWorkspaces.detail(result.workspace.id), result.workspace);
-      queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.workspaceOperations(result.workspace.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(result.workspace.projectId) });
-      setRuntimeActionErrorMessage(null);
-      setRuntimeActionMessage(
+  const controlЗапуститьtimeServices = useMutation({
+    mutationFn: (request: Рабочая областьЗапуститьtimeControlRequest) =>
+      executionРабочие областиApi.controlЗапуститьtimeКоманды(workspace!.id, request.action, request),
+    onУспешно: (result, request) => {
+      queryClient.setQueryData(queryКлючs.executionРабочие области.detail(result.workspace.id), result.workspace);
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.workspaceOperations(result.workspace.id) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.detail(result.workspace.projectId) });
+      setЗапуститьtimeActionОшибкаMessage(null);
+      setЗапуститьtimeActionMessage(
         request.action === "run"
-          ? "Workspace job completed."
+          ? "Рабочая область job completed."
           : request.action === "stop"
-            ? "Workspace service stopped."
+            ? "Рабочая область service stopped."
             : request.action === "restart"
-              ? "Workspace service restarted."
-              : "Workspace service started.",
+              ? "Рабочая область service restarted."
+              : "Рабочая область service started.",
       );
     },
-    onError: (error) => {
-      setRuntimeActionMessage(null);
-      setRuntimeActionErrorMessage(error instanceof Error ? error.message : "Failed to control workspace commands.");
+    onОшибка: (error) => {
+      setЗапуститьtimeActionMessage(null);
+      setЗапуститьtimeActionОшибкаMessage(error instanceof Ошибка ? error.message : "Ошибка to control workspace commands.");
     },
   });
 
-  if (workspaceQuery.isLoading) return <p className="text-sm text-muted-foreground">Loading workspace…</p>;
+  if (workspaceQuery.isЗагрузка) return <p classИмя="text-sm text-muted-foreground">Загрузка workspace…</p>;
   if (workspaceQuery.error) {
     return (
-      <p className="text-sm text-destructive">
-        {workspaceQuery.error instanceof Error ? workspaceQuery.error.message : "Failed to load workspace"}
+      <p classИмя="text-sm text-destructive">
+        {workspaceQuery.error instanceof Ошибка ? workspaceQuery.error.message : "Ошибка to load workspace"}
       </p>
     );
   }
   if (!workspace || !form || !initialState) return null;
 
-  const canRunWorkspaceCommands = Boolean(workspace.cwd);
-  const canStartRuntimeServices = Boolean(effectiveRuntimeConfig) && canRunWorkspaceCommands;
-  const runtimeControlSections = buildWorkspaceRuntimeControlSections({
-    runtimeConfig: effectiveRuntimeConfig,
+  const canЗапуститьРабочая областьКоманды = Boolean(workspace.cwd);
+  const canНачатьЗапуститьtimeServices = Boolean(effectiveЗапуститьtimeConfig) && canЗапуститьРабочая областьКоманды;
+  const runtimeControlSections = buildРабочая областьЗапуститьtimeControlSections({
+    runtimeConfig: effectiveЗапуститьtimeConfig,
     runtimeServices: workspace.runtimeServices ?? [],
-    canStartServices: canStartRuntimeServices,
-    canRunJobs: canRunWorkspaceCommands,
+    canНачатьServices: canНачатьЗапуститьtimeServices,
+    canЗапуститьJobs: canЗапуститьРабочая областьКоманды,
   });
-  const pendingRuntimeAction = controlRuntimeServices.isPending ? controlRuntimeServices.variables ?? null : null;
+  const pendingЗапуститьtimeAction = controlЗапуститьtimeServices.isОжидание ? controlЗапуститьtimeServices.variables ?? null : null;
 
   if (workspaceId && activeTab === null) {
-    return <LegacyWorkspaceTabRedirect workspaceId={workspaceId} />;
+    return <LegacyРабочая областьTabRedirect workspaceId={workspaceId} />;
   }
 
-  const handleTabChange = (tab: ExecutionWorkspaceTab) => {
-    navigate(executionWorkspaceTabPath(workspace.id, tab));
+  const handleTabChange = (tab: ExecutionРабочая областьTab) => {
+    navigate(executionРабочая областьTabПуть(workspace.id, tab));
   };
 
   const saveChanges = () => {
-    const validationError = validateForm(form);
-    if (validationError) {
-      setErrorMessage(validationError);
+    const validationОшибка = validateForm(form);
+    if (validationОшибка) {
+      setОшибкаMessage(validationОшибка);
       return;
     }
 
     let patch: Record<string, unknown>;
     try {
-      patch = buildWorkspacePatch(initialState, form);
+      patch = buildРабочая областьPatch(initialState, form);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to build workspace update.");
+      setОшибкаMessage(error instanceof Ошибка ? error.message : "Ошибка to build workspace update.");
       return;
     }
 
     if (Object.keys(patch).length === 0) return;
-    updateWorkspace.mutate(patch);
+    updateРабочая область.mutate(patch);
   };
 
   return (
     <>
-      <div className="space-y-4 overflow-hidden sm:space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-2">
-            <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+      <div classИмя="space-y-4 overflow-hidden sm:space-y-6">
+        <div classИмя="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div classИмя="min-w-0 space-y-2">
+            <div classИмя="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
               Execution workspace
             </div>
-            <h1 className="truncate text-xl font-semibold sm:text-2xl">{workspace.name}</h1>
+            <h1 classИмя="truncate text-xl font-semibold sm:text-2xl">{workspace.name}</h1>
           </div>
-          <WorkspaceRuntimeQuickControls
+          <Рабочая областьЗапуститьtimeQuickControls
             sections={runtimeControlSections}
-            isPending={controlRuntimeServices.isPending}
-            pendingRequest={pendingRuntimeAction}
-            onAction={(request) => controlRuntimeServices.mutate(request)}
+            isОжидание={controlЗапуститьtimeServices.isОжидание}
+            pendingRequest={pendingЗапуститьtimeAction}
+            onAction={(request) => controlЗапуститьtimeServices.mutate(request)}
           />
         </div>
-        {runtimeActionErrorMessage ? <p className="text-sm text-destructive">{runtimeActionErrorMessage}</p> : null}
-        {!runtimeActionErrorMessage && runtimeActionMessage ? <p className="text-sm text-muted-foreground">{runtimeActionMessage}</p> : null}
+        {runtimeActionОшибкаMessage ? <p classИмя="text-sm text-destructive">{runtimeActionОшибкаMessage}</p> : null}
+        {!runtimeActionОшибкаMessage && runtimeActionMessage ? <p classИмя="text-sm text-muted-foreground">{runtimeActionMessage}</p> : null}
 
-        <Tabs value={activeTab ?? "issues"} onValueChange={(value) => handleTabChange(value as ExecutionWorkspaceTab)}>
+        <Tabs value={activeTab ?? "issues"} onЗначениеChange={(value) => handleTabChange(value as ExecutionРабочая областьTab)}>
           <PageTabBar
             items={[
-              { value: "issues", label: "Issues" },
+              { value: "issues", label: "Задачи" },
               { value: "services", label: "Services" },
-              { value: "configuration", label: "Configuration" },
-              { value: "runtime_logs", label: "Runtime logs" },
-              { value: "routines", label: "Routines" },
+              { value: "configuration", label: "Конфигурация" },
+              { value: "runtime_logs", label: "Запуститьtime logs" },
+              { value: "routines", label: "Процедуры" },
             ]}
             align="start"
             value={activeTab ?? "issues"}
-            onValueChange={(value) => handleTabChange(value as ExecutionWorkspaceTab)}
+            onЗначениеChange={(value) => handleTabChange(value as ExecutionРабочая областьTab)}
           />
         </Tabs>
 
         {activeTab === "services" ? (
-          <WorkspaceRuntimeControls
+          <Рабочая областьЗапуститьtimeControls
             sections={runtimeControlSections}
-            isPending={controlRuntimeServices.isPending}
-            pendingRequest={pendingRuntimeAction}
+            isОжидание={controlЗапуститьtimeServices.isОжидание}
+            pendingRequest={pendingЗапуститьtimeAction}
             serviceEmptyMessage={
-              effectiveRuntimeConfig
-                ? "No services have been started for this execution workspace yet."
-                : "No workspace command config is defined for this execution workspace yet."
+              effectiveЗапуститьtimeConfig
+                ? "Нет services have been started for this execution workspace yet."
+                : "Нет workspace command config is defined for this execution workspace yet."
             }
-            jobEmptyMessage="No one-shot jobs are configured for this execution workspace yet."
+            jobEmptyMessage="Нет one-shot jobs are configured for this execution workspace yet."
             disabledHint={
-              canStartRuntimeServices
+              canНачатьЗапуститьtimeServices
                 ? null
                 : "Execution workspaces need a working directory before local commands can run, and services also need runtime config."
             }
-            onAction={(request) => controlRuntimeServices.mutate(request)}
+            onAction={(request) => controlЗапуститьtimeServices.mutate(request)}
           />
         ) : activeTab === "configuration" ? (
-          <div className="space-y-4 sm:space-y-6">
-            <Card className="rounded-none">
+          <div classИмя="space-y-4 sm:space-y-6">
+            <Card classИмя="rounded-none">
               <CardHeader>
-                <CardTitle>Workspace settings</CardTitle>
-                <CardDescription>
-                  Edit the concrete path, repo, branch, provisioning, teardown, and runtime overrides attached to this execution workspace.
-                </CardDescription>
+                <CardНазвание>Рабочая область settings</CardНазвание>
+                <CardОписание>
+                  Изменить the concrete path, repo, branch, provisioning, teardown, and runtime overrides attached to this execution workspace.
+                </CardОписание>
                 <CardAction>
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="w-full sm:w-auto"
-                    onClick={() => setCloseDialogOpen(true)}
+                    classИмя="w-full sm:w-auto"
+                    onClick={() => setЗакрытьDialogOpen(true)}
                     disabled={workspace.status === "archived"}
                   >
-                    {workspace.status === "cleanup_failed" ? "Retry close" : "Close workspace"}
+                    {workspace.status === "cleanup_failed" ? "Повторить close" : "Закрыть workspace"}
                   </Button>
                 </CardAction>
               </CardHeader>
 
               <CardContent>
 
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">General</div>
-                  <Field label="Workspace name">
+              <div classИмя="space-y-6">
+                <div classИмя="space-y-4">
+                  <div classИмя="text-xs font-medium uppercase tracking-widest text-muted-foreground">Общие</div>
+                  <Field label="Название области">
                     <Input
                       value={form.name}
                       onChange={(event) => setForm((current) => current ? { ...current, name: event.target.value } : current)}
@@ -801,21 +801,21 @@ export function ExecutionWorkspaceDetail() {
 
                 <Separator />
 
-                <div className="space-y-4">
-                  <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Source control</div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Branch name" hint="Useful for isolated worktrees">
+                <div classИмя="space-y-4">
+                  <div classИмя="text-xs font-medium uppercase tracking-widest text-muted-foreground">Source control</div>
+                  <div classИмя="grid gap-4 sm:grid-cols-2">
+                    <Field label="Ветка name" hint="Useful for isolated worktrees">
                       <Input
-                        className="font-mono"
-                        value={form.branchName}
-                        onChange={(event) => setForm((current) => current ? { ...current, branchName: event.target.value } : current)}
+                        classИмя="font-mono"
+                        value={form.branchИмя}
+                        onChange={(event) => setForm((current) => current ? { ...current, branchИмя: event.target.value } : current)}
                         placeholder="PAP-946-workspace"
                       />
                     </Field>
 
                     <Field label="Base ref">
                       <Input
-                        className="font-mono"
+                        classИмя="font-mono"
                         value={form.baseRef}
                         onChange={(event) => setForm((current) => current ? { ...current, baseRef: event.target.value } : current)}
                         placeholder="origin/main"
@@ -823,7 +823,7 @@ export function ExecutionWorkspaceDetail() {
                     </Field>
                   </div>
 
-                  <Field label="Repo URL">
+                  <Field label="URL репозитория">
                     <Input
                       value={form.repoUrl}
                       onChange={(event) => setForm((current) => current ? { ...current, repoUrl: event.target.value } : current)}
@@ -834,20 +834,20 @@ export function ExecutionWorkspaceDetail() {
 
                 <Separator />
 
-                <div className="space-y-4">
-                  <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Paths</div>
-                  <Field label="Working directory">
+                <div classИмя="space-y-4">
+                  <div classИмя="text-xs font-medium uppercase tracking-widest text-muted-foreground">Путьs</div>
+                  <Field label="Рабочая директория">
                     <Input
-                      className="font-mono"
+                      classИмя="font-mono"
                       value={form.cwd}
                       onChange={(event) => setForm((current) => current ? { ...current, cwd: event.target.value } : current)}
                       placeholder="/absolute/path/to/workspace"
                     />
                   </Field>
 
-                  <Field label="Provider path / ref">
+                  <Field label="Провайдер path / ref">
                     <Input
-                      className="font-mono"
+                      classИмя="font-mono"
                       value={form.providerRef}
                       onChange={(event) => setForm((current) => current ? { ...current, providerRef: event.target.value } : current)}
                       placeholder="/path/to/worktree or provider ref"
@@ -857,31 +857,31 @@ export function ExecutionWorkspaceDetail() {
 
                 <Separator />
 
-                <div className="space-y-4">
-                  <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Lifecycle commands</div>
-                  <Field label="Provision command" hint="Runs when Paperclip prepares this execution workspace">
+                <div classИмя="space-y-4">
+                  <div classИмя="text-xs font-medium uppercase tracking-widest text-muted-foreground">Lifecycle commands</div>
+                  <Field label="Provision command" hint="Запуститьs when Paperclip prepares this execution workspace">
                     <Textarea
-                      className="min-h-20 font-mono"
-                      value={form.provisionCommand}
-                      onChange={(event) => setForm((current) => current ? { ...current, provisionCommand: event.target.value } : current)}
+                      classИмя="min-h-20 font-mono"
+                      value={form.provisionКоманда}
+                      onChange={(event) => setForm((current) => current ? { ...current, provisionКоманда: event.target.value } : current)}
                       placeholder="bash ./scripts/provision-worktree.sh"
                     />
                   </Field>
 
-                  <Field label="Teardown command" hint="Runs when the execution workspace is archived or cleaned up">
+                  <Field label="Teardown command" hint="Запуститьs when the execution workspace is archived or cleaned up">
                     <Textarea
-                      className="min-h-20 font-mono"
-                      value={form.teardownCommand}
-                      onChange={(event) => setForm((current) => current ? { ...current, teardownCommand: event.target.value } : current)}
+                      classИмя="min-h-20 font-mono"
+                      value={form.teardownКоманда}
+                      onChange={(event) => setForm((current) => current ? { ...current, teardownКоманда: event.target.value } : current)}
                       placeholder="bash ./scripts/teardown-worktree.sh"
                     />
                   </Field>
 
-                  <Field label="Cleanup command" hint="Workspace-specific cleanup before teardown">
+                  <Field label="Cleanup command" hint="Рабочая область-specific cleanup before teardown">
                     <Textarea
-                      className="min-h-16 font-mono"
-                      value={form.cleanupCommand}
-                      onChange={(event) => setForm((current) => current ? { ...current, cleanupCommand: event.target.value } : current)}
+                      classИмя="min-h-16 font-mono"
+                      value={form.cleanupКоманда}
+                      onChange={(event) => setForm((current) => current ? { ...current, cleanupКоманда: event.target.value } : current)}
                       placeholder="pkill -f vite || true"
                     />
                   </Field>
@@ -889,71 +889,71 @@ export function ExecutionWorkspaceDetail() {
 
                 <Separator />
 
-                <div className="space-y-4">
-                  <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Runtime config</div>
-                  <div className="rounded-md border border-dashed border-border/70 bg-background px-4 py-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium text-foreground">
-                          Runtime config source
+                <div classИмя="space-y-4">
+                  <div classИмя="text-xs font-medium uppercase tracking-widest text-muted-foreground">Запуститьtime config</div>
+                  <div classИмя="rounded-md border border-dashed border-border/70 bg-background px-4 py-3">
+                    <div classИмя="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                      <div classИмя="space-y-1">
+                        <div classИмя="text-sm font-medium text-foreground">
+                          Запуститьtime config source
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p classИмя="text-sm text-muted-foreground">
                           {runtimeConfigSource === "execution_workspace"
                             ? "This execution workspace currently overrides the project workspace runtime config."
                             : runtimeConfigSource === "project_workspace"
                               ? "This execution workspace is inheriting the project workspace runtime config."
-                              : "No runtime config is currently defined on this execution workspace or its project workspace."}
+                              : "Нет runtime config is currently defined on this execution workspace or its project workspace."}
                         </p>
                       </div>
                       <Button
                         variant="outline"
-                        className="w-full sm:w-auto"
+                        classИмя="w-full sm:w-auto"
                         size="sm"
-                        disabled={!linkedProjectWorkspace?.runtimeConfig?.workspaceRuntime}
+                        disabled={!linkedProjectРабочая область?.runtimeConfig?.workspaceЗапуститьtime}
                         onClick={() =>
                           setForm((current) => current ? {
                             ...current,
-                            inheritRuntime: true,
-                            workspaceRuntime: "",
+                            inheritЗапуститьtime: true,
+                            workspaceЗапуститьtime: "",
                           } : current)
                         }
                       >
-                        Reset to inherit
+                        Сбросить to inherit
                       </Button>
                     </div>
                   </div>
 
-                  <details className="rounded-md border border-dashed border-border/70 bg-background px-4 py-3">
-                    <summary className="cursor-pointer text-sm font-medium">Advanced runtime JSON</summary>
-                    <p className="mt-2 text-sm text-muted-foreground">
+                  <details classИмя="rounded-md border border-dashed border-border/70 bg-background px-4 py-3">
+                    <summary classИмя="cursor-pointer text-sm font-medium">Дополнительно runtime JSON</summary>
+                    <p classИмя="mt-2 text-sm text-muted-foreground">
                       Override the inherited workspace command model only when this execution workspace truly needs different service or job behavior.
                     </p>
-                    <div className="mt-3">
-                      <Field label="Workspace commands JSON" hint="Legacy `services` arrays still work, but `commands` supports both services and jobs.">
-                        <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+                    <div classИмя="mt-3">
+                      <Field label="Рабочая область commands JSON" hint="Legacy `services` arrays still work, but `commands` supports both services and jobs.">
+                        <div classИмя="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
                           <input
                             id="inherit-runtime-config"
                             type="checkbox"
-                            className="rounded border-border"
-                            checked={form.inheritRuntime}
+                            classИмя="rounded border-border"
+                            checked={form.inheritЗапуститьtime}
                             onChange={(event) => {
                               const checked = event.target.checked;
                               setForm((current) => {
                                 if (!current) return current;
-                                if (!checked && !current.workspaceRuntime.trim() && inheritedRuntimeConfig) {
-                                  return { ...current, inheritRuntime: checked, workspaceRuntime: formatJson(inheritedRuntimeConfig) };
+                                if (!checked && !current.workspaceЗапуститьtime.trim() && inheritedЗапуститьtimeConfig) {
+                                  return { ...current, inheritЗапуститьtime: checked, workspaceЗапуститьtime: formatJson(inheritedЗапуститьtimeConfig) };
                                 }
-                                return { ...current, inheritRuntime: checked };
+                                return { ...current, inheritЗапуститьtime: checked };
                               });
                             }}
                           />
                           <label htmlFor="inherit-runtime-config">Inherit project workspace runtime config</label>
                         </div>
                         <Textarea
-                          className="min-h-64 font-mono sm:min-h-96"
-                          value={form.workspaceRuntime}
-                          onChange={(event) => setForm((current) => current ? { ...current, workspaceRuntime: event.target.value } : current)}
-                          disabled={form.inheritRuntime}
+                          classИмя="min-h-64 font-mono sm:min-h-96"
+                          value={form.workspaceЗапуститьtime}
+                          onChange={(event) => setForm((current) => current ? { ...current, workspaceЗапуститьtime: event.target.value } : current)}
+                          disabled={form.inheritЗапуститьtime}
                           placeholder={'{\n  "commands": [\n    {\n      "id": "web",\n      "name": "web",\n      "kind": "service",\n      "command": "pnpm dev",\n      "cwd": ".",\n      "port": { "type": "auto" }\n    },\n    {\n      "id": "db-migrate",\n      "name": "db:migrate",\n      "kind": "job",\n      "command": "pnpm db:migrate",\n      "cwd": "."\n    }\n  ]\n}'}
                         />
                       </Field>
@@ -962,195 +962,195 @@ export function ExecutionWorkspaceDetail() {
                 </div>
               </div>
 
-              <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                <Button className="w-full sm:w-auto" disabled={!isDirty || updateWorkspace.isPending} onClick={saveChanges}>
-                  {updateWorkspace.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Save changes
+              <div classИмя="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <Button classИмя="w-full sm:w-auto" disabled={!isDirty || updateРабочая область.isОжидание} onClick={saveChanges}>
+                  {updateРабочая область.isОжидание ? <Loader2 classИмя="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Сохранить изменения
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto"
-                  disabled={!isDirty || updateWorkspace.isPending}
+                  classИмя="w-full sm:w-auto"
+                  disabled={!isDirty || updateРабочая область.isОжидание}
                   onClick={() => {
                     setForm(initialState);
-                    setErrorMessage(null);
-                    setRuntimeActionErrorMessage(null);
-                    setRuntimeActionMessage(null);
+                    setОшибкаMessage(null);
+                    setЗапуститьtimeActionОшибкаMessage(null);
+                    setЗапуститьtimeActionMessage(null);
                   }}
                 >
-                  Reset
+                  Сбросить
                 </Button>
-                {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
-                {!errorMessage && !isDirty ? <p className="text-sm text-muted-foreground">No unsaved changes.</p> : null}
+                {errorMessage ? <p classИмя="text-sm text-destructive">{errorMessage}</p> : null}
+                {!errorMessage && !isDirty ? <p classИмя="text-sm text-muted-foreground">Нет unsaved changes.</p> : null}
               </div>
               </CardContent>
             </Card>
 
-            <Card className="rounded-none">
+            <Card classИмя="rounded-none">
               <CardHeader>
-                <CardTitle>Workspace context</CardTitle>
-                <CardDescription>Linked objects and relationships</CardDescription>
+                <CardНазвание>Рабочая область context</CardНазвание>
+                <CardОписание>Linked objects and relationships</CardОписание>
               </CardHeader>
               <CardContent>
               <DetailRow label="Project">
-                {project ? <Link to={`/projects/${projectRef}`} className="hover:underline">{project.name}</Link> : <MonoValue value={workspace.projectId} />}
+                {project ? <Link to={`/projects/${projectRef}`} classИмя="hover:underline">{project.name}</Link> : <MonoЗначение value={workspace.projectId} />}
               </DetailRow>
               <DetailRow label="Project workspace">
-                {project && linkedProjectWorkspace ? (
-                  <WorkspaceLink project={project} workspace={linkedProjectWorkspace} />
-                ) : workspace.projectWorkspaceId ? (
-                  <MonoValue value={workspace.projectWorkspaceId} />
+                {project && linkedProjectРабочая область ? (
+                  <Рабочая областьLink project={project} workspace={linkedProjectРабочая область} />
+                ) : workspace.projectРабочая областьId ? (
+                  <MonoЗначение value={workspace.projectРабочая областьId} />
                 ) : (
-                  "None"
+                  "Нет"
                 )}
               </DetailRow>
               <DetailRow label="Source issue">
-                {sourceIssue ? (
-                  <Link to={issueUrl(sourceIssue)} className="hover:underline">
-                    {sourceIssue.identifier ?? sourceIssue.id} · {sourceIssue.title}
+                {sourceЗадача ? (
+                  <Link to={issueUrl(sourceЗадача)} classИмя="hover:underline">
+                    {sourceЗадача.identifier ?? sourceЗадача.id} · {sourceЗадача.title}
                   </Link>
-                ) : workspace.sourceIssueId ? (
-                  <MonoValue value={workspace.sourceIssueId} />
+                ) : workspace.sourceЗадачаId ? (
+                  <MonoЗначение value={workspace.sourceЗадачаId} />
                 ) : (
-                  "None"
+                  "Нет"
                 )}
               </DetailRow>
               <DetailRow label="Derived from">
-                {derivedWorkspace ? (
-                  <Link to={executionWorkspaceTabPath(derivedWorkspace.id, "configuration")} className="hover:underline">
-                    {derivedWorkspace.name}
+                {derivedРабочая область ? (
+                  <Link to={executionРабочая областьTabПуть(derivedРабочая область.id, "configuration")} classИмя="hover:underline">
+                    {derivedРабочая область.name}
                   </Link>
-                ) : workspace.derivedFromExecutionWorkspaceId ? (
-                  <MonoValue value={workspace.derivedFromExecutionWorkspaceId} />
+                ) : workspace.derivedFromExecutionРабочая областьId ? (
+                  <MonoЗначение value={workspace.derivedFromExecutionРабочая областьId} />
                 ) : (
-                  "None"
+                  "Нет"
                 )}
               </DetailRow>
-              <DetailRow label="Workspace ID">
-                <MonoValue value={workspace.id} />
+              <DetailRow label="ID области">
+                <MonoЗначение value={workspace.id} />
               </DetailRow>
               </CardContent>
             </Card>
 
-            <Card className="rounded-none">
+            <Card classИмя="rounded-none">
               <CardHeader>
-                <CardTitle>Concrete location</CardTitle>
-                <CardDescription>Paths and refs</CardDescription>
+                <CardНазвание>Concrete location</CardНазвание>
+                <CardОписание>Путьs and refs</CardОписание>
               </CardHeader>
               <CardContent>
-              <DetailRow label="Working dir">
-                {workspace.cwd ? <MonoValue value={workspace.cwd} copy /> : "None"}
+              <DetailRow label="Работаing dir">
+                {workspace.cwd ? <MonoЗначение value={workspace.cwd} copy /> : "Нет"}
               </DetailRow>
-              <DetailRow label="Provider ref">
-                {workspace.providerRef ? <MonoValue value={workspace.providerRef} copy /> : "None"}
+              <DetailRow label="Провайдер ref">
+                {workspace.providerRef ? <MonoЗначение value={workspace.providerRef} copy /> : "Нет"}
               </DetailRow>
-              <DetailRow label="Repo URL">
+              <DetailRow label="URL репозитория">
                 {workspace.repoUrl && isSafeExternalUrl(workspace.repoUrl) ? (
-                  <div className="inline-flex max-w-full items-start gap-2">
-                    <a href={workspace.repoUrl} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1 break-all hover:underline">
+                  <div classИмя="inline-flex max-w-full items-start gap-2">
+                    <a href={workspace.repoUrl} target="_blank" rel="noreferrer" classИмя="inline-flex min-w-0 items-center gap-1 break-all hover:underline">
                       {workspace.repoUrl}
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                      <ExternalLink classИмя="h-3.5 w-3.5 shrink-0" />
                     </a>
-                    <CopyText text={workspace.repoUrl} className="shrink-0 text-muted-foreground hover:text-foreground" copiedLabel="Copied">
-                      <Copy className="h-3.5 w-3.5" />
-                    </CopyText>
+                    <КопироватьText text={workspace.repoUrl} classИмя="shrink-0 text-muted-foreground hover:text-foreground" copiedLabel="Copied">
+                      <Копировать classИмя="h-3.5 w-3.5" />
+                    </КопироватьText>
                   </div>
                 ) : workspace.repoUrl ? (
-                  <MonoValue value={workspace.repoUrl} copy />
+                  <MonoЗначение value={workspace.repoUrl} copy />
                 ) : (
-                  "None"
+                  "Нет"
                 )}
               </DetailRow>
               <DetailRow label="Base ref">
-                {workspace.baseRef ? <MonoValue value={workspace.baseRef} copy /> : "None"}
+                {workspace.baseRef ? <MonoЗначение value={workspace.baseRef} copy /> : "Нет"}
               </DetailRow>
-              <DetailRow label="Branch">
-                {workspace.branchName ? <MonoValue value={workspace.branchName} copy /> : "None"}
+              <DetailRow label="Ветка">
+                {workspace.branchИмя ? <MonoЗначение value={workspace.branchИмя} copy /> : "Нет"}
               </DetailRow>
               <DetailRow label="Opened">{formatDateTime(workspace.openedAt)}</DetailRow>
               <DetailRow label="Last used">{formatDateTime(workspace.lastUsedAt)}</DetailRow>
               <DetailRow label="Cleanup">
                 {workspace.cleanupEligibleAt
                   ? `${formatDateTime(workspace.cleanupEligibleAt)}${workspace.cleanupReason ? ` · ${workspace.cleanupReason}` : ""}`
-                  : "Not scheduled"}
+                  : "Нетt scheduled"}
               </DetailRow>
               </CardContent>
             </Card>
           </div>
         ) : activeTab === "runtime_logs" ? (
-          <Card className="rounded-none">
+          <Card classИмя="rounded-none">
             <CardHeader>
-              <CardTitle>Runtime and cleanup logs</CardTitle>
-              <CardDescription>Recent operations</CardDescription>
+              <CardНазвание>Запуститьtime and cleanup logs</CardНазвание>
+              <CardОписание>Recent operations</CardОписание>
             </CardHeader>
             <CardContent>
-            {workspaceOperationsQuery.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading workspace operations…</p>
+            {workspaceOperationsQuery.isЗагрузка ? (
+              <p classИмя="text-sm text-muted-foreground">Загрузка workspace operations…</p>
             ) : workspaceOperationsQuery.error ? (
-              <p className="text-sm text-destructive">
-                {workspaceOperationsQuery.error instanceof Error
+              <p classИмя="text-sm text-destructive">
+                {workspaceOperationsQuery.error instanceof Ошибка
                   ? workspaceOperationsQuery.error.message
-                  : "Failed to load workspace operations."}
+                  : "Ошибка to load workspace operations."}
               </p>
             ) : workspaceOperationsQuery.data && workspaceOperationsQuery.data.length > 0 ? (
-              <div className="space-y-3">
+              <div classИмя="space-y-3">
                 {workspaceOperationsQuery.data.map((operation) => (
-                  <div key={operation.id} className="rounded-none border border-border/80 bg-background px-4 py-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">{operation.command ?? operation.phase}</div>
-                        <div className="text-xs text-muted-foreground">
+                  <div key={operation.id} classИмя="rounded-none border border-border/80 bg-background px-4 py-3">
+                    <div classИмя="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div classИмя="space-y-1">
+                        <div classИмя="text-sm font-medium">{operation.command ?? operation.phase}</div>
+                        <div classИмя="text-xs text-muted-foreground">
                           {formatDateTime(operation.startedAt)}
                           {operation.finishedAt ? ` → ${formatDateTime(operation.finishedAt)}` : ""}
                         </div>
                         {operation.stderrExcerpt ? (
-                          <div className="whitespace-pre-wrap break-words text-xs text-destructive">{operation.stderrExcerpt}</div>
+                          <div classИмя="whitespace-pre-wrap break-words text-xs text-destructive">{operation.stderrExcerpt}</div>
                         ) : operation.stdoutExcerpt ? (
-                          <div className="whitespace-pre-wrap break-words text-xs text-muted-foreground">{operation.stdoutExcerpt}</div>
+                          <div classИмя="whitespace-pre-wrap break-words text-xs text-muted-foreground">{operation.stdoutExcerpt}</div>
                         ) : null}
                       </div>
-                      <StatusPill className="self-start">{operation.status}</StatusPill>
+                      <СтатусPill classИмя="self-start">{operation.status}</СтатусPill>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No workspace operations have been recorded yet.</p>
+              <p classИмя="text-sm text-muted-foreground">Нет workspace operations have been recorded yet.</p>
             )}
             </CardContent>
           </Card>
         ) : activeTab === "issues" ? (
-          <ExecutionWorkspaceIssuesList
+          <ExecutionРабочая областьЗадачиList
             companyId={workspace.companyId}
             workspace={workspace}
-            issues={linkedIssues}
-            isLoading={linkedIssuesQuery.isLoading}
-            error={linkedIssuesQuery.error as Error | null}
+            issues={linkedЗадачи}
+            isЗагрузка={linkedЗадачиQuery.isЗагрузка}
+            error={linkedЗадачиQuery.error as Ошибка | null}
             project={project}
           />
         ) : (
-          <ExecutionWorkspaceRoutinesList
+          <ExecutionРабочая областьПроцедурыList
             workspace={workspace}
             project={project}
           />
         )}
       </div>
-      <ExecutionWorkspaceCloseDialog
+      <ExecutionРабочая областьЗакрытьDialog
         workspaceId={workspace.id}
-        workspaceName={workspace.name}
-        currentStatus={workspace.status}
+        workspaceИмя={workspace.name}
+        currentСтатус={workspace.status}
         open={closeDialogOpen}
-        onOpenChange={setCloseDialogOpen}
-        onClosed={(nextWorkspace) => {
-          queryClient.setQueryData(queryKeys.executionWorkspaces.detail(nextWorkspace.id), nextWorkspace);
-          queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.closeReadiness(nextWorkspace.id) });
-          queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.workspaceOperations(nextWorkspace.id) });
+        onOpenChange={setЗакрытьDialogOpen}
+        onЗакрытьd={(nextРабочая область) => {
+          queryClient.setQueryData(queryКлючs.executionРабочие области.detail(nextРабочая область.id), nextРабочая область);
+          queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.closeReadiness(nextРабочая область.id) });
+          queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.workspaceOperations(nextРабочая область.id) });
           if (project) {
-            queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(project.id) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.list(project.companyId, { projectId: project.id }) });
+            queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.detail(project.id) });
+            queryClient.invalidateQueries({ queryКлюч: queryКлючs.executionРабочие области.list(project.companyId, { projectId: project.id }) });
           }
-          if (sourceIssue) {
-            queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(sourceIssue.id) });
+          if (sourceЗадача) {
+            queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.detail(sourceЗадача.id) });
           }
         }}
       />

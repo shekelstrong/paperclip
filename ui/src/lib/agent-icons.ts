@@ -1,9 +1,9 @@
 import {
   Atom,
-  Bot,
+  Бот,
   Brain,
   Bug,
-  CircuitBoard,
+  CircuitСовет,
   Code,
   Cog,
   Cpu,
@@ -14,7 +14,7 @@ import {
   Fingerprint,
   Flame,
   Gem,
-  GitBranch,
+  GitВетка,
   Globe,
   Hammer,
   Heart,
@@ -29,12 +29,12 @@ import {
   Puzzle,
   Radar,
   Rocket,
-  Search,
+  Поиск,
   Shield,
   Sparkles,
   Star,
   Swords,
-  Target,
+  Цель,
   Telescope,
   Terminal,
   Wand2,
@@ -42,10 +42,10 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { AGENT_ICON_NAMES, type AgentIconName } from "@paperclipai/shared";
+import { AGENT_ICON_NAMES, type АгентIconИмя } from "@paperclipai/shared";
 
-export const AGENT_ICONS: Record<AgentIconName, LucideIcon> = {
-  bot: Bot,
+export const AGENT_ICONS: Record<АгентIconИмя, LucideIcon> = {
+  bot: Бот,
   cpu: Cpu,
   brain: Brain,
   zap: Zap,
@@ -54,7 +54,7 @@ export const AGENT_ICONS: Record<AgentIconName, LucideIcon> = {
   terminal: Terminal,
   shield: Shield,
   eye: Eye,
-  search: Search,
+  search: Поиск,
   wrench: Wrench,
   hammer: Hammer,
   lightbulb: Lightbulb,
@@ -70,13 +70,13 @@ export const AGENT_ICONS: Record<AgentIconName, LucideIcon> = {
   mail: Mail,
   "message-square": MessageSquare,
   "file-code": FileCode,
-  "git-branch": GitBranch,
+  "git-branch": GitВетка,
   package: Package,
   puzzle: Puzzle,
-  target: Target,
+  target: Цель,
   wand: Wand2,
   atom: Atom,
-  "circuit-board": CircuitBoard,
+  "circuit-board": CircuitСовет,
   radar: Radar,
   swords: Swords,
   telescope: Telescope,
@@ -88,11 +88,11 @@ export const AGENT_ICONS: Record<AgentIconName, LucideIcon> = {
   fingerprint: Fingerprint,
 };
 
-const DEFAULT_ICON: AgentIconName = "bot";
+const DEFAULT_ICON: АгентIconИмя = "bot";
 
-export function getAgentIcon(iconName: string | null | undefined): LucideIcon {
-  if (iconName && AGENT_ICON_NAMES.includes(iconName as AgentIconName)) {
-    return AGENT_ICONS[iconName as AgentIconName];
+export function getАгентIcon(iconИмя: string | null | undefined): LucideIcon {
+  if (iconИмя && AGENT_ICON_NAMES.includes(iconИмя as АгентIconИмя)) {
+    return AGENT_ICONS[iconИмя as АгентIconИмя];
   }
   return AGENT_ICONS[DEFAULT_ICON];
 }

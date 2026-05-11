@@ -20,28 +20,28 @@ function agentIdFromSelectionId(id: string): string | null {
   return null;
 }
 
-export function getRecentAssigneeIds(): string[] {
+export function getRecentИсполнительIds(): string[] {
   return readRecentSelectionIds(STORAGE_KEY)
     .map(agentIdFromSelectionId)
     .filter((id): id is string => Boolean(id));
 }
 
-export function getRecentAssigneeSelectionIds(): string[] {
+export function getRecentИсполнительSelectionIds(): string[] {
   return readRecentSelectionIds(STORAGE_KEY).map((id) => {
     if (id.includes(":")) return id;
     return agentSelectionId(id);
   });
 }
 
-export function trackRecentAssignee(agentId: string): void {
+export function trackRecentИсполнитель(agentId: string): void {
   trackRecentSelectionId(STORAGE_KEY, agentSelectionId(agentId));
 }
 
-export function trackRecentAssigneeUser(userId: string): void {
+export function trackRecentИсполнительUser(userId: string): void {
   trackRecentSelectionId(STORAGE_KEY, userSelectionId(userId));
 }
 
-export function sortAgentsByRecency<T extends { id: string; name: string }>(
+export function sortАгентыByRecency<T extends { id: string; name: string }>(
   agents: T[],
   recentIds: string[],
 ): T[] {

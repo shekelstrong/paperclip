@@ -1,12 +1,12 @@
-import type { UIAdapterModule } from "../types";
+import type { UIАдаптерModule } from "../types";
 import { parseHttpStdoutLine } from "./parse-stdout";
 import { HttpConfigFields } from "./config-fields";
 import { buildHttpConfig } from "./build-config";
 
-export const httpUIAdapter: UIAdapterModule = {
+export const httpUIАдаптер: UIАдаптерModule = {
   type: "http",
   label: "HTTP Webhook",
   parseStdoutLine: parseHttpStdoutLine,
   ConfigFields: HttpConfigFields,
-  buildAdapterConfig: buildHttpConfig,
+  buildАдаптерConfig: buildHttpConfig,
 };

@@ -1,14 +1,14 @@
 import {
-  extractRoutineVariableNames,
+  extractПроцедураVariableИмяs,
   WORKSPACE_BRANCH_ROUTINE_VARIABLE,
-  type RoutineListItem,
+  type ПроцедураListItem,
 } from "@paperclipai/shared";
 
 const WORKSPACE_SPECIFIC_ROUTINE_VARIABLES = new Set([
   WORKSPACE_BRANCH_ROUTINE_VARIABLE,
 ]);
 
-export function getWorkspaceSpecificRoutineVariableNames(routine: RoutineListItem): string[] {
+export function getРабочая областьSpecificПроцедураVariableИмяs(routine: ПроцедураListItem): string[] {
   const names = new Set<string>();
 
   for (const variable of routine.variables) {
@@ -17,7 +17,7 @@ export function getWorkspaceSpecificRoutineVariableNames(routine: RoutineListIte
     }
   }
 
-  for (const name of extractRoutineVariableNames([routine.title, routine.description])) {
+  for (const name of extractПроцедураVariableИмяs([routine.title, routine.description])) {
     if (WORKSPACE_SPECIFIC_ROUTINE_VARIABLES.has(name)) {
       names.add(name);
     }
@@ -26,6 +26,6 @@ export function getWorkspaceSpecificRoutineVariableNames(routine: RoutineListIte
   return [...names];
 }
 
-export function routineHasWorkspaceSpecificVariables(routine: RoutineListItem): boolean {
-  return getWorkspaceSpecificRoutineVariableNames(routine).length > 0;
+export function routineHasРабочая областьSpecificVariables(routine: ПроцедураListItem): boolean {
+  return getРабочая областьSpecificПроцедураVariableИмяs(routine).length > 0;
 }

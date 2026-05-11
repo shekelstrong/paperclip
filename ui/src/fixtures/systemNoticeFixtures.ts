@@ -1,14 +1,14 @@
 import type {
-  SystemNoticeMetadataSection,
-  SystemNoticeProps,
-} from "../components/SystemNotice";
+  SystemНетticeMetadataSection,
+  SystemНетticeProps,
+} from "../components/SystemНетtice";
 
-export type SystemNoticeFixture = {
+export type SystemНетticeFixture = {
   id: string;
   caption: string;
-} & SystemNoticeProps;
+} & SystemНетticeProps;
 
-const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
+const HANDOFF_METADATA: SystemНетticeMetadataSection[] = [
   {
     title: "Recovery owner",
     rows: [
@@ -17,11 +17,11 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
         label: "Recovery issue",
         identifier: "PAP-3440",
         href: "/PAP/issues/PAP-3440",
-        title: "Successful run handoff missing disposition",
+        title: "Успешноful run handoff missing disposition",
       },
       {
         kind: "agent",
-        label: "Owner",
+        label: "Владелец",
         name: "CTO",
         href: "/PAP/agents/cto",
       },
@@ -33,7 +33,7 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
     ],
   },
   {
-    title: "Run evidence",
+    title: "Запустить evidence",
     rows: [
       {
         kind: "run",
@@ -51,57 +51,57 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
       },
       {
         kind: "text",
-        label: "Normalized cause",
-        value: "Run completed without issuing a disposition for an in_progress task.",
+        label: "Нетrmalized cause",
+        value: "Запустить completed without issuing a disposition for an in_progress task.",
       },
     ],
   },
 ];
 
-const REQUIRED_METADATA: SystemNoticeMetadataSection[] = [
+const REQUIRED_METADATA: SystemНетticeMetadataSection[] = [
   {
-    title: "Required action",
+    title: "Обязательно action",
     rows: [
       {
         kind: "issue",
         label: "Source issue",
         identifier: "PAP-3440",
         href: "/PAP/issues/PAP-3440",
-        title: "Successful run handoff missing disposition",
+        title: "Успешноful run handoff missing disposition",
       },
       {
         kind: "agent",
-        label: "Assignee",
+        label: "Исполнитель",
         name: "CodexCoder",
         href: "/PAP/agents/codexcoder",
       },
       {
         kind: "text",
-        label: "Next step",
+        label: "Далее step",
         value: "Pick done, blocked, or in_review and post a one-line rationale.",
       },
     ],
   },
   {
-    title: "Run context",
+    title: "Запустить context",
     rows: [
       {
         kind: "run",
-        label: "Successful run",
+        label: "Успешноful run",
         runId: "9cdba892-c7ca-4d93-8604-4843873b127c",
         href: "/PAP/agents/codexcoder/runs/9cdba892-c7ca-4d93-8604-4843873b127c",
         status: "succeeded",
       },
       {
         kind: "code",
-        label: "Status before",
+        label: "Статус before",
         value: "in_progress",
       },
     ],
   },
 ];
 
-const NEUTRAL_METADATA: SystemNoticeMetadataSection[] = [
+const NEUTRAL_METADATA: SystemНетticeMetadataSection[] = [
   {
     rows: [
       {
@@ -119,34 +119,34 @@ const NEUTRAL_METADATA: SystemNoticeMetadataSection[] = [
       {
         kind: "text",
         label: "Reason",
-        value: "Manual reassignment requested by Board.",
+        value: "Manual reassignment requested by Совет.",
       },
     ],
   },
 ];
 
-export const systemNoticeFixtures: readonly SystemNoticeFixture[] = [
+export const systemНетticeFixtures: readonly SystemНетticeFixture[] = [
   {
     id: "warning-collapsed",
-    caption: "Warning · collapsed (default)",
+    caption: "Предупреждение · collapsed (default)",
     tone: "warning",
     label: "System warning",
     source: { label: "Paperclip", href: "/PAP/agents" },
     timestamp: "2026-05-04T16:32:00.000Z",
     body: "Paperclip needs a disposition before this issue can continue.",
     metadata: REQUIRED_METADATA,
-    detailsDefaultOpen: false,
+    detailsПо умолчаниюOpen: false,
   },
   {
     id: "warning-expanded",
-    caption: "Warning · expanded",
+    caption: "Предупреждение · expanded",
     tone: "warning",
     label: "System warning",
     source: { label: "Paperclip", href: "/PAP/agents" },
     timestamp: "2026-05-04T16:32:00.000Z",
     body: "Paperclip needs a disposition before this issue can continue.",
     metadata: REQUIRED_METADATA,
-    detailsDefaultOpen: true,
+    detailsПо умолчаниюOpen: true,
   },
   {
     id: "danger-collapsed",
@@ -157,7 +157,7 @@ export const systemNoticeFixtures: readonly SystemNoticeFixture[] = [
     timestamp: "2026-05-04T16:48:00.000Z",
     body: "Paperclip could not resolve this issue's missing disposition automatically. The issue is blocked on a recovery owner.",
     metadata: HANDOFF_METADATA,
-    detailsDefaultOpen: false,
+    detailsПо умолчаниюOpen: false,
   },
   {
     id: "danger-expanded",
@@ -168,7 +168,7 @@ export const systemNoticeFixtures: readonly SystemNoticeFixture[] = [
     timestamp: "2026-05-04T16:48:00.000Z",
     body: "Paperclip could not resolve this issue's missing disposition automatically. The issue is blocked on a recovery owner.",
     metadata: HANDOFF_METADATA,
-    detailsDefaultOpen: true,
+    detailsПо умолчаниюOpen: true,
   },
   {
     id: "neutral-collapsed",
@@ -179,7 +179,7 @@ export const systemNoticeFixtures: readonly SystemNoticeFixture[] = [
     timestamp: "2026-05-04T15:10:00.000Z",
     body: "Reassigned to ClaudeFixer.",
     metadata: NEUTRAL_METADATA,
-    detailsDefaultOpen: false,
+    detailsПо умолчаниюOpen: false,
   },
   {
     id: "neutral-expanded",
@@ -190,11 +190,11 @@ export const systemNoticeFixtures: readonly SystemNoticeFixture[] = [
     timestamp: "2026-05-04T15:10:00.000Z",
     body: "Reassigned to ClaudeFixer.",
     metadata: NEUTRAL_METADATA,
-    detailsDefaultOpen: true,
+    detailsПо умолчаниюOpen: true,
   },
   {
     id: "warning-no-details",
-    caption: "Warning · no metadata (Details affordance hidden)",
+    caption: "Предупреждение · no metadata (Детали affordance hidden)",
     tone: "warning",
     label: "System warning",
     source: { label: "Paperclip" },

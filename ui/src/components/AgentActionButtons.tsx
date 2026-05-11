@@ -1,10 +1,10 @@
-import { Pause, Play } from "lucide-react";
+import { Пауза, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function RunButton({
+export function ЗапуститьButton({
   onClick,
   disabled,
-  label = "Run now",
+  label = "Запустить сейчас",
   size = "sm",
 }: {
   onClick: () => void;
@@ -14,38 +14,38 @@ export function RunButton({
 }) {
   return (
     <Button variant="outline" size={size} onClick={onClick} disabled={disabled}>
-      <Play className="h-3.5 w-3.5 sm:mr-1" />
-      <span className="hidden sm:inline">{label}</span>
+      <Play classИмя="h-3.5 w-3.5 sm:mr-1" />
+      <span classИмя="hidden sm:inline">{label}</span>
     </Button>
   );
 }
 
-export function PauseResumeButton({
-  isPaused,
-  onPause,
-  onResume,
+export function ПаузаПродолжитьButton({
+  isПриостановлен,
+  onПауза,
+  onПродолжить,
   disabled,
   size = "sm",
 }: {
-  isPaused: boolean;
-  onPause: () => void;
-  onResume: () => void;
+  isПриостановлен: boolean;
+  onПауза: () => void;
+  onПродолжить: () => void;
   disabled?: boolean;
   size?: "sm" | "default";
 }) {
-  if (isPaused) {
+  if (isПриостановлен) {
     return (
-      <Button variant="outline" size={size} onClick={onResume} disabled={disabled}>
-        <Play className="h-3.5 w-3.5 sm:mr-1" />
-        <span className="hidden sm:inline">Resume</span>
+      <Button variant="outline" size={size} onClick={onПродолжить} disabled={disabled}>
+        <Play classИмя="h-3.5 w-3.5 sm:mr-1" />
+        <span classИмя="hidden sm:inline">Продолжить</span>
       </Button>
     );
   }
 
   return (
-    <Button variant="outline" size={size} onClick={onPause} disabled={disabled}>
-      <Pause className="h-3.5 w-3.5 sm:mr-1" />
-      <span className="hidden sm:inline">Pause</span>
+    <Button variant="outline" size={size} onClick={onПауза} disabled={disabled}>
+      <Пауза classИмя="h-3.5 w-3.5 sm:mr-1" />
+      <span classИмя="hidden sm:inline">Пауза</span>
     </Button>
   );
 }

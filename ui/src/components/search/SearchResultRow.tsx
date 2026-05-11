@@ -1,21 +1,21 @@
-import { memo, type ComponentType, type SVGProps } from "react";
-import { Bot, FileText, Hexagon, MessageSquare, Quote } from "lucide-react";
-import type { Agent, CompanySearchResult } from "@paperclipai/shared";
+import { memo, type ComponentТип, type SVGProps } from "react";
+import { Бот, FileText, Hexagon, MessageSquare, Quote } from "lucide-react";
+import type { Агент, КомпанияПоискResult } from "@paperclipai/shared";
 import { Link } from "@/lib/router";
 import { cn } from "@/lib/utils";
-import { StatusIcon } from "../StatusIcon";
+import { СтатусIcon } from "../СтатусIcon";
 import { Identity } from "../Identity";
-import { HighlightedText, type HighlightedTextProps } from "./HighlightedText";
+import { ВысокийlightedText, type ВысокийlightedTextProps } from "./ВысокийlightedText";
 
 type SnippetStyle = {
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+  Icon: ComponentТип<SVGProps<SVGSVGElement>>;
   label: string;
 };
 
 const SNIPPET_STYLES: Record<string, SnippetStyle> = {
   comment: { Icon: MessageSquare, label: "Comment" },
   document: { Icon: FileText, label: "Doc" },
-  description: { Icon: Quote, label: "Description" },
+  description: { Icon: Quote, label: "Описание" },
 };
 
 function snippetStyle(field: string, fallbackLabel: string): SnippetStyle {
@@ -43,42 +43,42 @@ function formatRelativeTime(input: string | null): string {
   return `${years}y`;
 }
 
-export interface SearchResultRowProps {
-  result: CompanySearchResult;
-  agentsById?: ReadonlyMap<string, Pick<Agent, "id" | "name">>;
-  isActive?: boolean;
-  className?: string;
+export interface ПоискResultRowProps {
+  result: КомпанияПоискResult;
+  agentsById?: ReadonlyMap<string, Pick<Агент, "id" | "name">>;
+  isАктивен?: boolean;
+  classИмя?: string;
 }
 
 const ROW_BASE =
   "group flex items-start gap-3 rounded-md px-3 transition-colors no-underline text-inherit hover:bg-muted/40";
 
-function SearchResultRowImpl({
+function ПоискResultRowImpl({
   result,
   agentsById,
-  isActive,
-  className,
-}: SearchResultRowProps) {
+  isАктивен,
+  classИмя,
+}: ПоискResultRowProps) {
   if (result.type === "agent") {
     return (
       <Link
         to={result.href}
-        className={cn(ROW_BASE, "py-3", isActive && "bg-muted/40", className)}
+        classИмя={cn(ROW_BASE, "py-3", isАктивен && "bg-muted/40", classИмя)}
         data-result-type="agent"
       >
-        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <Bot className="h-3 w-3" />
+        <span classИмя="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <Бот classИмя="h-3 w-3" />
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-sm font-medium">{result.title}</span>
+        <div classИмя="min-w-0 flex-1">
+          <div classИмя="flex min-w-0 items-center gap-2">
+            <span classИмя="truncate text-sm font-medium">{result.title}</span>
           </div>
           {result.snippet ? (
             <SnippetLine
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="agent"
-              fallbackLabel={result.sourceLabel ?? "Agent"}
+              fallbackLabel={result.sourceLabel ?? "Агент"}
             />
           ) : null}
         </div>
@@ -90,12 +90,12 @@ function SearchResultRowImpl({
     return (
       <Link
         to={result.href}
-        className={cn(ROW_BASE, "py-3", isActive && "bg-muted/40", className)}
+        classИмя={cn(ROW_BASE, "py-3", isАктивен && "bg-muted/40", classИмя)}
         data-result-type="project"
       >
-        <Hexagon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-        <div className="min-w-0 flex-1">
-          <span className="truncate text-sm font-medium">{result.title}</span>
+        <Hexagon classИмя="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <div classИмя="min-w-0 flex-1">
+          <span classИмя="truncate text-sm font-medium">{result.title}</span>
           {result.snippet ? (
             <SnippetLine
               text={result.snippets[0]?.text ?? result.snippet}
@@ -111,36 +111,36 @@ function SearchResultRowImpl({
 
   const issue = result.issue;
   if (!issue) return null;
-  const assigneeName = issue.assigneeAgentId
-    ? agentsById?.get(issue.assigneeAgentId)?.name ?? null
+  const assigneeИмя = issue.assigneeАгентId
+    ? agentsById?.get(issue.assigneeАгентId)?.name ?? null
     : null;
   const updated = formatRelativeTime(result.updatedAt ?? issue.updatedAt);
-  const titleHighlights = result.snippets.find((snippet) => snippet.field === "title")?.highlights;
+  const titleВысокийlights = result.snippets.find((snippet) => snippet.field === "title")?.highlights;
   const bodySnippets = result.snippets.filter((snippet) => snippet.field !== "title").slice(0, 2);
   const previewImageUrl = result.previewImageUrl;
-  const hasRightRail = previewImageUrl || assigneeName || updated;
+  const hasRightRail = previewImageUrl || assigneeИмя || updated;
 
   return (
     <Link
       to={result.href}
-      disableIssueQuicklook
-      className={cn(ROW_BASE, "py-4", isActive && "bg-muted/40", className)}
+      disableЗадачаQuicklook
+      classИмя={cn(ROW_BASE, "py-4", isАктивен && "bg-muted/40", classИмя)}
       data-result-type="issue"
     >
-      <div className="mt-1 shrink-0">
-        <StatusIcon status={issue.status} />
+      <div classИмя="mt-1 shrink-0">
+        <СтатусIcon status={issue.status} />
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1">
+      <div classИмя="min-w-0 flex-1">
+        <div classИмя="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1">
           {issue.identifier ? (
-            <span className="shrink-0 font-mono text-xs text-muted-foreground tabular-nums">
+            <span classИмя="shrink-0 font-mono text-xs text-muted-foreground tabular-nums">
               {issue.identifier}
             </span>
           ) : null}
-          <HighlightedText
+          <ВысокийlightedText
             text={issue.title}
-            highlights={titleHighlights}
-            className="min-w-0 flex-1 text-sm font-medium leading-snug text-foreground"
+            highlights={titleВысокийlights}
+            classИмя="min-w-0 flex-1 text-sm font-medium leading-snug text-foreground"
           />
         </div>
         {bodySnippets.map((snippet, index) => (
@@ -154,18 +154,18 @@ function SearchResultRowImpl({
           />
         ))}
         {hasRightRail ? (
-          <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
-            {assigneeName ? <span className="truncate">{assigneeName}</span> : null}
-            {updated ? <span className="ml-auto tabular-nums">{updated}</span> : null}
+          <div classИмя="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
+            {assigneeИмя ? <span classИмя="truncate">{assigneeИмя}</span> : null}
+            {updated ? <span classИмя="ml-auto tabular-nums">{updated}</span> : null}
           </div>
         ) : null}
       </div>
       {hasRightRail ? (
-        <div className="ml-2 hidden shrink-0 flex-col items-end gap-2 sm:flex">
-          {assigneeName || updated ? (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {assigneeName ? <Identity name={assigneeName} size="sm" /> : null}
-              {updated ? <span className="tabular-nums">{updated}</span> : null}
+        <div classИмя="ml-2 hidden shrink-0 flex-col items-end gap-2 sm:flex">
+          {assigneeИмя || updated ? (
+            <div classИмя="flex items-center gap-2 text-xs text-muted-foreground">
+              {assigneeИмя ? <Identity name={assigneeИмя} size="sm" /> : null}
+              {updated ? <span classИмя="tabular-nums">{updated}</span> : null}
             </div>
           ) : null}
           {previewImageUrl ? (
@@ -174,7 +174,7 @@ function SearchResultRowImpl({
               alt=""
               loading="lazy"
               decoding="async"
-              className="h-[88px] w-[88px] shrink-0 rounded-md border border-border bg-muted object-cover"
+              classИмя="h-[88px] w-[88px] shrink-0 rounded-md border border-border bg-muted object-cover"
             />
           ) : null}
         </div>
@@ -183,11 +183,11 @@ function SearchResultRowImpl({
   );
 }
 
-export const SearchResultRow = memo(SearchResultRowImpl);
+export const ПоискResultRow = memo(ПоискResultRowImpl);
 
 interface SnippetLineProps {
   text: string;
-  highlights?: HighlightedTextProps["highlights"];
+  highlights?: ВысокийlightedTextProps["highlights"];
   field: string;
   fallbackLabel: string;
   multiline?: boolean;
@@ -197,20 +197,20 @@ function SnippetLine({ text, highlights, field, fallbackLabel, multiline = false
   const { Icon, label } = snippetStyle(field, fallbackLabel);
   return (
     <div
-      className={cn(
+      classИмя={cn(
         "mt-2.5 flex min-w-0 gap-1.5 text-xs text-muted-foreground",
         multiline ? "items-start" : "items-center",
       )}
     >
       <Icon
-        className={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground/60", multiline && "mt-0.5")}
+        classИмя={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground/60", multiline && "mt-0.5")}
         aria-hidden
       />
-      <span className="sr-only">{label}: </span>
-      <HighlightedText
+      <span classИмя="sr-only">{label}: </span>
+      <ВысокийlightedText
         text={text}
         highlights={highlights}
-        className={multiline ? "line-clamp-2 leading-relaxed" : "line-clamp-1 truncate"}
+        classИмя={multiline ? "line-clamp-2 leading-relaxed" : "line-clamp-1 truncate"}
       />
     </div>
   );

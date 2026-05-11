@@ -5,93 +5,93 @@ import { goalsApi } from "../api/goals";
 import { projectsApi } from "../api/projects";
 import { assetsApi } from "../api/assets";
 import { usePanel } from "../context/PanelContext";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useDialogActions } from "../context/DialogContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { queryKeys } from "../lib/queryKeys";
-import { GoalProperties } from "../components/GoalProperties";
-import { GoalTree } from "../components/GoalTree";
-import { StatusBadge } from "../components/StatusBadge";
-import { InlineEditor } from "../components/InlineEditor";
+import { queryКлючs } from "../lib/queryКлючs";
+import { ЦельProperties } from "../components/ЦельProperties";
+import { ЦельTree } from "../components/ЦельTree";
+import { СтатусBadge } from "../components/СтатусBadge";
+import { InlineИзменитьor } from "../components/InlineИзменитьor";
 import { EntityRow } from "../components/EntityRow";
 import { PageSkeleton } from "../components/PageSkeleton";
 import { cn, projectUrl } from "../lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, SlidersHorizontal } from "lucide-react";
-import type { Goal, Project } from "@paperclipai/shared";
+import type { Цель, Project } from "@paperclipai/shared";
 
-interface GoalPropertiesToggleButtonProps {
+interface ЦельPropertiesToggleButtonProps {
   panelVisible: boolean;
   onShowProperties: () => void;
 }
 
-export function GoalPropertiesToggleButton({
+export function ЦельPropertiesToggleButton({
   panelVisible,
   onShowProperties,
-}: GoalPropertiesToggleButtonProps) {
+}: ЦельPropertiesToggleButtonProps) {
   return (
     <Button
       variant="ghost"
       size="icon-xs"
-      className={cn(
+      classИмя={cn(
         "hidden md:inline-flex shrink-0 transition-opacity duration-200",
         panelVisible ? "opacity-0 pointer-events-none w-0 overflow-hidden" : "opacity-100",
       )}
       onClick={onShowProperties}
-      title="Show properties"
+      title="Показать свойства"
     >
-      <SlidersHorizontal className="h-4 w-4" />
+      <SlidersHorizontal classИмя="h-4 w-4" />
     </Button>
   );
 }
 
-export function GoalDetail() {
+export function ЦельDetail() {
   const { goalId } = useParams<{ goalId: string }>();
-  const { selectedCompanyId, setSelectedCompanyId } = useCompany();
-  const { openNewGoal } = useDialogActions();
+  const { selectedКомпанияId, setSelectedКомпанияId } = useКомпания();
+  const { openNewЦель } = useDialogActions();
   const { openPanel, closePanel, panelVisible, setPanelVisible } = usePanel();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
 
   const {
     data: goal,
-    isLoading,
+    isЗагрузка,
     error
   } = useQuery({
-    queryKey: queryKeys.goals.detail(goalId!),
+    queryКлюч: queryКлючs.goals.detail(goalId!),
     queryFn: () => goalsApi.get(goalId!),
     enabled: !!goalId
   });
-  const resolvedCompanyId = goal?.companyId ?? selectedCompanyId;
+  const resolvedКомпанияId = goal?.companyId ?? selectedКомпанияId;
 
-  const { data: allGoals } = useQuery({
-    queryKey: queryKeys.goals.list(resolvedCompanyId!),
-    queryFn: () => goalsApi.list(resolvedCompanyId!),
-    enabled: !!resolvedCompanyId
+  const { data: allЦели } = useQuery({
+    queryКлюч: queryКлючs.goals.list(resolvedКомпанияId!),
+    queryFn: () => goalsApi.list(resolvedКомпанияId!),
+    enabled: !!resolvedКомпанияId
   });
 
-  const { data: allProjects } = useQuery({
-    queryKey: queryKeys.projects.list(resolvedCompanyId!),
-    queryFn: () => projectsApi.list(resolvedCompanyId!),
-    enabled: !!resolvedCompanyId
+  const { data: allПроекты } = useQuery({
+    queryКлюч: queryКлючs.projects.list(resolvedКомпанияId!),
+    queryFn: () => projectsApi.list(resolvedКомпанияId!),
+    enabled: !!resolvedКомпанияId
   });
 
   useEffect(() => {
-    if (!goal?.companyId || goal.companyId === selectedCompanyId) return;
-    setSelectedCompanyId(goal.companyId, { source: "route_sync" });
-  }, [goal?.companyId, selectedCompanyId, setSelectedCompanyId]);
+    if (!goal?.companyId || goal.companyId === selectedКомпанияId) return;
+    setSelectedКомпанияId(goal.companyId, { source: "route_sync" });
+  }, [goal?.companyId, selectedКомпанияId, setSelectedКомпанияId]);
 
-  const updateGoal = useMutation({
+  const updateЦель = useMutation({
     mutationFn: (data: Record<string, unknown>) =>
       goalsApi.update(goalId!, data),
-    onSuccess: () => {
+    onУспешно: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.goals.detail(goalId!)
+        queryКлюч: queryКлючs.goals.detail(goalId!)
       });
-      if (resolvedCompanyId) {
+      if (resolvedКомпанияId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.goals.list(resolvedCompanyId)
+          queryКлюч: queryКлючs.goals.list(resolvedКомпанияId)
         });
       }
     }
@@ -99,17 +99,17 @@ export function GoalDetail() {
 
   const uploadImage = useMutation({
     mutationFn: async (file: File) => {
-      if (!resolvedCompanyId) throw new Error("No company selected");
+      if (!resolvedКомпанияId) throw new Ошибка("Нет company selected");
       return assetsApi.uploadImage(
-        resolvedCompanyId,
+        resolvedКомпанияId,
         file,
         `goals/${goalId ?? "draft"}`
       );
     }
   });
 
-  const childGoals = (allGoals ?? []).filter((g) => g.parentId === goalId);
-  const linkedProjects = (allProjects ?? []).filter((p) => {
+  const childЦели = (allЦели ?? []).filter((g) => g.parentId === goalId);
+  const linkedПроекты = (allПроекты ?? []).filter((p) => {
     if (!goalId) return false;
     if (p.goalIds.includes(goalId)) return true;
     if (p.goals.some((goalRef) => goalRef.id === goalId)) return true;
@@ -118,104 +118,104 @@ export function GoalDetail() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Goals", href: "/goals" },
-      { label: goal?.title ?? goalId ?? "Goal" }
+      { label: "Цели", href: "/goals" },
+      { label: goal?.title ?? goalId ?? "Цель" }
     ]);
   }, [setBreadcrumbs, goal, goalId]);
 
   useEffect(() => {
     if (goal) {
       openPanel(
-        <GoalProperties
+        <ЦельProperties
           goal={goal}
-          onUpdate={(data) => updateGoal.mutate(data)}
+          onОбновить={(data) => updateЦель.mutate(data)}
         />
       );
     }
     return () => closePanel();
   }, [goal]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (isLoading) return <PageSkeleton variant="detail" />;
-  if (error) return <p className="text-sm text-destructive">{error.message}</p>;
+  if (isЗагрузка) return <PageSkeleton variant="detail" />;
+  if (error) return <p classИмя="text-sm text-destructive">{error.message}</p>;
   if (!goal) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs uppercase text-muted-foreground">
+    <div classИмя="space-y-6">
+      <div classИмя="space-y-3">
+        <div classИмя="flex items-center gap-2">
+          <span classИмя="text-xs uppercase text-muted-foreground">
             {goal.level}
           </span>
-          <StatusBadge status={goal.status} />
-          <div className="ml-auto">
-            <GoalPropertiesToggleButton
+          <СтатусBadge status={goal.status} />
+          <div classИмя="ml-auto">
+            <ЦельPropertiesToggleButton
               panelVisible={panelVisible}
               onShowProperties={() => setPanelVisible(true)}
             />
           </div>
         </div>
 
-        <InlineEditor
+        <InlineИзменитьor
           value={goal.title}
-          onSave={(title) => updateGoal.mutate({ title })}
+          onСохранить={(title) => updateЦель.mutate({ title })}
           as="h2"
-          className="text-xl font-bold"
+          classИмя="text-xl font-bold"
         />
 
-        <InlineEditor
+        <InlineИзменитьor
           value={goal.description ?? ""}
-          onSave={(description) => updateGoal.mutate({ description })}
+          onСохранить={(description) => updateЦель.mutate({ description })}
           as="p"
-          className="text-sm text-muted-foreground"
-          placeholder="Add a description..."
+          classИмя="text-sm text-muted-foreground"
+          placeholder="Добавить a description..."
           multiline
-          imageUploadHandler={async (file) => {
+          imageЗагрузитьHandler={async (file) => {
             const asset = await uploadImage.mutateAsync(file);
-            return asset.contentPath;
+            return asset.contentПуть;
           }}
         />
       </div>
 
-      <Tabs defaultValue="children">
+      <Tabs defaultЗначение="children">
         <TabsList>
           <TabsTrigger value="children">
-            Sub-Goals ({childGoals.length})
+            Sub-Цели ({childЦели.length})
           </TabsTrigger>
           <TabsTrigger value="projects">
-            Projects ({linkedProjects.length})
+            Проекты ({linkedПроекты.length})
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="children" className="mt-4 space-y-3">
-          <div className="flex items-center justify-start">
+        <TabsContent value="children" classИмя="mt-4 space-y-3">
+          <div classИмя="flex items-center justify-start">
             <Button
               size="sm"
               variant="outline"
-              onClick={() => openNewGoal({ parentId: goalId })}
+              onClick={() => openNewЦель({ parentId: goalId })}
             >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Sub Goal
+              <Plus classИмя="h-3.5 w-3.5 mr-1.5" />
+              Sub Цель
             </Button>
           </div>
-          {childGoals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No sub-goals.</p>
+          {childЦели.length === 0 ? (
+            <p classИмя="text-sm text-muted-foreground">Нет sub-goals.</p>
           ) : (
-            <GoalTree goals={childGoals} goalLink={(g) => `/goals/${g.id}`} />
+            <ЦельTree goals={childЦели} goalLink={(g) => `/goals/${g.id}`} />
           )}
         </TabsContent>
 
-        <TabsContent value="projects" className="mt-4">
-          {linkedProjects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No linked projects.</p>
+        <TabsContent value="projects" classИмя="mt-4">
+          {linkedПроекты.length === 0 ? (
+            <p classИмя="text-sm text-muted-foreground">Нет linked projects.</p>
           ) : (
-            <div className="border border-border">
-              {linkedProjects.map((project) => (
+            <div classИмя="border border-border">
+              {linkedПроекты.map((project) => (
                 <EntityRow
                   key={project.id}
                   title={project.name}
                   subtitle={project.description ?? undefined}
                   to={projectUrl(project)}
-                  trailing={<StatusBadge status={project.status} />}
+                  trailing={<СтатусBadge status={project.status} />}
                 />
               ))}
             </div>

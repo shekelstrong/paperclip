@@ -1,54 +1,54 @@
-import type { CompanyPortabilityIssueManifestEntry } from "@paperclipai/shared";
+import type { КомпанияПортabilityЗадачаManifestEntry } from "@paperclipai/shared";
 
-function isTaskPath(filePath: string): boolean {
-  return /(?:^|\/)tasks\//.test(filePath);
+function isЗадачаПуть(fileПуть: string): boolean {
+  return /(?:^|\/)tasks\//.test(fileПуть);
 }
 
-function buildRecurringTaskPrefixes(
-  issues: Array<Pick<CompanyPortabilityIssueManifestEntry, "path" | "recurring">>,
+function buildRecurringЗадачаPrefixes(
+  issues: Array<Pick<КомпанияПортabilityЗадачаManifestEntry, "path" | "recurring">>,
 ): Set<string> {
   const prefixes = new Set<string>();
 
   for (const issue of issues) {
     if (!issue.recurring) continue;
 
-    const filePath = issue.path.trim();
-    if (!filePath) continue;
+    const fileПуть = issue.path.trim();
+    if (!fileПуть) continue;
 
-    prefixes.add(filePath);
+    prefixes.add(fileПуть);
 
-    const lastSlash = filePath.lastIndexOf("/");
+    const lastSlash = fileПуть.lastIndexOf("/");
     if (lastSlash >= 0) {
-      prefixes.add(`${filePath.slice(0, lastSlash + 1)}`);
+      prefixes.add(`${fileПуть.slice(0, lastSlash + 1)}`);
     }
   }
 
   return prefixes;
 }
 
-function isRecurringTaskFile(filePath: string, recurringTaskPrefixes: Set<string>): boolean {
-  for (const prefix of recurringTaskPrefixes) {
-    if (filePath === prefix || filePath.startsWith(prefix)) return true;
+function isRecurringЗадачаFile(fileПуть: string, recurringЗадачаPrefixes: Set<string>): boolean {
+  for (const prefix of recurringЗадачаPrefixes) {
+    if (fileПуть === prefix || fileПуть.startsWith(prefix)) return true;
   }
   return false;
 }
 
-export function buildInitialExportCheckedFiles(
-  filePaths: string[],
-  issues: Array<Pick<CompanyPortabilityIssueManifestEntry, "path" | "recurring">>,
-  previousCheckedFiles: Set<string>,
+export function buildInitialЭкспортCheckedФайлы(
+  fileПутьs: string[],
+  issues: Array<Pick<КомпанияПортabilityЗадачаManifestEntry, "path" | "recurring">>,
+  previousCheckedФайлы: Set<string>,
 ): Set<string> {
   const next = new Set<string>();
-  const recurringTaskPrefixes = buildRecurringTaskPrefixes(issues);
+  const recurringЗадачаPrefixes = buildRecurringЗадачаPrefixes(issues);
 
-  for (const filePath of filePaths) {
-    if (previousCheckedFiles.has(filePath)) {
-      next.add(filePath);
+  for (const fileПуть of fileПутьs) {
+    if (previousCheckedФайлы.has(fileПуть)) {
+      next.add(fileПуть);
       continue;
     }
 
-    if (!isTaskPath(filePath) || isRecurringTaskFile(filePath, recurringTaskPrefixes)) {
-      next.add(filePath);
+    if (!isЗадачаПуть(fileПуть) || isRecurringЗадачаFile(fileПуть, recurringЗадачаPrefixes)) {
+      next.add(fileПуть);
     }
   }
 

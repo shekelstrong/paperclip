@@ -3,19 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import { accessApi } from "@/api/access";
 import { authApi } from "@/api/auth";
 import { healthApi } from "@/api/health";
-import { queryKeys } from "@/lib/queryKeys";
+import { queryКлючs } from "@/lib/queryКлючs";
 
-function BootstrapPendingPage({ hasActiveInvite = false }: { hasActiveInvite?: boolean }) {
+function BootstrapОжиданиеPage({ hasАктивенInvite = false }: { hasАктивенInvite?: boolean }) {
   return (
-    <div className="mx-auto max-w-xl py-10">
-      <div className="rounded-lg border border-border bg-card p-6">
-        <h1 className="text-xl font-semibold">Instance setup required</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {hasActiveInvite
-            ? "No instance admin exists yet. A bootstrap invite is already active. Check your Paperclip startup logs for the first admin invite URL, or run this command to rotate it:"
-            : "No instance admin exists yet. Run this command in your Paperclip environment to generate the first admin invite URL:"}
+    <div classИмя="mx-auto max-w-xl py-10">
+      <div classИмя="rounded-lg border border-border bg-card p-6">
+        <h1 classИмя="text-xl font-semibold">Instance setup required</h1>
+        <p classИмя="mt-2 text-sm text-muted-foreground">
+          {hasАктивенInvite
+            ? "Нет instance admin exists yet. A bootstrap invite is already active. Check your Paperclip startup logs for the first admin invite URL, or run this command to rotate it:"
+            : "Нет instance admin exists yet. Запустить this command in your Paperclip environment to generate the first admin invite URL:"}
         </p>
-        <pre className="mt-4 overflow-x-auto rounded-md border border-border bg-muted/30 p-3 text-xs">
+        <pre classИмя="mt-4 overflow-x-auto rounded-md border border-border bg-muted/30 p-3 text-xs">
 {`pnpm paperclipai auth bootstrap-ceo`}
         </pre>
       </div>
@@ -23,16 +23,16 @@ function BootstrapPendingPage({ hasActiveInvite = false }: { hasActiveInvite?: b
   );
 }
 
-function NoBoardAccessPage() {
+function НетСоветДоступPage() {
   return (
-    <div className="mx-auto max-w-xl py-10">
-      <div className="rounded-lg border border-border bg-card p-6">
-        <h1 className="text-xl font-semibold">No company access</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+    <div classИмя="mx-auto max-w-xl py-10">
+      <div classИмя="rounded-lg border border-border bg-card p-6">
+        <h1 classИмя="text-xl font-semibold">Нет company access</h1>
+        <p classИмя="mt-2 text-sm text-muted-foreground">
           This account is signed in, but it does not have an active company membership or instance-admin access on
           this Paperclip instance.
         </p>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p classИмя="mt-2 text-sm text-muted-foreground">
           Use a company invite or sign in with an account that already belongs to this org.
         </p>
       </div>
@@ -40,60 +40,60 @@ function NoBoardAccessPage() {
   );
 }
 
-export function CloudAccessGate() {
+export function CloudДоступGate() {
   const location = useLocation();
   const healthQuery = useQuery({
-    queryKey: queryKeys.health,
+    queryКлюч: queryКлючs.health,
     queryFn: () => healthApi.get(),
     retry: false,
     refetchInterval: (query) => {
       const data = query.state.data as
-        | { deploymentMode?: "local_trusted" | "authenticated"; bootstrapStatus?: "ready" | "bootstrap_pending" }
+        | { deploymentMode?: "local_trusted" | "authenticated"; bootstrapСтатус?: "ready" | "bootstrap_pending" }
         | undefined;
-      return data?.deploymentMode === "authenticated" && data.bootstrapStatus === "bootstrap_pending"
+      return data?.deploymentMode === "authenticated" && data.bootstrapСтатус === "bootstrap_pending"
         ? 2000
         : false;
     },
-    refetchIntervalInBackground: true,
+    refetchIntervalInНазадground: true,
   });
 
   const isAuthenticatedMode = healthQuery.data?.deploymentMode === "authenticated";
   const sessionQuery = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
     enabled: isAuthenticatedMode,
     retry: false,
   });
 
-  const boardAccessQuery = useQuery({
-    queryKey: queryKeys.access.currentBoardAccess,
-    queryFn: () => accessApi.getCurrentBoardAccess(),
+  const boardДоступQuery = useQuery({
+    queryКлюч: queryКлючs.access.currentСоветДоступ,
+    queryFn: () => accessApi.getCurrentСоветДоступ(),
     enabled: isAuthenticatedMode && !!sessionQuery.data,
     retry: false,
   });
 
   if (
-    healthQuery.isLoading ||
-    (isAuthenticatedMode && sessionQuery.isLoading) ||
-    (isAuthenticatedMode && !!sessionQuery.data && boardAccessQuery.isLoading)
+    healthQuery.isЗагрузка ||
+    (isAuthenticatedMode && sessionQuery.isЗагрузка) ||
+    (isAuthenticatedMode && !!sessionQuery.data && boardДоступQuery.isЗагрузка)
   ) {
-    return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
+    return <div classИмя="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Загрузка...</div>;
   }
 
-  if (healthQuery.error || boardAccessQuery.error) {
+  if (healthQuery.error || boardДоступQuery.error) {
     return (
-      <div className="mx-auto max-w-xl py-10 text-sm text-destructive">
-        {healthQuery.error instanceof Error
+      <div classИмя="mx-auto max-w-xl py-10 text-sm text-destructive">
+        {healthQuery.error instanceof Ошибка
           ? healthQuery.error.message
-          : boardAccessQuery.error instanceof Error
-            ? boardAccessQuery.error.message
-            : "Failed to load app state"}
+          : boardДоступQuery.error instanceof Ошибка
+            ? boardДоступQuery.error.message
+            : "Ошибка to load app state"}
       </div>
     );
   }
 
-  if (isAuthenticatedMode && healthQuery.data?.bootstrapStatus === "bootstrap_pending") {
-    return <BootstrapPendingPage hasActiveInvite={healthQuery.data.bootstrapInviteActive} />;
+  if (isAuthenticatedMode && healthQuery.data?.bootstrapСтатус === "bootstrap_pending") {
+    return <BootstrapОжиданиеPage hasАктивенInvite={healthQuery.data.bootstrapInviteАктивен} />;
   }
 
   if (isAuthenticatedMode && !sessionQuery.data) {
@@ -104,10 +104,10 @@ export function CloudAccessGate() {
   if (
     isAuthenticatedMode &&
     sessionQuery.data &&
-    !boardAccessQuery.data?.isInstanceAdmin &&
-    (boardAccessQuery.data?.companyIds.length ?? 0) === 0
+    !boardДоступQuery.data?.isInstanceAdmin &&
+    (boardДоступQuery.data?.companyIds.length ?? 0) === 0
   ) {
-    return <NoBoardAccessPage />;
+    return <НетСоветДоступPage />;
   }
 
   return <Outlet />;

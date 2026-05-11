@@ -1,6 +1,6 @@
-import { ChevronsUpDown, Plus, Settings } from "lucide-react";
+import { ChevronsUpDown, Plus, Настройки } from "lucide-react";
 import { Link } from "@/lib/router";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,15 +25,15 @@ function statusDotColor(status?: string): string {
   }
 }
 
-interface CompanySwitcherProps {
+interface КомпанияSwitcherProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-export function CompanySwitcher({ open: controlledOpen, onOpenChange }: CompanySwitcherProps = {}) {
+export function КомпанияSwitcher({ open: controlledOpen, onOpenChange }: КомпанияSwitcherProps = {}) {
   const [internalOpen, setInternalOpen] = useState(false);
-  const { companies, selectedCompany, setSelectedCompanyId } = useCompany();
-  const sidebarCompanies = companies.filter((company) => company.status !== "archived");
+  const { companies, selectedКомпания, setSelectedКомпанияId } = useКомпания();
+  const sidebarКомпании = companies.filter((company) => company.status !== "archived");
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
 
@@ -42,46 +42,46 @@ export function CompanySwitcher({ open: controlledOpen, onOpenChange }: CompanyS
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-between px-2 py-1.5 h-auto text-left"
+          classИмя="w-full justify-between px-2 py-1.5 h-auto text-left"
         >
-          <div className="flex items-center gap-2 min-w-0">
-            {selectedCompany && (
-              <span className={`h-2 w-2 rounded-full shrink-0 ${statusDotColor(selectedCompany.status)}`} />
+          <div classИмя="flex items-center gap-2 min-w-0">
+            {selectedКомпания && (
+              <span classИмя={`h-2 w-2 rounded-full shrink-0 ${statusDotColor(selectedКомпания.status)}`} />
             )}
-            <span className="text-sm font-medium truncate">
-              {selectedCompany?.name ?? "Select company"}
+            <span classИмя="text-sm font-medium truncate">
+              {selectedКомпания?.name ?? "Select company"}
             </span>
           </div>
-          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <ChevronsUpDown classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[220px]">
-        <DropdownMenuLabel>Companies</DropdownMenuLabel>
+      <DropdownMenuContent align="start" classИмя="w-[220px]">
+        <DropdownMenuLabel>Компании</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {sidebarCompanies.map((company) => (
+        {sidebarКомпании.map((company) => (
           <DropdownMenuItem
             key={company.id}
-            onClick={() => setSelectedCompanyId(company.id)}
-            className={company.id === selectedCompany?.id ? "bg-accent" : ""}
+            onClick={() => setSelectedКомпанияId(company.id)}
+            classИмя={company.id === selectedКомпания?.id ? "bg-accent" : ""}
           >
-            <span className={`h-2 w-2 rounded-full shrink-0 mr-2 ${statusDotColor(company.status)}`} />
-            <span className="truncate">{company.name}</span>
+            <span classИмя={`h-2 w-2 rounded-full shrink-0 mr-2 ${statusDotColor(company.status)}`} />
+            <span classИмя="truncate">{company.name}</span>
           </DropdownMenuItem>
         ))}
-        {sidebarCompanies.length === 0 && (
-          <DropdownMenuItem disabled>No companies</DropdownMenuItem>
+        {sidebarКомпании.length === 0 && (
+          <DropdownMenuItem disabled>Нет companies</DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/company/settings" className="no-underline text-inherit">
-            <Settings className="h-4 w-4 mr-2" />
-            Company Settings
+          <Link to="/company/settings" classИмя="no-underline text-inherit">
+            <Настройки classИмя="h-4 w-4 mr-2" />
+            Компания Настройки
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/companies" className="no-underline text-inherit">
-            <Plus className="h-4 w-4 mr-2" />
-            Manage Companies
+          <Link to="/companies" classИмя="no-underline text-inherit">
+            <Plus classИмя="h-4 w-4 mr-2" />
+            Manage Компании
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

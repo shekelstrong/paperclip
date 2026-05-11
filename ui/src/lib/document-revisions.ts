@@ -1,4 +1,4 @@
-import type { DocumentRevision, IssueDocument } from "@paperclipai/shared";
+import type { DocumentRevision, ЗадачаDocument } from "@paperclipai/shared";
 
 type DocumentRevisionState = {
   currentRevision: DocumentRevision;
@@ -22,7 +22,7 @@ function sortRevisionsDescending(revisions: DocumentRevision[]) {
   });
 }
 
-function createCurrentRevisionSnapshot(document: IssueDocument): DocumentRevision {
+function createCurrentRevisionSnapshot(document: ЗадачаDocument): DocumentRevision {
   return {
     id: document.latestRevisionId ?? `${document.id}-latest`,
     companyId: document.companyId,
@@ -34,14 +34,14 @@ function createCurrentRevisionSnapshot(document: IssueDocument): DocumentRevisio
     format: document.format,
     body: document.body,
     changeSummary: null,
-    createdByAgentId: document.updatedByAgentId ?? document.createdByAgentId,
+    createdByАгентId: document.updatedByАгентId ?? document.createdByАгентId,
     createdByUserId: document.updatedByUserId ?? document.createdByUserId,
     createdAt: document.updatedAt,
   };
 }
 
 export function deriveDocumentRevisionState(
-  document: IssueDocument,
+  document: ЗадачаDocument,
   revisions: DocumentRevision[],
 ): DocumentRevisionState {
   const sortedRevisions = sortRevisionsDescending(revisions);

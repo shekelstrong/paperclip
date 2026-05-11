@@ -1,11 +1,11 @@
-import type { Issue } from "@paperclipai/shared";
+import type { Задача } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
 import { formatMonitorOffset } from "@/lib/issue-monitor";
 import { formatDateTime } from "@/lib/utils";
 
-function resolveScheduledMonitor(issue: Issue) {
+function resolveРасписаниеdMonitor(issue: Задача) {
   const nextCheckAt =
-    issue.monitorNextCheckAt ??
+    issue.monitorДалееCheckAt ??
     issue.executionPolicy?.monitor?.nextCheckAt ??
     issue.executionState?.monitor?.nextCheckAt ??
     null;
@@ -13,56 +13,56 @@ function resolveScheduledMonitor(issue: Issue) {
 
   return {
     nextCheckAt,
-    notes: issue.executionPolicy?.monitor?.notes ?? issue.monitorNotes ?? issue.executionState?.monitor?.notes ?? null,
+    notes: issue.executionPolicy?.monitor?.notes ?? issue.monitorНетtes ?? issue.executionState?.monitor?.notes ?? null,
     attemptCount: issue.monitorAttemptCount ?? issue.executionState?.monitor?.attemptCount ?? 0,
-    serviceName: issue.executionPolicy?.monitor?.serviceName ?? issue.executionState?.monitor?.serviceName ?? null,
+    serviceИмя: issue.executionPolicy?.monitor?.serviceИмя ?? issue.executionState?.monitor?.serviceИмя ?? null,
   };
 }
 
-interface IssueMonitorActivityCardProps {
-  issue: Issue;
-  onCheckNow?: (() => void) | null;
-  checkingNow?: boolean;
+interface ЗадачаMonitorАктивностьCardProps {
+  issue: Задача;
+  onCheckСейчас?: (() => void) | null;
+  checkingСейчас?: boolean;
 }
 
-export function IssueMonitorActivityCard({
+export function ЗадачаMonitorАктивностьCard({
   issue,
-  onCheckNow = null,
-  checkingNow = false,
-}: IssueMonitorActivityCardProps) {
-  const monitor = resolveScheduledMonitor(issue);
+  onCheckСейчас = null,
+  checkingСейчас = false,
+}: ЗадачаMonitorАктивностьCardProps) {
+  const monitor = resolveРасписаниеdMonitor(issue);
   if (!monitor) return null;
 
   return (
-    <div className="mb-3 rounded-lg border border-border bg-muted/30 px-3 py-2">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <div className="text-sm font-medium text-foreground">Monitor scheduled</div>
-          <div className="text-xs text-muted-foreground">
-            Next check {formatDateTime(monitor.nextCheckAt)} ({formatMonitorOffset(monitor.nextCheckAt)})
+    <div classИмя="mb-3 rounded-lg border border-border bg-muted/30 px-3 py-2">
+      <div classИмя="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div classИмя="min-w-0">
+          <div classИмя="text-sm font-medium text-foreground">Monitor scheduled</div>
+          <div classИмя="text-xs text-muted-foreground">
+            Далее check {formatDateTime(monitor.nextCheckAt)} ({formatMonitorOffset(monitor.nextCheckAt)})
           </div>
           {monitor.notes ? (
-            <div className="mt-1 text-xs text-muted-foreground">{monitor.notes}</div>
+            <div classИмя="mt-1 text-xs text-muted-foreground">{monitor.notes}</div>
           ) : null}
-          {monitor.serviceName ? (
-            <div className="mt-1 text-xs text-muted-foreground">
-              {monitor.serviceName}
+          {monitor.serviceИмя ? (
+            <div classИмя="mt-1 text-xs text-muted-foreground">
+              {monitor.serviceИмя}
             </div>
           ) : null}
           {monitor.attemptCount > 0 ? (
-            <div className="mt-1 text-xs text-muted-foreground">Attempt {monitor.attemptCount}</div>
+            <div classИмя="mt-1 text-xs text-muted-foreground">Attempt {monitor.attemptCount}</div>
           ) : null}
         </div>
-        {onCheckNow ? (
+        {onCheckСейчас ? (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="shrink-0 shadow-none"
-            onClick={onCheckNow}
-            disabled={checkingNow}
+            classИмя="shrink-0 shadow-none"
+            onClick={onCheckСейчас}
+            disabled={checkingСейчас}
           >
-            {checkingNow ? "Checking..." : "Check now"}
+            {checkingСейчас ? "Checking..." : "Check now"}
           </Button>
         ) : null}
       </div>

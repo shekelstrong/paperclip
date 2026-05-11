@@ -1,15 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
-import { agentsApi, type OrgNode } from "../api/agents";
+import { agentsApi, type ОргструктураНетde } from "../api/agents";
 import { heartbeatsApi } from "../api/heartbeats";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useDialogActions } from "../context/DialogContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useSidebar } from "../context/SidebarContext";
-import { queryKeys } from "../lib/queryKeys";
-import { StatusBadge } from "../components/StatusBadge";
-import { agentStatusDot, agentStatusDotDefault } from "../lib/status-colors";
+import { queryКлючs } from "../lib/queryКлючs";
+import { СтатусBadge } from "../components/СтатусBadge";
+import { agentСтатусDot, agentСтатусDotПо умолчанию } from "../lib/status-colors";
 import { EntityRow } from "../components/EntityRow";
 import { EmptyState } from "../components/EmptyState";
 import { PageSkeleton } from "../components/PageSkeleton";
@@ -17,16 +17,16 @@ import { relativeTime, cn, agentRouteRef, agentUrl } from "../lib/utils";
 import { PageTabBar } from "../components/PageTabBar";
 import { Tabs } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Bot, Plus, List, GitBranch, SlidersHorizontal } from "lucide-react";
-import { AGENT_ROLE_LABELS, type Agent } from "@paperclipai/shared";
+import { Бот, Plus, List, GitВетка, SlidersHorizontal } from "lucide-react";
+import { AGENT_ROLE_LABELS, type Агент } from "@paperclipai/shared";
 
-import { getAdapterLabel } from "../adapters/adapter-display-registry";
+import { getАдаптерLabel } from "../adapters/adapter-display-registry";
 
-const roleLabels = AGENT_ROLE_LABELS as Record<string, string>;
+const roleЯрлыки = AGENT_ROLE_LABELS as Record<string, string>;
 
-type FilterTab = "all" | "active" | "paused" | "error";
+type ФильтрTab = "all" | "active" | "paused" | "error";
 
-function matchesFilter(status: string, tab: FilterTab, showTerminated: boolean): boolean {
+function matchesФильтр(status: string, tab: ФильтрTab, showTerminated: boolean): boolean {
   if (status === "terminated") return showTerminated;
   if (tab === "all") return true;
   if (tab === "active") return status === "active" || status === "running" || status === "idle";
@@ -35,67 +35,67 @@ function matchesFilter(status: string, tab: FilterTab, showTerminated: boolean):
   return true;
 }
 
-function filterAgents(agents: Agent[], tab: FilterTab, showTerminated: boolean): Agent[] {
+function filterАгенты(agents: Агент[], tab: ФильтрTab, showTerminated: boolean): Агент[] {
   return agents
-    .filter((a) => matchesFilter(a.status, tab, showTerminated))
+    .filter((a) => matchesФильтр(a.status, tab, showTerminated))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function getConfiguredModel(agent: Agent): string | null {
+function getConfiguredМодель(agent: Агент): string | null {
   const value = agent.adapterConfig?.model;
   if (typeof value !== "string") return null;
   const model = value.trim();
   return model.length > 0 ? model : null;
 }
 
-function filterOrgTree(nodes: OrgNode[], tab: FilterTab, showTerminated: boolean): OrgNode[] {
+function filterОргструктураTree(nodes: ОргструктураНетde[], tab: ФильтрTab, showTerminated: boolean): ОргструктураНетde[] {
   return nodes
-    .reduce<OrgNode[]>((acc, node) => {
-      const filteredReports = filterOrgTree(node.reports, tab, showTerminated);
-      if (matchesFilter(node.status, tab, showTerminated) || filteredReports.length > 0) {
-        acc.push({ ...node, reports: filteredReports });
+    .reduce<ОргструктураНетde[]>((acc, node) => {
+      const filteredРепозиторийrts = filterОргструктураTree(node.reports, tab, showTerminated);
+      if (matchesФильтр(node.status, tab, showTerminated) || filteredРепозиторийrts.length > 0) {
+        acc.push({ ...node, reports: filteredРепозиторийrts });
       }
       return acc;
     }, [])
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function Agents() {
-  const { selectedCompanyId } = useCompany();
-  const { openNewAgent } = useDialogActions();
+export function Агенты() {
+  const { selectedКомпанияId } = useКомпания();
+  const { openNewАгент } = useDialogActions();
   const { setBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const location = useLocation();
   const { isMobile } = useSidebar();
   const pathSegment = location.pathname.split("/").pop() ?? "all";
-  const tab: FilterTab = (pathSegment === "all" || pathSegment === "active" || pathSegment === "paused" || pathSegment === "error") ? pathSegment : "all";
+  const tab: ФильтрTab = (pathSegment === "all" || pathSegment === "active" || pathSegment === "paused" || pathSegment === "error") ? pathSegment : "all";
   const [view, setView] = useState<"list" | "org">("org");
   const forceListView = isMobile;
   const effectiveView: "list" | "org" = forceListView ? "list" : view;
   const [showTerminated, setShowTerminated] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setФильтрsOpen] = useState(false);
 
-  const { data: agents, isLoading, error } = useQuery({
-    queryKey: queryKeys.agents.list(selectedCompanyId!),
-    queryFn: () => agentsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+  const { data: agents, isЗагрузка, error } = useQuery({
+    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
+    queryFn: () => agentsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
   const { data: orgTree } = useQuery({
-    queryKey: queryKeys.org(selectedCompanyId!),
-    queryFn: () => agentsApi.org(selectedCompanyId!),
-    enabled: !!selectedCompanyId && effectiveView === "org",
+    queryКлюч: queryКлючs.org(selectedКомпанияId!),
+    queryFn: () => agentsApi.org(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId && effectiveView === "org",
   });
 
   const { data: runs } = useQuery({
-    queryKey: [...queryKeys.liveRuns(selectedCompanyId!), "agents-page"],
-    queryFn: () => heartbeatsApi.liveRunsForCompany(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: [...queryКлючs.liveЗапуститьs(selectedКомпанияId!), "agents-page"],
+    queryFn: () => heartbeatsApi.liveЗапуститьsForКомпания(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
     refetchInterval: 15_000,
   });
 
   // Map agentId -> first live run + live run count
-  const liveRunByAgent = useMemo(() => {
+  const liveЗапуститьByАгент = useMemo(() => {
     const map = new Map<string, { runId: string; liveCount: number }>();
     for (const r of runs ?? []) {
       if (r.status !== "running" && r.status !== "queued") continue;
@@ -110,66 +110,66 @@ export function Agents() {
   }, [runs]);
 
   const agentMap = useMemo(() => {
-    const map = new Map<string, Agent>();
+    const map = new Map<string, Агент>();
     for (const a of agents ?? []) map.set(a.id, a);
     return map;
   }, [agents]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Agents" }]);
+    setBreadcrumbs([{ label: "Агенты" }]);
   }, [setBreadcrumbs]);
 
-  if (!selectedCompanyId) {
-    return <EmptyState icon={Bot} message="Select a company to view agents." />;
+  if (!selectedКомпанияId) {
+    return <EmptyState icon={Бот} message="Select a company to view agents." />;
   }
 
-  if (isLoading) {
+  if (isЗагрузка) {
     return <PageSkeleton variant="list" />;
   }
 
-  const filtered = filterAgents(agents ?? [], tab, showTerminated);
-  const filteredOrg = filterOrgTree(orgTree ?? [], tab, showTerminated);
+  const filtered = filterАгенты(agents ?? [], tab, showTerminated);
+  const filteredОргструктура = filterОргструктураTree(orgTree ?? [], tab, showTerminated);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={tab} onValueChange={(v) => navigate(`/agents/${v}`)}>
+    <div classИмя="space-y-4">
+      <div classИмя="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Tabs value={tab} onЗначениеChange={(v) => navigate(`/agents/${v}`)}>
           <PageTabBar
             items={[
-              { value: "all", label: "All" },
-              { value: "active", label: "Active" },
-              { value: "paused", label: "Paused" },
-              { value: "error", label: "Error" },
+              { value: "all", label: "Все" },
+              { value: "active", label: "Активен" },
+              { value: "paused", label: "Приостановлен" },
+              { value: "error", label: "Ошибка" },
             ]}
             value={tab}
-            onValueChange={(v) => navigate(`/agents/${v}`)}
+            onЗначениеChange={(v) => navigate(`/agents/${v}`)}
           />
         </Tabs>
-        <div className="flex items-center gap-2">
-          {/* Filters */}
-          <div className="relative">
+        <div classИмя="flex items-center gap-2">
+          {/* Фильтрs */}
+          <div classИмя="relative">
             <button
-              className={cn(
+              classИмя={cn(
                 "flex items-center gap-1.5 px-2 py-1.5 text-xs transition-colors border border-border",
                 filtersOpen || showTerminated ? "text-foreground bg-accent" : "text-muted-foreground hover:bg-accent/50"
               )}
-              onClick={() => setFiltersOpen(!filtersOpen)}
+              onClick={() => setФильтрsOpen(!filtersOpen)}
             >
-              <SlidersHorizontal className="h-3 w-3" />
-              Filters
-              {showTerminated && <span className="ml-0.5 px-1 bg-foreground/10 rounded text-[10px]">1</span>}
+              <SlidersHorizontal classИмя="h-3 w-3" />
+              Фильтрs
+              {showTerminated && <span classИмя="ml-0.5 px-1 bg-foreground/10 rounded text-[10px]">1</span>}
             </button>
             {filtersOpen && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-48 border border-border bg-popover shadow-md p-1">
+              <div classИмя="absolute right-0 top-full mt-1 z-50 w-48 border border-border bg-popover shadow-md p-1">
                 <button
-                  className="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-left hover:bg-accent/50 transition-colors"
+                  classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-left hover:bg-accent/50 transition-colors"
                   onClick={() => setShowTerminated(!showTerminated)}
                 >
-                  <span className={cn(
+                  <span classИмя={cn(
                     "flex items-center justify-center h-3.5 w-3.5 border border-border rounded-sm",
                     showTerminated && "bg-foreground"
                   )}>
-                    {showTerminated && <span className="text-background text-[10px] leading-none">&#10003;</span>}
+                    {showTerminated && <span classИмя="text-background text-[10px] leading-none">&#10003;</span>}
                   </span>
                   Show terminated
                 </button>
@@ -178,102 +178,102 @@ export function Agents() {
           </div>
           {/* View toggle */}
           {!forceListView && (
-            <div className="flex items-center border border-border">
+            <div classИмя="flex items-center border border-border">
               <button
-                className={cn(
+                classИмя={cn(
                   "p-1.5 transition-colors",
                   effectiveView === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50"
                 )}
                 onClick={() => setView("list")}
               >
-                <List className="h-3.5 w-3.5" />
+                <List classИмя="h-3.5 w-3.5" />
               </button>
               <button
-                className={cn(
+                classИмя={cn(
                   "p-1.5 transition-colors",
                   effectiveView === "org" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50"
                 )}
                 onClick={() => setView("org")}
               >
-                <GitBranch className="h-3.5 w-3.5" />
+                <GitВетка classИмя="h-3.5 w-3.5" />
               </button>
             </div>
           )}
-          <Button size="sm" variant="outline" onClick={openNewAgent}>
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            New Agent
+          <Button size="sm" variant="outline" onClick={openNewАгент}>
+            <Plus classИмя="h-3.5 w-3.5 mr-1.5" />
+            Новый агент
           </Button>
         </div>
       </div>
 
       {filtered.length > 0 && (
-        <p className="text-xs text-muted-foreground">{filtered.length} agent{filtered.length !== 1 ? "s" : ""}</p>
+        <p classИмя="text-xs text-muted-foreground">{filtered.length} agent{filtered.length !== 1 ? "s" : ""}</p>
       )}
 
-      {error && <p className="text-sm text-destructive">{error.message}</p>}
+      {error && <p classИмя="text-sm text-destructive">{error.message}</p>}
 
       {agents && agents.length === 0 && (
         <EmptyState
-          icon={Bot}
-          message="Create your first agent to get started."
-          action="New Agent"
-          onAction={openNewAgent}
+          icon={Бот}
+          message="Создать your first agent to get started."
+          action="Новый агент"
+          onAction={openNewАгент}
         />
       )}
 
       {/* List view */}
       {effectiveView === "list" && filtered.length > 0 && (
-        <div className="border border-border">
+        <div classИмя="border border-border">
           {filtered.map((agent) => {
             return (
               <EntityRow
                 key={agent.id}
                 title={agent.name}
-                subtitle={`${roleLabels[agent.role] ?? agent.role}${agent.title ? ` - ${agent.title}` : ""}`}
+                subtitle={`${roleЯрлыки[agent.role] ?? agent.role}${agent.title ? ` - ${agent.title}` : ""}`}
                 to={agentUrl(agent)}
-                className={agent.pausedAt && tab !== "paused" ? "opacity-50" : ""}
+                classИмя={agent.pausedAt && tab !== "paused" ? "opacity-50" : ""}
                 leading={
-                  <span className="relative flex h-2.5 w-2.5">
+                  <span classИмя="relative flex h-2.5 w-2.5">
                     <span
-                      className={`absolute inline-flex h-full w-full rounded-full ${agentStatusDot[agent.status] ?? agentStatusDotDefault}`}
+                      classИмя={`absolute inline-flex h-full w-full rounded-full ${agentСтатусDot[agent.status] ?? agentСтатусDotПо умолчанию}`}
                     />
                   </span>
                 }
                 trailing={
-                  <div className="flex items-center gap-3">
-                    <span className="sm:hidden">
-                      {liveRunByAgent.has(agent.id) ? (
-                        <LiveRunIndicator
+                  <div classИмя="flex items-center gap-3">
+                    <span classИмя="sm:hidden">
+                      {liveЗапуститьByАгент.has(agent.id) ? (
+                        <LiveЗапуститьIndicator
                           agentRef={agentRouteRef(agent)}
-                          runId={liveRunByAgent.get(agent.id)!.runId}
-                          liveCount={liveRunByAgent.get(agent.id)!.liveCount}
+                          runId={liveЗапуститьByАгент.get(agent.id)!.runId}
+                          liveCount={liveЗапуститьByАгент.get(agent.id)!.liveCount}
                         />
                       ) : (
-                        <StatusBadge status={agent.status} />
+                        <СтатусBadge status={agent.status} />
                       )}
                     </span>
-                    <div className="hidden sm:flex items-center gap-3">
-                      {liveRunByAgent.has(agent.id) && (
-                        <LiveRunIndicator
+                    <div classИмя="hidden sm:flex items-center gap-3">
+                      {liveЗапуститьByАгент.has(agent.id) && (
+                        <LiveЗапуститьIndicator
                           agentRef={agentRouteRef(agent)}
-                          runId={liveRunByAgent.get(agent.id)!.runId}
-                          liveCount={liveRunByAgent.get(agent.id)!.liveCount}
+                          runId={liveЗапуститьByАгент.get(agent.id)!.runId}
+                          liveCount={liveЗапуститьByАгент.get(agent.id)!.liveCount}
                         />
                       )}
-                      <span className="w-28 whitespace-nowrap text-left font-mono text-xs text-muted-foreground">
-                        {getAdapterLabel(agent.adapterType)}
+                      <span classИмя="w-28 whitespace-nowrap text-left font-mono text-xs text-muted-foreground">
+                        {getАдаптерLabel(agent.adapterТип)}
                       </span>
                       <span
-                        className="w-36 truncate text-left font-mono text-xs text-muted-foreground"
-                        title={getConfiguredModel(agent) ?? undefined}
+                        classИмя="w-36 truncate text-left font-mono text-xs text-muted-foreground"
+                        title={getConfiguredМодель(agent) ?? undefined}
                       >
-                        {getConfiguredModel(agent) ?? "—"}
+                        {getConfiguredМодель(agent) ?? "—"}
                       </span>
-                      <span className="text-xs text-muted-foreground w-16 text-right">
+                      <span classИмя="text-xs text-muted-foreground w-16 text-right">
                         {agent.lastHeartbeatAt ? relativeTime(agent.lastHeartbeatAt) : "—"}
                       </span>
-                      <span className="w-20 flex justify-end">
-                        <StatusBadge status={agent.status} />
+                      <span classИмя="w-20 flex justify-end">
+                        <СтатусBadge status={agent.status} />
                       </span>
                     </div>
                   </div>
@@ -285,114 +285,114 @@ export function Agents() {
       )}
 
       {effectiveView === "list" && agents && agents.length > 0 && filtered.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No agents match the selected filter.
+        <p classИмя="text-sm text-muted-foreground text-center py-8">
+          Нет agents match the selected filter.
         </p>
       )}
 
-      {/* Org chart view */}
-      {effectiveView === "org" && filteredOrg.length > 0 && (
-        <div className="border border-border py-1">
-          {filteredOrg.map((node) => (
-            <OrgTreeNode key={node.id} node={node} depth={0} agentMap={agentMap} liveRunByAgent={liveRunByAgent} tab={tab} />
+      {/* Оргструктура chart view */}
+      {effectiveView === "org" && filteredОргструктура.length > 0 && (
+        <div classИмя="border border-border py-1">
+          {filteredОргструктура.map((node) => (
+            <ОргструктураTreeНетde key={node.id} node={node} depth={0} agentMap={agentMap} liveЗапуститьByАгент={liveЗапуститьByАгент} tab={tab} />
           ))}
         </div>
       )}
 
-      {effectiveView === "org" && orgTree && orgTree.length > 0 && filteredOrg.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No agents match the selected filter.
+      {effectiveView === "org" && orgTree && orgTree.length > 0 && filteredОргструктура.length === 0 && (
+        <p classИмя="text-sm text-muted-foreground text-center py-8">
+          Нет agents match the selected filter.
         </p>
       )}
 
       {effectiveView === "org" && orgTree && orgTree.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No organizational hierarchy defined.
+        <p classИмя="text-sm text-muted-foreground text-center py-8">
+          Нет organizational hierarchy defined.
         </p>
       )}
     </div>
   );
 }
 
-function OrgTreeNode({
+function ОргструктураTreeНетde({
   node,
   depth,
   agentMap,
-  liveRunByAgent,
+  liveЗапуститьByАгент,
   tab,
 }: {
-  node: OrgNode;
+  node: ОргструктураНетde;
   depth: number;
-  agentMap: Map<string, Agent>;
-  liveRunByAgent: Map<string, { runId: string; liveCount: number }>;
-  tab: FilterTab;
+  agentMap: Map<string, Агент>;
+  liveЗапуститьByАгент: Map<string, { runId: string; liveCount: number }>;
+  tab: ФильтрTab;
 }) {
   const agent = agentMap.get(node.id);
 
-  const statusColor = agentStatusDot[node.status] ?? agentStatusDotDefault;
+  const statusColor = agentСтатусDot[node.status] ?? agentСтатусDotПо умолчанию;
 
   return (
     <div style={{ paddingLeft: depth * 24 }}>
       <Link
         to={agent ? agentUrl(agent) : `/agents/${node.id}`}
-        className={cn("flex items-center gap-3 px-3 py-2 hover:bg-accent/30 transition-colors w-full text-left no-underline text-inherit", agent?.pausedAt && tab !== "paused" && "opacity-50")}
+        classИмя={cn("flex items-center gap-3 px-3 py-2 hover:bg-accent/30 transition-colors w-full text-left no-underline text-inherit", agent?.pausedAt && tab !== "paused" && "opacity-50")}
       >
-        <span className="relative flex h-2.5 w-2.5 shrink-0">
-          <span className={`absolute inline-flex h-full w-full rounded-full ${statusColor}`} />
+        <span classИмя="relative flex h-2.5 w-2.5 shrink-0">
+          <span classИмя={`absolute inline-flex h-full w-full rounded-full ${statusColor}`} />
         </span>
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium">{node.name}</span>
-          <span className="text-xs text-muted-foreground ml-2">
-            {roleLabels[node.role] ?? node.role}
+        <div classИмя="flex-1 min-w-0">
+          <span classИмя="text-sm font-medium">{node.name}</span>
+          <span classИмя="text-xs text-muted-foreground ml-2">
+            {roleЯрлыки[node.role] ?? node.role}
             {agent?.title ? ` - ${agent.title}` : ""}
           </span>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="sm:hidden">
-            {liveRunByAgent.has(node.id) ? (
-              <LiveRunIndicator
+        <div classИмя="flex items-center gap-3 shrink-0">
+          <span classИмя="sm:hidden">
+            {liveЗапуститьByАгент.has(node.id) ? (
+              <LiveЗапуститьIndicator
                 agentRef={agent ? agentRouteRef(agent) : node.id}
-                runId={liveRunByAgent.get(node.id)!.runId}
-                liveCount={liveRunByAgent.get(node.id)!.liveCount}
+                runId={liveЗапуститьByАгент.get(node.id)!.runId}
+                liveCount={liveЗапуститьByАгент.get(node.id)!.liveCount}
               />
             ) : (
-              <StatusBadge status={node.status} />
+              <СтатусBadge status={node.status} />
             )}
           </span>
-          <div className="hidden sm:flex items-center gap-3">
-            {liveRunByAgent.has(node.id) && (
-              <LiveRunIndicator
+          <div classИмя="hidden sm:flex items-center gap-3">
+            {liveЗапуститьByАгент.has(node.id) && (
+              <LiveЗапуститьIndicator
                 agentRef={agent ? agentRouteRef(agent) : node.id}
-                runId={liveRunByAgent.get(node.id)!.runId}
-                liveCount={liveRunByAgent.get(node.id)!.liveCount}
+                runId={liveЗапуститьByАгент.get(node.id)!.runId}
+                liveCount={liveЗапуститьByАгент.get(node.id)!.liveCount}
               />
             )}
             {agent && (
               <>
-                <span className="w-28 whitespace-nowrap text-left font-mono text-xs text-muted-foreground">
-                  {getAdapterLabel(agent.adapterType)}
+                <span classИмя="w-28 whitespace-nowrap text-left font-mono text-xs text-muted-foreground">
+                  {getАдаптерLabel(agent.adapterТип)}
                 </span>
                 <span
-                  className="w-36 truncate text-left font-mono text-xs text-muted-foreground"
-                  title={getConfiguredModel(agent) ?? undefined}
+                  classИмя="w-36 truncate text-left font-mono text-xs text-muted-foreground"
+                  title={getConfiguredМодель(agent) ?? undefined}
                 >
-                  {getConfiguredModel(agent) ?? "—"}
+                  {getConfiguredМодель(agent) ?? "—"}
                 </span>
-                <span className="text-xs text-muted-foreground w-16 text-right">
+                <span classИмя="text-xs text-muted-foreground w-16 text-right">
                   {agent.lastHeartbeatAt ? relativeTime(agent.lastHeartbeatAt) : "—"}
                 </span>
               </>
             )}
-            <span className="w-20 flex justify-end">
-              <StatusBadge status={node.status} />
+            <span classИмя="w-20 flex justify-end">
+              <СтатусBadge status={node.status} />
             </span>
           </div>
         </div>
       </Link>
       {node.reports && node.reports.length > 0 && (
-        <div className="border-l border-border/50 ml-4">
+        <div classИмя="border-l border-border/50 ml-4">
           {node.reports.map((child) => (
-            <OrgTreeNode key={child.id} node={child} depth={depth + 1} agentMap={agentMap} liveRunByAgent={liveRunByAgent} tab={tab} />
+            <ОргструктураTreeНетde key={child.id} node={child} depth={depth + 1} agentMap={agentMap} liveЗапуститьByАгент={liveЗапуститьByАгент} tab={tab} />
           ))}
         </div>
       )}
@@ -400,7 +400,7 @@ function OrgTreeNode({
   );
 }
 
-function LiveRunIndicator({
+function LiveЗапуститьIndicator({
   agentRef,
   runId,
   liveCount,
@@ -412,14 +412,14 @@ function LiveRunIndicator({
   return (
     <Link
       to={`/agents/${agentRef}/runs/${runId}`}
-      className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 hover:bg-blue-500/20 transition-colors no-underline"
+      classИмя="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 hover:bg-blue-500/20 transition-colors no-underline"
       onClick={(e) => e.stopPropagation()}
     >
-      <span className="relative flex h-2 w-2">
-        <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+      <span classИмя="relative flex h-2 w-2">
+        <span classИмя="animate-pulse absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+        <span classИмя="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
       </span>
-      <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400">
+      <span classИмя="text-[11px] font-medium text-blue-600 dark:text-blue-400">
         Live{liveCount > 1 ? ` (${liveCount})` : ""}
       </span>
     </Link>

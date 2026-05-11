@@ -1,61 +1,61 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { goalsApi } from "../api/goals";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useDialogActions } from "../context/DialogContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { queryKeys } from "../lib/queryKeys";
-import { GoalTree } from "../components/GoalTree";
+import { queryКлючs } from "../lib/queryКлючs";
+import { ЦельTree } from "../components/ЦельTree";
 import { EmptyState } from "../components/EmptyState";
 import { PageSkeleton } from "../components/PageSkeleton";
 import { Button } from "@/components/ui/button";
-import { Target, Plus } from "lucide-react";
+import { Цель, Plus } from "lucide-react";
 
-export function Goals() {
-  const { selectedCompanyId } = useCompany();
-  const { openNewGoal } = useDialogActions();
+export function Цели() {
+  const { selectedКомпанияId } = useКомпания();
+  const { openNewЦель } = useDialogActions();
   const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Goals" }]);
+    setBreadcrumbs([{ label: "Цели" }]);
   }, [setBreadcrumbs]);
 
-  const { data: goals, isLoading, error } = useQuery({
-    queryKey: queryKeys.goals.list(selectedCompanyId!),
-    queryFn: () => goalsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+  const { data: goals, isЗагрузка, error } = useQuery({
+    queryКлюч: queryКлючs.goals.list(selectedКомпанияId!),
+    queryFn: () => goalsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
-  if (!selectedCompanyId) {
-    return <EmptyState icon={Target} message="Select a company to view goals." />;
+  if (!selectedКомпанияId) {
+    return <EmptyState icon={Цель} message="Select a company to view goals." />;
   }
 
-  if (isLoading) {
+  if (isЗагрузка) {
     return <PageSkeleton variant="list" />;
   }
 
   return (
-    <div className="space-y-4">
-      {error && <p className="text-sm text-destructive">{error.message}</p>}
+    <div classИмя="space-y-4">
+      {error && <p classИмя="text-sm text-destructive">{error.message}</p>}
 
       {goals && goals.length === 0 && (
         <EmptyState
-          icon={Target}
-          message="No goals yet."
-          action="Add Goal"
-          onAction={() => openNewGoal()}
+          icon={Цель}
+          message="Пока нет целей."
+          action="Добавить цель"
+          onAction={() => openNewЦель()}
         />
       )}
 
       {goals && goals.length > 0 && (
         <>
-          <div className="flex items-center justify-start">
-            <Button size="sm" variant="outline" onClick={() => openNewGoal()}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              New Goal
+          <div classИмя="flex items-center justify-start">
+            <Button size="sm" variant="outline" onClick={() => openNewЦель()}>
+              <Plus classИмя="h-3.5 w-3.5 mr-1.5" />
+              New Цель
             </Button>
           </div>
-          <GoalTree goals={goals} goalLink={(goal) => `/goals/${goal.id}`} />
+          <ЦельTree goals={goals} goalLink={(goal) => `/goals/${goal.id}`} />
         </>
       )}
     </div>

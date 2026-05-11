@@ -1,7 +1,7 @@
-import type { AdapterConfigFieldsProps } from "../types";
+import type { АдаптерConfigFieldsProps } from "../types";
 import {
   Field,
-  DraftInput,
+  ЧерновикInput,
   help,
 } from "../../components/agent-config-primitives";
 
@@ -25,41 +25,41 @@ function parseCommaArgs(value: string): string[] {
 }
 
 export function ProcessConfigFields({
-  isCreate,
+  isСоздать,
   values,
   set,
   config,
   eff,
   mark,
-}: AdapterConfigFieldsProps) {
+}: АдаптерConfigFieldsProps) {
   return (
     <>
-      <Field label="Command" hint={help.command}>
-        <DraftInput
+      <Field label="Команда" hint={help.command}>
+        <ЧерновикInput
           value={
-            isCreate
+            isСоздать
               ? values!.command
               : eff("adapterConfig", "command", String(config.command ?? ""))
           }
           onCommit={(v) =>
-            isCreate
+            isСоздать
               ? set!({ command: v })
               : mark("adapterConfig", "command", v || undefined)
           }
           immediate
-          className={inputClass}
+          classИмя={inputClass}
           placeholder="e.g. node, python"
         />
       </Field>
       <Field label="Args (comma-separated)" hint={help.args}>
-        <DraftInput
+        <ЧерновикInput
           value={
-            isCreate
+            isСоздать
               ? values!.args
               : eff("adapterConfig", "args", formatArgList(config.args))
           }
           onCommit={(v) =>
-            isCreate
+            isСоздать
               ? set!({ args: v })
               : mark(
                   "adapterConfig",
@@ -68,7 +68,7 @@ export function ProcessConfigFields({
                 )
           }
           immediate
-          className={inputClass}
+          classИмя={inputClass}
           placeholder="e.g. script.js, --flag"
         />
       </Field>

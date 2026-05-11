@@ -15,23 +15,23 @@
 import {
   usePluginData,
   usePluginAction,
-  useHostContext,
-  useHostLocation,
-  useHostNavigation,
+  useХостContext,
+  useХостLocation,
+  useХостNavigation,
   usePluginStream,
   usePluginToast,
 } from "./bridge.js";
-import { createElement, useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { createElement, useEffect, useMemo, useState, type ComponentТип, type ReactНетde } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { User } from "lucide-react";
 import {
   FileTree,
-  type FileTreeProps as HostFileTreeProps,
+  type FileTreeProps as ХостFileTreeProps,
 } from "@/components/FileTree";
-import { AgentIcon } from "@/components/AgentIconPicker";
+import { АгентIcon } from "@/components/АгентIconPicker";
 import { InlineEntitySelector, type InlineEntityOption } from "@/components/InlineEntitySelector";
-import { IssuesList as HostIssuesList } from "@/components/IssuesList";
-import { ManagedRoutinesList as HostManagedRoutinesList } from "@/components/ManagedRoutinesList";
+import { ЗадачиList as ХостЗадачиList } from "@/components/ЗадачиList";
+import { ManagedПроцедурыList as ХостManagedПроцедурыList } from "@/components/ManagedПроцедурыList";
 import { MarkdownBody } from "@/components/MarkdownBody";
 import { accessApi } from "@/api/access";
 import { agentsApi } from "@/api/agents";
@@ -40,21 +40,21 @@ import { heartbeatsApi } from "@/api/heartbeats";
 import { issuesApi } from "@/api/issues";
 import { projectsApi } from "@/api/projects";
 import {
-  buildCompanyUserInlineOptions,
+  buildКомпанияUserInlineOptions,
 } from "@/lib/company-members";
-import { collectLiveIssueIds } from "@/lib/liveIssueIds";
+import { collectLiveЗадачаIds } from "@/lib/liveЗадачаIds";
 import { useProjectOrder } from "@/hooks/useProjectOrder";
 import {
-  assigneeValueFromSelection,
-  currentUserAssigneeOption,
-  parseAssigneeValue,
+  assigneeЗначениеFromSelection,
+  currentUserИсполнительOption,
+  parseИсполнительЗначение,
 } from "@/lib/assignees";
-import { queryKeys } from "@/lib/queryKeys";
+import { queryКлючs } from "@/lib/queryКлючs";
 import {
-  getRecentAssigneeSelectionIds,
-  sortAgentsByRecency,
-  trackRecentAssignee,
-  trackRecentAssigneeUser,
+  getRecentИсполнительSelectionIds,
+  sortАгентыByRecency,
+  trackRecentИсполнитель,
+  trackRecentИсполнительUser,
 } from "@/lib/recent-assignees";
 import { getRecentProjectIds, trackRecentProject } from "@/lib/recent-projects";
 
@@ -79,34 +79,34 @@ declare global {
   var __paperclipPluginBridge__: PluginBridgeRegistry | undefined;
 }
 
-type PluginFileTreePathCollection = ReadonlySet<string> | readonly string[];
+type PluginFileTreeПутьCollection = ReadonlySet<string> | readonly string[];
 
 type PluginFileTreeProps = Omit<
-  HostFileTreeProps,
+  ХостFileTreeProps,
   | "expandedDirs"
-  | "checkedFiles"
+  | "checkedФайлы"
   | "renderFileExtra"
-  | "fileRowClassName"
+  | "fileRowClassИмя"
   | "selectedFile"
   | "showCheckboxes"
   | "onToggleDir"
   | "onSelectFile"
 > & {
   selectedFile?: string | null;
-  expandedPaths?: PluginFileTreePathCollection;
-  checkedPaths?: PluginFileTreePathCollection;
+  expandedПутьs?: PluginFileTreeПутьCollection;
+  checkedПутьs?: PluginFileTreeПутьCollection;
   showCheckboxes?: boolean;
   onToggleDir?: (path: string) => void;
   onSelectFile?: (path: string) => void;
 };
 
-function toPathSet(paths?: PluginFileTreePathCollection | null): Set<string> {
+function toПутьSet(paths?: PluginFileTreeПутьCollection | null): Set<string> {
   return new Set(paths ?? []);
 }
 
 function PluginSdkFileTree({
-  expandedPaths,
-  checkedPaths,
+  expandedПутьs,
+  checkedПутьs,
   selectedFile = null,
   showCheckboxes = false,
   onToggleDir,
@@ -116,8 +116,8 @@ function PluginSdkFileTree({
   return createElement(FileTree, {
     ...props,
     selectedFile,
-    expandedDirs: toPathSet(expandedPaths),
-    checkedFiles: checkedPaths ? toPathSet(checkedPaths) : undefined,
+    expandedDirs: toПутьSet(expandedПутьs),
+    checkedФайлы: checkedПутьs ? toПутьSet(checkedПутьs) : undefined,
     showCheckboxes,
     onToggleDir: onToggleDir ?? (() => undefined),
     onSelectFile: onSelectFile ?? (() => undefined),
@@ -126,68 +126,68 @@ function PluginSdkFileTree({
 
 type PluginMarkdownBlockProps = {
   content: string;
-  className?: string;
+  classИмя?: string;
   enableWikiLinks?: boolean;
   wikiLinkRoot?: string;
   resolveWikiLinkHref?: (target: string, label: string) => string | null | undefined;
 };
 
-type PluginMarkdownEditorProps = {
+type PluginMarkdownИзменитьorProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  className?: string;
-  contentClassName?: string;
+  classИмя?: string;
+  contentClassИмя?: string;
   onBlur?: () => void;
   bordered?: boolean;
   readOnly?: boolean;
-  onSubmit?: () => void;
+  onОтправить?: () => void;
 };
 
-type PluginIssuesListFilters = {
+type PluginЗадачиListФильтрs = {
   status?: string;
   projectId?: string;
   parentId?: string;
-  assigneeAgentId?: string;
-  participantAgentId?: string;
+  assigneeАгентId?: string;
+  participantАгентId?: string;
   assigneeUserId?: string;
   labelId?: string;
   workspaceId?: string;
-  executionWorkspaceId?: string;
+  executionРабочая областьId?: string;
   originKind?: string;
   originKindPrefix?: string;
   originId?: string;
   descendantOf?: string;
-  includeRoutineExecutions?: boolean;
+  includeПроцедураExecutions?: boolean;
 };
 
-type PluginIssuesListProps = {
+type PluginЗадачиListProps = {
   companyId: string | null;
   projectId?: string | null;
-  filters?: PluginIssuesListFilters;
-  viewStateKey?: string;
-  initialSearch?: string;
-  createIssueLabel?: string;
-  searchWithinLoadedIssues?: boolean;
+  filters?: PluginЗадачиListФильтрs;
+  viewStateКлюч?: string;
+  initialПоиск?: string;
+  createЗадачаLabel?: string;
+  searchWithinLoadedЗадачи?: boolean;
 };
 
-type PluginAssigneePickerSelection = {
-  assigneeAgentId: string | null;
+type PluginИсполнительPickerSelection = {
+  assigneeАгентId: string | null;
   assigneeUserId: string | null;
 };
 
-type PluginAssigneePickerProps = {
+type PluginИсполнительPickerProps = {
   companyId?: string | null;
   value: string;
-  onChange: (value: string, selection: PluginAssigneePickerSelection) => void;
+  onChange: (value: string, selection: PluginИсполнительPickerSelection) => void;
   placeholder?: string;
   noneLabel?: string;
   searchPlaceholder?: string;
   emptyMessage?: string;
   includeUsers?: boolean;
-  includeTerminatedAgents?: boolean;
-  className?: string;
-  onConfirm?: () => void;
+  includeTerminatedАгенты?: boolean;
+  classИмя?: string;
+  onПодтвердить?: () => void;
 };
 
 type PluginProjectPickerProps = {
@@ -198,104 +198,104 @@ type PluginProjectPickerProps = {
   noneLabel?: string;
   searchPlaceholder?: string;
   emptyMessage?: string;
-  includeArchived?: boolean;
-  className?: string;
-  onConfirm?: () => void;
+  includeАрхивирован?: boolean;
+  classИмя?: string;
+  onПодтвердить?: () => void;
 };
 
-function PluginSdkMarkdownEditor(props: PluginMarkdownEditorProps) {
-  const [Editor, setEditor] = useState<ComponentType<PluginMarkdownEditorProps> | null>(null);
+function PluginSdkMarkdownИзменитьor(props: PluginMarkdownИзменитьorProps) {
+  const [Изменитьor, setИзменитьor] = useState<ComponentТип<PluginMarkdownИзменитьorProps> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    import("@/components/MarkdownEditor").then((module) => {
-      if (!cancelled) setEditor(() => module.MarkdownEditor as ComponentType<PluginMarkdownEditorProps>);
+    import("@/components/MarkdownИзменитьor").then((module) => {
+      if (!cancelled) setИзменитьor(() => module.MarkdownИзменитьor as ComponentТип<PluginMarkdownИзменитьorProps>);
     });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  if (Editor) return createElement(Editor, props);
+  if (Изменитьor) return createElement(Изменитьor, props);
 
   return createElement("textarea", {
-    className: props.className,
+    classИмя: props.classИмя,
     value: props.value,
     placeholder: props.placeholder,
     readOnly: props.readOnly,
     onBlur: props.onBlur,
-    onChange: (event) => props.onChange((event.currentTarget as HTMLTextAreaElement).value),
+    onChange: (event) => props.onChange((event.currentЦель as HTMLTextAreaElement).value),
   });
 }
 
-function compactIssueFilters(filters: PluginIssuesListFilters): PluginIssuesListFilters {
+function compactЗадачаФильтрs(filters: PluginЗадачиListФильтрs): PluginЗадачиListФильтрs {
   return Object.fromEntries(
     Object.entries(filters).filter(([, value]) =>
       value !== undefined && value !== null && value !== "" && value !== false,
     ),
-  ) as PluginIssuesListFilters;
+  ) as PluginЗадачиListФильтрs;
 }
 
-function PluginSdkIssuesList({
+function PluginSdkЗадачиList({
   companyId,
   projectId = null,
   filters,
-  viewStateKey = "paperclip:plugin-issues-view",
-  initialSearch,
-  createIssueLabel,
-  searchWithinLoadedIssues = true,
-}: PluginIssuesListProps) {
+  viewStateКлюч = "paperclip:plugin-issues-view",
+  initialПоиск,
+  createЗадачаLabel,
+  searchWithinLoadedЗадачи = true,
+}: PluginЗадачиListProps) {
   const queryClient = useQueryClient();
-  const issueFilters = useMemo(
-    () => compactIssueFilters({
+  const issueФильтрs = useMemo(
+    () => compactЗадачаФильтрs({
       ...(filters ?? {}),
       projectId: filters?.projectId ?? projectId ?? undefined,
     }),
     [filters, projectId],
   );
-  const originKindPrefix = issueFilters.originKindPrefix ?? null;
-  const resolvedProjectId = issueFilters.projectId ?? projectId ?? null;
-  const issuesQueryKey = useMemo(
-    () => ["plugins", "sdk-ui", "issues-list", companyId ?? "__no-company__", issueFilters] as const,
-    [companyId, issueFilters],
+  const originKindPrefix = issueФильтрs.originKindPrefix ?? null;
+  const resolvedProjectId = issueФильтрs.projectId ?? projectId ?? null;
+  const issuesQueryКлюч = useMemo(
+    () => ["plugins", "sdk-ui", "issues-list", companyId ?? "__no-company__", issueФильтрs] as const,
+    [companyId, issueФильтрs],
   );
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(companyId ?? "__no-company__"),
+    queryКлюч: queryКлючs.agents.list(companyId ?? "__no-company__"),
     queryFn: () => agentsApi.list(companyId!),
     enabled: !!companyId,
   });
   const { data: projects } = useQuery({
-    queryKey: queryKeys.projects.list(companyId ?? "__no-company__"),
+    queryКлюч: queryКлючs.projects.list(companyId ?? "__no-company__"),
     queryFn: () => projectsApi.list(companyId!),
     enabled: !!companyId,
   });
-  const { data: liveRuns } = useQuery({
-    queryKey: queryKeys.liveRuns(companyId ?? "__no-company__"),
-    queryFn: () => heartbeatsApi.liveRunsForCompany(companyId!),
+  const { data: liveЗапуститьs } = useQuery({
+    queryКлюч: queryКлючs.liveЗапуститьs(companyId ?? "__no-company__"),
+    queryFn: () => heartbeatsApi.liveЗапуститьsForКомпания(companyId!),
     enabled: !!companyId,
     refetchInterval: 5000,
   });
-  const liveIssueIds = useMemo(() => collectLiveIssueIds(liveRuns), [liveRuns]);
+  const liveЗадачаIds = useMemo(() => collectLiveЗадачаIds(liveЗапуститьs), [liveЗапуститьs]);
 
-  const { data: issues, isLoading, error } = useQuery({
-    queryKey: issuesQueryKey,
-    queryFn: () => issuesApi.list(companyId!, issueFilters),
+  const { data: issues, isЗагрузка, error } = useQuery({
+    queryКлюч: issuesQueryКлюч,
+    queryFn: () => issuesApi.list(companyId!, issueФильтрs),
     enabled: !!companyId,
   });
 
-  const updateIssue = useMutation({
+  const updateЗадача = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       issuesApi.update(id, data),
-    onSuccess: () => {
+    onУспешно: () => {
       if (!companyId) return;
-      queryClient.invalidateQueries({ queryKey: ["plugins", "sdk-ui", "issues-list", companyId] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(companyId) });
+      queryClient.invalidateQueries({ queryКлюч: ["plugins", "sdk-ui", "issues-list", companyId] });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(companyId) });
       if (resolvedProjectId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByProject(companyId, resolvedProjectId) });
+        queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listByProject(companyId, resolvedProjectId) });
         if (originKindPrefix) {
           queryClient.invalidateQueries({
-            queryKey: queryKeys.issues.listPluginOperationsByProject(companyId, resolvedProjectId, originKindPrefix),
+            queryКлюч: queryКлючs.issues.listPluginOperationsByProject(companyId, resolvedProjectId, originKindPrefix),
           });
         }
       }
@@ -303,130 +303,130 @@ function PluginSdkIssuesList({
   });
 
   if (!companyId) {
-    return createElement("div", { className: "text-sm text-muted-foreground" }, "Select a company to view issues.");
+    return createElement("div", { classИмя: "text-sm text-muted-foreground" }, "Select a company to view issues.");
   }
 
-  return createElement(HostIssuesList, {
+  return createElement(ХостЗадачиList, {
     issues: issues ?? [],
-    isLoading,
-    error: error as Error | null,
+    isЗагрузка,
+    error: error as Ошибка | null,
     agents,
     projects,
-    liveIssueIds,
+    liveЗадачаIds,
     projectId: resolvedProjectId ?? undefined,
-    viewStateKey,
-    initialSearch,
-    createIssueLabel,
-    searchWithinLoadedIssues,
-    onUpdateIssue: (id: string, data: Record<string, unknown>) => updateIssue.mutate({ id, data }),
+    viewStateКлюч,
+    initialПоиск,
+    createЗадачаLabel,
+    searchWithinLoadedЗадачи,
+    onОбновитьЗадача: (id: string, data: Record<string, unknown>) => updateЗадача.mutate({ id, data }),
   });
 }
 
-function PluginSdkAssigneePicker({
+function PluginSdkИсполнительPicker({
   companyId,
   value,
   onChange,
-  placeholder = "Assignee",
-  noneLabel = "No assignee",
-  searchPlaceholder = "Search assignees...",
-  emptyMessage = "No assignees found.",
+  placeholder = "Исполнитель",
+  noneLabel = "Нет assignee",
+  searchPlaceholder = "Поиск assignees...",
+  emptyMessage = "Нет assignees found.",
   includeUsers = true,
-  includeTerminatedAgents = false,
-  className,
-  onConfirm,
-}: PluginAssigneePickerProps) {
-  const hostContext = useHostContext();
-  const resolvedCompanyId = companyId ?? hostContext.companyId ?? null;
+  includeTerminatedАгенты = false,
+  classИмя,
+  onПодтвердить,
+}: PluginИсполнительPickerProps) {
+  const hostContext = useХостContext();
+  const resolvedКомпанияId = companyId ?? hostContext.companyId ?? null;
   const { data: session } = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
     enabled: includeUsers,
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(resolvedCompanyId ?? "__no-company__"),
-    queryFn: () => agentsApi.list(resolvedCompanyId!),
-    enabled: !!resolvedCompanyId,
+    queryКлюч: queryКлючs.agents.list(resolvedКомпанияId ?? "__no-company__"),
+    queryFn: () => agentsApi.list(resolvedКомпанияId!),
+    enabled: !!resolvedКомпанияId,
   });
   const { data: companyMembers } = useQuery({
-    queryKey: queryKeys.access.companyUserDirectory(resolvedCompanyId ?? "__no-company__"),
-    queryFn: () => accessApi.listUserDirectory(resolvedCompanyId!),
-    enabled: !!resolvedCompanyId && includeUsers,
+    queryКлюч: queryКлючs.access.companyUserDirectory(resolvedКомпанияId ?? "__no-company__"),
+    queryFn: () => accessApi.listUserDirectory(resolvedКомпанияId!),
+    enabled: !!resolvedКомпанияId && includeUsers,
   });
-  const recentAssigneeSelectionIds = useMemo(() => getRecentAssigneeSelectionIds(), []);
-  const recentAssigneeIds = useMemo(
-    () => recentAssigneeSelectionIds
+  const recentИсполнительSelectionIds = useMemo(() => getRecentИсполнительSelectionIds(), []);
+  const recentИсполнительIds = useMemo(
+    () => recentИсполнительSelectionIds
       .map((id) => id.startsWith("agent:") ? id.slice("agent:".length) : null)
       .filter((id): id is string => Boolean(id)),
-    [recentAssigneeSelectionIds],
+    [recentИсполнительSelectionIds],
   );
-  const sortedAgents = useMemo(
-    () => sortAgentsByRecency(
-      (agents ?? []).filter((agent) => includeTerminatedAgents || agent.status !== "terminated"),
-      recentAssigneeIds,
+  const sortedАгенты = useMemo(
+    () => sortАгентыByRecency(
+      (agents ?? []).filter((agent) => includeTerminatedАгенты || agent.status !== "terminated"),
+      recentИсполнительIds,
     ),
-    [agents, includeTerminatedAgents, recentAssigneeIds],
+    [agents, includeTerminatedАгенты, recentИсполнительIds],
   );
   const options = useMemo<InlineEntityOption[]>(
     () => [
-      ...(includeUsers ? currentUserAssigneeOption(currentUserId) : []),
+      ...(includeUsers ? currentUserИсполнительOption(currentUserId) : []),
       ...(includeUsers
-        ? buildCompanyUserInlineOptions(companyMembers?.users, { excludeUserIds: [currentUserId] })
+        ? buildКомпанияUserInlineOptions(companyMembers?.users, { excludeUserIds: [currentUserId] })
         : []),
-      ...sortedAgents.map((agent) => ({
-        id: assigneeValueFromSelection({ assigneeAgentId: agent.id }),
+      ...sortedАгенты.map((agent) => ({
+        id: assigneeЗначениеFromSelection({ assigneeАгентId: agent.id }),
         label: agent.name,
         searchText: `${agent.name} ${agent.role} ${agent.title ?? ""}`,
       })),
     ],
-    [companyMembers?.users, currentUserId, includeUsers, sortedAgents],
+    [companyMembers?.users, currentUserId, includeUsers, sortedАгенты],
   );
-  const selectedAssignee = parseAssigneeValue(value);
-  const selectedAgent = selectedAssignee.assigneeAgentId
-    ? sortedAgents.find((agent) => agent.id === selectedAssignee.assigneeAgentId)
+  const selectedИсполнитель = parseИсполнительЗначение(value);
+  const selectedАгент = selectedИсполнитель.assigneeАгентId
+    ? sortedАгенты.find((agent) => agent.id === selectedИсполнитель.assigneeАгентId)
     : null;
 
   return createElement(InlineEntitySelector, {
     value,
     options,
-    recentOptionIds: recentAssigneeSelectionIds,
+    recentOptionIds: recentИсполнительSelectionIds,
     placeholder,
     noneLabel,
     searchPlaceholder,
     emptyMessage,
-    className,
-    onConfirm,
-    onChange: (nextValue: string) => {
-      const selection = parseAssigneeValue(nextValue);
-      if (selection.assigneeAgentId) trackRecentAssignee(selection.assigneeAgentId);
-      if (selection.assigneeUserId) trackRecentAssigneeUser(selection.assigneeUserId);
-      onChange(nextValue, selection);
+    classИмя,
+    onПодтвердить,
+    onChange: (nextЗначение: string) => {
+      const selection = parseИсполнительЗначение(nextЗначение);
+      if (selection.assigneeАгентId) trackRecentИсполнитель(selection.assigneeАгентId);
+      if (selection.assigneeUserId) trackRecentИсполнительUser(selection.assigneeUserId);
+      onChange(nextЗначение, selection);
     },
-    renderTriggerValue: (option: InlineEntityOption | null) => {
-      if (!option) return createElement("span", { className: "text-muted-foreground" }, placeholder);
-      if (selectedAgent) {
+    renderTriggerЗначение: (option: InlineEntityOption | null) => {
+      if (!option) return createElement("span", { classИмя: "text-muted-foreground" }, placeholder);
+      if (selectedАгент) {
         return createElement(
           FragmentSafe,
           null,
-          createElement(AgentIcon, { icon: selectedAgent.icon, className: "h-3.5 w-3.5 shrink-0 text-muted-foreground" }),
-          createElement("span", { className: "truncate" }, option.label),
+          createElement(АгентIcon, { icon: selectedАгент.icon, classИмя: "h-3.5 w-3.5 shrink-0 text-muted-foreground" }),
+          createElement("span", { classИмя: "truncate" }, option.label),
         );
       }
-      return createElement("span", { className: "truncate" }, option.label);
+      return createElement("span", { classИмя: "truncate" }, option.label);
     },
     renderOption: (option: InlineEntityOption) => {
-      if (!option.id) return createElement("span", { className: "truncate" }, option.label);
-      const selection = parseAssigneeValue(option.id);
-      const agent = selection.assigneeAgentId
-        ? sortedAgents.find((entry) => entry.id === selection.assigneeAgentId)
+      if (!option.id) return createElement("span", { classИмя: "truncate" }, option.label);
+      const selection = parseИсполнительЗначение(option.id);
+      const agent = selection.assigneeАгентId
+        ? sortedАгенты.find((entry) => entry.id === selection.assigneeАгентId)
         : null;
       return createElement(
         FragmentSafe,
         null,
         agent
-          ? createElement(AgentIcon, { icon: agent.icon, className: "h-3.5 w-3.5 shrink-0 text-muted-foreground" })
-          : createElement(User, { className: "h-3.5 w-3.5 shrink-0 text-muted-foreground" }),
-        createElement("span", { className: "truncate" }, option.label),
+          ? createElement(АгентIcon, { icon: agent.icon, classИмя: "h-3.5 w-3.5 shrink-0 text-muted-foreground" })
+          : createElement(User, { classИмя: "h-3.5 w-3.5 shrink-0 text-muted-foreground" }),
+        createElement("span", { classИмя: "truncate" }, option.label),
       );
     },
   });
@@ -437,44 +437,44 @@ function PluginSdkProjectPicker({
   value,
   onChange,
   placeholder = "Project",
-  noneLabel = "No project",
-  searchPlaceholder = "Search projects...",
-  emptyMessage = "No projects found.",
-  includeArchived = false,
-  className,
-  onConfirm,
+  noneLabel = "Нет project",
+  searchPlaceholder = "Поиск projects...",
+  emptyMessage = "Проекты не найдены.",
+  includeАрхивирован = false,
+  classИмя,
+  onПодтвердить,
 }: PluginProjectPickerProps) {
-  const hostContext = useHostContext();
-  const resolvedCompanyId = companyId ?? hostContext.companyId ?? null;
+  const hostContext = useХостContext();
+  const resolvedКомпанияId = companyId ?? hostContext.companyId ?? null;
   const { data: session } = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
   const { data: projects } = useQuery({
-    queryKey: queryKeys.projects.list(resolvedCompanyId ?? "__no-company__"),
-    queryFn: () => projectsApi.list(resolvedCompanyId!),
-    enabled: !!resolvedCompanyId,
+    queryКлюч: queryКлючs.projects.list(resolvedКомпанияId ?? "__no-company__"),
+    queryFn: () => projectsApi.list(resolvedКомпанияId!),
+    enabled: !!resolvedКомпанияId,
   });
-  const visibleProjects = useMemo(
-    () => (projects ?? []).filter((project) => includeArchived || !project.archivedAt),
-    [includeArchived, projects],
+  const visibleПроекты = useMemo(
+    () => (projects ?? []).filter((project) => includeАрхивирован || !project.archivedAt),
+    [includeАрхивирован, projects],
   );
-  const { orderedProjects } = useProjectOrder({
-    projects: visibleProjects,
-    companyId: resolvedCompanyId,
+  const { orderedПроекты } = useProjectOrder({
+    projects: visibleПроекты,
+    companyId: resolvedКомпанияId,
     userId: currentUserId,
   });
   const recentProjectIds = useMemo(() => getRecentProjectIds(), []);
   const options = useMemo<InlineEntityOption[]>(
-    () => orderedProjects.map((project) => ({
+    () => orderedПроекты.map((project) => ({
       id: project.id,
       label: project.name,
       searchText: project.description ?? "",
     })),
-    [orderedProjects],
+    [orderedПроекты],
   );
-  const selectedProject = orderedProjects.find((project) => project.id === value) ?? null;
+  const selectedProject = orderedПроекты.find((project) => project.id === value) ?? null;
 
   return createElement(InlineEntitySelector, {
     value,
@@ -484,44 +484,44 @@ function PluginSdkProjectPicker({
     noneLabel,
     searchPlaceholder,
     emptyMessage,
-    className,
-    onConfirm,
+    classИмя,
+    onПодтвердить,
     onChange: (nextProjectId: string) => {
       if (nextProjectId) trackRecentProject(nextProjectId);
       onChange(nextProjectId);
     },
-    renderTriggerValue: (option: InlineEntityOption | null) => {
+    renderTriggerЗначение: (option: InlineEntityOption | null) => {
       if (!option || !selectedProject) {
-        return createElement("span", { className: "text-muted-foreground" }, placeholder);
+        return createElement("span", { classИмя: "text-muted-foreground" }, placeholder);
       }
       return createElement(
         FragmentSafe,
         null,
         createElement("span", {
-          className: "h-3.5 w-3.5 shrink-0 rounded-sm",
+          classИмя: "h-3.5 w-3.5 shrink-0 rounded-sm",
           style: { backgroundColor: selectedProject.color ?? "#6366f1" },
         }),
-        createElement("span", { className: "truncate" }, option.label),
+        createElement("span", { classИмя: "truncate" }, option.label),
       );
     },
     renderOption: (option: InlineEntityOption) => {
-      if (!option.id) return createElement("span", { className: "truncate" }, option.label);
-      const project = orderedProjects.find((entry) => entry.id === option.id);
+      if (!option.id) return createElement("span", { classИмя: "truncate" }, option.label);
+      const project = orderedПроекты.find((entry) => entry.id === option.id);
       return createElement(
         FragmentSafe,
         null,
         createElement("span", {
-          className: "h-3.5 w-3.5 shrink-0 rounded-sm",
+          classИмя: "h-3.5 w-3.5 shrink-0 rounded-sm",
           style: { backgroundColor: project?.color ?? "#6366f1" },
         }),
-        createElement("span", { className: "truncate" }, option.label),
+        createElement("span", { classИмя: "truncate" }, option.label),
       );
     },
   });
 }
 
-function FragmentSafe({ children }: { children?: ReactNode }) {
-  return createElement("span", { className: "contents" }, children);
+function FragmentSafe({ children }: { children?: ReactНетde }) {
+  return createElement("span", { classИмя: "contents" }, children);
 }
 
 /**
@@ -544,32 +544,32 @@ export function initPluginBridge(
     sdkUi: {
       usePluginData,
       usePluginAction,
-      useHostContext,
-      useHostLocation,
-      useHostNavigation,
+      useХостContext,
+      useХостLocation,
+      useХостNavigation,
       usePluginStream,
       usePluginToast,
       MarkdownBlock: ({
         content,
-        className,
+        classИмя,
         enableWikiLinks,
         wikiLinkRoot,
         resolveWikiLinkHref,
       }: PluginMarkdownBlockProps) =>
         createElement(MarkdownBody, {
-          className,
+          classИмя,
           softBreaks: false,
           enableWikiLinks,
           wikiLinkRoot,
           resolveWikiLinkHref,
           children: content,
         }),
-      MarkdownEditor: PluginSdkMarkdownEditor,
+      MarkdownИзменитьor: PluginSdkMarkdownИзменитьor,
       FileTree: PluginSdkFileTree,
-      IssuesList: PluginSdkIssuesList,
-      AssigneePicker: PluginSdkAssigneePicker,
+      ЗадачиList: PluginSdkЗадачиList,
+      ИсполнительPicker: PluginSdkИсполнительPicker,
       ProjectPicker: PluginSdkProjectPicker,
-      ManagedRoutinesList: HostManagedRoutinesList,
+      ManagedПроцедурыList: ХостManagedПроцедурыList,
     },
   };
 }

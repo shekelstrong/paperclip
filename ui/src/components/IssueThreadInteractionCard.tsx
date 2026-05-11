@@ -1,49 +1,49 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Agent } from "@paperclipai/shared";
-import { AlertTriangle, CheckCircle2, ChevronRight, CircleDashed, GitBranch, ListChecks, Loader2, MessageSquareQuote, XCircle } from "lucide-react";
+import type { Агент } from "@paperclipai/shared";
+import { AlertTriangle, CheckCircle2, ChevronRight, CircleDashed, GitВетка, ListChecks, Loader2, MessageSquareQuote, XCircle } from "lucide-react";
 import { Link } from "@/lib/router";
-import { formatAssigneeUserLabel } from "../lib/assignees";
+import { formatИсполнительUserLabel } from "../lib/assignees";
 import {
-  buildSuggestedTaskTree,
-  collectSuggestedTaskClientKeys,
-  countSuggestedTaskNodes,
-  getQuestionAnswerLabels,
+  buildSuggestedЗадачаTree,
+  collectSuggestedЗадачаClientКлючs,
+  countSuggestedЗадачаНетdes,
+  getQuestionAnswerЯрлыки,
   type AskUserQuestionsAnswer,
   type AskUserQuestionsInteraction,
-  type IssueThreadInteraction,
-  type RequestConfirmationInteraction,
-  type RequestConfirmationTarget,
-  type SuggestTasksInteraction,
-  type SuggestTasksResultCreatedTask,
-  type SuggestedTaskDraft,
-  type SuggestedTaskTreeNode,
+  type ЗадачаThreadInteraction,
+  type RequestПодтвердитьationInteraction,
+  type RequestПодтвердитьationЦель,
+  type SuggestЗадачиInteraction,
+  type SuggestЗадачиResultСозданоЗадача,
+  type SuggestedЗадачаЧерновик,
+  type SuggestedЗадачаTreeНетde,
 } from "../lib/issue-thread-interactions";
 import { cn, formatDateTime, formatShortDate } from "../lib/utils";
 import { MarkdownBody } from "./MarkdownBody";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
-import { PriorityIcon } from "./PriorityIcon";
+import { ПриоритетIcon } from "./ПриоритетIcon";
 import { Textarea } from "./ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-interface IssueThreadInteractionCardProps {
-  interaction: IssueThreadInteraction;
-  agentMap?: Map<string, Agent>;
+interface ЗадачаThreadInteractionCardProps {
+  interaction: ЗадачаThreadInteraction;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
-  onAcceptInteraction?: (
-    interaction: SuggestTasksInteraction | RequestConfirmationInteraction,
-    selectedClientKeys?: string[],
+  onПринятьInteraction?: (
+    interaction: SuggestЗадачиInteraction | RequestПодтвердитьationInteraction,
+    selectedClientКлючs?: string[],
   ) => Promise<void> | void;
-  onRejectInteraction?: (
-    interaction: SuggestTasksInteraction | RequestConfirmationInteraction,
+  onОтклонитьInteraction?: (
+    interaction: SuggestЗадачиInteraction | RequestПодтвердитьationInteraction,
     reason?: string,
   ) => Promise<void> | void;
-  onSubmitInteractionAnswers?: (
+  onОтправитьInteractionAnswers?: (
     interaction: AskUserQuestionsInteraction,
     answers: AskUserQuestionsAnswer[],
   ) => Promise<void> | void;
-  onCancelInteraction?: (
+  onОтменаInteraction?: (
     interaction: AskUserQuestionsInteraction,
   ) => Promise<void> | void;
 }
@@ -51,7 +51,7 @@ interface IssueThreadInteractionCardProps {
 function resolveActorLabel(args: {
   agentId?: string | null;
   userId?: string | null;
-  agentMap?: Map<string, Agent>;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
 }) {
@@ -60,46 +60,46 @@ function resolveActorLabel(args: {
     return agentMap?.get(agentId)?.name ?? agentId.slice(0, 8);
   }
   if (userId) {
-    return formatAssigneeUserLabel(userId, currentUserId, userLabelMap) ?? "Board";
+    return formatИсполнительUserLabel(userId, currentUserId, userLabelMap) ?? "Совет";
   }
-  return "Unknown";
+  return "Неизвестно";
 }
 
-function statusLabel(status: IssueThreadInteraction["status"]) {
+function statusLabel(status: ЗадачаThreadInteraction["status"]) {
   switch (status) {
     case "pending":
-      return "Pending";
+      return "Ожидание";
     case "accepted":
-      return "Accepted";
+      return "Принятьed";
     case "rejected":
-      return "Rejected";
+      return "Отклонитьed";
     case "answered":
       return "Answered";
     case "cancelled":
-      return "Cancelled";
+      return "Отменён";
     case "expired":
       return "Expired";
     case "failed":
-      return "Failed";
+      return "Ошибка";
     default:
       return status;
   }
 }
 
-function interactionKindLabel(kind: IssueThreadInteraction["kind"]) {
+function interactionKindLabel(kind: ЗадачаThreadInteraction["kind"]) {
   switch (kind) {
     case "suggest_tasks":
       return "Suggested tasks";
     case "ask_user_questions":
       return "Ask user questions";
     case "request_confirmation":
-      return "Confirmation";
+      return "Подтвердитьation";
     default:
       return kind;
   }
 }
 
-function statusIcon(status: IssueThreadInteraction["status"]) {
+function statusIcon(status: ЗадачаThreadInteraction["status"]) {
   switch (status) {
     case "accepted":
     case "answered":
@@ -115,7 +115,7 @@ function statusIcon(status: IssueThreadInteraction["status"]) {
   }
 }
 
-function statusClasses(status: IssueThreadInteraction["status"]) {
+function statusClasses(status: ЗадачаThreadInteraction["status"]) {
   switch (status) {
     case "accepted":
     case "answered":
@@ -143,7 +143,7 @@ function statusClasses(status: IssueThreadInteraction["status"]) {
   }
 }
 
-function TaskField({
+function ЗадачаField({
   label,
   value,
   tone = "default",
@@ -154,7 +154,7 @@ function TaskField({
 }) {
   return (
     <span
-      className={cn(
+      classИмя={cn(
         "inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em]",
         tone === "default"
           ? "border-border/70 bg-transparent text-foreground"
@@ -166,56 +166,56 @@ function TaskField({
   );
 }
 
-function createdTaskMap(
-  createdTasks: readonly SuggestTasksResultCreatedTask[] | undefined,
+function createdЗадачаMap(
+  createdЗадачи: readonly SuggestЗадачиResultСозданоЗадача[] | undefined,
 ) {
   return new Map(
-    (createdTasks ?? []).map((entry) => [entry.clientKey, entry] as const),
+    (createdЗадачи ?? []).map((entry) => [entry.clientКлюч, entry] as const),
   );
 }
 
-function TaskTreeNode({
+function ЗадачаTreeНетde({
   node,
-  createdByClientKey,
+  createdByClientКлюч,
   agentMap,
   currentUserId,
   userLabelMap,
   depth = 0,
-  selectedClientKeys,
-  skippedClientKeys,
+  selectedClientКлючs,
+  skippedClientКлючs,
   showSelection,
   onToggleSelection,
 }: {
-  node: SuggestedTaskTreeNode;
-  createdByClientKey: ReadonlyMap<string, SuggestTasksResultCreatedTask>;
-  agentMap?: Map<string, Agent>;
+  node: SuggestedЗадачаTreeНетde;
+  createdByClientКлюч: ReadonlyMap<string, SuggestЗадачиResultСозданоЗадача>;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
   depth?: number;
-  selectedClientKeys?: ReadonlySet<string>;
-  skippedClientKeys?: ReadonlySet<string>;
+  selectedClientКлючs?: ReadonlySet<string>;
+  skippedClientКлючs?: ReadonlySet<string>;
   showSelection?: boolean;
-  onToggleSelection?: (node: SuggestedTaskTreeNode, checked: boolean) => void;
+  onToggleSelection?: (node: SuggestedЗадачаTreeНетde, checked: boolean) => void;
 }) {
-  const visibleChildren = node.children.filter((child) => !child.task.hiddenInPreview);
+  const visibleChildren = node.children.filter((child) => !child.task.hiddenInПредпросмотр);
   const hiddenChildCount = node.children
-    .filter((child) => child.task.hiddenInPreview)
-    .reduce((sum, child) => sum + countSuggestedTaskNodes(child), 0);
-  const createdTask = createdByClientKey.get(node.task.clientKey);
-  const isSelected = selectedClientKeys?.has(node.task.clientKey) ?? false;
-  const isSkipped = skippedClientKeys?.has(node.task.clientKey) ?? false;
+    .filter((child) => child.task.hiddenInПредпросмотр)
+    .reduce((sum, child) => sum + countSuggestedЗадачаНетdes(child), 0);
+  const createdЗадача = createdByClientКлюч.get(node.task.clientКлюч);
+  const isSelected = selectedClientКлючs?.has(node.task.clientКлюч) ?? false;
+  const isSkipped = skippedClientКлючs?.has(node.task.clientКлюч) ?? false;
   const assigneeLabel = resolveActorLabel({
-    agentId: node.task.assigneeAgentId,
+    agentId: node.task.assigneeАгентId,
     userId: node.task.assigneeUserId,
     agentMap,
     currentUserId,
     userLabelMap,
   });
-  const hasExplicitAssignee = Boolean(
-    node.task.assigneeAgentId || node.task.assigneeUserId,
+  const hasExplicitИсполнитель = Boolean(
+    node.task.assigneeАгентId || node.task.assigneeUserId,
   );
   const labels = node.task.labels ?? [];
-  const hasMetadata = hasExplicitAssignee
+  const hasMetadata = hasExplicitИсполнитель
     || Boolean(node.task.billingCode)
     || Boolean(node.task.projectId)
     || labels.length > 0;
@@ -223,42 +223,42 @@ function TaskTreeNode({
   return (
     <>
       <div
-        className={cn(
+        classИмя={cn(
           "relative border-b border-border/60 px-3 py-2.5 last:border-b-0",
           depth > 0 && "before:absolute before:left-3 before:top-0 before:h-full before:w-px before:bg-border/70",
         )}
         style={depth > 0 ? { paddingLeft: `${depth * 24 + 12}px` } : undefined}
       >
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-2">
+        <div classИмя="flex items-start justify-between gap-2">
+          <div classИмя="min-w-0 flex-1">
+            <div classИмя="flex items-start gap-2">
               {showSelection ? (
                 <Checkbox
                   checked={isSelected}
                   onCheckedChange={(checked) => onToggleSelection?.(node, checked === true)}
                   aria-label={`Include ${node.task.title}`}
-                  className="mt-0.5"
+                  classИмя="mt-0.5"
                 />
               ) : null}
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-center gap-1.5">
+              <div classИмя="min-w-0 flex-1">
+                <div classИмя="flex min-w-0 items-center gap-1.5">
                   {node.task.priority ? (
-                    <PriorityIcon
+                    <ПриоритетIcon
                       priority={node.task.priority}
-                      className="mt-px"
+                      classИмя="mt-px"
                     />
                   ) : null}
-                  <div className="min-w-0 truncate text-sm font-medium text-foreground">
+                  <div classИмя="min-w-0 truncate text-sm font-medium text-foreground">
                     {node.task.title}
                   </div>
                 </div>
                 {depth > 0 ? (
-                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  <div classИмя="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     Child task
                   </div>
                 ) : null}
                 {node.task.description ? (
-                  <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
+                  <p classИмя="mt-0.5 text-sm leading-5 text-muted-foreground">
                     {node.task.description}
                   </p>
                 ) : null}
@@ -266,41 +266,41 @@ function TaskTreeNode({
             </div>
           </div>
 
-          {createdTask?.issueId ? (
+          {createdЗадача?.issueId ? (
             <Link
-              to={`/issues/${createdTask.identifier ?? createdTask.issueId}`}
-              className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-emerald-500/50 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-900 transition-colors hover:bg-emerald-500/15 dark:text-emerald-100"
+              to={`/issues/${createdЗадача.identifier ?? createdЗадача.issueId}`}
+              classИмя="inline-flex shrink-0 items-center gap-1 rounded-sm border border-emerald-500/50 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-900 transition-colors hover:bg-emerald-500/15 dark:text-emerald-100"
             >
-              {createdTask.identifier ?? createdTask.issueId.slice(0, 8)}
-              <ChevronRight className="h-3 w-3" />
+              {createdЗадача.identifier ?? createdЗадача.issueId.slice(0, 8)}
+              <ChevronRight classИмя="h-3 w-3" />
             </Link>
           ) : isSkipped ? (
-            <span className="inline-flex shrink-0 items-center rounded-sm border border-amber-500/60 bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-900 dark:text-amber-100">
+            <span classИмя="inline-flex shrink-0 items-center rounded-sm border border-amber-500/60 bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-900 dark:text-amber-100">
               Skipped
             </span>
           ) : null}
         </div>
 
         {hasMetadata ? (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {hasExplicitAssignee ? (
-              <TaskField label="Assignee" value={assigneeLabel} />
+          <div classИмя="mt-2 flex flex-wrap gap-1.5">
+            {hasExplicitИсполнитель ? (
+              <ЗадачаField label="Исполнитель" value={assigneeLabel} />
             ) : null}
             {node.task.billingCode ? (
-              <TaskField label="Billing" value={node.task.billingCode} />
+              <ЗадачаField label="Биллинг" value={node.task.billingCode} />
             ) : null}
             {node.task.projectId ? (
-              <TaskField label="Project" value={node.task.projectId} tone="subtle" />
+              <ЗадачаField label="Project" value={node.task.projectId} tone="subtle" />
             ) : null}
             {labels.map((label) => (
-              <TaskField key={label} label="Label" value={label} tone="subtle" />
+              <ЗадачаField key={label} label="Label" value={label} tone="subtle" />
             ))}
           </div>
         ) : null}
 
         {hiddenChildCount > 0 ? (
-          <div className="mt-2 flex items-center gap-2 rounded-sm border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
-            <GitBranch className="h-3.5 w-3.5 shrink-0" />
+          <div classИмя="mt-2 flex items-center gap-2 rounded-sm border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+            <GitВетка classИмя="h-3.5 w-3.5 shrink-0" />
             <span>
               {hiddenChildCount === 1
                 ? "1 follow-on task hidden in preview"
@@ -313,16 +313,16 @@ function TaskTreeNode({
       {visibleChildren.length > 0 ? (
         <>
           {visibleChildren.map((child) => (
-            <TaskTreeNode
-              key={child.task.clientKey}
+            <ЗадачаTreeНетde
+              key={child.task.clientКлюч}
               node={child}
-              createdByClientKey={createdByClientKey}
+              createdByClientКлюч={createdByClientКлюч}
               agentMap={agentMap}
               currentUserId={currentUserId}
               userLabelMap={userLabelMap}
               depth={depth + 1}
-              selectedClientKeys={selectedClientKeys}
-              skippedClientKeys={skippedClientKeys}
+              selectedClientКлючs={selectedClientКлючs}
+              skippedClientКлючs={skippedClientКлючs}
               showSelection={showSelection}
               onToggleSelection={onToggleSelection}
             />
@@ -333,142 +333,142 @@ function TaskTreeNode({
   );
 }
 
-function SuggestTasksCard({
+function SuggestЗадачиCard({
   interaction,
   agentMap,
   currentUserId,
   userLabelMap,
-  onAcceptInteraction,
-  onRejectInteraction,
+  onПринятьInteraction,
+  onОтклонитьInteraction,
 }: {
-  interaction: SuggestTasksInteraction;
-  agentMap?: Map<string, Agent>;
+  interaction: SuggestЗадачиInteraction;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
   userLabelMap?: ReadonlyMap<string, string> | null;
-  onAcceptInteraction?: (
-    interaction: SuggestTasksInteraction,
-    selectedClientKeys?: string[],
+  onПринятьInteraction?: (
+    interaction: SuggestЗадачиInteraction,
+    selectedClientКлючs?: string[],
   ) => Promise<void> | void;
-  onRejectInteraction?: (
-    interaction: SuggestTasksInteraction,
+  onОтклонитьInteraction?: (
+    interaction: SuggestЗадачиInteraction,
     reason?: string,
   ) => Promise<void> | void;
 }) {
-  const [rejecting, setRejecting] = useState(false);
-  const [working, setWorking] = useState<"accept" | "reject" | null>(null);
-  const [rejectReason, setRejectReason] = useState(
+  const [rejecting, setОтклонитьing] = useState(false);
+  const [working, setРаботаing] = useState<"accept" | "reject" | null>(null);
+  const [rejectReason, setОтклонитьReason] = useState(
     interaction.result?.rejectionReason ?? "",
   );
 
   useEffect(() => {
-    setRejectReason(interaction.result?.rejectionReason ?? "");
+    setОтклонитьReason(interaction.result?.rejectionReason ?? "");
     if (interaction.status !== "pending") {
-      setRejecting(false);
-      setWorking(null);
+      setОтклонитьing(false);
+      setРаботаing(null);
     }
   }, [interaction.result?.rejectionReason, interaction.status]);
 
   const roots = useMemo(
     () =>
-      buildSuggestedTaskTree(interaction.payload.tasks).filter(
-        (node) => !node.task.hiddenInPreview,
+      buildSuggestedЗадачаTree(interaction.payload.tasks).filter(
+        (node) => !node.task.hiddenInПредпросмотр,
       ),
     [interaction.payload.tasks],
   );
-  const createdByClientKey = useMemo(
-    () => createdTaskMap(interaction.result?.createdTasks),
-    [interaction.result?.createdTasks],
+  const createdByClientКлюч = useMemo(
+    () => createdЗадачаMap(interaction.result?.createdЗадачи),
+    [interaction.result?.createdЗадачи],
   );
-  const skippedClientKeys = useMemo(
-    () => new Set(interaction.result?.skippedClientKeys ?? []),
-    [interaction.result?.skippedClientKeys],
+  const skippedClientКлючs = useMemo(
+    () => new Set(interaction.result?.skippedClientКлючs ?? []),
+    [interaction.result?.skippedClientКлючs],
   );
-  const totalTasks = interaction.payload.tasks.length;
-  const [selectedClientKeys, setSelectedClientKeys] = useState<Set<string>>(
-    () => new Set(interaction.payload.tasks.map((task) => task.clientKey)),
+  const totalЗадачи = interaction.payload.tasks.length;
+  const [selectedClientКлючs, setSelectedClientКлючs] = useState<Set<string>>(
+    () => new Set(interaction.payload.tasks.map((task) => task.clientКлюч)),
   );
   const taskSelectionSeed = useMemo(
-    () => interaction.payload.tasks.map((task) => task.clientKey).join("\n"),
+    () => interaction.payload.tasks.map((task) => task.clientКлюч).join("\n"),
     [interaction.payload.tasks],
   );
 
   useEffect(() => {
-    setSelectedClientKeys(new Set(interaction.payload.tasks.map((task) => task.clientKey)));
+    setSelectedClientКлючs(new Set(interaction.payload.tasks.map((task) => task.clientКлюч)));
   }, [interaction.id, interaction.status, taskSelectionSeed]);
 
-  const taskByClientKey = useMemo(
-    () => new Map(interaction.payload.tasks.map((task) => [task.clientKey, task] as const)),
+  const taskByClientКлюч = useMemo(
+    () => new Map(interaction.payload.tasks.map((task) => [task.clientКлюч, task] as const)),
     [interaction.payload.tasks],
   );
-  const selectedCount = selectedClientKeys.size;
-  const createdCount = interaction.result?.createdTasks?.length ?? 0;
-  const skippedCount = interaction.result?.skippedClientKeys?.length ?? 0;
+  const selectedCount = selectedClientКлючs.size;
+  const createdCount = interaction.result?.createdЗадачи?.length ?? 0;
+  const skippedCount = interaction.result?.skippedClientКлючs?.length ?? 0;
 
-  async function handleAccept() {
-    if (!onAcceptInteraction) return;
-    setWorking("accept");
+  async function handleПринять() {
+    if (!onПринятьInteraction) return;
+    setРаботаing("accept");
     try {
-      await onAcceptInteraction(interaction, [...selectedClientKeys]);
+      await onПринятьInteraction(interaction, [...selectedClientКлючs]);
     } finally {
-      setWorking(null);
+      setРаботаing(null);
     }
   }
 
-  async function handleReject() {
-    if (!onRejectInteraction) return;
-    setWorking("reject");
+  async function handleОтклонить() {
+    if (!onОтклонитьInteraction) return;
+    setРаботаing("reject");
     try {
-      await onRejectInteraction(interaction, rejectReason.trim() || undefined);
-      setRejecting(false);
+      await onОтклонитьInteraction(interaction, rejectReason.trim() || undefined);
+      setОтклонитьing(false);
     } finally {
-      setWorking(null);
+      setРаботаing(null);
     }
   }
 
-  function handleToggleSelection(node: SuggestedTaskTreeNode, checked: boolean) {
-    const subtreeClientKeys = collectSuggestedTaskClientKeys(node);
-    setSelectedClientKeys((current) => {
+  function handleToggleSelection(node: SuggestedЗадачаTreeНетde, checked: boolean) {
+    const subtreeClientКлючs = collectSuggestedЗадачаClientКлючs(node);
+    setSelectedClientКлючs((current) => {
       const next = new Set(current);
       if (!checked) {
-        for (const clientKey of subtreeClientKeys) {
-          next.delete(clientKey);
+        for (const clientКлюч of subtreeClientКлючs) {
+          next.delete(clientКлюч);
         }
         return next;
       }
 
-      for (const clientKey of subtreeClientKeys) {
-        next.add(clientKey);
+      for (const clientКлюч of subtreeClientКлючs) {
+        next.add(clientКлюч);
       }
 
-      let parentClientKey = taskByClientKey.get(node.task.clientKey)?.parentClientKey ?? null;
-      while (parentClientKey) {
-        next.add(parentClientKey);
-        parentClientKey = taskByClientKey.get(parentClientKey)?.parentClientKey ?? null;
+      let parentClientКлюч = taskByClientКлюч.get(node.task.clientКлюч)?.parentClientКлюч ?? null;
+      while (parentClientКлюч) {
+        next.add(parentClientКлюч);
+        parentClientКлюч = taskByClientКлюч.get(parentClientКлюч)?.parentClientКлюч ?? null;
       }
       return next;
     });
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span>{totalTasks === 1 ? "1 draft issue" : `${totalTasks} draft issues`}</span>
-        {interaction.payload.defaultParentId ? (
-          <TaskField label="Default parent" value={interaction.payload.defaultParentId} tone="subtle" />
+    <div classИмя="space-y-3">
+      <div classИмя="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span>{totalЗадачи === 1 ? "1 draft issue" : `${totalЗадачи} draft issues`}</span>
+        {interaction.payload.defaultРодительId ? (
+          <ЗадачаField label="По умолчанию parent" value={interaction.payload.defaultРодительId} tone="subtle" />
         ) : null}
       </div>
 
-      <div className="overflow-hidden border border-border/70">
+      <div classИмя="overflow-hidden border border-border/70">
         {roots.map((root) => (
-          <TaskTreeNode
-            key={root.task.clientKey}
+          <ЗадачаTreeНетde
+            key={root.task.clientКлюч}
             node={root}
-            createdByClientKey={createdByClientKey}
+            createdByClientКлюч={createdByClientКлюч}
             agentMap={agentMap}
             currentUserId={currentUserId}
             userLabelMap={userLabelMap}
-            selectedClientKeys={selectedClientKeys}
-            skippedClientKeys={skippedClientKeys}
+            selectedClientКлючs={selectedClientКлючs}
+            skippedClientКлючs={skippedClientКлючs}
             showSelection={interaction.status === "pending"}
             onToggleSelection={handleToggleSelection}
           />
@@ -476,106 +476,106 @@ function SuggestTasksCard({
       </div>
 
       {interaction.status === "accepted" ? (
-        <div className="rounded-sm border border-emerald-500/60 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+        <div classИмя="rounded-sm border border-emerald-500/60 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100">
+          <div classИмя="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
             Resolution summary
           </div>
-          <p className="mt-1 leading-6">
+          <p classИмя="mt-1 leading-6">
             {skippedCount > 0
-              ? `Created ${createdCount} draft ${createdCount === 1 ? "issue" : "issues"} and skipped ${skippedCount} during review.`
-              : `Created all ${createdCount} draft ${createdCount === 1 ? "issue" : "issues"}.`}
+              ? `Создано ${createdCount} draft ${createdCount === 1 ? "issue" : "issues"} and skipped ${skippedCount} during review.`
+              : `Создано all ${createdCount} draft ${createdCount === 1 ? "issue" : "issues"}.`}
           </p>
         </div>
       ) : null}
 
       {interaction.status === "rejected" ? (
-        <div className="rounded-sm border border-rose-500/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">
-            Rejection reason
+        <div classИмя="rounded-sm border border-rose-500/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-900 dark:text-rose-100">
+          <div classИмя="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">
+            Отклонитьion reason
           </div>
-          <p className={cn(
+          <p classИмя={cn(
             "mt-1 leading-6",
             !interaction.result?.rejectionReason && "text-rose-900/75",
           )}>
-            {interaction.result?.rejectionReason || "No reason provided."}
+            {interaction.result?.rejectionReason || "Нет reason provided."}
           </p>
         </div>
       ) : null}
 
       {interaction.status === "pending" ? (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <div classИмя="space-y-3">
+          <div classИмя="flex flex-wrap items-center justify-between gap-3">
+            <div classИмя="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span>
-                {selectedCount === totalTasks
-                  ? `All ${totalTasks} draft ${totalTasks === 1 ? "issue" : "issues"} selected`
-                  : `${selectedCount} of ${totalTasks} draft ${totalTasks === 1 ? "issue" : "issues"} selected`}
+                {selectedCount === totalЗадачи
+                  ? `Все ${totalЗадачи} draft ${totalЗадачи === 1 ? "issue" : "issues"} selected`
+                  : `${selectedCount} of ${totalЗадачи} draft ${totalЗадачи === 1 ? "issue" : "issues"} selected`}
               </span>
-              {selectedCount < totalTasks ? (
+              {selectedCount < totalЗадачи ? (
                 <span>
-                  {totalTasks - selectedCount} will be skipped if you accept this interaction.
+                  {totalЗадачи - selectedCount} will be skipped if you accept this interaction.
                 </span>
               ) : null}
             </div>
 
-            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <div classИмя="ml-auto flex flex-wrap items-center justify-end gap-2">
               <Button
                 size="sm"
-                disabled={!onAcceptInteraction || working !== null || selectedCount === 0}
-                onClick={() => void handleAccept()}
+                disabled={!onПринятьInteraction || working !== null || selectedCount === 0}
+                onClick={() => void handleПринять()}
               >
                 {working === "accept" ? (
                   <>
-                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    Accepting...
+                    <Loader2 classИмя="mr-2 h-3.5 w-3.5 animate-spin" />
+                    Принятьing...
                   </>
                 ) : (
-                  selectedCount === totalTasks ? "Accept drafts" : "Accept selected drafts"
+                  selectedCount === totalЗадачи ? "Принять drafts" : "Принять selected drafts"
                 )}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                disabled={!onRejectInteraction || working !== null}
-                onClick={() => setRejecting((current) => !current)}
+                disabled={!onОтклонитьInteraction || working !== null}
+                onClick={() => setОтклонитьing((current) => !current)}
               >
-                Reject
+                Отклонить
               </Button>
-              {selectedCount < totalTasks ? (
+              {selectedCount < totalЗадачи ? (
                 <Button
                   size="sm"
                   variant="ghost"
                   disabled={working !== null}
-                  onClick={() => setSelectedClientKeys(new Set(interaction.payload.tasks.map((task) => task.clientKey)))}
+                  onClick={() => setSelectedClientКлючs(new Set(interaction.payload.tasks.map((task) => task.clientКлюч)))}
                 >
-                  Reset selection
+                  Сбросить selection
                 </Button>
               ) : null}
             </div>
           </div>
 
           {rejecting ? (
-            <div className="space-y-3">
+            <div classИмя="space-y-3">
               <Textarea
                 value={rejectReason}
-                onChange={(event) => setRejectReason(event.target.value)}
-                placeholder="Add a short reason for rejecting this suggestion"
-                className="min-h-24 bg-background text-sm"
+                onChange={(event) => setОтклонитьReason(event.target.value)}
+                placeholder="Добавить a short reason for rejecting this suggestion"
+                classИмя="min-h-24 bg-background text-sm"
               />
-              <div className="flex justify-end">
+              <div classИмя="flex justify-end">
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={!onRejectInteraction || working !== null}
-                  onClick={() => void handleReject()}
+                  disabled={!onОтклонитьInteraction || working !== null}
+                  onClick={() => void handleОтклонить()}
                 >
                   {working === "reject" ? (
                     <>
-                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                      <Loader2 classИмя="mr-2 h-3.5 w-3.5 animate-spin" />
                       Saving...
                     </>
                   ) : (
-                    "Save rejection"
+                    "Сохранить rejection"
                   )}
                 </Button>
               </div>
@@ -607,7 +607,7 @@ function QuestionOptionButton({
       type="button"
       role={selectionMode === "single" ? "radio" : "checkbox"}
       aria-checked={selected}
-      className={cn(
+      classИмя={cn(
         "w-full rounded-sm border px-4 py-3 text-left transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
         selected
           ? "border-sky-500/80 bg-sky-500/10 text-sky-950 dark:border-sky-400/80 dark:bg-sky-400/15 dark:text-sky-50"
@@ -617,7 +617,7 @@ function QuestionOptionButton({
       onClick={onClick}
     >
       <div
-        className={cn(
+        classИмя={cn(
           "text-sm font-medium",
           selected ? "text-sky-950 dark:text-sky-50" : "text-foreground",
         )}
@@ -626,7 +626,7 @@ function QuestionOptionButton({
       </div>
       {description ? (
         <div
-          className={cn(
+          classИмя={cn(
             "mt-1 text-sm leading-6",
             selected
               ? "text-sky-900/80 dark:text-sky-100/80"
@@ -642,19 +642,19 @@ function QuestionOptionButton({
 
 function AskUserQuestionsCard({
   interaction,
-  onSubmitInteractionAnswers,
-  onCancelInteraction,
+  onОтправитьInteractionAnswers,
+  onОтменаInteraction,
 }: {
   interaction: AskUserQuestionsInteraction;
-  onSubmitInteractionAnswers?: (
+  onОтправитьInteractionAnswers?: (
     interaction: AskUserQuestionsInteraction,
     answers: AskUserQuestionsAnswer[],
   ) => Promise<void> | void;
-  onCancelInteraction?: (
+  onОтменаInteraction?: (
     interaction: AskUserQuestionsInteraction,
   ) => Promise<void> | void;
 }) {
-  const [draftAnswers, setDraftAnswers] = useState<Record<string, string[]>>(() =>
+  const [draftAnswers, setЧерновикAnswers] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(
       (interaction.result?.answers ?? []).map((answer) => [
         answer.questionId,
@@ -662,11 +662,11 @@ function AskUserQuestionsCard({
       ]),
     ),
   );
-  const [working, setWorking] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const [working, setРаботаing] = useState(false);
+  const [cancelling, setОтменаling] = useState(false);
 
   useEffect(() => {
-    setDraftAnswers(
+    setЧерновикAnswers(
       Object.fromEntries(
         (interaction.result?.answers ?? []).map((answer) => [
           answer.questionId,
@@ -678,12 +678,12 @@ function AskUserQuestionsCard({
 
   const questions = interaction.payload.questions;
   const requiredQuestions = questions.filter((question) => question.required);
-  const canSubmit = requiredQuestions.every(
+  const canОтправить = requiredQuestions.every(
     (question) => (draftAnswers[question.id] ?? []).length > 0,
   );
 
   function toggleOption(questionId: string, optionId: string, selectionMode: "single" | "multi") {
-    setDraftAnswers((current) => {
+    setЧерновикAnswers((current) => {
       const existing = current[questionId] ?? [];
       if (selectionMode === "single") {
         return { ...current, [questionId]: [optionId] };
@@ -695,11 +695,11 @@ function AskUserQuestionsCard({
     });
   }
 
-  async function handleSubmit() {
-    if (!onSubmitInteractionAnswers || !canSubmit) return;
-    setWorking(true);
+  async function handleОтправить() {
+    if (!onОтправитьInteractionAnswers || !canОтправить) return;
+    setРаботаing(true);
     try {
-      await onSubmitInteractionAnswers(
+      await onОтправитьInteractionAnswers(
         interaction,
         questions.map((question) => ({
           questionId: question.id,
@@ -707,25 +707,25 @@ function AskUserQuestionsCard({
         })),
       );
     } finally {
-      setWorking(false);
+      setРаботаing(false);
     }
   }
 
-  async function handleCancel() {
-    if (!onCancelInteraction) return;
-    setCancelling(true);
+  async function handleОтмена() {
+    if (!onОтменаInteraction) return;
+    setОтменаling(true);
     try {
-      await onCancelInteraction(interaction);
+      await onОтменаInteraction(interaction);
     } finally {
-      setCancelling(false);
+      setОтменаling(false);
     }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/70 px-2.5 py-1 font-medium uppercase tracking-[0.16em] text-foreground/70">
-          <MessageSquareQuote className="h-3 w-3" />
+    <div classИмя="space-y-4">
+      <div classИмя="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span classИмя="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/70 px-2.5 py-1 font-medium uppercase tracking-[0.16em] text-foreground/70">
+          <MessageSquareQuote classИмя="h-3 w-3" />
           Ask user questions
         </span>
         <span>
@@ -736,38 +736,38 @@ function AskUserQuestionsCard({
       </div>
 
       {interaction.status === "pending" ? (
-        <div className="space-y-4">
+        <div classИмя="space-y-4">
           {questions.map((question, index) => (
             <div
               key={question.id}
-              className="rounded-2xl border border-border/70 bg-background/82 p-4 shadow-[0_18px_42px_rgba(15,23,42,0.06)]"
+              classИмя="rounded-2xl border border-border/70 bg-background/82 p-4 shadow-[0_18px_42px_rgba(15,23,42,0.06)]"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div classИмя="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <div classИмя="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Question {index + 1}
                   </div>
                   <div
                     id={`${interaction.id}-${question.id}-prompt`}
-                    className="mt-1 text-sm font-semibold text-foreground"
+                    classИмя="mt-1 text-sm font-semibold text-foreground"
                   >
                     {question.prompt}
                   </div>
                   {question.helpText ? (
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    <p classИмя="mt-1 text-sm leading-6 text-muted-foreground">
                       {question.helpText}
                     </p>
                   ) : null}
                 </div>
-                <TaskField
+                <ЗадачаField
                   label={question.selectionMode === "single" ? "Pick" : "Pick many"}
-                  value={question.required ? "Required" : "Optional"}
+                  value={question.required ? "Обязательно" : "Опционально"}
                   tone="subtle"
                 />
               </div>
 
               <div
-                className="mt-3 grid gap-3"
+                classИмя="mt-3 grid gap-3"
                 role={question.selectionMode === "single" ? "radiogroup" : "group"}
                 aria-labelledby={`${interaction.id}-${question.id}-prompt`}
               >
@@ -787,76 +787,76 @@ function AskUserQuestionsCard({
             </div>
           ))}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/75 p-4">
-            <div className="text-sm text-muted-foreground">
-              Submit once after you finish the full form.
+          <div classИмя="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/75 p-4">
+            <div classИмя="text-sm text-muted-foreground">
+              Отправить once after you finish the full form.
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {onCancelInteraction ? (
+            <div classИмя="flex flex-wrap items-center gap-2">
+              {onОтменаInteraction ? (
                 <Button
                   size="sm"
                   variant="outline"
                   disabled={working || cancelling}
-                  onClick={() => void handleCancel()}
+                  onClick={() => void handleОтмена()}
                 >
                   {cancelling ? (
                     <>
-                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                      Cancelling...
+                      <Loader2 classИмя="mr-2 h-3.5 w-3.5 animate-spin" />
+                      Отменаling...
                     </>
                   ) : (
-                    "Cancel question"
+                    "Отмена question"
                   )}
                   </Button>
                 ) : null}
               <Button
                 size="sm"
-                disabled={!onSubmitInteractionAnswers || !canSubmit || working || cancelling}
-                onClick={() => void handleSubmit()}
+                disabled={!onОтправитьInteractionAnswers || !canОтправить || working || cancelling}
+                onClick={() => void handleОтправить()}
               >
                 {working ? (
                   <>
-                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    Submitting...
+                    <Loader2 classИмя="mr-2 h-3.5 w-3.5 animate-spin" />
+                    Отправитьting...
                   </>
                 ) : (
-                  interaction.payload.submitLabel ?? "Submit answers"
+                  interaction.payload.submitLabel ?? "Отправить answers"
                 )}
               </Button>
             </div>
           </div>
         </div>
       ) : interaction.status === "cancelled" ? (
-        <div className="rounded-2xl border border-rose-300/60 bg-rose-50/85 p-4 text-sm leading-6 text-rose-950 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100">
-          <div className="font-semibold">Question cancelled</div>
+        <div classИмя="rounded-2xl border border-rose-300/60 bg-rose-50/85 p-4 text-sm leading-6 text-rose-950 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-100">
+          <div classИмя="font-semibold">Question cancelled</div>
           {interaction.result?.cancellationReason ? (
-            <p className="mt-1">{interaction.result.cancellationReason}</p>
+            <p classИмя="mt-1">{interaction.result.cancellationReason}</p>
           ) : (
-            <p className="mt-1">No answer was recorded.</p>
+            <p classИмя="mt-1">Нет answer was recorded.</p>
           )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div classИмя="space-y-3">
           {questions.map((question) => {
-            const labels = getQuestionAnswerLabels({
+            const labels = getQuestionAnswerЯрлыки({
               question,
               answers: interaction.result?.answers ?? [],
             });
             return (
               <div
                 key={question.id}
-                className="rounded-2xl border border-border/70 bg-background/82 p-4"
+                classИмя="rounded-2xl border border-border/70 bg-background/82 p-4"
               >
-                <div className="text-sm font-semibold text-foreground">
+                <div classИмя="text-sm font-semibold text-foreground">
                   {question.prompt}
                 </div>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div classИмя="mt-2 flex flex-wrap gap-2">
                   {labels.length > 0 ? (
                     labels.map((label) => (
-                      <TaskField key={label} label="Answer" value={label} />
+                      <ЗадачаField key={label} label="Answer" value={label} />
                     ))
                   ) : (
-                    <span className="text-sm text-muted-foreground">No answer recorded.</span>
+                    <span classИмя="text-sm text-muted-foreground">Нет answer recorded.</span>
                   )}
                 </div>
               </div>
@@ -864,9 +864,9 @@ function AskUserQuestionsCard({
           })}
 
           {interaction.result?.summaryMarkdown ? (
-            <div className="rounded-2xl border border-emerald-300/60 bg-emerald-50/85 p-4">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
-                Submitted summary
+            <div classИмя="rounded-2xl border border-emerald-300/60 bg-emerald-50/85 p-4">
+              <div classИмя="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                Отправитьted summary
               </div>
               <MarkdownBody>{interaction.result.summaryMarkdown}</MarkdownBody>
             </div>
@@ -877,7 +877,7 @@ function AskUserQuestionsCard({
   );
 }
 
-function requestConfirmationTargetLabel(target: RequestConfirmationTarget) {
+function requestПодтвердитьationЦельLabel(target: RequestПодтвердитьationЦель) {
   if (target.label) return target.label;
   const revision = target.revisionNumber ? ` v${target.revisionNumber}` : "";
   if (target.type === "issue_document" && target.key === "plan") {
@@ -886,12 +886,12 @@ function requestConfirmationTargetLabel(target: RequestConfirmationTarget) {
   return `${target.key}${revision}`;
 }
 
-function requestConfirmationTargetHref({
+function requestПодтвердитьationЦельHref({
   interaction,
   target,
 }: {
-  interaction: RequestConfirmationInteraction;
-  target: RequestConfirmationTarget;
+  interaction: RequestПодтвердитьationInteraction;
+  target: RequestПодтвердитьationЦель;
 }) {
   if (target.href) return target.href;
   if (target.type === "issue_document") {
@@ -901,19 +901,19 @@ function requestConfirmationTargetHref({
   return null;
 }
 
-function RequestConfirmationTargetChip({
+function RequestПодтвердитьationЦельChip({
   interaction,
   target,
   tone = "default",
 }: {
-  interaction: RequestConfirmationInteraction;
-  target: RequestConfirmationTarget | null | undefined;
+  interaction: RequestПодтвердитьationInteraction;
+  target: RequestПодтвердитьationЦель | null | undefined;
   tone?: "default" | "subtle";
 }) {
   if (!target) return null;
 
-  const href = requestConfirmationTargetHref({ interaction, target });
-  const className = cn(
+  const href = requestПодтвердитьationЦельHref({ interaction, target });
+  const classИмя = cn(
     "inline-flex max-w-full items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em]",
     tone === "default"
       ? "border-border/70 bg-transparent text-foreground"
@@ -922,53 +922,53 @@ function RequestConfirmationTargetChip({
   );
   const content = (
     <>
-      <GitBranch className="h-3 w-3 shrink-0" />
-      <span className="min-w-0 truncate">{requestConfirmationTargetLabel(target)}</span>
+      <GitВетка classИмя="h-3 w-3 shrink-0" />
+      <span classИмя="min-w-0 truncate">{requestПодтвердитьationЦельLabel(target)}</span>
     </>
   );
 
-  if (!href) return <span className={className}>{content}</span>;
+  if (!href) return <span classИмя={classИмя}>{content}</span>;
   if (/^https?:\/\//i.test(href)) {
     return (
-      <a href={href} target="_blank" rel="noreferrer" className={className}>
+      <a href={href} target="_blank" rel="noreferrer" classИмя={classИмя}>
         {content}
       </a>
     );
   }
   return (
-    <Link to={href} className={className}>
+    <Link to={href} classИмя={classИмя}>
       {content}
     </Link>
   );
 }
 
-function RequestConfirmationResolution({
+function RequestПодтвердитьationResolution({
   interaction,
 }: {
-  interaction: RequestConfirmationInteraction;
+  interaction: RequestПодтвердитьationInteraction;
 }) {
   const outcome = interaction.result?.outcome;
   const target = interaction.payload.target ?? null;
-  const staleTarget = interaction.result?.staleTarget ?? null;
+  const staleЦель = interaction.result?.staleЦель ?? null;
 
   if (interaction.status === "accepted") {
     return (
-      <div className="flex flex-wrap items-center gap-2 text-sm leading-6 text-foreground">
-        <span className="font-medium">Confirmed</span>
-        <RequestConfirmationTargetChip interaction={interaction} target={target} />
+      <div classИмя="flex flex-wrap items-center gap-2 text-sm leading-6 text-foreground">
+        <span classИмя="font-medium">Подтвердитьed</span>
+        <RequestПодтвердитьationЦельChip interaction={interaction} target={target} />
       </div>
     );
   }
 
   if (interaction.status === "rejected") {
     return (
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-sm leading-6 text-foreground">
-          <span className="font-medium">Declined</span>
-          <RequestConfirmationTargetChip interaction={interaction} target={target} />
+      <div classИмя="space-y-2">
+        <div classИмя="flex flex-wrap items-center gap-2 text-sm leading-6 text-foreground">
+          <span classИмя="font-medium">Отклонитьd</span>
+          <RequestПодтвердитьationЦельChip interaction={interaction} target={target} />
         </div>
         {interaction.result?.reason ? (
-          <blockquote className="rounded-sm border-l-2 border-rose-500/70 bg-rose-500/10 px-3 py-2 text-sm leading-6 text-rose-900 dark:text-rose-100">
+          <blockquote classИмя="rounded-sm border-l-2 border-rose-500/70 bg-rose-500/10 px-3 py-2 text-sm leading-6 text-rose-900 dark:text-rose-100">
             {interaction.result.reason}
           </blockquote>
         ) : null}
@@ -978,33 +978,33 @@ function RequestConfirmationResolution({
 
   if (interaction.status === "expired") {
     const expiredByComment = outcome === "superseded_by_comment";
-    const expiredByTargetChange = outcome === "stale_target";
+    const expiredByЦельChange = outcome === "stale_target";
     return (
-      <div className="space-y-3 rounded-sm border border-amber-500/60 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+      <div classИмя="space-y-3 rounded-sm border border-amber-500/60 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+        <div classИмя="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">
           {expiredByComment ? "Expired by comment" : "Expired by target change"}
         </div>
-        <p className="leading-6">
+        <p classИмя="leading-6">
           {expiredByComment
             ? "A board comment superseded this confirmation before it was resolved."
             : "The requested target changed before this confirmation was resolved."}
         </p>
         {expiredByComment && interaction.result?.commentId ? (
-          <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-amber-950 hover:bg-amber-500/15 dark:text-amber-50">
+          <Button asChild size="sm" variant="ghost" classИмя="h-7 px-2 text-amber-950 hover:bg-amber-500/15 dark:text-amber-50">
             <a href={`#comment-${interaction.result.commentId}`}>Jump to comment</a>
           </Button>
         ) : null}
-        {expiredByTargetChange ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <RequestConfirmationTargetChip
+        {expiredByЦельChange ? (
+          <div classИмя="flex flex-wrap items-center gap-2">
+            <RequestПодтвердитьationЦельChip
               interaction={interaction}
-              target={staleTarget}
+              target={staleЦель}
               tone="subtle"
             />
-            {staleTarget && target ? (
-              <ChevronRight className="h-3.5 w-3.5 text-amber-700" />
+            {staleЦель && target ? (
+              <ChevronRight classИмя="h-3.5 w-3.5 text-amber-700" />
             ) : null}
-            <RequestConfirmationTargetChip interaction={interaction} target={target} />
+            <RequestПодтвердитьationЦельChip interaction={interaction} target={target} />
           </div>
         ) : null}
       </div>
@@ -1013,8 +1013,8 @@ function RequestConfirmationResolution({
 
   if (interaction.status === "failed") {
     return (
-      <p className="text-sm leading-6 text-muted-foreground">
-        This request could not be resolved. Try again or create a new request.
+      <p classИмя="text-sm leading-6 text-muted-foreground">
+        This request could not be resolved. Попробовать снова or create a new request.
       </p>
     );
   }
@@ -1022,87 +1022,87 @@ function RequestConfirmationResolution({
   return null;
 }
 
-function RequestConfirmationCard({
+function RequestПодтвердитьationCard({
   interaction,
-  onAcceptInteraction,
-  onRejectInteraction,
+  onПринятьInteraction,
+  onОтклонитьInteraction,
 }: {
-  interaction: RequestConfirmationInteraction;
-  onAcceptInteraction?: (
-    interaction: RequestConfirmationInteraction,
+  interaction: RequestПодтвердитьationInteraction;
+  onПринятьInteraction?: (
+    interaction: RequestПодтвердитьationInteraction,
   ) => Promise<void> | void;
-  onRejectInteraction?: (
-    interaction: RequestConfirmationInteraction,
+  onОтклонитьInteraction?: (
+    interaction: RequestПодтвердитьationInteraction,
     reason?: string,
   ) => Promise<void> | void;
 }) {
-  const [rejecting, setRejecting] = useState(false);
-  const [working, setWorking] = useState<"accept" | "reject" | null>(null);
-  const [rejectReason, setRejectReason] = useState(interaction.result?.reason ?? "");
-  const [rejectAttempted, setRejectAttempted] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [rejecting, setОтклонитьing] = useState(false);
+  const [working, setРаботаing] = useState<"accept" | "reject" | null>(null);
+  const [rejectReason, setОтклонитьReason] = useState(interaction.result?.reason ?? "");
+  const [rejectAttempted, setОтклонитьAttempted] = useState(false);
+  const [actionОшибка, setActionОшибка] = useState<string | null>(null);
   const rejectRequiresReason = interaction.payload.rejectRequiresReason === true;
-  const allowDeclineReason = interaction.payload.allowDeclineReason !== false;
-  const trimmedRejectReason = rejectReason.trim();
-  const canReject = !rejectRequiresReason || trimmedRejectReason.length > 0;
-  const declineReasonInvalid = rejectRequiresReason && !canReject;
+  const allowОтклонитьReason = interaction.payload.allowОтклонитьReason !== false;
+  const trimmedОтклонитьReason = rejectReason.trim();
+  const canОтклонить = !rejectRequiresReason || trimmedОтклонитьReason.length > 0;
+  const declineReasonInvalid = rejectRequiresReason && !canОтклонить;
   const declineReasonPlaceholder =
     interaction.payload.declineReasonPlaceholder
-    ?? (interaction.payload.acceptLabel === "Approve plan"
-      ? "Optional: what would you like revised?"
-      : "Optional: tell the agent what you'd change.");
+    ?? (interaction.payload.acceptLabel === "Одобрить plan"
+      ? "Опционально: what would you like revised?"
+      : "Опционально: tell the agent what you'd change.");
 
   useEffect(() => {
-    setRejectReason(interaction.result?.reason ?? "");
-    setRejectAttempted(false);
-    setActionError(null);
+    setОтклонитьReason(interaction.result?.reason ?? "");
+    setОтклонитьAttempted(false);
+    setActionОшибка(null);
     if (interaction.status !== "pending") {
-      setRejecting(false);
-      setWorking(null);
+      setОтклонитьing(false);
+      setРаботаing(null);
     }
   }, [interaction.id, interaction.result?.reason, interaction.status]);
 
-  async function handleAccept() {
-    if (!onAcceptInteraction) return;
-    setWorking("accept");
-    setActionError(null);
+  async function handleПринять() {
+    if (!onПринятьInteraction) return;
+    setРаботаing("accept");
+    setActionОшибка(null);
     try {
-      await onAcceptInteraction(interaction);
+      await onПринятьInteraction(interaction);
     } catch {
-      setActionError("Try again");
+      setActionОшибка("Попробовать снова");
     } finally {
-      setWorking(null);
+      setРаботаing(null);
     }
   }
 
-  async function handleReject() {
-    setRejectAttempted(true);
-    if (!onRejectInteraction || !canReject) return;
-    setWorking("reject");
-    setActionError(null);
+  async function handleОтклонить() {
+    setОтклонитьAttempted(true);
+    if (!onОтклонитьInteraction || !canОтклонить) return;
+    setРаботаing("reject");
+    setActionОшибка(null);
     try {
-      await onRejectInteraction(interaction, trimmedRejectReason || undefined);
-      setRejecting(false);
+      await onОтклонитьInteraction(interaction, trimmedОтклонитьReason || undefined);
+      setОтклонитьing(false);
     } catch {
-      setActionError("Try again");
+      setActionОшибка("Попробовать снова");
     } finally {
-      setWorking(null);
+      setРаботаing(null);
     }
   }
 
   return (
-    <div className="space-y-4">
+    <div classИмя="space-y-4">
       {interaction.status === "pending" ? (
-        <div className="space-y-3 rounded-sm border border-border/70 bg-background/75 p-4">
-          <div className="text-sm leading-6 text-foreground">
+        <div classИмя="space-y-3 rounded-sm border border-border/70 bg-background/75 p-4">
+          <div classИмя="text-sm leading-6 text-foreground">
             {interaction.payload.prompt}
           </div>
           {interaction.payload.detailsMarkdown ? (
-            <div className="border-t border-border/60 pt-3 text-sm">
+            <div classИмя="border-t border-border/60 pt-3 text-sm">
               <MarkdownBody>{interaction.payload.detailsMarkdown}</MarkdownBody>
             </div>
           ) : null}
-          <RequestConfirmationTargetChip
+          <RequestПодтвердитьationЦельChip
             interaction={interaction}
             target={interaction.payload.target}
           />
@@ -1110,123 +1110,123 @@ function RequestConfirmationCard({
       ) : null}
 
       {interaction.status === "pending" ? (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-end gap-2">
+        <div classИмя="space-y-3">
+          <div classИмя="flex flex-wrap items-center justify-end gap-2">
             <Button
               size="sm"
               variant={rejecting ? "outline" : "default"}
-              disabled={!onAcceptInteraction || working !== null}
-              onClick={() => void handleAccept()}
+              disabled={!onПринятьInteraction || working !== null}
+              onClick={() => void handleПринять()}
             >
               {working === "accept" ? (
                 <>
-                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                  Confirming...
+                  <Loader2 classИмя="mr-2 h-3.5 w-3.5 animate-spin" />
+                  Подтвердитьing...
                 </>
               ) : (
-                interaction.payload.acceptLabel ?? "Confirm"
+                interaction.payload.acceptLabel ?? "Подтвердить"
               )}
             </Button>
             <Button
               size="sm"
               variant="outline"
-              disabled={!onRejectInteraction || working !== null}
+              disabled={!onОтклонитьInteraction || working !== null}
               onClick={() => {
-                if (!allowDeclineReason) {
-                  void handleReject();
+                if (!allowОтклонитьReason) {
+                  void handleОтклонить();
                   return;
                 }
-                setRejectAttempted(false);
-                setRejecting((current) => !current);
+                setОтклонитьAttempted(false);
+                setОтклонитьing((current) => !current);
               }}
             >
-              {interaction.payload.rejectLabel ?? "Decline"}
+              {interaction.payload.rejectLabel ?? "Отклонить"}
             </Button>
           </div>
 
           {rejecting ? (
-            <div className="space-y-3 rounded-sm border border-border/70 bg-background/75 p-3">
+            <div classИмя="space-y-3 rounded-sm border border-border/70 bg-background/75 p-3">
               <Textarea
                 value={rejectReason}
-                onChange={(event) => setRejectReason(event.target.value)}
+                onChange={(event) => setОтклонитьReason(event.target.value)}
                 placeholder={declineReasonPlaceholder}
                 aria-invalid={rejectAttempted && declineReasonInvalid}
-                className={cn(
+                classИмя={cn(
                   "min-h-24 bg-background text-sm",
                   rejectAttempted && declineReasonInvalid
                     && "border-rose-500 focus-visible:ring-rose-500/25",
                 )}
               />
               {rejectAttempted && declineReasonInvalid ? (
-                <p className="text-xs text-destructive">A decline reason is required.</p>
+                <p classИмя="text-xs text-destructive">A decline reason is required.</p>
               ) : null}
-              <div className="flex flex-wrap justify-end gap-2">
+              <div classИмя="flex flex-wrap justify-end gap-2">
                 <Button
                   size="sm"
                   variant="ghost"
                   disabled={working !== null}
                   onClick={() => {
-                    setRejecting(false);
-                    setRejectAttempted(false);
+                    setОтклонитьing(false);
+                    setОтклонитьAttempted(false);
                   }}
                 >
-                  Cancel decline
+                  Отмена decline
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={!onRejectInteraction || working !== null}
-                  onClick={() => void handleReject()}
+                  disabled={!onОтклонитьInteraction || working !== null}
+                  onClick={() => void handleОтклонить()}
                 >
                   {working === "reject" ? (
                     <>
-                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                      <Loader2 classИмя="mr-2 h-3.5 w-3.5 animate-spin" />
                       Saving...
                     </>
                   ) : (
-                    interaction.payload.rejectLabel ?? "Decline"
+                    interaction.payload.rejectLabel ?? "Отклонить"
                   )}
                 </Button>
               </div>
             </div>
           ) : null}
 
-          {actionError ? (
-            <div className="rounded-sm border border-destructive/60 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {actionError}
+          {actionОшибка ? (
+            <div classИмя="rounded-sm border border-destructive/60 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {actionОшибка}
             </div>
           ) : null}
         </div>
       ) : (
-        <RequestConfirmationResolution interaction={interaction} />
+        <RequestПодтвердитьationResolution interaction={interaction} />
       )}
     </div>
   );
 }
 
-export function IssueThreadInteractionCard({
+export function ЗадачаThreadInteractionCard({
   interaction,
   agentMap,
   currentUserId,
   userLabelMap,
-  onAcceptInteraction,
-  onRejectInteraction,
-  onSubmitInteractionAnswers,
-  onCancelInteraction,
-}: IssueThreadInteractionCardProps) {
-  const StatusIcon = statusIcon(interaction.status);
+  onПринятьInteraction,
+  onОтклонитьInteraction,
+  onОтправитьInteractionAnswers,
+  onОтменаInteraction,
+}: ЗадачаThreadInteractionCardProps) {
+  const СтатусIcon = statusIcon(interaction.status);
   const styles = statusClasses(interaction.status);
   const createdByLabel = resolveActorLabel({
-    agentId: interaction.createdByAgentId,
+    agentId: interaction.createdByАгентId,
     userId: interaction.createdByUserId,
     agentMap,
     currentUserId,
     userLabelMap,
   });
   const resolvedByLabel =
-    interaction.resolvedByAgentId || interaction.resolvedByUserId
+    interaction.resolvedByАгентId || interaction.resolvedByUserId
       ? resolveActorLabel({
-          agentId: interaction.resolvedByAgentId,
+          agentId: interaction.resolvedByАгентId,
           userId: interaction.resolvedByUserId,
           agentMap,
           currentUserId,
@@ -1235,20 +1235,20 @@ export function IssueThreadInteractionCard({
       : null;
 
   return (
-    <div className={cn("rounded-sm border p-5 shadow-none", styles.shell)}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1 basis-64">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={cn("inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]", styles.badge)}>
-              <StatusIcon className="h-3.5 w-3.5" />
+    <div classИмя={cn("rounded-sm border p-5 shadow-none", styles.shell)}>
+      <div classИмя="flex flex-wrap items-start justify-between gap-4">
+        <div classИмя="min-w-0 flex-1 basis-64">
+          <div classИмя="flex flex-wrap items-center gap-2">
+            <span classИмя={cn("inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]", styles.badge)}>
+              <СтатусIcon classИмя="h-3.5 w-3.5" />
               {interactionKindLabel(interaction.kind)}
-              <span className="text-current/60">/</span>
+              <span classИмя="text-current/60">/</span>
               {statusLabel(interaction.status)}
             </span>
             {interaction.continuationPolicy === "wake_assignee"
               || interaction.continuationPolicy === "wake_assignee_on_accept" ? (
-              <span className="inline-flex items-center gap-1 rounded-sm border border-border/70 bg-transparent px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-foreground/70">
-                <ListChecks className="h-3.5 w-3.5" />
+              <span classИмя="inline-flex items-center gap-1 rounded-sm border border-border/70 bg-transparent px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-foreground/70">
+                <ListChecks classИмя="h-3.5 w-3.5" />
                 {interaction.continuationPolicy === "wake_assignee_on_accept"
                   ? "Wakes on confirm"
                   : "Wakes assignee"}
@@ -1256,16 +1256,16 @@ export function IssueThreadInteractionCard({
             ) : null}
           </div>
 
-          <div className="mt-3 text-lg font-bold text-foreground">
+          <div classИмя="mt-3 text-lg font-bold text-foreground">
             {interaction.title
               ?? (interaction.kind === "suggest_tasks"
                 ? "Suggested task tree"
                 : interaction.kind === "ask_user_questions"
                   ? interaction.payload.title ?? "Questions for the operator"
-                  : "Confirmation requested")}
+                  : "Подтвердитьation requested")}
           </div>
           {interaction.summary ? (
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+            <p classИмя="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
               {interaction.summary}
             </p>
           ) : null}
@@ -1273,45 +1273,45 @@ export function IssueThreadInteractionCard({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="rounded-sm border border-border/70 bg-transparent px-3 py-2 text-right text-xs text-muted-foreground">
-              <div className="font-medium text-foreground">{formatShortDate(interaction.createdAt)}</div>
+            <div classИмя="rounded-sm border border-border/70 bg-transparent px-3 py-2 text-right text-xs text-muted-foreground">
+              <div classИмя="font-medium text-foreground">{formatShortDate(interaction.createdAt)}</div>
               <div>proposed by {createdByLabel}</div>
             </div>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">
-            Created {formatDateTime(interaction.createdAt)}
+          <TooltipContent side="bottom" classИмя="text-xs">
+            Создано {formatDateTime(interaction.createdAt)}
           </TooltipContent>
         </Tooltip>
       </div>
 
-      <div className="mt-5">
+      <div classИмя="mt-5">
         {interaction.kind === "suggest_tasks" ? (
-          <SuggestTasksCard
+          <SuggestЗадачиCard
             interaction={interaction}
             agentMap={agentMap}
             currentUserId={currentUserId}
             userLabelMap={userLabelMap}
-            onAcceptInteraction={onAcceptInteraction}
-            onRejectInteraction={onRejectInteraction}
+            onПринятьInteraction={onПринятьInteraction}
+            onОтклонитьInteraction={onОтклонитьInteraction}
           />
         ) : interaction.kind === "ask_user_questions" ? (
           <AskUserQuestionsCard
             interaction={interaction}
-            onSubmitInteractionAnswers={onSubmitInteractionAnswers}
-            onCancelInteraction={onCancelInteraction}
+            onОтправитьInteractionAnswers={onОтправитьInteractionAnswers}
+            onОтменаInteraction={onОтменаInteraction}
           />
         ) : (
-          <RequestConfirmationCard
+          <RequestПодтвердитьationCard
             interaction={interaction}
-            onAcceptInteraction={onAcceptInteraction}
-            onRejectInteraction={onRejectInteraction}
+            onПринятьInteraction={onПринятьInteraction}
+            onОтклонитьInteraction={onОтклонитьInteraction}
           />
         )}
       </div>
 
       {resolvedByLabel ? (
-        <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-          Resolved by <span className="font-medium text-foreground">{resolvedByLabel}</span>
+        <div classИмя="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+          Resolved by <span classИмя="font-medium text-foreground">{resolvedByLabel}</span>
           {interaction.resolvedAt ? ` on ${formatShortDate(interaction.resolvedAt)}` : ""}
         </div>
       ) : null}

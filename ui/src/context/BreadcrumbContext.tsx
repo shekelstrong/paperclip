@@ -1,23 +1,23 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactНетde } from "react";
 
 export interface Breadcrumb {
   label: string;
   href?: string;
 }
 
-interface BreadcrumbContextValue {
+interface BreadcrumbContextЗначение {
   breadcrumbs: Breadcrumb[];
   setBreadcrumbs: (crumbs: Breadcrumb[]) => void;
-  mobileToolbar: ReactNode | null;
-  setMobileToolbar: (node: ReactNode | null) => void;
+  mobileToolbar: ReactНетde | null;
+  setMobileToolbar: (node: ReactНетde | null) => void;
 }
 
-interface BreadcrumbProviderProps {
-  children: ReactNode;
-  companyName?: string | null;
+interface BreadcrumbПровайдерProps {
+  children: ReactНетde;
+  companyИмя?: string | null;
 }
 
-const BreadcrumbContext = createContext<BreadcrumbContextValue | null>(null);
+const BreadcrumbContext = createContext<BreadcrumbContextЗначение | null>(null);
 
 function breadcrumbsEqual(left: Breadcrumb[], right: Breadcrumb[]) {
   if (left === right) return true;
@@ -30,42 +30,42 @@ function breadcrumbsEqual(left: Breadcrumb[], right: Breadcrumb[]) {
   return true;
 }
 
-export function buildDocumentTitle(breadcrumbs: Breadcrumb[], companyName?: string | null) {
+export function buildDocumentНазвание(breadcrumbs: Breadcrumb[], companyИмя?: string | null) {
   const pageParts = breadcrumbs.length === 0
     ? []
     : [...breadcrumbs].reverse().map((breadcrumb) => breadcrumb.label);
-  const companyPart = companyName?.trim() ? [companyName.trim()] : [];
+  const companyPart = companyИмя?.trim() ? [companyИмя.trim()] : [];
   const parts = [...pageParts, ...companyPart, "Paperclip"];
   return parts.join(" • ");
 }
 
-export function BreadcrumbProvider({ children, companyName }: BreadcrumbProviderProps) {
+export function BreadcrumbПровайдер({ children, companyИмя }: BreadcrumbПровайдерProps) {
   const [breadcrumbs, setBreadcrumbsState] = useState<Breadcrumb[]>([]);
-  const [mobileToolbar, setMobileToolbarState] = useState<ReactNode | null>(null);
+  const [mobileToolbar, setMobileToolbarState] = useState<ReactНетde | null>(null);
 
   const setBreadcrumbs = useCallback((crumbs: Breadcrumb[]) => {
     setBreadcrumbsState((current) => (breadcrumbsEqual(current, crumbs) ? current : crumbs));
   }, []);
 
-  const setMobileToolbar = useCallback((node: ReactNode | null) => {
+  const setMobileToolbar = useCallback((node: ReactНетde | null) => {
     setMobileToolbarState(node);
   }, []);
 
   useEffect(() => {
-    document.title = buildDocumentTitle(breadcrumbs, companyName);
-  }, [breadcrumbs, companyName]);
+    document.title = buildDocumentНазвание(breadcrumbs, companyИмя);
+  }, [breadcrumbs, companyИмя]);
 
   return (
-    <BreadcrumbContext.Provider value={{ breadcrumbs, setBreadcrumbs, mobileToolbar, setMobileToolbar }}>
+    <BreadcrumbContext.Провайдер value={{ breadcrumbs, setBreadcrumbs, mobileToolbar, setMobileToolbar }}>
       {children}
-    </BreadcrumbContext.Provider>
+    </BreadcrumbContext.Провайдер>
   );
 }
 
 export function useBreadcrumbs() {
   const ctx = useContext(BreadcrumbContext);
   if (!ctx) {
-    throw new Error("useBreadcrumbs must be used within BreadcrumbProvider");
+    throw new Ошибка("useBreadcrumbs must be used within BreadcrumbПровайдер");
   }
   return ctx;
 }

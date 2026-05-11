@@ -5,29 +5,29 @@
  * Provides synchronous reads so module-level constants can filter against it.
  * Falls back to "nothing disabled" before the first hydration.
  *
- * Usage in components:
+ * Использование in components:
  *   useQuery + adaptersApi.list() populates the store automatically.
  *
- * Usage in non-React code:
- *   import { isAdapterTypeHidden } from "@/adapters/disabled-store";
+ * Использование in non-React code:
+ *   import { isАдаптерТипHidden } from "@/adapters/disabled-store";
  */
 
-let disabledTypes = new Set<string>();
+let disabledТипs = new Set<string>();
 
 /** Check if an adapter type is hidden from menus (sync read). */
-export function isAdapterTypeHidden(type: string): boolean {
-  return disabledTypes.has(type);
+export function isАдаптерТипHidden(type: string): boolean {
+  return disabledТипs.has(type);
 }
 
 /** Get all hidden adapter types (sync read). */
-export function getHiddenAdapterTypes(): Set<string> {
-  return disabledTypes;
+export function getHiddenАдаптерТипs(): Set<string> {
+  return disabledТипs;
 }
 
 /**
  * Hydrate the store from a server response.
  * Called by components that fetch the adapters list.
  */
-export function setDisabledAdapterTypes(types: string[]): void {
-  disabledTypes = new Set(types);
+export function setОтключитьdАдаптерТипs(types: string[]): void {
+  disabledТипs = new Set(types);
 }

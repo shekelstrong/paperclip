@@ -1,32 +1,32 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { Issue } from "@paperclipai/shared";
+import type { Задача } from "@paperclipai/shared";
 import { issuesApi } from "@/api/issues";
-import { queryKeys } from "@/lib/queryKeys";
+import { queryКлючs } from "@/lib/queryКлючs";
 
 const ISSUE_DETAIL_QUERY_PREFIX = ["issues", "detail"] as const;
 export const ISSUE_DETAIL_STALE_TIME_MS = 60_000;
 
-function isNonEmptyString(value: unknown): value is string {
+function isНетnEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
-function collectIssueRefs(
+function collectЗадачаRefs(
   issueRef: string | null | undefined,
-  issue?: Pick<Issue, "id" | "identifier"> | null,
+  issue?: Pick<Задача, "id" | "identifier"> | null,
 ): string[] {
   const refs = new Set<string>();
-  if (isNonEmptyString(issueRef)) refs.add(issueRef);
-  if (isNonEmptyString(issue?.id)) refs.add(issue.id);
-  if (isNonEmptyString(issue?.identifier)) refs.add(issue.identifier);
+  if (isНетnEmptyString(issueRef)) refs.add(issueRef);
+  if (isНетnEmptyString(issue?.id)) refs.add(issue.id);
+  if (isНетnEmptyString(issue?.identifier)) refs.add(issue.identifier);
   return Array.from(refs);
 }
 
-function matchesIssueRef(issue: Pick<Issue, "id" | "identifier">, refs: Iterable<string>) {
+function matchesЗадачаRef(issue: Pick<Задача, "id" | "identifier">, refs: Iterable<string>) {
   const refSet = refs instanceof Set ? refs : new Set(refs);
   return refSet.has(issue.id) || (!!issue.identifier && refSet.has(issue.identifier));
 }
 
-function mergeIssueSnapshots(existing: Issue | undefined, incoming: Issue): Issue {
+function mergeЗадачаSnapshots(existing: Задача | undefined, incoming: Задача): Задача {
   if (!existing) return incoming;
   return {
     ...existing,
@@ -34,84 +34,84 @@ function mergeIssueSnapshots(existing: Issue | undefined, incoming: Issue): Issu
   };
 }
 
-export function getIssueDetailCacheRefs(issue: Pick<Issue, "id" | "identifier">): string[] {
-  return collectIssueRefs(null, issue);
+export function getЗадачаDetailCacheRefs(issue: Pick<Задача, "id" | "identifier">): string[] {
+  return collectЗадачаRefs(null, issue);
 }
 
-export function getCachedIssueDetail(
+export function getCachedЗадачаDetail(
   queryClient: QueryClient,
   issueRef: string | null | undefined,
-  issue?: Pick<Issue, "id" | "identifier"> | null,
-): Issue | undefined {
-  const refs = collectIssueRefs(issueRef, issue);
+  issue?: Pick<Задача, "id" | "identifier"> | null,
+): Задача | undefined {
+  const refs = collectЗадачаRefs(issueRef, issue);
 
   for (const ref of refs) {
-    const cached = queryClient.getQueryData<Issue>(queryKeys.issues.detail(ref));
+    const cached = queryClient.getQueryData<Задача>(queryКлючs.issues.detail(ref));
     if (cached) return cached;
   }
 
-  const cachedEntries = queryClient.getQueriesData<Issue>({ queryKey: ISSUE_DETAIL_QUERY_PREFIX });
+  const cachedEntries = queryClient.getQueriesData<Задача>({ queryКлюч: ISSUE_DETAIL_QUERY_PREFIX });
   return cachedEntries
-    .map(([, cachedIssue]) => cachedIssue)
-    .find((cachedIssue): cachedIssue is Issue => !!cachedIssue && matchesIssueRef(cachedIssue, refs));
+    .map(([, cachedЗадача]) => cachedЗадача)
+    .find((cachedЗадача): cachedЗадача is Задача => !!cachedЗадача && matchesЗадачаRef(cachedЗадача, refs));
 }
 
-export function seedIssueDetailCache(
+export function seedЗадачаDetailCache(
   queryClient: QueryClient,
-  issue: Issue,
+  issue: Задача,
   options?: {
     issueRef?: string | null;
   },
-): Issue {
-  const refs = collectIssueRefs(options?.issueRef, issue);
-  const merged = mergeIssueSnapshots(getCachedIssueDetail(queryClient, options?.issueRef, issue), issue);
+): Задача {
+  const refs = collectЗадачаRefs(options?.issueRef, issue);
+  const merged = mergeЗадачаSnapshots(getCachedЗадачаDetail(queryClient, options?.issueRef, issue), issue);
 
   for (const ref of refs) {
-    queryClient.setQueryData<Issue>(
-      queryKeys.issues.detail(ref),
-      (existing) => mergeIssueSnapshots(existing, merged),
+    queryClient.setQueryData<Задача>(
+      queryКлючs.issues.detail(ref),
+      (existing) => mergeЗадачаSnapshots(existing, merged),
     );
   }
 
   return merged;
 }
 
-export async function fetchIssueDetail(
+export async function fetchЗадачаDetail(
   queryClient: QueryClient,
   issueRef: string,
-): Promise<Issue> {
+): Promise<Задача> {
   const issue = await issuesApi.get(issueRef);
-  return seedIssueDetailCache(queryClient, issue, { issueRef });
+  return seedЗадачаDetailCache(queryClient, issue, { issueRef });
 }
 
-export function getIssueDetailQueryOptions(
+export function getЗадачаDetailQueryOptions(
   queryClient: QueryClient,
   issueRef: string,
   options?: {
-    placeholderIssue?: Pick<Issue, "id" | "identifier"> | null;
+    placeholderЗадача?: Pick<Задача, "id" | "identifier"> | null;
   },
 ) {
   return {
-    queryKey: queryKeys.issues.detail(issueRef),
-    queryFn: () => fetchIssueDetail(queryClient, issueRef),
-    placeholderData: getCachedIssueDetail(queryClient, issueRef, options?.placeholderIssue ?? undefined),
+    queryКлюч: queryКлючs.issues.detail(issueRef),
+    queryFn: () => fetchЗадачаDetail(queryClient, issueRef),
+    placeholderData: getCachedЗадачаDetail(queryClient, issueRef, options?.placeholderЗадача ?? undefined),
   };
 }
 
-export function prefetchIssueDetail(
+export function prefetchЗадачаDetail(
   queryClient: QueryClient,
   issueRef: string,
   options?: {
-    issue?: Issue | null;
+    issue?: Задача | null;
   },
 ) {
   if (options?.issue) {
-    seedIssueDetailCache(queryClient, options.issue, { issueRef });
+    seedЗадачаDetailCache(queryClient, options.issue, { issueRef });
   }
 
   return queryClient.prefetchQuery({
-    queryKey: queryKeys.issues.detail(issueRef),
-    queryFn: () => fetchIssueDetail(queryClient, issueRef),
+    queryКлюч: queryКлючs.issues.detail(issueRef),
+    queryFn: () => fetchЗадачаDetail(queryClient, issueRef),
     staleTime: ISSUE_DETAIL_STALE_TIME_MS,
   });
 }

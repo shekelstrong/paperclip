@@ -1,28 +1,28 @@
-import type { ReactNode } from "react";
+import type { ReactНетde } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSidebar } from "../context/SidebarContext";
 
 export interface PageTabItem {
   value: string;
-  label: ReactNode;
+  label: ReactНетde;
 }
 
 interface PageTabBarProps {
   items: PageTabItem[];
   value?: string;
-  onValueChange?: (value: string) => void;
+  onЗначениеChange?: (value: string) => void;
   align?: "center" | "start";
 }
 
-export function PageTabBar({ items, value, onValueChange, align = "center" }: PageTabBarProps) {
+export function PageTabBar({ items, value, onЗначениеChange, align = "center" }: PageTabBarProps) {
   const { isMobile } = useSidebar();
 
-  if (isMobile && value !== undefined && onValueChange) {
+  if (isMobile && value !== undefined && onЗначениеChange) {
     return (
       <select
         value={value}
-        onChange={(e) => onValueChange(e.target.value)}
-        className="h-9 rounded-md border border-border bg-background px-2 py-1 text-base focus:outline-none focus:ring-1 focus:ring-ring"
+        onChange={(e) => onЗначениеChange(e.target.value)}
+        classИмя="h-9 rounded-md border border-border bg-background px-2 py-1 text-base focus:outline-none focus:ring-1 focus:ring-ring"
       >
         {items.map((item) => (
           <option key={item.value} value={item.value}>
@@ -34,7 +34,7 @@ export function PageTabBar({ items, value, onValueChange, align = "center" }: Pa
   }
 
   return (
-    <TabsList variant="line" className={align === "start" ? "justify-start" : undefined}>
+    <TabsList variant="line" classИмя={align === "start" ? "justify-start" : undefined}>
       {items.map((item) => (
         <TabsTrigger key={item.value} value={item.value}>
           {item.label}

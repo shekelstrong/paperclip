@@ -1,40 +1,40 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
-import { agentsApi, type OrgNode } from "../api/agents";
-import { useCompany } from "../context/CompanyContext";
+import { agentsApi, type ОргструктураНетde } from "../api/agents";
+import { useКомпания } from "../context/КомпанияContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { queryKeys } from "../lib/queryKeys";
-import { StatusBadge } from "../components/StatusBadge";
+import { queryКлючs } from "../lib/queryКлючs";
+import { СтатусBadge } from "../components/СтатусBadge";
 import { EmptyState } from "../components/EmptyState";
 import { PageSkeleton } from "../components/PageSkeleton";
-import { ChevronRight, GitBranch } from "lucide-react";
+import { ChevronRight, GitВетка } from "lucide-react";
 import { cn } from "../lib/utils";
 
-function OrgTree({
+function ОргструктураTree({
   nodes,
   depth = 0,
   hrefFn,
 }: {
-  nodes: OrgNode[];
+  nodes: ОргструктураНетde[];
   depth?: number;
   hrefFn: (id: string) => string;
 }) {
   return (
     <div>
       {nodes.map((node) => (
-        <OrgTreeNode key={node.id} node={node} depth={depth} hrefFn={hrefFn} />
+        <ОргструктураTreeНетde key={node.id} node={node} depth={depth} hrefFn={hrefFn} />
       ))}
     </div>
   );
 }
 
-function OrgTreeNode({
+function ОргструктураTreeНетde({
   node,
   depth,
   hrefFn,
 }: {
-  node: OrgNode;
+  node: ОргструктураНетde;
   depth: number;
   hrefFn: (id: string) => string;
 }) {
@@ -45,27 +45,27 @@ function OrgTreeNode({
     <div>
       <Link
         to={hrefFn(node.id)}
-        className="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors cursor-pointer hover:bg-accent/50 no-underline text-inherit"
+        classИмя="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors cursor-pointer hover:bg-accent/50 no-underline text-inherit"
         style={{ paddingLeft: `${depth * 16 + 12}px` }}
       >
         {hasChildren ? (
           <button
-            className="p-0.5"
+            classИмя="p-0.5"
             onClick={(e) => {
-              e.preventDefault();
+              e.preventПо умолчанию();
               e.stopPropagation();
               setExpanded(!expanded);
             }}
           >
             <ChevronRight
-              className={cn("h-3 w-3 transition-transform", expanded && "rotate-90")}
+              classИмя={cn("h-3 w-3 transition-transform", expanded && "rotate-90")}
             />
           </button>
         ) : (
-          <span className="w-4" />
+          <span classИмя="w-4" />
         )}
         <span
-          className={cn(
+          classИмя={cn(
             "h-2 w-2 rounded-full shrink-0",
             node.status === "active"
               ? "bg-green-400"
@@ -78,53 +78,53 @@ function OrgTreeNode({
                   : "bg-neutral-400"
           )}
         />
-        <span className="font-medium flex-1">{node.name}</span>
-        <span className="text-xs text-muted-foreground">{node.role}</span>
-        <StatusBadge status={node.status} />
+        <span classИмя="font-medium flex-1">{node.name}</span>
+        <span classИмя="text-xs text-muted-foreground">{node.role}</span>
+        <СтатусBadge status={node.status} />
       </Link>
       {hasChildren && expanded && (
-        <OrgTree nodes={node.reports} depth={depth + 1} hrefFn={hrefFn} />
+        <ОргструктураTree nodes={node.reports} depth={depth + 1} hrefFn={hrefFn} />
       )}
     </div>
   );
 }
 
-export function Org() {
-  const { selectedCompanyId } = useCompany();
+export function Оргструктура() {
+  const { selectedКомпанияId } = useКомпания();
   const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Org Chart" }]);
+    setBreadcrumbs([{ label: "Оргструктура Chart" }]);
   }, [setBreadcrumbs]);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: queryKeys.org(selectedCompanyId!),
-    queryFn: () => agentsApi.org(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+  const { data, isЗагрузка, error } = useQuery({
+    queryКлюч: queryКлючs.org(selectedКомпанияId!),
+    queryFn: () => agentsApi.org(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
-  if (!selectedCompanyId) {
-    return <EmptyState icon={GitBranch} message="Select a company to view org chart." />;
+  if (!selectedКомпанияId) {
+    return <EmptyState icon={GitВетка} message="Select a company to view org chart." />;
   }
 
-  if (isLoading) {
+  if (isЗагрузка) {
     return <PageSkeleton variant="list" />;
   }
 
   return (
-    <div className="space-y-4">
-      {error && <p className="text-sm text-destructive">{error.message}</p>}
+    <div classИмя="space-y-4">
+      {error && <p classИмя="text-sm text-destructive">{error.message}</p>}
 
       {data && data.length === 0 && (
         <EmptyState
-          icon={GitBranch}
-          message="No agents in the organization. Create agents to build your org chart."
+          icon={GitВетка}
+          message="Нет agents in the organization. Создать agents to build your org chart."
         />
       )}
 
       {data && data.length > 0 && (
-        <div className="border border-border py-1">
-          <OrgTree nodes={data} hrefFn={(id) => `/agents/${id}`} />
+        <div classИмя="border border-border py-1">
+          <ОргструктураTree nodes={data} hrefFn={(id) => `/agents/${id}`} />
         </div>
       )}
     </div>

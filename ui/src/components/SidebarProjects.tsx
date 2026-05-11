@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
-import { FolderOpen, Plus } from "lucide-react";
+import { ПапкаOpen, Plus } from "lucide-react";
 import {
   DndContext,
   MouseSensor,
@@ -10,31 +10,31 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { СортировкаableContext, arrayMove, useСортировкаable, verticalListСортировкаingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useDialogActions } from "../context/DialogContext";
 import { useSidebar } from "../context/SidebarContext";
 import { authApi } from "../api/auth";
 import { projectsApi } from "../api/projects";
 import { SIDEBAR_SCROLL_RESET_STATE } from "../lib/navigation-scroll";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import { cn, projectRouteRef } from "../lib/utils";
 import { useProjectOrder } from "../hooks/useProjectOrder";
-import { BudgetSidebarMarker } from "./BudgetSidebarMarker";
+import { БюджетSidebarMarker } from "./БюджетSidebarMarker";
 import { SidebarSection, type SidebarSectionRadioChoice } from "./SidebarSection";
 import { PluginSlotMount, usePluginSlots } from "@/plugins/slots";
 import {
-  getProjectSortModeStorageKey,
+  getProjectСортировкаModeStorageКлюч,
   PROJECT_SORT_MODE_UPDATED_EVENT,
-  readProjectSortMode,
-  type ProjectSortModeUpdatedDetail,
-  type ProjectSidebarSortMode,
-  writeProjectSortMode,
+  readProjectСортировкаMode,
+  type ProjectСортировкаModeОбновленоDetail,
+  type ProjectSidebarСортировкаMode,
+  writeProjectСортировкаMode,
 } from "../lib/project-order";
 import type { Project } from "@paperclipai/shared";
 
-type ProjectSidebarSlot = ReturnType<typeof usePluginSlots>["slots"][number];
+type ProjectSidebarSlot = ReturnТип<typeof usePluginSlots>["slots"][number];
 
 const PROJECT_SORT_CHOICES: SidebarSectionRadioChoice[] = [
   { value: "top", label: "Top" },
@@ -60,7 +60,7 @@ function projectTimestamp(project: Project): number {
   return Number.isFinite(created) ? created : 0;
 }
 
-function sortProjects(projects: Project[], sortMode: ProjectSidebarSortMode): Project[] {
+function sortПроекты(projects: Project[], sortMode: ProjectSidebarСортировкаMode): Project[] {
   if (sortMode === "top") return projects;
   const sorted = [...projects];
   if (sortMode === "alphabetical") {
@@ -87,18 +87,18 @@ function ProjectItem({
   const routeRef = projectRouteRef(project);
 
   return (
-    <div className="flex flex-col gap-0.5">
+    <div classИмя="flex flex-col gap-0.5">
       <NavLink
         to={`/projects/${routeRef}/issues`}
         state={SIDEBAR_SCROLL_RESET_STATE}
         onClick={(e) => {
           if (isDragging) {
-            e.preventDefault();
+            e.preventПо умолчанию();
             return;
           }
           if (isMobile) setSidebarOpen(false);
         }}
-        className={cn(
+        classИмя={cn(
           "flex items-center gap-2.5 px-3 py-1.5 text-[13px] font-medium transition-colors",
           activeProjectRef === routeRef || activeProjectRef === project.id
             ? "bg-accent text-foreground"
@@ -106,17 +106,17 @@ function ProjectItem({
         )}
       >
         <span
-          className="shrink-0 h-3.5 w-3.5 rounded-sm"
+          classИмя="shrink-0 h-3.5 w-3.5 rounded-sm"
           style={{ backgroundColor: project.color ?? "#6366f1" }}
         />
-        <span className="flex-1 truncate">{project.name}</span>
-        {project.pauseReason === "budget" ? <BudgetSidebarMarker title="Project paused by budget" /> : null}
+        <span classИмя="flex-1 truncate">{project.name}</span>
+        {project.pauseReason === "budget" ? <БюджетSidebarMarker title="Project paused by budget" /> : null}
       </NavLink>
       {projectSidebarSlots.length > 0 && (
-        <div className="ml-5 flex flex-col gap-0.5">
+        <div classИмя="ml-5 flex flex-col gap-0.5">
           {projectSidebarSlots.map((slot) => (
             <PluginSlotMount
-              key={`${project.id}:${slot.pluginKey}:${slot.id}`}
+              key={`${project.id}:${slot.pluginКлюч}:${slot.id}`}
               slot={slot}
               context={{
                 companyId,
@@ -124,7 +124,7 @@ function ProjectItem({
                 projectId: project.id,
                 projectRef: routeRef,
                 entityId: project.id,
-                entityType: "project",
+                entityТип: "project",
               }}
               missingBehavior="placeholder"
             />
@@ -135,25 +135,25 @@ function ProjectItem({
   );
 }
 
-function SortableProjectItem(props: ProjectItemProps) {
+function СортировкаableProjectItem(props: ProjectItemProps) {
   const {
     attributes,
     listeners,
-    setNodeRef,
+    setНетdeRef,
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.project.id });
+  } = useСортировкаable({ id: props.project.id });
 
   return (
     <div
-      ref={setNodeRef}
+      ref={setНетdeRef}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
         zIndex: isDragging ? 10 : undefined,
       }}
-      className={cn(isDragging && "opacity-80")}
+      classИмя={cn(isDragging && "opacity-80")}
       {...attributes}
       {...listeners}
     >
@@ -162,51 +162,51 @@ function SortableProjectItem(props: ProjectItemProps) {
   );
 }
 
-export function SidebarProjects() {
+export function SidebarПроекты() {
   const [open, setOpen] = useState(true);
-  const { selectedCompany, selectedCompanyId } = useCompany();
+  const { selectedКомпания, selectedКомпанияId } = useКомпания();
   const { openNewProject } = useDialogActions();
   const { isMobile, setSidebarOpen } = useSidebar();
   const location = useLocation();
 
   const { data: projects } = useQuery({
-    queryKey: queryKeys.projects.list(selectedCompanyId!),
-    queryFn: () => projectsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.projects.list(selectedКомпанияId!),
+    queryFn: () => projectsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
   const { data: session } = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
   });
   const { slots: projectSidebarSlots } = usePluginSlots({
-    slotTypes: ["projectSidebarItem"],
-    entityType: "project",
-    companyId: selectedCompanyId,
-    enabled: !!selectedCompanyId,
+    slotТипs: ["projectSidebarItem"],
+    entityТип: "project",
+    companyId: selectedКомпанияId,
+    enabled: !!selectedКомпанияId,
   });
 
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
-  const sortModeStorageKey = useMemo(() => {
-    if (!selectedCompanyId) return null;
-    return getProjectSortModeStorageKey(selectedCompanyId, currentUserId);
-  }, [currentUserId, selectedCompanyId]);
-  const [sortMode, setSortMode] = useState<ProjectSidebarSortMode>(() => {
-    if (!sortModeStorageKey) return "top";
-    return readProjectSortMode(sortModeStorageKey);
+  const sortModeStorageКлюч = useMemo(() => {
+    if (!selectedКомпанияId) return null;
+    return getProjectСортировкаModeStorageКлюч(selectedКомпанияId, currentUserId);
+  }, [currentUserId, selectedКомпанияId]);
+  const [sortMode, setСортировкаMode] = useState<ProjectSidebarСортировкаMode>(() => {
+    if (!sortModeStorageКлюч) return "top";
+    return readProjectСортировкаMode(sortModeStorageКлюч);
   });
 
-  const visibleProjects = useMemo(
+  const visibleПроекты = useMemo(
     () => (projects ?? []).filter((project: Project) => !project.archivedAt),
     [projects],
   );
-  const { orderedProjects, persistOrder } = useProjectOrder({
-    projects: visibleProjects,
-    companyId: selectedCompanyId,
+  const { orderedПроекты, persistOrder } = useProjectOrder({
+    projects: visibleПроекты,
+    companyId: selectedКомпанияId,
     userId: currentUserId,
   });
-  const sortedProjects = useMemo(
-    () => sortProjects(orderedProjects, sortMode),
-    [orderedProjects, sortMode],
+  const sortedПроекты = useMemo(
+    () => sortПроекты(orderedПроекты, sortMode),
+    [orderedПроекты, sortMode],
   );
   const isTopMode = sortMode === "top";
 
@@ -220,44 +220,44 @@ export function SidebarProjects() {
   );
 
   useEffect(() => {
-    if (!sortModeStorageKey) {
-      setSortMode("top");
+    if (!sortModeStorageКлюч) {
+      setСортировкаMode("top");
       return;
     }
-    setSortMode(readProjectSortMode(sortModeStorageKey));
-  }, [sortModeStorageKey]);
+    setСортировкаMode(readProjectСортировкаMode(sortModeStorageКлюч));
+  }, [sortModeStorageКлюч]);
 
   useEffect(() => {
-    if (!sortModeStorageKey) return;
+    if (!sortModeStorageКлюч) return;
 
     const onStorage = (event: StorageEvent) => {
-      if (event.key !== sortModeStorageKey) return;
-      setSortMode(readProjectSortMode(sortModeStorageKey));
+      if (event.key !== sortModeStorageКлюч) return;
+      setСортировкаMode(readProjectСортировкаMode(sortModeStorageКлюч));
     };
-    const onCustomEvent = (event: Event) => {
-      const detail = (event as CustomEvent<ProjectSortModeUpdatedDetail>).detail;
-      if (!detail || detail.storageKey !== sortModeStorageKey) return;
-      setSortMode(detail.sortMode);
+    const onСвойEvent = (event: Event) => {
+      const detail = (event as СвойEvent<ProjectСортировкаModeОбновленоDetail>).detail;
+      if (!detail || detail.storageКлюч !== sortModeStorageКлюч) return;
+      setСортировкаMode(detail.sortMode);
     };
 
     window.addEventListener("storage", onStorage);
-    window.addEventListener(PROJECT_SORT_MODE_UPDATED_EVENT, onCustomEvent);
+    window.addEventListener(PROJECT_SORT_MODE_UPDATED_EVENT, onСвойEvent);
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener(PROJECT_SORT_MODE_UPDATED_EVENT, onCustomEvent);
+      window.removeEventListener(PROJECT_SORT_MODE_UPDATED_EVENT, onСвойEvent);
     };
-  }, [sortModeStorageKey]);
+  }, [sortModeStorageКлюч]);
 
-  const persistSortMode = useCallback(
+  const persistСортировкаMode = useCallback(
     (value: string) => {
-      const nextSortMode: ProjectSidebarSortMode =
+      const nextСортировкаMode: ProjectSidebarСортировкаMode =
         value === "alphabetical" || value === "recent" ? value : "top";
-      setSortMode(nextSortMode);
-      if (sortModeStorageKey) {
-        writeProjectSortMode(sortModeStorageKey, nextSortMode);
+      setСортировкаMode(nextСортировкаMode);
+      if (sortModeStorageКлюч) {
+        writeProjectСортировкаMode(sortModeStorageКлюч, nextСортировкаMode);
       }
     },
-    [sortModeStorageKey],
+    [sortModeStorageКлюч],
   );
 
   const handleDragEnd = useCallback(
@@ -266,22 +266,22 @@ export function SidebarProjects() {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const ids = orderedProjects.map((project) => project.id);
+      const ids = orderedПроекты.map((project) => project.id);
       const oldIndex = ids.indexOf(active.id as string);
       const newIndex = ids.indexOf(over.id as string);
       if (oldIndex === -1 || newIndex === -1) return;
 
       persistOrder(arrayMove(ids, oldIndex, newIndex));
     },
-    [isTopMode, orderedProjects, persistOrder],
+    [isTopMode, orderedПроекты, persistOrder],
   );
 
   const renderProject = (project: Project) => (
     <ProjectItem
       key={project.id}
       activeProjectRef={activeProjectRef}
-      companyId={selectedCompanyId}
-      companyPrefix={selectedCompany?.issuePrefix ?? null}
+      companyId={selectedКомпанияId}
+      companyPrefix={selectedКомпания?.issuePrefix ?? null}
       isMobile={isMobile}
       project={project}
       projectSidebarSlots={projectSidebarSlots}
@@ -291,23 +291,23 @@ export function SidebarProjects() {
 
   return (
     <SidebarSection
-      label="Projects"
+      label="Проекты"
       collapsible={{ open, onOpenChange: setOpen }}
       headerAction={{
-        ariaLabel: "New project",
+        ariaLabel: "Новый проект",
         icon: Plus,
         onClick: openNewProject,
       }}
       menu={{
-        ariaLabel: "Projects section actions",
+        ariaLabel: "Проекты section actions",
         actions: [
-          { type: "item", label: "Browse projects", icon: FolderOpen, href: "/projects" },
+          { type: "item", label: "Browse projects", icon: ПапкаOpen, href: "/projects" },
           { type: "separator" },
         ],
         radioLabel: "Project sort",
         radioChoices: PROJECT_SORT_CHOICES,
-        radioValue: sortMode,
-        onRadioValueChange: persistSortMode,
+        radioЗначение: sortMode,
+        onRadioЗначениеChange: persistСортировкаMode,
       }}
     >
       {isTopMode ? (
@@ -316,17 +316,17 @@ export function SidebarProjects() {
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext
-            items={orderedProjects.map((project) => project.id)}
-            strategy={verticalListSortingStrategy}
+          <СортировкаableContext
+            items={orderedПроекты.map((project) => project.id)}
+            strategy={verticalListСортировкаingStrategy}
           >
-            <div className="flex flex-col gap-0.5">
-              {orderedProjects.map((project: Project) => (
-                <SortableProjectItem
+            <div classИмя="flex flex-col gap-0.5">
+              {orderedПроекты.map((project: Project) => (
+                <СортировкаableProjectItem
                   key={project.id}
                   activeProjectRef={activeProjectRef}
-                  companyId={selectedCompanyId}
-                  companyPrefix={selectedCompany?.issuePrefix ?? null}
+                  companyId={selectedКомпанияId}
+                  companyPrefix={selectedКомпания?.issuePrefix ?? null}
                   isMobile={isMobile}
                   project={project}
                   projectSidebarSlots={projectSidebarSlots}
@@ -334,11 +334,11 @@ export function SidebarProjects() {
                 />
               ))}
             </div>
-          </SortableContext>
+          </СортировкаableContext>
         </DndContext>
       ) : (
-        <div className="flex flex-col gap-0.5">
-          {sortedProjects.map((project: Project) => renderProject(project))}
+        <div classИмя="flex flex-col gap-0.5">
+          {sortedПроекты.map((project: Project) => renderProject(project))}
         </div>
       )}
     </SidebarSection>

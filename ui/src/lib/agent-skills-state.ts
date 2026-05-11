@@ -1,13 +1,13 @@
-import type { AgentSkillEntry } from "@paperclipai/shared";
+import type { АгентНавыкEntry } from "@paperclipai/shared";
 
-export interface AgentSkillDraftState {
+export interface АгентНавыкЧерновикState {
   draft: string[];
-  lastSaved: string[];
+  lastСохранитьd: string[];
   hasHydratedSnapshot: boolean;
 }
 
-export interface AgentSkillSnapshotApplyResult extends AgentSkillDraftState {
-  shouldSkipAutosave: boolean;
+export interface АгентНавыкSnapshotApplyResult extends АгентНавыкЧерновикState {
+  shouldSkipАвтоsave: boolean;
 }
 
 export function arraysEqual(a: string[], b: string[]): boolean {
@@ -16,25 +16,25 @@ export function arraysEqual(a: string[], b: string[]): boolean {
   return a.every((value, index) => value === b[index]);
 }
 
-export function applyAgentSkillSnapshot(
-  state: AgentSkillDraftState,
-  desiredSkills: string[],
-): AgentSkillSnapshotApplyResult {
-  const shouldReplaceDraft = !state.hasHydratedSnapshot || arraysEqual(state.draft, state.lastSaved);
+export function applyАгентНавыкSnapshot(
+  state: АгентНавыкЧерновикState,
+  desiredНавыки: string[],
+): АгентНавыкSnapshotApplyResult {
+  const shouldReplaceЧерновик = !state.hasHydratedSnapshot || arraysEqual(state.draft, state.lastСохранитьd);
 
   return {
-    draft: shouldReplaceDraft ? desiredSkills : state.draft,
-    lastSaved: desiredSkills,
+    draft: shouldReplaceЧерновик ? desiredНавыки : state.draft,
+    lastСохранитьd: desiredНавыки,
     hasHydratedSnapshot: true,
-    shouldSkipAutosave: shouldReplaceDraft,
+    shouldSkipАвтоsave: shouldReplaceЧерновик,
   };
 }
 
-export function isReadOnlyUnmanagedSkillEntry(
-  entry: AgentSkillEntry,
-  companySkillKeys: Set<string>,
+export function isReadOnlyUnmanagedНавыкEntry(
+  entry: АгентНавыкEntry,
+  companyНавыкКлючs: Set<string>,
 ): boolean {
-  if (companySkillKeys.has(entry.key)) return false;
+  if (companyНавыкКлючs.has(entry.key)) return false;
   if (entry.origin === "user_installed" || entry.origin === "external_unknown") return true;
   return entry.managed === false && entry.state === "external";
 }

@@ -1,4 +1,4 @@
-export function parseOnboardingGoalInput(raw: string): {
+export function parseOnboardingЦельInput(raw: string): {
   title: string;
   description: string | null;
 } {

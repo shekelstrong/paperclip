@@ -2,20 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, ExternalLink, MailPlus } from "lucide-react";
 import { accessApi } from "@/api/access";
-import { ApiError } from "@/api/client";
+import { ApiОшибка } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
-import { useCompany } from "@/context/CompanyContext";
+import { useКомпания } from "@/context/КомпанияContext";
 import { useToast } from "@/context/ToastContext";
 import { Link } from "@/lib/router";
-import { queryKeys } from "@/lib/queryKeys";
+import { queryКлючs } from "@/lib/queryКлючs";
 
 const inviteRoleOptions = [
   {
     value: "viewer",
     label: "Viewer",
     description: "Can view company work and follow along without operational permissions.",
-    gets: "No built-in grants.",
+    gets: "Нет built-in grants.",
   },
   {
     value: "operator",
@@ -31,7 +31,7 @@ const inviteRoleOptions = [
   },
   {
     value: "owner",
-    label: "Owner",
+    label: "Владелец",
     description: "Full company access, including membership and permission management.",
     gets: "Everything in Admin, plus managing members and permission grants.",
   },
@@ -39,17 +39,17 @@ const inviteRoleOptions = [
 
 const INVITE_HISTORY_PAGE_SIZE = 5;
 
-function isInviteHistoryRow(value: unknown): value is Awaited<ReturnType<typeof accessApi.listInvites>>["invites"][number] {
+function isInviteИсторияRow(value: unknown): value is Awaited<ReturnТип<typeof accessApi.listInvites>>["invites"][number] {
   if (!value || typeof value !== "object") return false;
   return "id" in value && "state" in value && "createdAt" in value;
 }
 
-export function CompanyInvites() {
-  const { selectedCompany, selectedCompanyId } = useCompany();
+export function КомпанияInvites() {
+  const { selectedКомпания, selectedКомпанияId } = useКомпания();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [humanRole, setHumanRole] = useState<"owner" | "admin" | "operator" | "viewer">("operator");
+  const [humanRole, setЧеловекRole] = useState<"owner" | "admin" | "operator" | "viewer">("operator");
   const [latestInviteUrl, setLatestInviteUrl] = useState<string | null>(null);
   const [latestInviteCopied, setLatestInviteCopied] = useState(false);
 
@@ -73,7 +73,7 @@ export function CompanyInvites() {
 
     pushToast({
       title: "Clipboard unavailable",
-      body: "Copy the invite URL manually from the field below.",
+      body: "Копировать the invite URL manually from the field below.",
       tone: "warn",
     });
     return false;
@@ -81,55 +81,55 @@ export function CompanyInvites() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Settings", href: "/company/settings" },
+      { label: selectedКомпания?.name ?? "Компания", href: "/dashboard" },
+      { label: "Настройки", href: "/company/settings" },
       { label: "Invites" },
     ]);
-  }, [selectedCompany?.name, setBreadcrumbs]);
+  }, [selectedКомпания?.name, setBreadcrumbs]);
 
-  const inviteHistoryQueryKey = queryKeys.access.invites(selectedCompanyId ?? "", "all", INVITE_HISTORY_PAGE_SIZE);
+  const inviteИсторияQueryКлюч = queryКлючs.access.invites(selectedКомпанияId ?? "", "all", INVITE_HISTORY_PAGE_SIZE);
   const invitesQuery = useInfiniteQuery({
-    queryKey: inviteHistoryQueryKey,
+    queryКлюч: inviteИсторияQueryКлюч,
     queryFn: ({ pageParam }) =>
-      accessApi.listInvites(selectedCompanyId!, {
+      accessApi.listInvites(selectedКомпанияId!, {
         limit: INVITE_HISTORY_PAGE_SIZE,
         offset: pageParam,
       }),
-    enabled: !!selectedCompanyId,
+    enabled: !!selectedКомпанияId,
     initialPageParam: 0,
-    getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
+    getДалееPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
   });
-  const inviteHistory = useMemo(
+  const inviteИстория = useMemo(
     () =>
       invitesQuery.data?.pages.flatMap((page) =>
-        Array.isArray(page?.invites) ? page.invites.filter(isInviteHistoryRow) : [],
+        Array.isArray(page?.invites) ? page.invites.filter(isInviteИсторияRow) : [],
       ) ?? [],
     [invitesQuery.data?.pages],
   );
 
   const createInviteMutation = useMutation({
     mutationFn: () =>
-      accessApi.createCompanyInvite(selectedCompanyId!, {
-        allowedJoinTypes: "human",
+      accessApi.createКомпанияInvite(selectedКомпанияId!, {
+        allowedJoinТипs: "human",
         humanRole,
         agentMessage: null,
       }),
-    onSuccess: async (invite) => {
+    onУспешно: async (invite) => {
       setLatestInviteUrl(invite.inviteUrl);
       setLatestInviteCopied(false);
       const copied = await copyInviteUrl(invite.inviteUrl);
 
-      await queryClient.invalidateQueries({ queryKey: inviteHistoryQueryKey });
+      await queryClient.invalidateQueries({ queryКлюч: inviteИсторияQueryКлюч });
       pushToast({
         title: "Invite created",
         body: copied ? "Invite ready below and copied to clipboard." : "Invite ready below.",
         tone: "success",
       });
     },
-    onError: (error) => {
+    onОшибка: (error) => {
       pushToast({
-        title: "Failed to create invite",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: "Ошибка to create invite",
+        body: error instanceof Ошибка ? error.message : "Неизвестно error",
         tone: "error",
       });
     },
@@ -137,86 +137,86 @@ export function CompanyInvites() {
 
   const revokeMutation = useMutation({
     mutationFn: (inviteId: string) => accessApi.revokeInvite(inviteId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: inviteHistoryQueryKey });
+    onУспешно: async () => {
+      await queryClient.invalidateQueries({ queryКлюч: inviteИсторияQueryКлюч });
       pushToast({ title: "Invite revoked", tone: "success" });
     },
-    onError: (error) => {
+    onОшибка: (error) => {
       pushToast({
-        title: "Failed to revoke invite",
-        body: error instanceof Error ? error.message : "Unknown error",
+        title: "Ошибка to revoke invite",
+        body: error instanceof Ошибка ? error.message : "Неизвестно error",
         tone: "error",
       });
     },
   });
 
-  if (!selectedCompanyId) {
-    return <div className="text-sm text-muted-foreground">Select a company to manage invites.</div>;
+  if (!selectedКомпанияId) {
+    return <div classИмя="text-sm text-muted-foreground">Select a company to manage invites.</div>;
   }
 
-  if (invitesQuery.isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading invites…</div>;
+  if (invitesQuery.isЗагрузка) {
+    return <div classИмя="text-sm text-muted-foreground">Загрузка invites…</div>;
   }
 
   if (invitesQuery.error) {
     const message =
-      invitesQuery.error instanceof ApiError && invitesQuery.error.status === 403
+      invitesQuery.error instanceof ApiОшибка && invitesQuery.error.status === 403
         ? "You do not have permission to manage company invites."
-        : invitesQuery.error instanceof Error
+        : invitesQuery.error instanceof Ошибка
           ? invitesQuery.error.message
-          : "Failed to load invites.";
-    return <div className="text-sm text-destructive">{message}</div>;
+          : "Ошибка to load invites.";
+    return <div classИмя="text-sm text-destructive">{message}</div>;
   }
 
   return (
-    <div className="max-w-5xl space-y-8">
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <MailPlus className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-lg font-semibold">Company Invites</h1>
+    <div classИмя="max-w-5xl space-y-8">
+      <div classИмя="space-y-3">
+        <div classИмя="flex items-center gap-2">
+          <MailPlus classИмя="h-5 w-5 text-muted-foreground" />
+          <h1 classИмя="text-lg font-semibold">Компания Invites</h1>
         </div>
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          Create human invite links for company access. New invite links are copied to your clipboard when they are generated.
+        <p classИмя="max-w-3xl text-sm text-muted-foreground">
+          Создать human invite links for company access. New invite links are copied to your clipboard when they are generated.
         </p>
       </div>
 
-      <section className="space-y-4 rounded-xl border border-border p-5">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold">Create invite</h2>
-          <p className="text-sm text-muted-foreground">
+      <section classИмя="space-y-4 rounded-xl border border-border p-5">
+        <div classИмя="space-y-1">
+          <h2 classИмя="text-sm font-semibold">Создать invite</h2>
+          <p classИмя="text-sm text-muted-foreground">
             Generate a human invite link and choose the default access it should request.
           </p>
         </div>
 
-        <fieldset className="space-y-3">
-          <legend className="text-sm font-medium">Choose a role</legend>
-          <div className="rounded-xl border border-border">
+        <fieldset classИмя="space-y-3">
+          <legend classИмя="text-sm font-medium">Choose a role</legend>
+          <div classИмя="rounded-xl border border-border">
             {inviteRoleOptions.map((option, index) => {
               const checked = humanRole === option.value;
               return (
                 <label
                   key={option.value}
-                  className={`flex cursor-pointer gap-3 px-4 py-4 ${index > 0 ? "border-t border-border" : ""}`}
+                  classИмя={`flex cursor-pointer gap-3 px-4 py-4 ${index > 0 ? "border-t border-border" : ""}`}
                 >
                   <input
                     type="radio"
                     name="invite-role"
                     value={option.value}
                     checked={checked}
-                    onChange={() => setHumanRole(option.value)}
-                    className="mt-1 h-4 w-4 border-border text-foreground"
+                    onChange={() => setЧеловекRole(option.value)}
+                    classИмя="mt-1 h-4 w-4 border-border text-foreground"
                   />
-                  <span className="min-w-0 space-y-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium">{option.label}</span>
+                  <span classИмя="min-w-0 space-y-1">
+                    <span classИмя="flex flex-wrap items-center gap-2">
+                      <span classИмя="text-sm font-medium">{option.label}</span>
                       {option.value === "operator" ? (
-                        <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-                          Default
+                        <span classИмя="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                          По умолчанию
                         </span>
                       ) : null}
                     </span>
-                    <span className="block max-w-2xl text-sm text-muted-foreground">{option.description}</span>
-                    <span className="block text-sm text-foreground">{option.gets}</span>
+                    <span classИмя="block max-w-2xl text-sm text-muted-foreground">{option.description}</span>
+                    <span classИмя="block text-sm text-foreground">{option.gets}</span>
                   </span>
                 </label>
               );
@@ -224,30 +224,30 @@ export function CompanyInvites() {
           </div>
         </fieldset>
 
-        <div className="rounded-lg border border-border px-4 py-3 text-sm text-muted-foreground">
+        <div classИмя="rounded-lg border border-border px-4 py-3 text-sm text-muted-foreground">
           Each invite link is single-use. The first successful use consumes the link and creates or reuses the matching join request before approval.
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Button onClick={() => createInviteMutation.mutate()} disabled={createInviteMutation.isPending}>
-            {createInviteMutation.isPending ? "Creating…" : "Create invite"}
+        <div classИмя="flex flex-wrap items-center gap-3">
+          <Button onClick={() => createInviteMutation.mutate()} disabled={createInviteMutation.isОжидание}>
+            {createInviteMutation.isОжидание ? "Creating…" : "Создать invite"}
           </Button>
-          <span className="text-sm text-muted-foreground">Invite history below keeps the audit trail.</span>
+          <span classИмя="text-sm text-muted-foreground">Invite history below keeps the audit trail.</span>
         </div>
 
         {latestInviteUrl ? (
-          <div className="space-y-3 rounded-lg border border-border px-4 py-4">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-medium">Latest invite link</div>
+          <div classИмя="space-y-3 rounded-lg border border-border px-4 py-4">
+            <div classИмя="space-y-1">
+              <div classИмя="flex items-center justify-between gap-3">
+                <div classИмя="text-sm font-medium">Latest invite link</div>
                 {latestInviteCopied ? (
-                  <div className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
-                    <Check className="h-3.5 w-3.5" />
+                  <div classИмя="inline-flex items-center gap-1 text-xs font-medium text-foreground">
+                    <Check classИмя="h-3.5 w-3.5" />
                     Copied
                   </div>
                 ) : null}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div classИмя="text-sm text-muted-foreground">
                 This URL includes the current Paperclip domain returned by the server.
               </div>
             </div>
@@ -257,14 +257,14 @@ export function CompanyInvites() {
                 const copied = await copyInviteUrl(latestInviteUrl);
                 setLatestInviteCopied(copied);
               }}
-              className="w-full rounded-md border border-border bg-muted/60 px-3 py-2 text-left text-sm break-all transition-colors hover:bg-background"
+              classИмя="w-full rounded-md border border-border bg-muted/60 px-3 py-2 text-left text-sm break-all transition-colors hover:bg-background"
             >
               {latestInviteUrl}
             </button>
-            <div className="flex flex-wrap gap-2">
+            <div classИмя="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" asChild>
                 <a href={latestInviteUrl} target="_blank" rel="noreferrer">
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink classИмя="h-4 w-4" />
                   Open invite
                 </a>
               </Button>
@@ -273,76 +273,76 @@ export function CompanyInvites() {
         ) : null}
       </section>
 
-      <section className="rounded-xl border border-border">
-        <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold">Invite history</h2>
-            <p className="text-sm text-muted-foreground">
+      <section classИмя="rounded-xl border border-border">
+        <div classИмя="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+          <div classИмя="space-y-1">
+            <h2 classИмя="text-sm font-semibold">Invite history</h2>
+            <p classИмя="text-sm text-muted-foreground">
               Review invite status, role, inviter, and any linked join request.
             </p>
           </div>
-          <Link to="/inbox/requests" className="text-sm underline underline-offset-4">
+          <Link to="/inbox/requests" classИмя="text-sm underline underline-offset-4">
             Open join request queue
           </Link>
         </div>
 
-        {inviteHistory.length === 0 ? (
-          <div className="border-t border-border px-5 py-8 text-sm text-muted-foreground">
-            No invites have been created for this company yet.
+        {inviteИстория.length === 0 ? (
+          <div classИмя="border-t border-border px-5 py-8 text-sm text-muted-foreground">
+            Нет invites have been created for this company yet.
           </div>
         ) : (
-          <div className="border-t border-border">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
+          <div classИмя="border-t border-border">
+            <div classИмя="overflow-x-auto">
+              <table classИмя="min-w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-border">
-                    <th className="px-5 py-3 font-medium text-muted-foreground">State</th>
-                    <th className="px-5 py-3 font-medium text-muted-foreground">Role</th>
-                    <th className="px-5 py-3 font-medium text-muted-foreground">Invited by</th>
-                    <th className="px-5 py-3 font-medium text-muted-foreground">Created</th>
-                    <th className="px-5 py-3 font-medium text-muted-foreground">Join request</th>
-                    <th className="px-5 py-3 text-right font-medium text-muted-foreground">Action</th>
+                  <tr classИмя="border-b border-border">
+                    <th classИмя="px-5 py-3 font-medium text-muted-foreground">State</th>
+                    <th classИмя="px-5 py-3 font-medium text-muted-foreground">Role</th>
+                    <th classИмя="px-5 py-3 font-medium text-muted-foreground">Invited by</th>
+                    <th classИмя="px-5 py-3 font-medium text-muted-foreground">Создано</th>
+                    <th classИмя="px-5 py-3 font-medium text-muted-foreground">Join request</th>
+                    <th classИмя="px-5 py-3 text-right font-medium text-muted-foreground">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {inviteHistory.map((invite) => (
-                    <tr key={invite.id} className="border-b border-border last:border-b-0">
-                      <td className="px-5 py-3 align-top">
-                        <span className="inline-flex rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                  {inviteИстория.map((invite) => (
+                    <tr key={invite.id} classИмя="border-b border-border last:border-b-0">
+                      <td classИмя="px-5 py-3 align-top">
+                        <span classИмя="inline-flex rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
                           {formatInviteState(invite.state)}
                         </span>
                       </td>
-                      <td className="px-5 py-3 align-top">{invite.humanRole ?? "—"}</td>
-                      <td className="px-5 py-3 align-top">
-                        <div>{invite.invitedByUser?.name || invite.invitedByUser?.email || "Unknown inviter"}</div>
+                      <td classИмя="px-5 py-3 align-top">{invite.humanRole ?? "—"}</td>
+                      <td classИмя="px-5 py-3 align-top">
+                        <div>{invite.invitedByUser?.name || invite.invitedByUser?.email || "Неизвестно inviter"}</div>
                         {invite.invitedByUser?.email && invite.invitedByUser.name ? (
-                          <div className="text-xs text-muted-foreground">{invite.invitedByUser.email}</div>
+                          <div classИмя="text-xs text-muted-foreground">{invite.invitedByUser.email}</div>
                         ) : null}
                       </td>
-                      <td className="px-5 py-3 align-top text-muted-foreground">
+                      <td classИмя="px-5 py-3 align-top text-muted-foreground">
                         {new Date(invite.createdAt).toLocaleString()}
                       </td>
-                      <td className="px-5 py-3 align-top">
+                      <td classИмя="px-5 py-3 align-top">
                         {invite.relatedJoinRequestId ? (
-                          <Link to="/inbox/requests" className="underline underline-offset-4">
+                          <Link to="/inbox/requests" classИмя="underline underline-offset-4">
                             Review request
                           </Link>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span classИмя="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="px-5 py-3 text-right align-top">
+                      <td classИмя="px-5 py-3 text-right align-top">
                         {invite.state === "active" ? (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => revokeMutation.mutate(invite.id)}
-                            disabled={revokeMutation.isPending}
+                            disabled={revokeMutation.isОжидание}
                           >
                             Revoke
                           </Button>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Inactive</span>
+                          <span classИмя="text-xs text-muted-foreground">Inactive</span>
                         )}
                       </td>
                     </tr>
@@ -350,15 +350,15 @@ export function CompanyInvites() {
                 </tbody>
               </table>
             </div>
-            {invitesQuery.hasNextPage ? (
-              <div className="flex justify-center border-t border-border px-5 py-4">
+            {invitesQuery.hasДалееPage ? (
+              <div classИмя="flex justify-center border-t border-border px-5 py-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => invitesQuery.fetchNextPage()}
-                  disabled={invitesQuery.isFetchingNextPage}
+                  onClick={() => invitesQuery.fetchДалееPage()}
+                  disabled={invitesQuery.isFetchingДалееPage}
                 >
-                  {invitesQuery.isFetchingNextPage ? "Loading more…" : "View more"}
+                  {invitesQuery.isFetchingДалееPage ? "Загрузка more…" : "Показать больше"}
                 </Button>
               </div>
             ) : null}

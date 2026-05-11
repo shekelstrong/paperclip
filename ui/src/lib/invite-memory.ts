@@ -4,7 +4,7 @@ function canUseStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
-export function rememberPendingInviteToken(token: string) {
+export function rememberОжиданиеInviteТокен(token: string) {
   const normalized = token.trim();
   if (!normalized || !canUseStorage()) return;
   try {
@@ -14,18 +14,18 @@ export function rememberPendingInviteToken(token: string) {
   }
 }
 
-export function clearPendingInviteToken(expectedToken?: string) {
+export function clearОжиданиеInviteТокен(expectedТокен?: string) {
   if (!canUseStorage()) return;
   try {
     const current = window.localStorage.getItem(PENDING_INVITE_STORAGE_KEY);
-    if (expectedToken && current !== expectedToken.trim()) return;
+    if (expectedТокен && current !== expectedТокен.trim()) return;
     window.localStorage.removeItem(PENDING_INVITE_STORAGE_KEY);
   } catch {
     // Ignore storage failures.
   }
 }
 
-export function getRememberedInvitePath() {
+export function getRememberedInviteПуть() {
   if (!canUseStorage()) return null;
   try {
     const token = window.localStorage.getItem(PENDING_INVITE_STORAGE_KEY)?.trim();

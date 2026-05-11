@@ -1,73 +1,73 @@
-import { startTransition, useDeferredValue, useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { startTransition, useDeferredЗначение, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { accessApi } from "../api/access";
 import { useDialogActions } from "../context/DialogContext";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { Link } from "@/lib/router";
-import { executionWorkspacesApi } from "../api/execution-workspaces";
+import { executionРабочие областиApi } from "../api/execution-workspaces";
 import { issuesApi } from "../api/issues";
 import { authApi } from "../api/auth";
-import { instanceSettingsApi } from "../api/instanceSettings";
-import { queryKeys } from "../lib/queryKeys";
+import { instanceНастройкиApi } from "../api/instanceНастройки";
+import { queryКлючs } from "../lib/queryКлючs";
 import {
-  shouldBlurPageSearchOnEnter,
-  shouldBlurPageSearchOnEscape,
+  shouldBlurPageПоискOnEnter,
+  shouldBlurPageПоискOnEscape,
 } from "../lib/keyboardShortcuts";
-import { formatAssigneeUserLabel } from "../lib/assignees";
-import { buildCompanyUserLabelMap, buildCompanyUserProfileMap } from "../lib/company-members";
-import { createIssueDetailPath, withIssueDetailHeaderSeed } from "../lib/issueDetailBreadcrumb";
+import { formatИсполнительUserLabel } from "../lib/assignees";
+import { buildКомпанияUserLabelMap, buildКомпанияUserПрофильMap } from "../lib/company-members";
+import { createЗадачаDetailПуть, withЗадачаDetailHeaderSeed } from "../lib/issueDetailBreadcrumb";
 import {
-  buildSubIssueProgressSummary,
-  shouldRenderSubIssueProgressSummary,
-  type SubIssueProgressSummary,
+  buildSubЗадачаProgressSummary,
+  shouldRenderSubЗадачаProgressSummary,
+  type SubЗадачаProgressSummary,
 } from "../lib/issue-detail-subissues";
 import { groupBy } from "../lib/groupBy";
 import {
-  applyIssueFilters,
-  countActiveIssueFilters,
-  defaultIssueFilterState,
-  issueFilterLabel,
-  issuePriorityOrder,
-  normalizeIssueFilterState,
-  resolveIssueFilterWorkspaceId,
-  shouldIncludeIssueFilterWorkspaceOption,
-  issueStatusOrder,
-  type IssueFilterState,
+  applyЗадачаФильтрs,
+  countАктивенЗадачаФильтрs,
+  defaultЗадачаФильтрState,
+  issueФильтрLabel,
+  issueПриоритетOrder,
+  normalizeЗадачаФильтрState,
+  resolveЗадачаФильтрРабочая областьId,
+  shouldIncludeЗадачаФильтрРабочая областьOption,
+  issueСтатусOrder,
+  type ЗадачаФильтрState,
 } from "../lib/issue-filters";
 import {
   DEFAULT_INBOX_ISSUE_COLUMNS,
-  getAvailableInboxIssueColumns,
-  normalizeInboxIssueColumns,
-  resolveIssueWorkspaceName,
-  type InboxIssueColumn,
+  getAvailableВходящиеЗадачаColumns,
+  normalizeВходящиеЗадачаColumns,
+  resolveЗадачаРабочая областьИмя,
+  type ВходящиеЗадачаColumn,
 } from "../lib/inbox";
-import { cn, formatDurationMs, formatTokens } from "../lib/utils";
+import { cn, formatDurationMs, formatТокенs } from "../lib/utils";
 import {
-  InboxIssueMetaLeading,
-  InboxIssueTrailingColumns,
-  IssueColumnPicker,
-  issueActivityText,
+  ВходящиеЗадачаMetaLeading,
+  ВходящиеЗадачаTrailingColumns,
+  ЗадачаColumnPicker,
+  issueАктивностьText,
   issueTrailingColumns,
-} from "./IssueColumns";
-import { StatusIcon } from "./StatusIcon";
+} from "./ЗадачаColumns";
+import { СтатусIcon } from "./СтатусIcon";
 import { EmptyState } from "./EmptyState";
 import { Identity } from "./Identity";
-import { IssueGroupHeader } from "./IssueGroupHeader";
-import { IssueFiltersPopover } from "./IssueFiltersPopover";
-import { IssueRow } from "./IssueRow";
+import { ЗадачаGroupHeader } from "./ЗадачаGroupHeader";
+import { ЗадачаФильтрsPopover } from "./ЗадачаФильтрsPopover";
+import { ЗадачаRow } from "./ЗадачаRow";
 import { PageSkeleton } from "./PageSkeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { CircleDot, Plus, ArrowUpDown, Layers, Check, ChevronRight, List, ListTree, Columns3, User, Search, CircleSlash2 } from "lucide-react";
-import { KanbanBoard } from "./KanbanBoard";
-import { buildIssueTree, countDescendants } from "../lib/issue-tree";
-import { buildSubIssueDefaultsForViewer } from "../lib/subIssueDefaults";
+import { CircleDot, Plus, ArrowUpDown, Layers, Check, ChevronRight, List, ListTree, Columns3, User, Поиск, CircleSlash2 } from "lucide-react";
+import { KanbanСовет } from "./KanbanСовет";
+import { buildЗадачаTree, countDescendants } from "../lib/issue-tree";
+import { buildSubЗадачаПо умолчаниюsForViewer } from "../lib/subЗадачаПо умолчаниюs";
 import { statusBadge } from "../lib/status-colors";
-import { workflowSort } from "../lib/workflow-sort";
-import { isSuccessfulRunHandoffRequired } from "../lib/successful-run-handoff";
-import { ISSUE_STATUSES, type Issue, type IssueStatus, type Project } from "@paperclipai/shared";
+import { workflowСортировка } from "../lib/workflow-sort";
+import { isУспешноfulЗапуститьHandoffОбязательно } from "../lib/successful-run-handoff";
+import { ISSUE_STATUSES, type Задача, type ЗадачаСтатус, type Project } from "@paperclipai/shared";
 const ISSUE_SEARCH_DEBOUNCE_MS = 250;
 const ISSUE_SEARCH_RESULT_LIMIT = 200;
 const ISSUE_BOARD_COLUMN_RESULT_LIMIT = 200;
@@ -75,7 +75,7 @@ const INITIAL_ISSUE_ROW_RENDER_LIMIT = 100;
 const ISSUE_ROW_RENDER_BATCH_SIZE = 150;
 const ISSUE_SCROLL_LOAD_THRESHOLD_PX = 320;
 
-function findIssuesScrollContainer(element: HTMLElement | null): HTMLElement | null {
+function findЗадачиScrollContainer(element: HTMLElement | null): HTMLElement | null {
   if (!element || typeof window === "undefined") return null;
   let current = element.parentElement;
   while (current && current !== document.body && current !== document.documentElement) {
@@ -87,17 +87,17 @@ function findIssuesScrollContainer(element: HTMLElement | null): HTMLElement | n
   }
   return null;
 }
-const boardIssueStatuses = ISSUE_STATUSES;
-const issueStatusLabels: Record<IssueStatus, string> = {
-  backlog: "Backlog",
+const boardЗадачаСтатусes = ISSUE_STATUSES;
+const issueСтатусЯрлыки: Record<ЗадачаСтатус, string> = {
+  backlog: "Назадlog",
   todo: "Todo",
   in_progress: "In progress",
   in_review: "In review",
-  done: "Done",
-  blocked: "Blocked",
-  cancelled: "Cancelled",
+  done: "Готово",
+  blocked: "Заблокирован",
+  cancelled: "Отменён",
 };
-const progressSegmentClasses: Record<IssueStatus, string> = {
+const progressSegmentClasses: Record<ЗадачаСтатус, string> = {
   backlog: "bg-muted-foreground/40",
   todo: "bg-blue-500",
   in_progress: "bg-yellow-500",
@@ -109,73 +109,73 @@ const progressSegmentClasses: Record<IssueStatus, string> = {
 
 /* ── View state ── */
 
-export type IssueSortField = "status" | "priority" | "title" | "created" | "updated" | "workflow";
+export type ЗадачаСортировкаField = "status" | "priority" | "title" | "created" | "updated" | "workflow";
 
-export type IssueViewState = IssueFilterState & {
-  sortField: IssueSortField;
+export type ЗадачаViewState = ЗадачаФильтрState & {
+  sortField: ЗадачаСортировкаField;
   sortDir: "asc" | "desc";
   groupBy: "status" | "priority" | "assignee" | "project" | "workspace" | "parent" | "none";
   viewMode: "list" | "board";
-  nestingEnabled: boolean;
+  nestingВключитьd: boolean;
   collapsedGroups: string[];
-  collapsedParents: string[];
+  collapsedРодительs: string[];
 };
 
-const defaultViewState: IssueViewState = {
-  ...defaultIssueFilterState,
+const defaultViewState: ЗадачаViewState = {
+  ...defaultЗадачаФильтрState,
   sortField: "updated",
   sortDir: "desc",
   groupBy: "none",
   viewMode: "list",
-  nestingEnabled: true,
+  nestingВключитьd: true,
   collapsedGroups: [],
-  collapsedParents: [],
+  collapsedРодительs: [],
 };
 
-function getViewState(key: string): IssueViewState {
+function getViewState(key: string): ЗадачаViewState {
   try {
     const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return { ...defaultViewState, ...parsed, ...normalizeIssueFilterState(parsed) };
+      return { ...defaultViewState, ...parsed, ...normalizeЗадачаФильтрState(parsed) };
     }
   } catch { /* ignore */ }
   return { ...defaultViewState };
 }
 
-function saveViewState(key: string, state: IssueViewState) {
+function saveViewState(key: string, state: ЗадачаViewState) {
   localStorage.setItem(key, JSON.stringify(state));
 }
 
 function getInitialViewState(
   key: string,
-  initialAssignees?: string[],
-  defaultSortField?: IssueSortField,
-): IssueViewState {
+  initialИсполнители?: string[],
+  defaultСортировкаField?: ЗадачаСортировкаField,
+): ЗадачаViewState {
   const hasStored = hasStoredViewState(key);
   const stored = getViewState(key);
-  const base = !hasStored && defaultSortField
-    ? { ...stored, sortField: defaultSortField, sortDir: "asc" as const }
+  const base = !hasStored && defaultСортировкаField
+    ? { ...stored, sortField: defaultСортировкаField, sortDir: "asc" as const }
     : stored;
-  if (!initialAssignees) return base;
+  if (!initialИсполнители) return base;
   return {
     ...base,
-    assignees: initialAssignees,
+    assignees: initialИсполнители,
     statuses: [],
   };
 }
 
-function getInitialWorkspaceViewState(
+function getInitialРабочая областьViewState(
   key: string,
-  initialAssignees?: string[],
-  initialWorkspaces?: string[],
-  defaultSortField?: IssueSortField,
-): IssueViewState {
-  const stored = getInitialViewState(key, initialAssignees, defaultSortField);
-  if (!initialWorkspaces) return stored;
+  initialИсполнители?: string[],
+  initialРабочие области?: string[],
+  defaultСортировкаField?: ЗадачаСортировкаField,
+): ЗадачаViewState {
+  const stored = getInitialViewState(key, initialИсполнители, defaultСортировкаField);
+  if (!initialРабочие области) return stored;
   return {
     ...stored,
-    workspaces: initialWorkspaces,
+    workspaces: initialРабочие области,
     statuses: [],
   };
 }
@@ -188,36 +188,36 @@ function hasStoredViewState(key: string): boolean {
   }
 }
 
-function getIssueColumnsStorageKey(key: string): string {
+function getЗадачаColumnsStorageКлюч(key: string): string {
   return `${key}:issue-columns`;
 }
 
-function loadIssueColumns(key: string): InboxIssueColumn[] {
+function loadЗадачаColumns(key: string): ВходящиеЗадачаColumn[] {
   try {
-    const raw = localStorage.getItem(getIssueColumnsStorageKey(key));
+    const raw = localStorage.getItem(getЗадачаColumnsStorageКлюч(key));
     if (raw === null) return DEFAULT_INBOX_ISSUE_COLUMNS;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return DEFAULT_INBOX_ISSUE_COLUMNS;
-    return normalizeInboxIssueColumns(parsed);
+    return normalizeВходящиеЗадачаColumns(parsed);
   } catch {
     return DEFAULT_INBOX_ISSUE_COLUMNS;
   }
 }
 
-function saveIssueColumns(key: string, columns: InboxIssueColumn[]) {
+function saveЗадачаColumns(key: string, columns: ВходящиеЗадачаColumn[]) {
   try {
     localStorage.setItem(
-      getIssueColumnsStorageKey(key),
-      JSON.stringify(normalizeInboxIssueColumns(columns)),
+      getЗадачаColumnsStorageКлюч(key),
+      JSON.stringify(normalizeВходящиеЗадачаColumns(columns)),
     );
   } catch {
     // Ignore localStorage failures.
   }
 }
 
-function sortIssues(issues: Issue[], state: IssueViewState): Issue[] {
+function sortЗадачи(issues: Задача[], state: ЗадачаViewState): Задача[] {
   if (state.sortField === "workflow") {
-    const ordered = workflowSort(issues);
+    const ordered = workflowСортировка(issues);
     return state.sortDir === "desc" ? [...ordered].reverse() : ordered;
   }
   const sorted = [...issues];
@@ -225,9 +225,9 @@ function sortIssues(issues: Issue[], state: IssueViewState): Issue[] {
   sorted.sort((a, b) => {
     switch (state.sortField) {
       case "status":
-        return dir * (issueStatusOrder.indexOf(a.status) - issueStatusOrder.indexOf(b.status));
+        return dir * (issueСтатусOrder.indexOf(a.status) - issueСтатусOrder.indexOf(b.status));
       case "priority":
-        return dir * (issuePriorityOrder.indexOf(a.priority) - issuePriorityOrder.indexOf(b.priority));
+        return dir * (issueПриоритетOrder.indexOf(a.priority) - issueПриоритетOrder.indexOf(b.priority));
       case "title":
         return dir * a.title.localeCompare(b.title);
       case "created":
@@ -241,96 +241,96 @@ function sortIssues(issues: Issue[], state: IssueViewState): Issue[] {
   return sorted;
 }
 
-function issueMatchesLocalSearch(issue: Issue, normalizedSearch: string): boolean {
-  if (!normalizedSearch) return true;
+function issueMatchesLocalПоиск(issue: Задача, normalizedПоиск: string): boolean {
+  if (!normalizedПоиск) return true;
   return [
     issue.identifier,
     issue.title,
     issue.description,
-  ].some((value) => value?.toLowerCase().includes(normalizedSearch));
+  ].some((value) => value?.toНизкийerCase().includes(normalizedПоиск));
 }
 
-function isActionableWorkflowStatus(status: IssueStatus): boolean {
+function isActionableРаботаflowСтатус(status: ЗадачаСтатус): boolean {
   return status !== "done" && status !== "cancelled" && status !== "blocked";
 }
 
-function buildChecklistStepNumberMap(issues: Issue[], nestingEnabled: boolean): Map<string, string> {
-  const stepNumberByIssueId = new Map<string, string>();
+function buildChecklistStepNumberMap(issues: Задача[], nestingВключитьd: boolean): Map<string, string> {
+  const stepNumberByЗадачаId = new Map<string, string>();
 
-  if (!nestingEnabled) {
+  if (!nestingВключитьd) {
     issues.forEach((issue, index) => {
-      stepNumberByIssueId.set(issue.id, String(index + 1));
+      stepNumberByЗадачаId.set(issue.id, String(index + 1));
     });
-    return stepNumberByIssueId;
+    return stepNumberByЗадачаId;
   }
 
-  const { roots, childMap } = buildIssueTree(issues);
-  const visit = (siblings: Issue[], prefix: string | null) => {
+  const { roots, childMap } = buildЗадачаTree(issues);
+  const visit = (siblings: Задача[], prefix: string | null) => {
     siblings.forEach((issue, index) => {
       const stepNumber = prefix ? `${prefix}.${index + 1}` : String(index + 1);
-      stepNumberByIssueId.set(issue.id, stepNumber);
+      stepNumberByЗадачаId.set(issue.id, stepNumber);
       visit(childMap.get(issue.id) ?? [], stepNumber);
     });
   };
   visit(roots, null);
 
   issues.forEach((issue, index) => {
-    if (!stepNumberByIssueId.has(issue.id)) {
-      stepNumberByIssueId.set(issue.id, String(index + 1));
+    if (!stepNumberByЗадачаId.has(issue.id)) {
+      stepNumberByЗадачаId.set(issue.id, String(index + 1));
     }
   });
 
-  return stepNumberByIssueId;
+  return stepNumberByЗадачаId;
 }
 
-function buildPreviousSiblingIssueIdMap(issues: Issue[], nestingEnabled: boolean): Map<string, string> {
-  const previousSiblingByIssueId = new Map<string, string>();
+function buildPreviousSiblingЗадачаIdMap(issues: Задача[], nestingВключитьd: boolean): Map<string, string> {
+  const previousSiblingByЗадачаId = new Map<string, string>();
 
-  if (!nestingEnabled) {
-    const previousByParentId = new Map<string, Issue>();
+  if (!nestingВключитьd) {
+    const previousByРодительId = new Map<string, Задача>();
     for (const issue of issues) {
       if (!issue.parentId) continue;
-      const previousSibling = previousByParentId.get(issue.parentId);
+      const previousSibling = previousByРодительId.get(issue.parentId);
       if (previousSibling) {
-        previousSiblingByIssueId.set(issue.id, previousSibling.id);
+        previousSiblingByЗадачаId.set(issue.id, previousSibling.id);
       }
-      previousByParentId.set(issue.parentId, issue);
+      previousByРодительId.set(issue.parentId, issue);
     }
-    return previousSiblingByIssueId;
+    return previousSiblingByЗадачаId;
   }
 
-  const { roots, childMap } = buildIssueTree(issues);
-  const visit = (siblings: Issue[]) => {
+  const { roots, childMap } = buildЗадачаTree(issues);
+  const visit = (siblings: Задача[]) => {
     siblings.forEach((issue, index) => {
       const previousSibling = index > 0 ? siblings[index - 1] : null;
       if (issue.parentId && previousSibling?.parentId === issue.parentId) {
-        previousSiblingByIssueId.set(issue.id, previousSibling.id);
+        previousSiblingByЗадачаId.set(issue.id, previousSibling.id);
       }
       visit(childMap.get(issue.id) ?? []);
     });
   };
   visit(roots);
 
-  return previousSiblingByIssueId;
+  return previousSiblingByЗадачаId;
 }
 
 function shouldSuppressSinglePreviousSiblingBlockerChip(
-  issue: Issue,
+  issue: Задача,
   unresolvedVisibleBlockerIds: string[],
-  previousSiblingIssueId: string | undefined,
+  previousSiblingЗадачаId: string | undefined,
 ): boolean {
   return Boolean(
     issue.parentId
-      && previousSiblingIssueId
+      && previousSiblingЗадачаId
       && (issue.blockedBy ?? []).length === 1
       && unresolvedVisibleBlockerIds.length === 1
-      && unresolvedVisibleBlockerIds[0] === previousSiblingIssueId,
+      && unresolvedVisibleBlockerIds[0] === previousSiblingЗадачаId,
   );
 }
 
 /* ── Component ── */
 
-interface Agent {
+interface Агент {
   id: string;
   name: string;
 }
@@ -342,165 +342,165 @@ type CreatorOption = {
   searchText?: string;
 };
 
-type ProjectOption = Pick<Project, "id" | "name"> & Partial<Pick<Project, "color" | "workspaces" | "executionWorkspacePolicy" | "primaryWorkspace">>;
-type IssueListRequestFilters = NonNullable<Parameters<typeof issuesApi.list>[1]>;
+type ProjectOption = Pick<Project, "id" | "name"> & Partial<Pick<Project, "color" | "workspaces" | "executionРабочая областьPolicy" | "primaryРабочая область">>;
+type ЗадачаListRequestФильтрs = НетnNullable<Parameters<typeof issuesApi.list>[1]>;
 
-interface IssuesListProps {
-  issues: Issue[];
-  isLoading?: boolean;
-  error?: Error | null;
-  agents?: Agent[];
+interface ЗадачиListProps {
+  issues: Задача[];
+  isЗагрузка?: boolean;
+  error?: Ошибка | null;
+  agents?: Агент[];
   projects?: ProjectOption[];
-  liveIssueIds?: Set<string>;
+  liveЗадачаIds?: Set<string>;
   projectId?: string;
-  viewStateKey: string;
+  viewStateКлюч: string;
   issueLinkState?: unknown;
-  initialAssignees?: string[];
-  initialWorkspaces?: string[];
-  initialSearch?: string;
-  searchFilters?: Omit<IssueListRequestFilters, "q" | "projectId" | "limit" | "includeRoutineExecutions">;
-  searchWithinLoadedIssues?: boolean;
-  baseCreateIssueDefaults?: Record<string, unknown>;
-  createIssueLabel?: string;
-  defaultSortField?: IssueSortField;
+  initialИсполнители?: string[];
+  initialРабочие области?: string[];
+  initialПоиск?: string;
+  searchФильтрs?: Omit<ЗадачаListRequestФильтрs, "q" | "projectId" | "limit" | "includeПроцедураExecutions">;
+  searchWithinLoadedЗадачи?: boolean;
+  baseСоздатьЗадачаПо умолчаниюs?: Record<string, unknown>;
+  createЗадачаLabel?: string;
+  defaultСортировкаField?: ЗадачаСортировкаField;
   showProgressSummary?: boolean;
   /**
    * When set together with `showProgressSummary`, the progress strip fetches
    * the recursive cost-summary for this parent issue and renders aggregate
    * tokens + wall-clock runtime for every run in the tree.
    */
-  parentIssueIdForCostSummary?: string;
-  enableRoutineVisibilityFilter?: boolean;
-  hasMoreIssues?: boolean;
-  isLoadingMoreIssues?: boolean;
-  mutedIssueIds?: Set<string>;
+  parentЗадачаIdForCostSummary?: string;
+  enableПроцедураVisibilityФильтр?: boolean;
+  hasMoreЗадачи?: boolean;
+  isЗагрузкаMoreЗадачи?: boolean;
+  mutedЗадачаIds?: Set<string>;
   issueBadgeById?: Map<string, string>;
-  onLoadMoreIssues?: () => void;
-  onSearchChange?: (search: string) => void;
-  onUpdateIssue: (id: string, data: Record<string, unknown>) => void;
+  onLoadMoreЗадачи?: () => void;
+  onПоискChange?: (search: string) => void;
+  onОбновитьЗадача: (id: string, data: Record<string, unknown>) => void;
 }
 
-function IssueSearchInput({
+function ЗадачаПоискInput({
   value,
   onDebouncedChange,
 }: {
   value: string;
   onDebouncedChange?: (search: string) => void;
 }) {
-  const [draftValue, setDraftValue] = useState(value);
-  const lastCommittedValueRef = useRef(value);
+  const [draftЗначение, setЧерновикЗначение] = useState(value);
+  const lastCommittedЗначениеRef = useRef(value);
 
   useEffect(() => {
-    setDraftValue(value);
-    lastCommittedValueRef.current = value;
+    setЧерновикЗначение(value);
+    lastCommittedЗначениеRef.current = value;
   }, [value]);
 
   useEffect(() => {
-    if (!onDebouncedChange || draftValue === lastCommittedValueRef.current) return;
+    if (!onDebouncedChange || draftЗначение === lastCommittedЗначениеRef.current) return;
 
     const timeoutId = window.setTimeout(() => {
-      lastCommittedValueRef.current = draftValue;
+      lastCommittedЗначениеRef.current = draftЗначение;
       startTransition(() => {
-        onDebouncedChange(draftValue);
+        onDebouncedChange(draftЗначение);
       });
     }, ISSUE_SEARCH_DEBOUNCE_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [draftValue, onDebouncedChange]);
+  }, [draftЗначение, onDebouncedChange]);
 
   return (
-    <div className="relative w-48 sm:w-64 md:w-80">
-      <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+    <div classИмя="relative w-48 sm:w-64 md:w-80">
+      <Поиск classИмя="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
       <Input
-        value={draftValue}
+        value={draftЗначение}
         onChange={(e) => {
-          setDraftValue(e.target.value);
+          setЧерновикЗначение(e.target.value);
         }}
-        onKeyDown={(e) => {
-          if (shouldBlurPageSearchOnEnter({
+        onКлючDown={(e) => {
+          if (shouldBlurPageПоискOnEnter({
             key: e.key,
             isComposing: e.nativeEvent.isComposing,
           })) {
-            e.currentTarget.blur();
+            e.currentЦель.blur();
             return;
           }
 
-          if (shouldBlurPageSearchOnEscape({
+          if (shouldBlurPageПоискOnEscape({
             key: e.key,
             isComposing: e.nativeEvent.isComposing,
-            currentValue: e.currentTarget.value,
+            currentЗначение: e.currentЦель.value,
           })) {
-            e.currentTarget.blur();
+            e.currentЦель.blur();
           }
         }}
-        placeholder="Search issues..."
-        className="pl-7 text-xs sm:text-sm"
-        aria-label="Search issues"
+        placeholder="Поиск issues..."
+        classИмя="pl-7 text-xs sm:text-sm"
+        aria-label="Поиск issues"
         data-page-search-target="true"
       />
     </div>
   );
 }
 
-function SubIssueProgressSummaryStrip({
+function SubЗадачаProgressSummaryStrip({
   summary,
   issueLinkState,
-  parentIssueIdForCostSummary,
+  parentЗадачаIdForCostSummary,
 }: {
-  summary: SubIssueProgressSummary;
+  summary: SubЗадачаProgressSummary;
   issueLinkState?: unknown;
-  parentIssueIdForCostSummary?: string;
+  parentЗадачаIdForCostSummary?: string;
 }) {
   const target = summary.target;
-  const targetIssue = target?.issue ?? null;
-  const targetPathId = targetIssue?.identifier ?? targetIssue?.id ?? "";
-  const targetState = targetIssue ? withIssueDetailHeaderSeed(issueLinkState, targetIssue) : undefined;
+  const targetЗадача = target?.issue ?? null;
+  const targetПутьId = targetЗадача?.identifier ?? targetЗадача?.id ?? "";
+  const targetState = targetЗадача ? withЗадачаDetailHeaderSeed(issueLinkState, targetЗадача) : undefined;
   const statusEntries = ISSUE_STATUSES
-    .map((status) => ({ status, count: summary.countsByStatus[status] ?? 0 }))
+    .map((status) => ({ status, count: summary.countsByСтатус[status] ?? 0 }))
     .filter((entry) => entry.count > 0);
 
-  // Refresh fast enough that the runtime ticks up while a sub-issue is still
+  // Обновить fast enough that the runtime ticks up while a sub-issue is still
   // running, but slow enough not to hammer the recursive CTE on idle trees.
   const hasInProgress = summary.inProgressCount > 0;
   const { data: costSummary } = useQuery({
-    queryKey: queryKeys.issues.costSummary(parentIssueIdForCostSummary ?? "pending", { excludeRoot: true }),
-    queryFn: () => issuesApi.getCostSummary(parentIssueIdForCostSummary!, { excludeRoot: true }),
-    enabled: !!parentIssueIdForCostSummary,
+    queryКлюч: queryКлючs.issues.costSummary(parentЗадачаIdForCostSummary ?? "pending", { excludeRoot: true }),
+    queryFn: () => issuesApi.getCostSummary(parentЗадачаIdForCostSummary!, { excludeRoot: true }),
+    enabled: !!parentЗадачаIdForCostSummary,
     refetchInterval: hasInProgress ? 5_000 : false,
   });
 
-  const totalTokens = costSummary
-    ? costSummary.inputTokens + costSummary.cachedInputTokens + costSummary.outputTokens
+  const totalТокенs = costSummary
+    ? costSummary.inputТокенs + costSummary.cachedInputТокенs + costSummary.outputТокенs
     : 0;
-  const showCostSummary = !!costSummary && (costSummary.runCount > 0 || totalTokens > 0);
+  const showCostSummary = !!costSummary && (costSummary.runCount > 0 || totalТокенs > 0);
 
   return (
-    <div className="border border-border bg-background p-3">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            <span className="font-medium text-foreground">
+    <div classИмя="border border-border bg-background p-3">
+      <div classИмя="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div classИмя="min-w-0 flex-1 space-y-2">
+          <div classИмя="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+            <span classИмя="font-medium text-foreground">
               {summary.doneCount}/{summary.totalCount} done
             </span>
-            <span className="text-muted-foreground">
+            <span classИмя="text-muted-foreground">
               {summary.inProgressCount} in progress
             </span>
-            <span className="text-muted-foreground">
+            <span classИмя="text-muted-foreground">
               {summary.blockedCount} blocked
             </span>
             {showCostSummary && (
               <>
                 <span
-                  className="text-muted-foreground tabular-nums"
+                  classИмя="text-muted-foreground tabular-nums"
                   title={`${costSummary.runCount.toLocaleString()} run${
                     costSummary.runCount === 1 ? "" : "s"
                   } across ${costSummary.issueCount} sub-issue${
                     costSummary.issueCount === 1 ? "" : "s"
                   }`}
                 >
-                  {formatTokens(totalTokens)} tokens
+                  {formatТокенs(totalТокенs)} tokens
                 </span>
-                <span className="text-muted-foreground tabular-nums">
+                <span classИмя="text-muted-foreground tabular-nums">
                   {formatDurationMs(costSummary.runtimeMs)} runtime
                 </span>
               </>
@@ -508,48 +508,48 @@ function SubIssueProgressSummaryStrip({
           </div>
           <div
             role="progressbar"
-            aria-label="Sub-issues completion progress"
+            aria-label="Подзадачи completion progress"
             aria-valuemin={0}
             aria-valuenow={summary.doneCount}
             aria-valuemax={summary.totalCount}
-            className="flex h-2 w-full overflow-hidden rounded-full bg-muted"
+            classИмя="flex h-2 w-full overflow-hidden rounded-full bg-muted"
           >
             {statusEntries.map(({ status, count }) => (
               <span
                 key={status}
-                className={cn("h-full", progressSegmentClasses[status])}
+                classИмя={cn("h-full", progressSegmentClasses[status])}
                 style={{ width: `${(count / summary.totalCount) * 100}%` }}
-                title={`${issueStatusLabels[status]}: ${count}`}
+                title={`${issueСтатусЯрлыки[status]}: ${count}`}
                 aria-hidden="true"
               />
             ))}
           </div>
         </div>
 
-        <div className="min-w-0 border border-border bg-background px-3 py-2 text-sm lg:w-72">
-          {target && targetIssue ? (
+        <div classИмя="min-w-0 border border-border bg-background px-3 py-2 text-sm lg:w-72">
+          {target && targetЗадача ? (
             <>
-              <div className="text-xs font-medium text-muted-foreground">
-                {target.kind === "next" ? "Next up" : "Waiting on blockers"}
+              <div classИмя="text-xs font-medium text-muted-foreground">
+                {target.kind === "next" ? "Далее up" : "Waiting on blockers"}
               </div>
               <Link
-                to={createIssueDetailPath(targetPathId)}
+                to={createЗадачаDetailПуть(targetПутьId)}
                 state={targetState}
-                issuePrefetch={targetIssue}
-                className="mt-1 block min-w-0 text-foreground underline-offset-2 hover:underline"
+                issuePrefetch={targetЗадача}
+                classИмя="mt-1 block min-w-0 text-foreground underline-offset-2 hover:underline"
               >
-                <span className="font-mono text-xs text-muted-foreground">
-                  {targetIssue.identifier ?? targetIssue.id.slice(0, 8)}
+                <span classИмя="font-mono text-xs text-muted-foreground">
+                  {targetЗадача.identifier ?? targetЗадача.id.slice(0, 8)}
                 </span>{" "}
-                <span>{targetIssue.title}</span>
+                <span>{targetЗадача.title}</span>
               </Link>
             </>
           ) : summary.totalCount === 0 ? (
-            <div className="text-sm font-medium text-foreground">No active sub-issues</div>
+            <div classИмя="text-sm font-medium text-foreground">Нет active sub-issues</div>
           ) : summary.doneCount === summary.totalCount ? (
-            <div className="text-sm font-medium text-foreground">All sub-issues done</div>
+            <div classИмя="text-sm font-medium text-foreground">Все sub-issues done</div>
           ) : (
-            <div className="text-sm font-medium text-foreground">No actionable sub-issues</div>
+            <div classИмя="text-sm font-medium text-foreground">Нет actionable sub-issues</div>
           )}
         </div>
       </div>
@@ -557,177 +557,177 @@ function SubIssueProgressSummaryStrip({
   );
 }
 
-export function IssuesList({
+export function ЗадачиList({
   issues,
-  isLoading,
+  isЗагрузка,
   error,
   agents,
   projects,
-  liveIssueIds,
+  liveЗадачаIds,
   projectId,
-  viewStateKey,
+  viewStateКлюч,
   issueLinkState,
-  initialAssignees,
-  initialWorkspaces,
-  initialSearch,
-  searchFilters,
-  searchWithinLoadedIssues = false,
-  baseCreateIssueDefaults,
-  createIssueLabel,
-  defaultSortField,
+  initialИсполнители,
+  initialРабочие области,
+  initialПоиск,
+  searchФильтрs,
+  searchWithinLoadedЗадачи = false,
+  baseСоздатьЗадачаПо умолчаниюs,
+  createЗадачаLabel,
+  defaultСортировкаField,
   showProgressSummary = false,
-  parentIssueIdForCostSummary,
-  enableRoutineVisibilityFilter = false,
-  hasMoreIssues = false,
-  isLoadingMoreIssues = false,
-  mutedIssueIds,
+  parentЗадачаIdForCostSummary,
+  enableПроцедураVisibilityФильтр = false,
+  hasMoreЗадачи = false,
+  isЗагрузкаMoreЗадачи = false,
+  mutedЗадачаIds,
   issueBadgeById,
-  onLoadMoreIssues,
-  onSearchChange,
-  onUpdateIssue,
-}: IssuesListProps) {
+  onLoadMoreЗадачи,
+  onПоискChange,
+  onОбновитьЗадача,
+}: ЗадачиListProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const { selectedCompanyId } = useCompany();
-  const { openNewIssue } = useDialogActions();
+  const { selectedКомпанияId } = useКомпания();
+  const { openNewЗадача } = useDialogActions();
   const { data: session } = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
   });
   const { data: companyMembers } = useQuery({
-    queryKey: queryKeys.access.companyUserDirectory(selectedCompanyId!),
-    queryFn: () => accessApi.listUserDirectory(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.access.companyUserDirectory(selectedКомпанияId!),
+    queryFn: () => accessApi.listUserDirectory(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
-  const { data: experimentalSettings } = useQuery({
-    queryKey: queryKeys.instance.experimentalSettings,
-    queryFn: () => instanceSettingsApi.getExperimental(),
+  const { data: experimentalНастройки } = useQuery({
+    queryКлюч: queryКлючs.instance.experimentalНастройки,
+    queryFn: () => instanceНастройкиApi.getExperimental(),
     retry: false,
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
-  const isolatedWorkspacesEnabled = experimentalSettings?.enableIsolatedWorkspaces === true;
+  const isolatedРабочие областиВключитьd = experimentalНастройки?.enableIsolatedРабочие области === true;
 
-  // Scope the storage key per company so folding/view state is independent across companies.
-  const scopedKey = selectedCompanyId ? `${viewStateKey}:${selectedCompanyId}` : viewStateKey;
-  const initialAssigneesKey = initialAssignees?.join("|") ?? "";
-  const initialWorkspacesKey = initialWorkspaces?.join("|") ?? "";
+  // Область the storage key per company so folding/view state is independent across companies.
+  const scopedКлюч = selectedКомпанияId ? `${viewStateКлюч}:${selectedКомпанияId}` : viewStateКлюч;
+  const initialИсполнителиКлюч = initialИсполнители?.join("|") ?? "";
+  const initialРабочие областиКлюч = initialРабочие области?.join("|") ?? "";
 
-  const [viewState, setViewState] = useState<IssueViewState>(() =>
-    getInitialWorkspaceViewState(scopedKey, initialAssignees, initialWorkspaces, defaultSortField),
+  const [viewState, setViewState] = useState<ЗадачаViewState>(() =>
+    getInitialРабочая областьViewState(scopedКлюч, initialИсполнители, initialРабочие области, defaultСортировкаField),
   );
-  const [assigneePickerIssueId, setAssigneePickerIssueId] = useState<string | null>(null);
-  const [assigneeSearch, setAssigneeSearch] = useState("");
-  const [issueSearch, setIssueSearch] = useState(initialSearch ?? "");
-  const [renderedIssueRowLimit, setRenderedIssueRowLimit] = useState(INITIAL_ISSUE_ROW_RENDER_LIMIT);
-  const [visibleIssueColumns, setVisibleIssueColumns] = useState<InboxIssueColumn[]>(() => loadIssueColumns(scopedKey));
-  const renderedIssueIdsRef = useRef("");
+  const [assigneePickerЗадачаId, setИсполнительPickerЗадачаId] = useState<string | null>(null);
+  const [assigneeПоиск, setИсполнительПоиск] = useState("");
+  const [issueПоиск, setЗадачаПоиск] = useState(initialПоиск ?? "");
+  const [renderedЗадачаRowLimit, setRenderedЗадачаRowLimit] = useState(INITIAL_ISSUE_ROW_RENDER_LIMIT);
+  const [visibleЗадачаColumns, setVisibleЗадачаColumns] = useState<ВходящиеЗадачаColumn[]>(() => loadЗадачаColumns(scopedКлюч));
+  const renderedЗадачаIdsRef = useRef("");
   const initialServerFillRequestedRef = useRef(false);
-  const deferredIssueSearch = useDeferredValue(issueSearch);
-  const normalizedIssueSearch = deferredIssueSearch.trim().toLowerCase();
+  const deferredЗадачаПоиск = useDeferredЗначение(issueПоиск);
+  const normalizedЗадачаПоиск = deferredЗадачаПоиск.trim().toНизкийerCase();
 
   useEffect(() => {
-    setIssueSearch(initialSearch ?? "");
-  }, [initialSearch]);
+    setЗадачаПоиск(initialПоиск ?? "");
+  }, [initialПоиск]);
 
   // Reload view state whenever the persisted context changes.
-  const prevViewStateContextKey = useRef(`${scopedKey}::${initialAssigneesKey}::${initialWorkspacesKey}`);
+  const prevViewStateContextКлюч = useRef(`${scopedКлюч}::${initialИсполнителиКлюч}::${initialРабочие областиКлюч}`);
   useEffect(() => {
-    const nextContextKey = `${scopedKey}::${initialAssigneesKey}::${initialWorkspacesKey}`;
-    if (prevViewStateContextKey.current !== nextContextKey) {
-      prevViewStateContextKey.current = nextContextKey;
-      setViewState(getInitialWorkspaceViewState(scopedKey, initialAssignees, initialWorkspaces, defaultSortField));
+    const nextContextКлюч = `${scopedКлюч}::${initialИсполнителиКлюч}::${initialРабочие областиКлюч}`;
+    if (prevViewStateContextКлюч.current !== nextContextКлюч) {
+      prevViewStateContextКлюч.current = nextContextКлюч;
+      setViewState(getInitialРабочая областьViewState(scopedКлюч, initialИсполнители, initialРабочие области, defaultСортировкаField));
     }
-  }, [scopedKey, initialAssignees, initialAssigneesKey, initialWorkspaces, initialWorkspacesKey, defaultSortField]);
+  }, [scopedКлюч, initialИсполнители, initialИсполнителиКлюч, initialРабочие области, initialРабочие областиКлюч, defaultСортировкаField]);
 
-  const prevColumnsScopedKey = useRef(scopedKey);
+  const prevColumnsОбластьdКлюч = useRef(scopedКлюч);
   useEffect(() => {
-    if (prevColumnsScopedKey.current !== scopedKey) {
-      prevColumnsScopedKey.current = scopedKey;
-      setVisibleIssueColumns(loadIssueColumns(scopedKey));
+    if (prevColumnsОбластьdКлюч.current !== scopedКлюч) {
+      prevColumnsОбластьdКлюч.current = scopedКлюч;
+      setVisibleЗадачаColumns(loadЗадачаColumns(scopedКлюч));
     }
-  }, [scopedKey]);
+  }, [scopedКлюч]);
 
-  const updateView = useCallback((patch: Partial<IssueViewState>) => {
+  const updateView = useCallback((patch: Partial<ЗадачаViewState>) => {
     setViewState((prev) => {
       const next = { ...prev, ...patch };
-      saveViewState(scopedKey, next);
+      saveViewState(scopedКлюч, next);
       return next;
     });
-  }, [scopedKey]);
+  }, [scopedКлюч]);
 
-  // Prune stale IDs from collapsedParents whenever the issue list changes.
-  // Deleted or reassigned issues leave orphan IDs in localStorage; this keeps
+  // Prune stale IDs from collapsedРодительs whenever the issue list changes.
+  // Удалитьd or reassigned issues leave orphan IDs in localStorage; this keeps
   // the stored array bounded to only current parent IDs.
   useEffect(() => {
     const parentIds = new Set(issues.map((i) => i.parentId).filter(Boolean) as string[]);
-    const pruned = viewState.collapsedParents.filter((id) => parentIds.has(id));
-    if (pruned.length !== viewState.collapsedParents.length) {
-      updateView({ collapsedParents: pruned });
+    const pruned = viewState.collapsedРодительs.filter((id) => parentIds.has(id));
+    if (pruned.length !== viewState.collapsedРодительs.length) {
+      updateView({ collapsedРодительs: pruned });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [issues]);
 
-  const { data: searchedIssues = [] } = useQuery({
-    queryKey: [
-      ...queryKeys.issues.search(selectedCompanyId!, normalizedIssueSearch, projectId),
-      searchFilters ?? {},
+  const { data: searchedЗадачи = [] } = useQuery({
+    queryКлюч: [
+      ...queryКлючs.issues.search(selectedКомпанияId!, normalizedЗадачаПоиск, projectId),
+      searchФильтрs ?? {},
       ISSUE_SEARCH_RESULT_LIMIT,
-      enableRoutineVisibilityFilter ? "with-routine-executions" : "without-routine-executions",
+      enableПроцедураVisibilityФильтр ? "with-routine-executions" : "without-routine-executions",
     ],
     queryFn: () =>
-      issuesApi.list(selectedCompanyId!, {
-        q: normalizedIssueSearch,
+      issuesApi.list(selectedКомпанияId!, {
+        q: normalizedЗадачаПоиск,
         projectId,
         limit: ISSUE_SEARCH_RESULT_LIMIT,
-        ...searchFilters,
-        ...(enableRoutineVisibilityFilter ? { includeRoutineExecutions: true } : {}),
+        ...searchФильтрs,
+        ...(enableПроцедураVisibilityФильтр ? { includeПроцедураExecutions: true } : {}),
       }),
-    enabled: !!selectedCompanyId && normalizedIssueSearch.length > 0 && !searchWithinLoadedIssues,
+    enabled: !!selectedКомпанияId && normalizedЗадачаПоиск.length > 0 && !searchWithinLoadedЗадачи,
     placeholderData: (previousData) => previousData,
   });
-  const boardIssueQueries = useQueries({
-    queries: boardIssueStatuses.map((status) => ({
-      queryKey: [
-        ...queryKeys.issues.list(selectedCompanyId ?? "__no-company__"),
+  const boardЗадачаQueries = useQueries({
+    queries: boardЗадачаСтатусes.map((status) => ({
+      queryКлюч: [
+        ...queryКлючs.issues.list(selectedКомпанияId ?? "__no-company__"),
         "board-column",
         status,
-        normalizedIssueSearch,
+        normalizedЗадачаПоиск,
         projectId ?? "__all-projects__",
-        searchFilters ?? {},
+        searchФильтрs ?? {},
         ISSUE_BOARD_COLUMN_RESULT_LIMIT,
-        enableRoutineVisibilityFilter ? "with-routine-executions" : "without-routine-executions",
+        enableПроцедураVisibilityФильтр ? "with-routine-executions" : "without-routine-executions",
       ],
       queryFn: () =>
-        issuesApi.list(selectedCompanyId!, {
-          ...searchFilters,
-          ...(normalizedIssueSearch.length > 0 ? { q: normalizedIssueSearch } : {}),
+        issuesApi.list(selectedКомпанияId!, {
+          ...searchФильтрs,
+          ...(normalizedЗадачаПоиск.length > 0 ? { q: normalizedЗадачаПоиск } : {}),
           projectId,
           status,
           limit: ISSUE_BOARD_COLUMN_RESULT_LIMIT,
-          ...(enableRoutineVisibilityFilter ? { includeRoutineExecutions: true } : {}),
+          ...(enableПроцедураVisibilityФильтр ? { includeПроцедураExecutions: true } : {}),
         }),
-      enabled: !!selectedCompanyId && viewState.viewMode === "board" && !searchWithinLoadedIssues,
-      placeholderData: (previousData: Issue[] | undefined) => previousData,
+      enabled: !!selectedКомпанияId && viewState.viewMode === "board" && !searchWithinLoadedЗадачи,
+      placeholderData: (previousData: Задача[] | undefined) => previousData,
     })),
   });
-  const { data: executionWorkspaces = [] } = useQuery({
-    queryKey: selectedCompanyId
-      ? queryKeys.executionWorkspaces.summaryList(selectedCompanyId)
+  const { data: executionРабочие области = [] } = useQuery({
+    queryКлюч: selectedКомпанияId
+      ? queryКлючs.executionРабочие области.summaryList(selectedКомпанияId)
       : ["execution-workspaces", "__disabled__"],
-    queryFn: () => executionWorkspacesApi.listSummaries(selectedCompanyId!),
-    enabled: !!selectedCompanyId && isolatedWorkspacesEnabled,
+    queryFn: () => executionРабочие областиApi.listSummaries(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId && isolatedРабочие областиВключитьd,
   });
 
-  const agentName = useCallback((id: string | null) => {
+  const agentИмя = useCallback((id: string | null) => {
     if (!id || !agents) return null;
     return agents.find((a) => a.id === id)?.name ?? null;
   }, [agents]);
 
   const companyUserLabelMap = useMemo(
-    () => buildCompanyUserLabelMap(companyMembers?.users),
+    () => buildКомпанияUserLabelMap(companyMembers?.users),
     [companyMembers?.users],
   );
-  const companyUserProfileMap = useMemo(
-    () => buildCompanyUserProfileMap(companyMembers?.users),
+  const companyUserПрофильMap = useMemo(
+    () => buildКомпанияUserПрофильMap(companyMembers?.users),
     [companyMembers?.users],
   );
 
@@ -739,7 +739,7 @@ export function IssuesList({
     return map;
   }, [projects]);
 
-  const projectWorkspaceById = useMemo(() => {
+  const projectРабочая областьById = useMemo(() => {
     const map = new Map<string, { name: string; projectId: string }>();
     for (const project of projects ?? []) {
       for (const workspace of project.workspaces ?? []) {
@@ -749,82 +749,82 @@ export function IssuesList({
     return map;
   }, [projects]);
 
-  const defaultProjectWorkspaceIdByProjectId = useMemo(() => {
+  const defaultProjectРабочая областьIdByProjectId = useMemo(() => {
     const map = new Map<string, string>();
     for (const project of projects ?? []) {
-      const defaultWorkspaceId =
-        project.executionWorkspacePolicy?.defaultProjectWorkspaceId
-        ?? project.primaryWorkspace?.id
+      const defaultРабочая областьId =
+        project.executionРабочая областьPolicy?.defaultProjectРабочая областьId
+        ?? project.primaryРабочая область?.id
         ?? null;
-      if (defaultWorkspaceId) map.set(project.id, defaultWorkspaceId);
+      if (defaultРабочая областьId) map.set(project.id, defaultРабочая областьId);
     }
     return map;
   }, [projects]);
-  const defaultProjectWorkspaceIds = useMemo(
-    () => new Set(defaultProjectWorkspaceIdByProjectId.values()),
-    [defaultProjectWorkspaceIdByProjectId],
+  const defaultProjectРабочая областьIds = useMemo(
+    () => new Set(defaultProjectРабочая областьIdByProjectId.values()),
+    [defaultProjectРабочая областьIdByProjectId],
   );
 
-  const executionWorkspaceById = useMemo(() => {
+  const executionРабочая областьById = useMemo(() => {
     const map = new Map<string, {
       name: string;
       mode: "shared_workspace" | "isolated_workspace" | "operator_branch" | "adapter_managed" | "cloud_sandbox";
-      projectWorkspaceId: string | null;
+      projectРабочая областьId: string | null;
       projectId: string | null;
     }>();
-    for (const workspace of executionWorkspaces) {
-      const projectWorkspace = workspace.projectWorkspaceId
-        ? projectWorkspaceById.get(workspace.projectWorkspaceId) ?? null
+    for (const workspace of executionРабочие области) {
+      const projectРабочая область = workspace.projectРабочая областьId
+        ? projectРабочая областьById.get(workspace.projectРабочая областьId) ?? null
         : null;
       map.set(workspace.id, {
         name: workspace.name,
         mode: workspace.mode,
-        projectWorkspaceId: workspace.projectWorkspaceId ?? null,
-        projectId: projectWorkspace?.projectId ?? null,
+        projectРабочая областьId: workspace.projectРабочая областьId ?? null,
+        projectId: projectРабочая область?.projectId ?? null,
       });
     }
     return map;
-  }, [executionWorkspaces, projectWorkspaceById]);
-  const issueFilterWorkspaceContext = useMemo(() => ({
-    executionWorkspaceById,
-    defaultProjectWorkspaceIdByProjectId,
-  }), [defaultProjectWorkspaceIdByProjectId, executionWorkspaceById]);
+  }, [executionРабочие области, projectРабочая областьById]);
+  const issueФильтрРабочая областьContext = useMemo(() => ({
+    executionРабочая областьById,
+    defaultProjectРабочая областьIdByProjectId,
+  }), [defaultProjectРабочая областьIdByProjectId, executionРабочая областьById]);
 
-  const workspaceNameMap = useMemo(() => {
+  const workspaceИмяMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const [workspaceId, workspace] of projectWorkspaceById) {
-      if (!shouldIncludeIssueFilterWorkspaceOption({ id: workspaceId }, defaultProjectWorkspaceIds)) continue;
+    for (const [workspaceId, workspace] of projectРабочая областьById) {
+      if (!shouldIncludeЗадачаФильтрРабочая областьOption({ id: workspaceId }, defaultProjectРабочая областьIds)) continue;
       map.set(workspaceId, workspace.name);
     }
-    for (const [workspaceId, workspace] of executionWorkspaceById) {
-      if (!shouldIncludeIssueFilterWorkspaceOption({
+    for (const [workspaceId, workspace] of executionРабочая областьById) {
+      if (!shouldIncludeЗадачаФильтрРабочая областьOption({
         id: workspaceId,
         mode: workspace.mode,
-        projectWorkspaceId: workspace.projectWorkspaceId,
-      }, defaultProjectWorkspaceIds)) continue;
+        projectРабочая областьId: workspace.projectРабочая областьId,
+      }, defaultProjectРабочая областьIds)) continue;
       map.set(workspaceId, workspace.name);
     }
     return map;
-  }, [defaultProjectWorkspaceIds, executionWorkspaceById, projectWorkspaceById]);
+  }, [defaultProjectРабочая областьIds, executionРабочая областьById, projectРабочая областьById]);
 
   const workspaceOptions = useMemo(() => {
     const options = new Map<string, string>();
-    for (const [workspaceId, workspaceName] of workspaceNameMap) {
-      options.set(workspaceId, workspaceName);
+    for (const [workspaceId, workspaceИмя] of workspaceИмяMap) {
+      options.set(workspaceId, workspaceИмя);
     }
     return [...options.entries()]
       .sort((a, b) => a[1].localeCompare(b[1]))
       .map(([id, name]) => ({ id, name }));
-  }, [workspaceNameMap]);
+  }, [workspaceИмяMap]);
 
   const creatorOptions = useMemo<CreatorOption[]>(() => {
     const options = new Map<string, CreatorOption>();
-    const knownAgentIds = new Set<string>();
+    const knownАгентIds = new Set<string>();
 
     if (currentUserId) {
       options.set(`user:${currentUserId}`, {
         id: `user:${currentUserId}`,
-        label: currentUserId === "local-board" ? "Board" : "Me",
+        label: currentUserId === "local-board" ? "Совет" : "Me",
         kind: "user",
         searchText: currentUserId === "local-board" ? "board me human local-board" : `me board human ${currentUserId}`,
       });
@@ -836,7 +836,7 @@ export function IssuesList({
         if (!options.has(id)) {
           options.set(id, {
             id,
-            label: formatAssigneeUserLabel(issue.createdByUserId, currentUserId) ?? issue.createdByUserId.slice(0, 5),
+            label: formatИсполнительUserLabel(issue.createdByUserId, currentUserId) ?? issue.createdByUserId.slice(0, 5),
             kind: "user",
             searchText: `${issue.createdByUserId} board user human`,
           });
@@ -845,7 +845,7 @@ export function IssuesList({
     }
 
     for (const agent of agents ?? []) {
-      knownAgentIds.add(agent.id);
+      knownАгентIds.add(agent.id);
       const id = `agent:${agent.id}`;
       if (!options.has(id)) {
         options.set(id, {
@@ -858,14 +858,14 @@ export function IssuesList({
     }
 
     for (const issue of issues) {
-      if (issue.createdByAgentId && !knownAgentIds.has(issue.createdByAgentId)) {
-        const id = `agent:${issue.createdByAgentId}`;
+      if (issue.createdByАгентId && !knownАгентIds.has(issue.createdByАгентId)) {
+        const id = `agent:${issue.createdByАгентId}`;
         if (!options.has(id)) {
           options.set(id, {
             id,
-            label: issue.createdByAgentId.slice(0, 8),
+            label: issue.createdByАгентId.slice(0, 8),
             kind: "agent",
-            searchText: `${issue.createdByAgentId} agent`,
+            searchText: `${issue.createdByАгентId} agent`,
           });
         }
       }
@@ -877,26 +877,26 @@ export function IssuesList({
     });
   }, [agents, currentUserId, issues]);
 
-  const visibleIssueColumnSet = useMemo(() => new Set(visibleIssueColumns), [visibleIssueColumns]);
-  const availableIssueColumns = useMemo(
-    () => getAvailableInboxIssueColumns(isolatedWorkspacesEnabled),
-    [isolatedWorkspacesEnabled],
+  const visibleЗадачаColumnSet = useMemo(() => new Set(visibleЗадачаColumns), [visibleЗадачаColumns]);
+  const availableЗадачаColumns = useMemo(
+    () => getAvailableВходящиеЗадачаColumns(isolatedРабочие областиВключитьd),
+    [isolatedРабочие областиВключитьd],
   );
-  const availableIssueColumnSet = useMemo(() => new Set(availableIssueColumns), [availableIssueColumns]);
-  const visibleTrailingIssueColumns = useMemo(
-    () => issueTrailingColumns.filter((column) => visibleIssueColumnSet.has(column) && availableIssueColumnSet.has(column)),
-    [availableIssueColumnSet, visibleIssueColumnSet],
+  const availableЗадачаColumnSet = useMemo(() => new Set(availableЗадачаColumns), [availableЗадачаColumns]);
+  const visibleTrailingЗадачаColumns = useMemo(
+    () => issueTrailingColumns.filter((column) => visibleЗадачаColumnSet.has(column) && availableЗадачаColumnSet.has(column)),
+    [availableЗадачаColumnSet, visibleЗадачаColumnSet],
   );
 
   const issueById = useMemo(() => {
-    const map = new Map<string, Issue>();
+    const map = new Map<string, Задача>();
     for (const issue of issues) {
       map.set(issue.id, issue);
     }
     return map;
   }, [issues]);
 
-  const issueTitleMap = useMemo(() => {
+  const issueНазваниеMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const issue of issues) {
       map.set(issue.id, issue.identifier ? `${issue.identifier}: ${issue.title}` : issue.title);
@@ -904,109 +904,109 @@ export function IssuesList({
     return map;
   }, [issues]);
 
-  const boardIssues = useMemo(() => {
-    if (viewState.viewMode !== "board" || searchWithinLoadedIssues) return null;
-    const merged = new Map<string, Issue>();
-    let isPending = false;
-    for (const query of boardIssueQueries) {
-      isPending ||= query.isPending;
+  const boardЗадачи = useMemo(() => {
+    if (viewState.viewMode !== "board" || searchWithinLoadedЗадачи) return null;
+    const merged = new Map<string, Задача>();
+    let isОжидание = false;
+    for (const query of boardЗадачаQueries) {
+      isОжидание ||= query.isОжидание;
       for (const issue of query.data ?? []) {
         merged.set(issue.id, issue);
       }
     }
     if (merged.size > 0) return [...merged.values()];
-    return isPending ? issues : [];
-  }, [boardIssueQueries, issues, searchWithinLoadedIssues, viewState.viewMode]);
+    return isОжидание ? issues : [];
+  }, [boardЗадачаQueries, issues, searchWithinLoadedЗадачи, viewState.viewMode]);
   const boardColumnLimitReached = useMemo(
     () =>
       viewState.viewMode === "board" &&
-      !searchWithinLoadedIssues &&
-      boardIssueQueries.some((query) => (query.data?.length ?? 0) === ISSUE_BOARD_COLUMN_RESULT_LIMIT),
-    [boardIssueQueries, searchWithinLoadedIssues, viewState.viewMode],
+      !searchWithinLoadedЗадачи &&
+      boardЗадачаQueries.some((query) => (query.data?.length ?? 0) === ISSUE_BOARD_COLUMN_RESULT_LIMIT),
+    [boardЗадачаQueries, searchWithinLoadedЗадачи, viewState.viewMode],
   );
 
   const filtered = useMemo(() => {
-    const useRemoteSearch = normalizedIssueSearch.length > 0 && !searchWithinLoadedIssues;
-    const sourceIssues = boardIssues ?? (useRemoteSearch ? searchedIssues : issues);
-    const searchScopedIssues = normalizedIssueSearch.length > 0 && searchWithinLoadedIssues
-      ? sourceIssues.filter((issue) => issueMatchesLocalSearch(issue, normalizedIssueSearch))
-      : sourceIssues;
-    const filteredByControls = applyIssueFilters(
-      searchScopedIssues,
+    const useRemoteПоиск = normalizedЗадачаПоиск.length > 0 && !searchWithinLoadedЗадачи;
+    const sourceЗадачи = boardЗадачи ?? (useRemoteПоиск ? searchedЗадачи : issues);
+    const searchОбластьdЗадачи = normalizedЗадачаПоиск.length > 0 && searchWithinLoadedЗадачи
+      ? sourceЗадачи.filter((issue) => issueMatchesLocalПоиск(issue, normalizedЗадачаПоиск))
+      : sourceЗадачи;
+    const filteredByControls = applyЗадачаФильтрs(
+      searchОбластьdЗадачи,
       viewState,
       currentUserId,
-      enableRoutineVisibilityFilter,
-      liveIssueIds,
-      issueFilterWorkspaceContext,
+      enableПроцедураVisibilityФильтр,
+      liveЗадачаIds,
+      issueФильтрРабочая областьContext,
     );
-    return sortIssues(filteredByControls, viewState);
+    return sortЗадачи(filteredByControls, viewState);
   }, [
-    boardIssues,
+    boardЗадачи,
     issues,
-    searchedIssues,
-    searchWithinLoadedIssues,
+    searchedЗадачи,
+    searchWithinLoadedЗадачи,
     viewState,
-    normalizedIssueSearch,
+    normalizedЗадачаПоиск,
     currentUserId,
-    enableRoutineVisibilityFilter,
-    liveIssueIds,
-    issueFilterWorkspaceContext,
+    enableПроцедураVisibilityФильтр,
+    liveЗадачаIds,
+    issueФильтрРабочая областьContext,
   ]);
 
   const progressSummary = useMemo(
-    () => shouldRenderSubIssueProgressSummary(showProgressSummary, issues.length)
-      ? buildSubIssueProgressSummary(issues)
+    () => shouldRenderSubЗадачаProgressSummary(showProgressSummary, issues.length)
+      ? buildSubЗадачаProgressSummary(issues)
       : null,
     [issues, showProgressSummary],
   );
-  const checklistAffordanceEnabled = useMemo(
+  const checklistAffordanceВключитьd = useMemo(
     () =>
-      defaultSortField === "workflow"
+      defaultСортировкаField === "workflow"
       && viewState.groupBy === "none",
-    [defaultSortField, viewState.groupBy],
+    [defaultСортировкаField, viewState.groupBy],
   );
   const workflowChecklistMeta = useMemo(() => {
-    if (!checklistAffordanceEnabled) return null;
+    if (!checklistAffordanceВключитьd) return null;
 
-    const visibleIssueIds = new Set(filtered.map((issue) => issue.id));
-    const stepNumberByIssueId = buildChecklistStepNumberMap(filtered, viewState.nestingEnabled);
-    const previousSiblingIssueIdByIssueId = buildPreviousSiblingIssueIdMap(filtered, viewState.nestingEnabled);
-    const unresolvedVisibleBlockersByIssueId = new Map<string, string[]>();
+    const visibleЗадачаIds = new Set(filtered.map((issue) => issue.id));
+    const stepNumberByЗадачаId = buildChecklistStepNumberMap(filtered, viewState.nestingВключитьd);
+    const previousSiblingЗадачаIdByЗадачаId = buildPreviousSiblingЗадачаIdMap(filtered, viewState.nestingВключитьd);
+    const unresolvedVisibleBlockersByЗадачаId = new Map<string, string[]>();
 
     filtered.forEach((issue) => {
       const unresolvedVisible = (issue.blockedBy ?? [])
         .map((blocker) => blocker.id)
         .filter((blockerId) => {
-          if (!visibleIssueIds.has(blockerId)) return false;
-          const blockerIssue = issueById.get(blockerId);
-          if (!blockerIssue) return false;
-          return blockerIssue.status !== "done" && blockerIssue.status !== "cancelled";
+          if (!visibleЗадачаIds.has(blockerId)) return false;
+          const blockerЗадача = issueById.get(blockerId);
+          if (!blockerЗадача) return false;
+          return blockerЗадача.status !== "done" && blockerЗадача.status !== "cancelled";
         });
       const shouldSuppressChip = shouldSuppressSinglePreviousSiblingBlockerChip(
         issue,
         unresolvedVisible,
-        previousSiblingIssueIdByIssueId.get(issue.id),
+        previousSiblingЗадачаIdByЗадачаId.get(issue.id),
       );
-      unresolvedVisibleBlockersByIssueId.set(issue.id, shouldSuppressChip ? [] : unresolvedVisible);
+      unresolvedVisibleBlockersByЗадачаId.set(issue.id, shouldSuppressChip ? [] : unresolvedVisible);
     });
 
-    const firstActionable = filtered.find((issue) => isActionableWorkflowStatus(issue.status)) ?? null;
-    const currentStepIssue = firstActionable ?? filtered.find((issue) => issue.status === "blocked") ?? null;
+    const firstActionable = filtered.find((issue) => isActionableРаботаflowСтатус(issue.status)) ?? null;
+    const currentStepЗадача = firstActionable ?? filtered.find((issue) => issue.status === "blocked") ?? null;
 
     return {
-      stepNumberByIssueId,
-      unresolvedVisibleBlockersByIssueId,
-      currentStepIssueId: currentStepIssue?.id ?? null,
+      stepNumberByЗадачаId,
+      unresolvedVisibleBlockersByЗадачаId,
+      currentStepЗадачаId: currentStepЗадача?.id ?? null,
     };
-  }, [checklistAffordanceEnabled, filtered, issueById, viewState.nestingEnabled]);
+  }, [checklistAffordanceВключитьd, filtered, issueById, viewState.nestingВключитьd]);
 
   const { data: labels } = useQuery({
-    queryKey: queryKeys.issues.labels(selectedCompanyId!),
-    queryFn: () => issuesApi.listLabels(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.issues.labels(selectedКомпанияId!),
+    queryFn: () => issuesApi.listЯрлыки(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
-  const activeFilterCount = countActiveIssueFilters(viewState, enableRoutineVisibilityFilter);
+  const activeФильтрCount = countАктивенЗадачаФильтрs(viewState, enableПроцедураVisibilityФильтр);
 
   const groupedContent = useMemo(() => {
     if (viewState.groupBy === "none") {
@@ -1014,20 +1014,20 @@ export function IssuesList({
     }
     if (viewState.groupBy === "status") {
       const groups = groupBy(filtered, (i) => i.status);
-      return issueStatusOrder
+      return issueСтатусOrder
         .filter((s) => groups[s]?.length)
-        .map((s) => ({ key: s, label: issueFilterLabel(s), items: groups[s]! }));
+        .map((s) => ({ key: s, label: issueФильтрLabel(s), items: groups[s]! }));
     }
     if (viewState.groupBy === "priority") {
       const groups = groupBy(filtered, (i) => i.priority);
-      return issuePriorityOrder
+      return issueПриоритетOrder
         .filter((p) => groups[p]?.length)
-        .map((p) => ({ key: p, label: issueFilterLabel(p), items: groups[p]! }));
+        .map((p) => ({ key: p, label: issueФильтрLabel(p), items: groups[p]! }));
     }
     if (viewState.groupBy === "workspace") {
       const groups = groupBy(
         filtered,
-        (issue) => resolveIssueFilterWorkspaceId(issue, issueFilterWorkspaceContext) ?? "__no_workspace",
+        (issue) => resolveЗадачаФильтрРабочая областьId(issue, issueФильтрРабочая областьContext) ?? "__no_workspace",
       );
       return Object.keys(groups)
         .sort((a, b) => {
@@ -1038,7 +1038,7 @@ export function IssuesList({
         })
         .map((key) => ({
           key,
-          label: key === "__no_workspace" ? "No Workspace" : (workspaceNameMap.get(key) ?? key.slice(0, 8)),
+          label: key === "__no_workspace" ? "Без области" : (workspaceИмяMap.get(key) ?? key.slice(0, 8)),
           items: groups[key]!,
         }));
     }
@@ -1054,7 +1054,7 @@ export function IssuesList({
         })
         .map((key) => ({
           key,
-          label: key === "__no_project" ? "No Project" : (projectById.get(key)?.name ?? key.slice(0, 8)),
+          label: key === "__no_project" ? "Без проекта" : (projectById.get(key)?.name ?? key.slice(0, 8)),
           items: groups[key]!,
         }));
     }
@@ -1069,85 +1069,85 @@ export function IssuesList({
         })
         .map((key) => ({
           key,
-          label: key === "__no_parent" ? "No Parent" : (issueTitleMap.get(key) ?? key.slice(0, 8)),
+          label: key === "__no_parent" ? "Нет Родитель" : (issueНазваниеMap.get(key) ?? key.slice(0, 8)),
           items: groups[key]!,
         }));
     }
     // assignee
     const groups = groupBy(
       filtered,
-      (issue) => issue.assigneeAgentId ?? (issue.assigneeUserId ? `__user:${issue.assigneeUserId}` : "__unassigned"),
+      (issue) => issue.assigneeАгентId ?? (issue.assigneeUserId ? `__user:${issue.assigneeUserId}` : "__unassigned"),
     );
     return Object.keys(groups).map((key) => ({
       key,
       label:
         key === "__unassigned"
-          ? "Unassigned"
+          ? "Не назначен"
           : key.startsWith("__user:")
-            ? (formatAssigneeUserLabel(key.slice("__user:".length), currentUserId, companyUserLabelMap) ?? "User")
-            : (agentName(key) ?? key.slice(0, 8)),
+            ? (formatИсполнительUserLabel(key.slice("__user:".length), currentUserId, companyUserLabelMap) ?? "User")
+            : (agentИмя(key) ?? key.slice(0, 8)),
       items: groups[key]!,
     }));
   }, [
     filtered,
-    issueFilterWorkspaceContext,
+    issueФильтрРабочая областьContext,
     viewState.groupBy,
     agents,
-    agentName,
+    agentИмя,
     currentUserId,
-    workspaceNameMap,
-    issueTitleMap,
+    workspaceИмяMap,
+    issueНазваниеMap,
     companyUserLabelMap,
     projectById,
   ]);
 
   useEffect(() => {
     if (viewState.viewMode !== "list") return;
-    const nextIssueIds = filtered.map((issue) => issue.id).join("|");
-    const previousIssueIds = renderedIssueIdsRef.current;
-    renderedIssueIdsRef.current = nextIssueIds;
+    const nextЗадачаIds = filtered.map((issue) => issue.id).join("|");
+    const previousЗадачаIds = renderedЗадачаIdsRef.current;
+    renderedЗадачаIdsRef.current = nextЗадачаIds;
 
-    setRenderedIssueRowLimit((current) => {
+    setRenderedЗадачаRowLimit((current) => {
       const nextInitialLimit = Math.min(filtered.length, INITIAL_ISSUE_ROW_RENDER_LIMIT);
-      const listAppended = previousIssueIds.length > 0
-        && nextIssueIds.startsWith(previousIssueIds)
+      const listAppended = previousЗадачаIds.length > 0
+        && nextЗадачаIds.startsWith(previousЗадачаIds)
         && filtered.length >= current;
       if (listAppended) return Math.min(filtered.length, Math.max(current, nextInitialLimit));
       return nextInitialLimit;
     });
   }, [filtered, viewState.viewMode]);
 
-  const hasMoreRenderedRows = viewState.viewMode === "list" && renderedIssueRowLimit < filtered.length;
-  const remainingIssueRowCount = Math.max(filtered.length - renderedIssueRowLimit, 0);
-  const loadMoreIssueRows = useCallback(() => {
+  const hasMoreRenderedRows = viewState.viewMode === "list" && renderedЗадачаRowLimit < filtered.length;
+  const remainingЗадачаRowCount = Math.max(filtered.length - renderedЗадачаRowLimit, 0);
+  const loadMoreЗадачаRows = useCallback(() => {
     if (viewState.viewMode !== "list") return;
     if (hasMoreRenderedRows) {
       startTransition(() => {
-        setRenderedIssueRowLimit((current) => Math.min(filtered.length, current + ISSUE_ROW_RENDER_BATCH_SIZE));
+        setRenderedЗадачаRowLimit((current) => Math.min(filtered.length, current + ISSUE_ROW_RENDER_BATCH_SIZE));
       });
       return;
     }
-    if (hasMoreIssues && !isLoadingMoreIssues) {
-      onLoadMoreIssues?.();
+    if (hasMoreЗадачи && !isЗагрузкаMoreЗадачи) {
+      onLoadMoreЗадачи?.();
     }
   }, [
     filtered.length,
-    hasMoreIssues,
+    hasMoreЗадачи,
     hasMoreRenderedRows,
-    isLoadingMoreIssues,
-    onLoadMoreIssues,
+    isЗагрузкаMoreЗадачи,
+    onLoadMoreЗадачи,
     viewState.viewMode,
   ]);
 
-  const canLoadMoreIssues = viewState.viewMode === "list"
-    && !isLoading
-    && (hasMoreRenderedRows || (hasMoreIssues && !isLoadingMoreIssues));
+  const canLoadMoreЗадачи = viewState.viewMode === "list"
+    && !isЗагрузка
+    && (hasMoreRenderedRows || (hasMoreЗадачи && !isЗагрузкаMoreЗадачи));
 
   useEffect(() => {
-    if (!canLoadMoreIssues) return;
+    if (!canLoadMoreЗадачи) return;
     let animationFrameId: number | null = null;
-    const scrollContainer = findIssuesScrollContainer(rootRef.current);
-    const scrollTarget: Window | HTMLElement = scrollContainer ?? window;
+    const scrollContainer = findЗадачиScrollContainer(rootRef.current);
+    const scrollЦель: Window | HTMLElement = scrollContainer ?? window;
 
     const checkScrollPosition = (trigger: "initial" | "scroll" | "resize" = "scroll") => {
       if (animationFrameId !== null) return;
@@ -1156,158 +1156,158 @@ export function IssuesList({
         const scrollHeight = scrollContainer?.scrollHeight ?? document.documentElement.scrollHeight;
         if (scrollHeight === 0) return;
         const viewportHeight = scrollContainer?.clientHeight ?? window.innerHeight;
-        const scrollBottom = scrollContainer
+        const scrollБотtom = scrollContainer
           ? scrollContainer.scrollTop + scrollContainer.clientHeight
           : window.scrollY + window.innerHeight;
         const hasScrollableOverflow = scrollHeight > viewportHeight + 1;
         const threshold = scrollHeight - ISSUE_SCROLL_LOAD_THRESHOLD_PX;
-        if (scrollBottom >= threshold) {
-          if (trigger === "initial" && !hasMoreRenderedRows && hasMoreIssues && !hasScrollableOverflow) {
+        if (scrollБотtom >= threshold) {
+          if (trigger === "initial" && !hasMoreRenderedRows && hasMoreЗадачи && !hasScrollableOverflow) {
             if (initialServerFillRequestedRef.current) return;
             initialServerFillRequestedRef.current = true;
           }
-          loadMoreIssueRows();
+          loadMoreЗадачаRows();
         }
       });
     };
 
     const handleScroll = () => checkScrollPosition("scroll");
     const handleResize = () => checkScrollPosition("resize");
-    scrollTarget.addEventListener("scroll", handleScroll, { passive: true });
+    scrollЦель.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleResize);
     checkScrollPosition("initial");
 
     return () => {
-      scrollTarget.removeEventListener("scroll", handleScroll);
+      scrollЦель.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
       if (animationFrameId !== null) window.cancelAnimationFrame(animationFrameId);
     };
-  }, [canLoadMoreIssues, hasMoreIssues, hasMoreRenderedRows, loadMoreIssueRows]);
+  }, [canLoadMoreЗадачи, hasMoreЗадачи, hasMoreRenderedRows, loadMoreЗадачаRows]);
 
-  const newIssueDefaults = useCallback((group?: { key: string; items: Issue[] }) => {
-    const groupKey = group?.key;
-    const defaults: Record<string, unknown> = { ...(baseCreateIssueDefaults ?? {}) };
+  const newЗадачаПо умолчаниюs = useCallback((group?: { key: string; items: Задача[] }) => {
+    const groupКлюч = group?.key;
+    const defaults: Record<string, unknown> = { ...(baseСоздатьЗадачаПо умолчаниюs ?? {}) };
     if (projectId && defaults.projectId === undefined) defaults.projectId = projectId;
-    if (groupKey) {
-      if (viewState.groupBy === "status") defaults.status = groupKey;
-      else if (viewState.groupBy === "priority") defaults.priority = groupKey;
-      else if (viewState.groupBy === "assignee" && groupKey !== "__unassigned") {
-        if (groupKey.startsWith("__user:")) defaults.assigneeUserId = groupKey.slice("__user:".length);
-        else defaults.assigneeAgentId = groupKey;
+    if (groupКлюч) {
+      if (viewState.groupBy === "status") defaults.status = groupКлюч;
+      else if (viewState.groupBy === "priority") defaults.priority = groupКлюч;
+      else if (viewState.groupBy === "assignee" && groupКлюч !== "__unassigned") {
+        if (groupКлюч.startsWith("__user:")) defaults.assigneeUserId = groupКлюч.slice("__user:".length);
+        else defaults.assigneeАгентId = groupКлюч;
       }
-      else if (viewState.groupBy === "project" && groupKey !== "__no_project") defaults.projectId = groupKey;
-      else if (viewState.groupBy === "workspace" && groupKey !== "__no_workspace") {
-        const representativeIssue = group?.items.find((issue) => issue.executionWorkspaceId === groupKey) ?? null;
-        const executionWorkspace = executionWorkspaceById.get(groupKey);
-        if (executionWorkspace) {
-          defaults.executionWorkspaceId = groupKey;
-          defaults.executionWorkspaceMode = "reuse_existing";
-          if (executionWorkspace.projectWorkspaceId) defaults.projectWorkspaceId = executionWorkspace.projectWorkspaceId;
-          const groupedProjectId = executionWorkspace.projectId
-            ?? (executionWorkspace.projectWorkspaceId
-              ? projectWorkspaceById.get(executionWorkspace.projectWorkspaceId)?.projectId
+      else if (viewState.groupBy === "project" && groupКлюч !== "__no_project") defaults.projectId = groupКлюч;
+      else if (viewState.groupBy === "workspace" && groupКлюч !== "__no_workspace") {
+        const representativeЗадача = group?.items.find((issue) => issue.executionРабочая областьId === groupКлюч) ?? null;
+        const executionРабочая область = executionРабочая областьById.get(groupКлюч);
+        if (executionРабочая область) {
+          defaults.executionРабочая областьId = groupКлюч;
+          defaults.executionРабочая областьMode = "reuse_existing";
+          if (executionРабочая область.projectРабочая областьId) defaults.projectРабочая областьId = executionРабочая область.projectРабочая областьId;
+          const groupedProjectId = executionРабочая область.projectId
+            ?? (executionРабочая область.projectРабочая областьId
+              ? projectРабочая областьById.get(executionРабочая область.projectРабочая областьId)?.projectId
               : null)
-            ?? (representativeIssue?.executionWorkspaceId === groupKey ? representativeIssue.projectId : null);
+            ?? (representativeЗадача?.executionРабочая областьId === groupКлюч ? representativeЗадача.projectId : null);
           if (groupedProjectId) defaults.projectId = groupedProjectId;
         } else {
-          const projectWorkspace = projectWorkspaceById.get(groupKey);
-          if (projectWorkspace) {
-            defaults.projectWorkspaceId = groupKey;
-            defaults.projectId = projectWorkspace.projectId;
+          const projectРабочая область = projectРабочая областьById.get(groupКлюч);
+          if (projectРабочая область) {
+            defaults.projectРабочая областьId = groupКлюч;
+            defaults.projectId = projectРабочая область.projectId;
           }
         }
       }
-      else if (viewState.groupBy === "parent" && groupKey !== "__no_parent") {
-        const parentIssue = issueById.get(groupKey);
-        if (parentIssue) Object.assign(defaults, buildSubIssueDefaultsForViewer(parentIssue, currentUserId));
-        else defaults.parentId = groupKey;
+      else if (viewState.groupBy === "parent" && groupКлюч !== "__no_parent") {
+        const parentЗадача = issueById.get(groupКлюч);
+        if (parentЗадача) Object.assign(defaults, buildSubЗадачаПо умолчаниюsForViewer(parentЗадача, currentUserId));
+        else defaults.parentId = groupКлюч;
       }
     }
     return defaults;
   }, [
-    baseCreateIssueDefaults,
+    baseСоздатьЗадачаПо умолчаниюs,
     currentUserId,
-    executionWorkspaceById,
+    executionРабочая областьById,
     issueById,
     projectId,
-    projectWorkspaceById,
+    projectРабочая областьById,
     viewState.groupBy,
   ]);
 
-  const createActionLabel = createIssueLabel ? `Create ${createIssueLabel}` : "Create Issue";
-  const createButtonLabel = createIssueLabel ? `New ${createIssueLabel}` : "New Issue";
-  const openCreateIssueDialog = useCallback((group?: { key: string; items: Issue[] }) => {
-    openNewIssue(newIssueDefaults(group));
-  }, [newIssueDefaults, openNewIssue]);
+  const createActionLabel = createЗадачаLabel ? `Создать ${createЗадачаLabel}` : "Создать задачу";
+  const createButtonLabel = createЗадачаLabel ? `New ${createЗадачаLabel}` : "Новая задача";
+  const openСоздатьЗадачаDialog = useCallback((group?: { key: string; items: Задача[] }) => {
+    openNewЗадача(newЗадачаПо умолчаниюs(group));
+  }, [newЗадачаПо умолчаниюs, openNewЗадача]);
 
-  const filterToWorkspace = useCallback((workspaceId: string) => {
+  const filterToРабочая область = useCallback((workspaceId: string) => {
     updateView({ workspaces: [workspaceId] });
   }, [updateView]);
 
-  const setIssueColumns = useCallback((next: InboxIssueColumn[]) => {
-    const normalized = normalizeInboxIssueColumns(next);
-    setVisibleIssueColumns(normalized);
-    saveIssueColumns(scopedKey, normalized);
-  }, [scopedKey]);
+  const setЗадачаColumns = useCallback((next: ВходящиеЗадачаColumn[]) => {
+    const normalized = normalizeВходящиеЗадачаColumns(next);
+    setVisibleЗадачаColumns(normalized);
+    saveЗадачаColumns(scopedКлюч, normalized);
+  }, [scopedКлюч]);
 
-  const toggleIssueColumn = useCallback((column: InboxIssueColumn, enabled: boolean) => {
+  const toggleЗадачаColumn = useCallback((column: ВходящиеЗадачаColumn, enabled: boolean) => {
     if (enabled) {
-      setIssueColumns([...visibleIssueColumns, column]);
+      setЗадачаColumns([...visibleЗадачаColumns, column]);
       return;
     }
-    setIssueColumns(visibleIssueColumns.filter((value) => value !== column));
-  }, [setIssueColumns, visibleIssueColumns]);
+    setЗадачаColumns(visibleЗадачаColumns.filter((value) => value !== column));
+  }, [setЗадачаColumns, visibleЗадачаColumns]);
 
-  const assignIssue = useCallback((issueId: string, assigneeAgentId: string | null, assigneeUserId: string | null = null) => {
-    onUpdateIssue(issueId, { assigneeAgentId, assigneeUserId });
-    setAssigneePickerIssueId(null);
-    setAssigneeSearch("");
-  }, [onUpdateIssue]);
+  const assignЗадача = useCallback((issueId: string, assigneeАгентId: string | null, assigneeUserId: string | null = null) => {
+    onОбновитьЗадача(issueId, { assigneeАгентId, assigneeUserId });
+    setИсполнительPickerЗадачаId(null);
+    setИсполнительПоиск("");
+  }, [onОбновитьЗадача]);
 
-  let remainingRowsToRender = viewState.viewMode === "list" ? renderedIssueRowLimit : Number.POSITIVE_INFINITY;
+  let remainingRowsToRender = viewState.viewMode === "list" ? renderedЗадачаRowLimit : Number.POSITIVE_INFINITY;
 
   return (
-    <div ref={rootRef} className="space-y-4">
+    <div ref={rootRef} classИмя="space-y-4">
       {progressSummary ? (
-        <SubIssueProgressSummaryStrip
+        <SubЗадачаProgressSummaryStrip
           summary={progressSummary}
           issueLinkState={issueLinkState}
-          parentIssueIdForCostSummary={parentIssueIdForCostSummary}
+          parentЗадачаIdForCostSummary={parentЗадачаIdForCostSummary}
         />
       ) : null}
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 sm:gap-3">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <Button size="sm" variant="outline" onClick={() => openCreateIssueDialog()}>
-            <Plus className="h-4 w-4 sm:mr-1" />
-            <span className="hidden sm:inline">{createButtonLabel}</span>
+      <div classИмя="flex items-center justify-between gap-2 sm:gap-3">
+        <div classИмя="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Button size="sm" variant="outline" onClick={() => openСоздатьЗадачаDialog()}>
+            <Plus classИмя="h-4 w-4 sm:mr-1" />
+            <span classИмя="hidden sm:inline">{createButtonLabel}</span>
           </Button>
-          <IssueSearchInput
-            value={issueSearch}
-            onDebouncedChange={(nextSearch) => {
-              setIssueSearch(nextSearch);
-              onSearchChange?.(nextSearch);
+          <ЗадачаПоискInput
+            value={issueПоиск}
+            onDebouncedChange={(nextПоиск) => {
+              setЗадачаПоиск(nextПоиск);
+              onПоискChange?.(nextПоиск);
             }}
           />
         </div>
 
-        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+        <div classИмя="flex items-center gap-0.5 sm:gap-1 shrink-0">
           {/* View mode toggle */}
-          <div className="flex items-center border border-border rounded-md overflow-hidden mr-1">
+          <div classИмя="flex items-center border border-border rounded-md overflow-hidden mr-1">
             <button
-              className={`p-1.5 transition-colors ${viewState.viewMode === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              classИмя={`p-1.5 transition-colors ${viewState.viewMode === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               onClick={() => updateView({ viewMode: "list" })}
               title="List view"
             >
-              <List className="h-3.5 w-3.5" />
+              <List classИмя="h-3.5 w-3.5" />
             </button>
             <button
-              className={`p-1.5 transition-colors ${viewState.viewMode === "board" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              classИмя={`p-1.5 transition-colors ${viewState.viewMode === "board" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               onClick={() => updateView({ viewMode: "board" })}
-              title="Board view"
+              title="Совет view"
             >
-              <Columns3 className="h-3.5 w-3.5" />
+              <Columns3 classИмя="h-3.5 w-3.5" />
             </button>
           </div>
 
@@ -1316,58 +1316,58 @@ export function IssuesList({
               type="button"
               variant="outline"
               size="icon"
-              className={cn("hidden h-8 w-8 shrink-0 sm:inline-flex", viewState.nestingEnabled && "bg-accent")}
-              onClick={() => updateView({ nestingEnabled: !viewState.nestingEnabled })}
-              title={viewState.nestingEnabled ? "Disable parent-child nesting" : "Enable parent-child nesting"}
+              classИмя={cn("hidden h-8 w-8 shrink-0 sm:inline-flex", viewState.nestingВключитьd && "bg-accent")}
+              onClick={() => updateView({ nestingВключитьd: !viewState.nestingВключитьd })}
+              title={viewState.nestingВключитьd ? "Отключить parent-child nesting" : "Включить parent-child nesting"}
             >
-              <ListTree className="h-3.5 w-3.5" />
+              <ListTree classИмя="h-3.5 w-3.5" />
             </Button>
           )}
 
-          <IssueColumnPicker
-            availableColumns={availableIssueColumns}
-            visibleColumnSet={visibleIssueColumnSet}
-            onToggleColumn={toggleIssueColumn}
-            onResetColumns={() => setIssueColumns(DEFAULT_INBOX_ISSUE_COLUMNS)}
+          <ЗадачаColumnPicker
+            availableColumns={availableЗадачаColumns}
+            visibleColumnSet={visibleЗадачаColumnSet}
+            onToggleColumn={toggleЗадачаColumn}
+            onСброситьColumns={() => setЗадачаColumns(DEFAULT_INBOX_ISSUE_COLUMNS)}
             title="Choose which issue columns stay visible"
             iconOnly
           />
 
-          <IssueFiltersPopover
+          <ЗадачаФильтрsPopover
             state={viewState}
             onChange={updateView}
-            activeFilterCount={activeFilterCount}
+            activeФильтрCount={activeФильтрCount}
             agents={agents}
             creators={creatorOptions}
             projects={projects?.map((project) => ({ id: project.id, name: project.name }))}
             labels={labels?.map((label) => ({ id: label.id, name: label.name, color: label.color }))}
             currentUserId={currentUserId}
-            enableRoutineVisibilityFilter={enableRoutineVisibilityFilter}
+            enableПроцедураVisibilityФильтр={enableПроцедураVisibilityФильтр}
             iconOnly
-            workspaces={isolatedWorkspacesEnabled ? workspaceOptions : undefined}
+            workspaces={isolatedРабочие областиВключитьd ? workspaceOptions : undefined}
           />
 
-          {/* Sort (list view only) */}
+          {/* Сортировка (list view only) */}
           {viewState.viewMode === "list" && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title="Sort">
-                  <ArrowUpDown className="h-3.5 w-3.5" />
+                <Button variant="outline" size="icon" classИмя="h-8 w-8 shrink-0" title="Сортировка">
+                  <ArrowUpDown classИмя="h-3.5 w-3.5" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-48 p-0">
-                <div className="p-2 space-y-0.5">
+              <PopoverContent align="end" classИмя="w-48 p-0">
+                <div classИмя="p-2 space-y-0.5">
                   {([
-                    ["workflow", "Workflow"],
-                    ["status", "Status"],
-                    ["priority", "Priority"],
-                    ["title", "Title"],
-                    ["created", "Created"],
-                    ["updated", "Updated"],
+                    ["workflow", "Работаflow"],
+                    ["status", "Статус"],
+                    ["priority", "Приоритет"],
+                    ["title", "Название"],
+                    ["created", "Создано"],
+                    ["updated", "Обновлено"],
                   ] as const).map(([field, label]) => (
                     <button
                       key={field}
-                      className={`flex items-center justify-between w-full px-2 py-1.5 text-sm rounded-sm ${
+                      classИмя={`flex items-center justify-between w-full px-2 py-1.5 text-sm rounded-sm ${
                         viewState.sortField === field ? "bg-accent/50 text-foreground" : "hover:bg-accent/50 text-muted-foreground"
                       }`}
                       onClick={() => {
@@ -1380,7 +1380,7 @@ export function IssuesList({
                     >
                       <span>{label}</span>
                       {viewState.sortField === field && (
-                        <span className="text-xs text-muted-foreground">
+                        <span classИмя="text-xs text-muted-foreground">
                           {viewState.sortDir === "asc" ? "\u2191" : "\u2193"}
                         </span>
                       )}
@@ -1395,30 +1395,30 @@ export function IssuesList({
           {viewState.viewMode === "list" && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title="Group">
-                  <Layers className="h-3.5 w-3.5" />
+                <Button variant="outline" size="icon" classИмя="h-8 w-8 shrink-0" title="Group">
+                  <Layers classИмя="h-3.5 w-3.5" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-44 p-0">
-                <div className="p-2 space-y-0.5">
+              <PopoverContent align="end" classИмя="w-44 p-0">
+                <div classИмя="p-2 space-y-0.5">
                   {([
-                    ["status", "Status"],
-                    ["priority", "Priority"],
-                    ["assignee", "Assignee"],
+                    ["status", "Статус"],
+                    ["priority", "Приоритет"],
+                    ["assignee", "Исполнитель"],
                     ["project", "Project"],
-                    ["workspace", "Workspace"],
-                    ["parent", "Parent Issue"],
-                    ["none", "None"],
+                    ["workspace", "Рабочая область"],
+                    ["parent", "Родитель Задача"],
+                    ["none", "Нет"],
                   ] as const).map(([value, label]) => (
                     <button
                       key={value}
-                      className={`flex items-center justify-between w-full px-2 py-1.5 text-sm rounded-sm ${
+                      classИмя={`flex items-center justify-between w-full px-2 py-1.5 text-sm rounded-sm ${
                         viewState.groupBy === value ? "bg-accent/50 text-foreground" : "hover:bg-accent/50 text-muted-foreground"
                       }`}
                       onClick={() => updateView({ groupBy: value })}
                     >
                       <span>{label}</span>
-                      {viewState.groupBy === value && <Check className="h-3.5 w-3.5" />}
+                      {viewState.groupBy === value && <Check classИмя="h-3.5 w-3.5" />}
                     </button>
                   ))}
                 </div>
@@ -1428,33 +1428,33 @@ export function IssuesList({
         </div>
       </div>
 
-      {isLoading && <PageSkeleton variant="issues-list" />}
-      {error && <p className="text-sm text-destructive">{error.message}</p>}
-      {!searchWithinLoadedIssues && normalizedIssueSearch.length > 0 && searchedIssues.length === ISSUE_SEARCH_RESULT_LIMIT && (
-        <p className="text-xs text-muted-foreground">
+      {isЗагрузка && <PageSkeleton variant="issues-list" />}
+      {error && <p classИмя="text-sm text-destructive">{error.message}</p>}
+      {!searchWithinLoadedЗадачи && normalizedЗадачаПоиск.length > 0 && searchedЗадачи.length === ISSUE_SEARCH_RESULT_LIMIT && (
+        <p classИмя="text-xs text-muted-foreground">
           Showing up to {ISSUE_SEARCH_RESULT_LIMIT} matches. Refine the search to narrow further.
         </p>
       )}
       {boardColumnLimitReached && (
-        <p className="text-xs text-muted-foreground">
+        <p classИмя="text-xs text-muted-foreground">
           Some board columns are showing up to {ISSUE_BOARD_COLUMN_RESULT_LIMIT} issues. Refine filters or search to reveal the rest.
         </p>
       )}
-      {!isLoading && filtered.length === 0 && viewState.viewMode === "list" && (
+      {!isЗагрузка && filtered.length === 0 && viewState.viewMode === "list" && (
         <EmptyState
           icon={CircleDot}
-          message="No issues match the current filters or search."
+          message="Нет issues match the current filters or search."
           action={createActionLabel}
-          onAction={() => openCreateIssueDialog()}
+          onAction={() => openСоздатьЗадачаDialog()}
         />
       )}
 
       {viewState.viewMode === "board" ? (
-        <KanbanBoard
+        <KanbanСовет
           issues={filtered}
           agents={agents}
-          liveIssueIds={liveIssueIds}
-          onUpdateIssue={onUpdateIssue}
+          liveЗадачаIds={liveЗадачаIds}
+          onОбновитьЗадача={onОбновитьЗадача}
         />
       ) : (
         <>
@@ -1473,7 +1473,7 @@ export function IssuesList({
             }}
           >
             {group.label && (
-              <IssueGroupHeader
+              <ЗадачаGroupHeader
                 label={group.label}
                 collapsible
                 collapsed={viewState.collapsedGroups.includes(group.key)}
@@ -1488,65 +1488,65 @@ export function IssuesList({
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    className="-mr-2 text-muted-foreground"
-                    title={`New issue in ${group.label}`}
-                    aria-label={`New issue in ${group.label}`}
-                    onClick={() => openCreateIssueDialog(group)}
+                    classИмя="-mr-2 text-muted-foreground"
+                    title={`Новая задача in ${group.label}`}
+                    aria-label={`Новая задача in ${group.label}`}
+                    onClick={() => openСоздатьЗадачаDialog(group)}
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus classИмя="h-3 w-3" />
                   </Button>
                 )}
               />
             )}
             <CollapsibleContent>
               {(() => {
-                const { roots, childMap } = viewState.nestingEnabled
-                  ? buildIssueTree(group.items)
-                  : { roots: group.items, childMap: new Map<string, Issue[]>() };
+                const { roots, childMap } = viewState.nestingВключитьd
+                  ? buildЗадачаTree(group.items)
+                  : { roots: group.items, childMap: new Map<string, Задача[]>() };
 
-                const renderIssueRow = (issue: Issue, depth: number) => {
+                const renderЗадачаRow = (issue: Задача, depth: number) => {
                   if (remainingRowsToRender <= 0) return null;
                   remainingRowsToRender -= 1;
 
                   const children = childMap.get(issue.id) ?? [];
                   const hasChildren = children.length > 0;
                   const totalDescendants = hasChildren ? countDescendants(issue.id, childMap) : 0;
-                  const isExpanded = !viewState.collapsedParents.includes(issue.id);
+                  const isExpanded = !viewState.collapsedРодительs.includes(issue.id);
                   const useDeferredRowRendering = !(hasChildren && isExpanded);
                   const issueProject = issue.projectId ? projectById.get(issue.projectId) ?? null : null;
-                  const parentIssue = issue.parentId ? issueById.get(issue.parentId) ?? null : null;
+                  const parentЗадача = issue.parentId ? issueById.get(issue.parentId) ?? null : null;
                   const issueBadge = issueBadgeById?.get(issue.id);
-                  const isMutedIssue = mutedIssueIds?.has(issue.id) === true;
-                  const assigneeUserProfile = issue.assigneeUserId
-                    ? companyUserProfileMap.get(issue.assigneeUserId) ?? null
+                  const isMutedЗадача = mutedЗадачаIds?.has(issue.id) === true;
+                  const assigneeUserПрофиль = issue.assigneeUserId
+                    ? companyUserПрофильMap.get(issue.assigneeUserId) ?? null
                     : null;
-                  const assigneeUserLabel = formatAssigneeUserLabel(
+                  const assigneeUserLabel = formatИсполнительUserLabel(
                     issue.assigneeUserId,
                     currentUserId,
                     companyUserLabelMap,
-                  ) ?? assigneeUserProfile?.label ?? null;
-                  const toggleCollapse = (e: { preventDefault: () => void; stopPropagation: () => void }) => {
-                    e.preventDefault();
+                  ) ?? assigneeUserПрофиль?.label ?? null;
+                  const toggleCollapse = (e: { preventПо умолчанию: () => void; stopPropagation: () => void }) => {
+                    e.preventПо умолчанию();
                     e.stopPropagation();
                     updateView({
-                      collapsedParents: isExpanded
-                        ? [...viewState.collapsedParents, issue.id]
-                        : viewState.collapsedParents.filter((id) => id !== issue.id),
+                      collapsedРодительs: isExpanded
+                        ? [...viewState.collapsedРодительs, issue.id]
+                        : viewState.collapsedРодительs.filter((id) => id !== issue.id),
                     });
                   };
                   const checklistMeta = workflowChecklistMeta;
-                  const checklistStepNumber = checklistMeta?.stepNumberByIssueId.get(issue.id) ?? null;
-                  const unresolvedVisibleBlockers = checklistMeta?.unresolvedVisibleBlockersByIssueId.get(issue.id) ?? [];
+                  const checklistStepNumber = checklistMeta?.stepNumberByЗадачаId.get(issue.id) ?? null;
+                  const unresolvedVisibleBlockers = checklistMeta?.unresolvedVisibleBlockersByЗадачаId.get(issue.id) ?? [];
                   const checklistRowId = checklistMeta ? `issue-workflow-row-${issue.id}` : undefined;
-                  const doneRowTitleClass = checklistMeta && issue.status === "done"
+                  const doneRowНазваниеClass = checklistMeta && issue.status === "done"
                     ? "text-muted-foreground"
                     : undefined;
                   const visibleBlockerChips = unresolvedVisibleBlockers
                     .map((blockerId) => {
-                      const blockerIssue = issueById.get(blockerId);
-                      if (!blockerIssue) return null;
-                      const label = blockerIssue.identifier ?? blockerIssue.id.slice(0, 8);
-                      const blockerStep = checklistMeta?.stepNumberByIssueId.get(blockerId);
+                      const blockerЗадача = issueById.get(blockerId);
+                      if (!blockerЗадача) return null;
+                      const label = blockerЗадача.identifier ?? blockerЗадача.id.slice(0, 8);
+                      const blockerStep = checklistMeta?.stepNumberByЗадачаId.get(blockerId);
                       const blockerStepSuffix = blockerStep ? ` \u00b7 step ${blockerStep}` : "";
                       return { blockerId, chipLabel: `blocked by ${label}${blockerStepSuffix}` };
                     })
@@ -1559,28 +1559,28 @@ export function IssuesList({
                   const firstVisibleBlockerDisplayLabel = firstVisibleBlockerChip
                     ? `${firstVisibleBlockerChip.chipLabel}${additionalVisibleBlockerLabel}`
                     : "";
-                  const hiddenVisibleBlockerLabels = visibleBlockerChips
+                  const hiddenVisibleBlockerЯрлыки = visibleBlockerChips
                     .slice(1)
                     .map((chip) => chip.chipLabel)
                     .join(", ");
-                  const firstVisibleBlockerTitle = additionalVisibleBlockerCount > 0
-                    ? `${firstVisibleBlockerDisplayLabel}: ${hiddenVisibleBlockerLabels}`
+                  const firstVisibleBlockerНазвание = additionalVisibleBlockerCount > 0
+                    ? `${firstVisibleBlockerDisplayLabel}: ${hiddenVisibleBlockerЯрлыки}`
                     : firstVisibleBlockerDisplayLabel;
                   const checklistDependencyChips = checklistMeta && firstVisibleBlockerChip ? (
                     <button
                       key={firstVisibleBlockerChip.blockerId}
                       type="button"
                       onClick={(event) => {
-                        event.preventDefault();
+                        event.preventПо умолчанию();
                         event.stopPropagation();
                         const target = document.getElementById(`issue-workflow-row-${firstVisibleBlockerChip.blockerId}`);
                         if (!target) return;
                         target.scrollIntoView({ behavior: "smooth", block: "nearest" });
                         target.focus?.();
                       }}
-                      className="inline-flex items-center rounded-full border border-amber-400/45 bg-amber-50/60 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 hover:bg-amber-100/80 dark:border-amber-300/35 dark:bg-amber-400/10 dark:text-amber-300"
-                      title={firstVisibleBlockerTitle}
-                      aria-label={firstVisibleBlockerTitle}
+                      classИмя="inline-flex items-center rounded-full border border-amber-400/45 bg-amber-50/60 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 hover:bg-amber-100/80 dark:border-amber-300/35 dark:bg-amber-400/10 dark:text-amber-300"
+                      title={firstVisibleBlockerНазвание}
+                      aria-label={firstVisibleBlockerНазвание}
                     >
                       {firstVisibleBlockerDisplayLabel}
                     </button>
@@ -1599,58 +1599,58 @@ export function IssuesList({
                           : {}),
                       }}
                     >
-                      <IssueRow
+                      <ЗадачаRow
                         issue={issue}
                         issueLinkState={issueLinkState}
                         checklistStepNumber={checklistStepNumber}
-                        checklistCurrentStep={checklistMeta?.currentStepIssueId === issue.id}
+                        checklistCurrentStep={checklistMeta?.currentStepЗадачаId === issue.id}
                         checklistDependencyChips={checklistDependencyChips}
                         checklistRowId={checklistRowId}
-                        titleClassName={doneRowTitleClass}
+                        titleClassИмя={doneRowНазваниеClass}
                         titleSuffix={(
                           <>
                             {hasChildren && !isExpanded ? (
-                              <span className="ml-1.5 text-xs text-muted-foreground">
+                              <span classИмя="ml-1.5 text-xs text-muted-foreground">
                                 ({totalDescendants} sub-task{totalDescendants !== 1 ? "s" : ""})
                               </span>
                             ) : null}
                             {issueBadge ? (
-                              issueBadge === "Paused" ? (
+                              issueBadge === "Приостановлен" ? (
                                 <span
-                                  className={cn("ml-1.5 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium", statusBadge.paused)}
-                                  aria-label="Paused"
-                                  title="Paused"
+                                  classИмя={cn("ml-1.5 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium", statusBadge.paused)}
+                                  aria-label="Приостановлен"
+                                  title="Приостановлен"
                                 >
-                                  <CircleSlash2 className="h-3 w-3" />
-                                  Paused
+                                  <CircleSlash2 classИмя="h-3 w-3" />
+                                  Приостановлен
                                 </span>
                               ) : (
-                                <span className="ml-1.5 inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                                <span classИмя="ml-1.5 inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
                                   {issueBadge}
                                 </span>
                               )
                             ) : null}
-                            {isSuccessfulRunHandoffRequired(issue) ? (
+                            {isУспешноfulЗапуститьHandoffОбязательно(issue) ? (
                               <span
-                                className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-amber-400/45 bg-amber-50/60 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:border-amber-300/35 dark:bg-amber-400/10 dark:text-amber-300"
+                                classИмя="ml-1.5 inline-flex items-center gap-1 rounded-full border border-amber-400/45 bg-amber-50/60 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:border-amber-300/35 dark:bg-amber-400/10 dark:text-amber-300"
                                 aria-label="Needs next step"
                                 title="This issue needs a next step"
                               >
-                                <CircleDot className="h-3 w-3" />
+                                <CircleDot classИмя="h-3 w-3" />
                                 Needs next step
                               </span>
                             ) : null}
                           </>
                         )}
-                        className={isMutedIssue ? "opacity-70" : undefined}
+                        classИмя={isMutedЗадача ? "opacity-70" : undefined}
                         mobileLeading={
                           hasChildren ? (
                             <button type="button" onClick={toggleCollapse}>
-                              <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
+                              <ChevronRight classИмя={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
                             </button>
                           ) : (
-                            <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                              <StatusIcon status={issue.status} blockerAttention={issue.blockerAttention} onChange={(s) => onUpdateIssue(issue.id, { status: s })} />
+                            <span onClick={(e) => { e.preventПо умолчанию(); e.stopPropagation(); }}>
+                              <СтатусIcon status={issue.status} blockerAttention={issue.blockerAttention} onChange={(s) => onОбновитьЗадача(issue.id, { status: s })} />
                             </span>
                           )
                         }
@@ -1659,143 +1659,143 @@ export function IssuesList({
                             {hasChildren ? (
                               <button
                                 type="button"
-                                className="hidden shrink-0 items-center sm:inline-flex"
+                                classИмя="hidden shrink-0 items-center sm:inline-flex"
                                 onClick={toggleCollapse}
                               >
-                                <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
+                                <ChevronRight classИмя={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
                               </button>
                             ) : (
-                              <span className="hidden w-3.5 shrink-0 sm:block" />
+                              <span classИмя="hidden w-3.5 shrink-0 sm:block" />
                             )}
-                            <InboxIssueMetaLeading
+                            <ВходящиеЗадачаMetaLeading
                               issue={issue}
-                              isLive={liveIssueIds?.has(issue.id) === true}
-                              showStatus={visibleIssueColumnSet.has("status") && availableIssueColumnSet.has("status")}
-                              showIdentifier={visibleIssueColumnSet.has("id") && availableIssueColumnSet.has("id")}
+                              isLive={liveЗадачаIds?.has(issue.id) === true}
+                              showСтатус={visibleЗадачаColumnSet.has("status") && availableЗадачаColumnSet.has("status")}
+                              showIdentifier={visibleЗадачаColumnSet.has("id") && availableЗадачаColumnSet.has("id")}
                               checklistStepNumber={checklistStepNumber}
                               statusSlot={(
-                                <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                  <StatusIcon status={issue.status} blockerAttention={issue.blockerAttention} onChange={(s) => onUpdateIssue(issue.id, { status: s })} />
+                                <span onClick={(e) => { e.preventПо умолчанию(); e.stopPropagation(); }}>
+                                  <СтатусIcon status={issue.status} blockerAttention={issue.blockerAttention} onChange={(s) => onОбновитьЗадача(issue.id, { status: s })} />
                                 </span>
                               )}
                             />
                           </>
                         )}
-                        mobileMeta={issueActivityText(issue).toLowerCase()}
+                        mobileMeta={issueАктивностьText(issue).toНизкийerCase()}
                         desktopTrailing={(
-                          visibleTrailingIssueColumns.length > 0 ? (
-                            <InboxIssueTrailingColumns
+                          visibleTrailingЗадачаColumns.length > 0 ? (
+                            <ВходящиеЗадачаTrailingColumns
                               issue={issue}
-                              columns={visibleTrailingIssueColumns}
-                              projectName={issueProject?.name ?? null}
+                              columns={visibleTrailingЗадачаColumns}
+                              projectИмя={issueProject?.name ?? null}
                               projectColor={issueProject?.color ?? null}
-                              workspaceId={resolveIssueFilterWorkspaceId(issue, issueFilterWorkspaceContext)}
-                              workspaceName={resolveIssueWorkspaceName(issue, {
-                                executionWorkspaceById,
-                                projectWorkspaceById,
-                                defaultProjectWorkspaceIdByProjectId,
+                              workspaceId={resolveЗадачаФильтрРабочая областьId(issue, issueФильтрРабочая областьContext)}
+                              workspaceИмя={resolveЗадачаРабочая областьИмя(issue, {
+                                executionРабочая областьById,
+                                projectРабочая областьById,
+                                defaultProjectРабочая областьIdByProjectId,
                               })}
-                              onFilterWorkspace={filterToWorkspace}
-                              assigneeName={agentName(issue.assigneeAgentId)}
-                              assigneeUserName={assigneeUserLabel}
-                              assigneeUserAvatarUrl={assigneeUserProfile?.image ?? null}
+                              onФильтрРабочая область={filterToРабочая область}
+                              assigneeИмя={agentИмя(issue.assigneeАгентId)}
+                              assigneeUserИмя={assigneeUserLabel}
+                              assigneeUserAvatarUrl={assigneeUserПрофиль?.image ?? null}
                               currentUserId={currentUserId}
-                              parentIdentifier={parentIssue?.identifier ?? null}
-                              parentTitle={parentIssue?.title ?? null}
+                              parentIdentifier={parentЗадача?.identifier ?? null}
+                              parentНазвание={parentЗадача?.title ?? null}
                               assigneeContent={(
                                 <Popover
-                                  open={assigneePickerIssueId === issue.id}
+                                  open={assigneePickerЗадачаId === issue.id}
                                   onOpenChange={(open) => {
-                                    setAssigneePickerIssueId(open ? issue.id : null);
-                                    if (!open) setAssigneeSearch("");
+                                    setИсполнительPickerЗадачаId(open ? issue.id : null);
+                                    if (!open) setИсполнительПоиск("");
                                   }}
                                 >
                                   <PopoverTrigger asChild>
                                     <button
-                                      className="flex w-full shrink-0 items-center overflow-hidden rounded-md px-2 py-1 transition-colors hover:bg-accent/50"
-                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                      classИмя="flex w-full shrink-0 items-center overflow-hidden rounded-md px-2 py-1 transition-colors hover:bg-accent/50"
+                                      onClick={(e) => { e.preventПо умолчанию(); e.stopPropagation(); }}
                                     >
-                                      {issue.assigneeAgentId && agentName(issue.assigneeAgentId) ? (
-                                        <Identity name={agentName(issue.assigneeAgentId)!} size="sm" className="min-w-0" />
+                                      {issue.assigneeАгентId && agentИмя(issue.assigneeАгентId) ? (
+                                        <Identity name={agentИмя(issue.assigneeАгентId)!} size="sm" classИмя="min-w-0" />
                                       ) : issue.assigneeUserId ? (
                                         <Identity
                                           name={assigneeUserLabel ?? "User"}
-                                          avatarUrl={assigneeUserProfile?.image ?? null}
+                                          avatarUrl={assigneeUserПрофиль?.image ?? null}
                                           size="sm"
-                                          className="min-w-0"
+                                          classИмя="min-w-0"
                                         />
                                       ) : (
-                                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-muted-foreground/35 bg-muted/30">
-                                            <User className="h-3.5 w-3.5" />
+                                        <span classИмя="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                          <span classИмя="inline-flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-muted-foreground/35 bg-muted/30">
+                                            <User classИмя="h-3.5 w-3.5" />
                                           </span>
-                                          Assignee
+                                          Исполнитель
                                         </span>
                                       )}
                                     </button>
                                   </PopoverTrigger>
                                   <PopoverContent
-                                    className="w-56 p-1"
+                                    classИмя="w-56 p-1"
                                     align="end"
                                     onClick={(e) => e.stopPropagation()}
-                                    onPointerDownOutside={() => setAssigneeSearch("")}
+                                    onPointerDownOutside={() => setИсполнительПоиск("")}
                                   >
                                     <input
-                                      className="mb-1 w-full border-b border-border bg-transparent px-2 py-1.5 text-xs outline-none placeholder:text-muted-foreground/50"
-                                      placeholder="Search assignees..."
-                                      value={assigneeSearch}
-                                      onChange={(e) => setAssigneeSearch(e.target.value)}
+                                      classИмя="mb-1 w-full border-b border-border bg-transparent px-2 py-1.5 text-xs outline-none placeholder:text-muted-foreground/50"
+                                      placeholder="Поиск assignees..."
+                                      value={assigneeПоиск}
+                                      onChange={(e) => setИсполнительПоиск(e.target.value)}
                                       autoFocus
                                     />
-                                    <div className="max-h-48 overflow-y-auto overscroll-contain">
+                                    <div classИмя="max-h-48 overflow-y-auto overscroll-contain">
                                       <button
-                                        className={cn(
+                                        classИмя={cn(
                                           "flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent/50",
-                                          !issue.assigneeAgentId && !issue.assigneeUserId && "bg-accent",
+                                          !issue.assigneeАгентId && !issue.assigneeUserId && "bg-accent",
                                         )}
                                         onClick={(e) => {
-                                          e.preventDefault();
+                                          e.preventПо умолчанию();
                                           e.stopPropagation();
-                                          assignIssue(issue.id, null, null);
+                                          assignЗадача(issue.id, null, null);
                                         }}
                                       >
-                                        No assignee
+                                        Нет assignee
                                       </button>
                                       {currentUserId && (
                                         <button
-                                          className={cn(
+                                          classИмя={cn(
                                             "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-accent/50",
                                             issue.assigneeUserId === currentUserId && "bg-accent",
                                           )}
                                           onClick={(e) => {
-                                            e.preventDefault();
+                                            e.preventПо умолчанию();
                                             e.stopPropagation();
-                                            assignIssue(issue.id, null, currentUserId);
+                                            assignЗадача(issue.id, null, currentUserId);
                                           }}
                                         >
-                                          <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                          <User classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                                           <span>Me</span>
                                         </button>
                                       )}
                                       {(agents ?? [])
                                         .filter((agent) => {
-                                          if (!assigneeSearch.trim()) return true;
-                                          return agent.name.toLowerCase().includes(assigneeSearch.toLowerCase());
+                                          if (!assigneeПоиск.trim()) return true;
+                                          return agent.name.toНизкийerCase().includes(assigneeПоиск.toНизкийerCase());
                                         })
                                         .map((agent) => (
                                           <button
                                             key={agent.id}
-                                            className={cn(
+                                            classИмя={cn(
                                               "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-accent/50",
-                                              issue.assigneeAgentId === agent.id && "bg-accent",
+                                              issue.assigneeАгентId === agent.id && "bg-accent",
                                             )}
                                             onClick={(e) => {
-                                              e.preventDefault();
+                                              e.preventПо умолчанию();
                                               e.stopPropagation();
-                                              assignIssue(issue.id, agent.id, null);
+                                              assignЗадача(issue.id, agent.id, null);
                                             }}
                                           >
-                                            <Identity name={agent.name} size="sm" className="min-w-0" />
+                                            <Identity name={agent.name} size="sm" classИмя="min-w-0" />
                                           </button>
                                         ))}
                                     </div>
@@ -1806,24 +1806,24 @@ export function IssuesList({
                           ) : undefined
                         )}
                       />
-                      {hasChildren && isExpanded && children.map((child) => renderIssueRow(child, depth + 1))}
+                      {hasChildren && isExpanded && children.map((child) => renderЗадачаRow(child, depth + 1))}
                     </div>
                   );
                 };
 
-                return roots.map((issue) => renderIssueRow(issue, 0)).filter((node) => node !== null);
+                return roots.map((issue) => renderЗадачаRow(issue, 0)).filter((node) => node !== null);
               })()}
             </CollapsibleContent>
           </Collapsible>
           );
           })}
-          {(remainingIssueRowCount > 0 || hasMoreIssues || isLoadingMoreIssues) && (
-            <div className="py-2" data-testid="issues-load-more-sentinel">
-              <p className="text-xs text-muted-foreground">
-                {isLoadingMoreIssues
-                  ? "Loading more issues..."
-                  : remainingIssueRowCount > 0
-                    ? `Rendering ${Math.min(renderedIssueRowLimit, filtered.length)} of ${filtered.length} issues`
+          {(remainingЗадачаRowCount > 0 || hasMoreЗадачи || isЗагрузкаMoreЗадачи) && (
+            <div classИмя="py-2" data-testid="issues-load-more-sentinel">
+              <p classИмя="text-xs text-muted-foreground">
+                {isЗагрузкаMoreЗадачи
+                  ? "Загрузка more issues..."
+                  : remainingЗадачаRowCount > 0
+                    ? `Rendering ${Math.min(renderedЗадачаRowLimit, filtered.length)} of ${filtered.length} issues`
                     : "Scroll to load more issues"}
               </p>
             </div>

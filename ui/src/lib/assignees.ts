@@ -1,89 +1,89 @@
-export interface AssigneeSelection {
-  assigneeAgentId: string | null;
+export interface ИсполнительSelection {
+  assigneeАгентId: string | null;
   assigneeUserId: string | null;
 }
 
-export interface AssigneeOption {
+export interface ИсполнительOption {
   id: string;
   label: string;
   searchText?: string;
 }
 
-interface CommentAssigneeSuggestionInput {
-  assigneeAgentId?: string | null;
+interface CommentИсполнительSuggestionInput {
+  assigneeАгентId?: string | null;
   assigneeUserId?: string | null;
 }
 
-interface CommentAssigneeSuggestionComment {
-  authorAgentId?: string | null;
+interface CommentИсполнительSuggestionComment {
+  authorАгентId?: string | null;
   authorUserId?: string | null;
 }
 
-export function assigneeValueFromSelection(selection: Partial<AssigneeSelection>): string {
-  if (selection.assigneeAgentId) return `agent:${selection.assigneeAgentId}`;
+export function assigneeЗначениеFromSelection(selection: Partial<ИсполнительSelection>): string {
+  if (selection.assigneeАгентId) return `agent:${selection.assigneeАгентId}`;
   if (selection.assigneeUserId) return `user:${selection.assigneeUserId}`;
   return "";
 }
 
-export function suggestedCommentAssigneeValue(
-  issue: CommentAssigneeSuggestionInput,
-  comments: CommentAssigneeSuggestionComment[] | null | undefined,
+export function suggestedCommentИсполнительЗначение(
+  issue: CommentИсполнительSuggestionInput,
+  comments: CommentИсполнительSuggestionComment[] | null | undefined,
   currentUserId: string | null | undefined,
-  currentAgentId?: string | null | undefined,
+  currentАгентId?: string | null | undefined,
 ): string {
-  if (comments && comments.length > 0 && (currentUserId || currentAgentId)) {
+  if (comments && comments.length > 0 && (currentUserId || currentАгентId)) {
     for (let i = comments.length - 1; i >= 0; i--) {
       const comment = comments[i];
-      if (comment.authorAgentId && comment.authorAgentId !== currentAgentId) {
-        return assigneeValueFromSelection({ assigneeAgentId: comment.authorAgentId });
+      if (comment.authorАгентId && comment.authorАгентId !== currentАгентId) {
+        return assigneeЗначениеFromSelection({ assigneeАгентId: comment.authorАгентId });
       }
       if (comment.authorUserId && comment.authorUserId !== currentUserId) {
-        return assigneeValueFromSelection({ assigneeUserId: comment.authorUserId });
+        return assigneeЗначениеFromSelection({ assigneeUserId: comment.authorUserId });
       }
     }
   }
 
-  return assigneeValueFromSelection(issue);
+  return assigneeЗначениеFromSelection(issue);
 }
 
-export function parseAssigneeValue(value: string): AssigneeSelection {
+export function parseИсполнительЗначение(value: string): ИсполнительSelection {
   if (!value) {
-    return { assigneeAgentId: null, assigneeUserId: null };
+    return { assigneeАгентId: null, assigneeUserId: null };
   }
   if (value.startsWith("agent:")) {
-    const assigneeAgentId = value.slice("agent:".length);
-    return { assigneeAgentId: assigneeAgentId || null, assigneeUserId: null };
+    const assigneeАгентId = value.slice("agent:".length);
+    return { assigneeАгентId: assigneeАгентId || null, assigneeUserId: null };
   }
   if (value.startsWith("user:")) {
     const assigneeUserId = value.slice("user:".length);
-    return { assigneeAgentId: null, assigneeUserId: assigneeUserId || null };
+    return { assigneeАгентId: null, assigneeUserId: assigneeUserId || null };
   }
-  // Backward compatibility for older drafts/defaults that stored a raw agent id.
-  return { assigneeAgentId: value, assigneeUserId: null };
+  // Назадward compatibility for older drafts/defaults that stored a raw agent id.
+  return { assigneeАгентId: value, assigneeUserId: null };
 }
 
-export function currentUserAssigneeOption(currentUserId: string | null | undefined): AssigneeOption[] {
+export function currentUserИсполнительOption(currentUserId: string | null | undefined): ИсполнительOption[] {
   if (!currentUserId) return [];
   return [{
-    id: assigneeValueFromSelection({ assigneeUserId: currentUserId }),
+    id: assigneeЗначениеFromSelection({ assigneeUserId: currentUserId }),
     label: "Me",
     searchText: currentUserId === "local-board" ? "me board human local-board" : `me human ${currentUserId}`,
   }];
 }
 
-export function formatAssigneeUserLabel(
+export function formatИсполнительUserLabel(
   userId: string | null | undefined,
   currentUserId: string | null | undefined,
-  userLabels?: ReadonlyMap<string, string> | Record<string, string> | null,
+  userЯрлыки?: ReadonlyMap<string, string> | Record<string, string> | null,
 ): string | null {
   if (!userId) return null;
   if (currentUserId && userId === currentUserId) return "You";
-  if (userLabels) {
-    const label = userLabels instanceof Map
-      ? userLabels.get(userId)
-      : (userLabels as Record<string, string>)[userId];
+  if (userЯрлыки) {
+    const label = userЯрлыки instanceof Map
+      ? userЯрлыки.get(userId)
+      : (userЯрлыки as Record<string, string>)[userId];
     if (typeof label === "string" && label.trim()) return label;
   }
-  if (userId === "local-board") return "Board";
+  if (userId === "local-board") return "Совет";
   return userId.slice(0, 5);
 }

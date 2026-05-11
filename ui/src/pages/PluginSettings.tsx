@@ -1,22 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Puzzle, ArrowLeft, ShieldAlert, ActivitySquare, CheckCircle, XCircle, Loader2, Clock, Cpu, Webhook, CalendarClock, AlertTriangle, FolderOpen, Save } from "lucide-react";
-import type { PluginLocalFolderDeclaration } from "@paperclipai/shared";
-import { useCompany } from "@/context/CompanyContext";
+import { Puzzle, ArrowLeft, ShieldAlert, АктивностьSquare, CheckCircle, XCircle, Loader2, Clock, Cpu, Webhook, CalendarClock, AlertTriangle, ПапкаOpen, Сохранить } from "lucide-react";
+import type { PluginLocalПапкаDeclaration } from "@paperclipai/shared";
+import { useКомпания } from "@/context/КомпанияContext";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { Link, Navigate, useParams } from "@/lib/router";
 import { PluginSlotMount, usePluginSlots } from "@/plugins/slots";
-import { pluginsApi, type PluginLocalFolderStatus } from "@/api/plugins";
-import { queryKeys } from "@/lib/queryKeys";
+import { pluginsApi, type PluginLocalПапкаСтатус } from "@/api/plugins";
+import { queryКлючs } from "@/lib/queryКлючs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChoosePathButton } from "@/components/PathInstructionsModal";
+import { ChooseПутьButton } from "@/components/ПутьInstructionsModal";
 import {
   Card,
   CardContent,
-  CardDescription,
+  CardОписание,
   CardHeader,
-  CardTitle,
+  CardНазвание,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -24,22 +24,22 @@ import { PageTabBar } from "@/components/PageTabBar";
 import {
   JsonSchemaForm,
   validateJsonSchemaForm,
-  getDefaultValues,
-  type JsonSchemaNode,
+  getПо умолчаниюЗначениеs,
+  type JsonSchemaНетde,
 } from "@/components/JsonSchemaForm";
 
 /**
- * PluginSettings page component.
+ * PluginНастройки page component.
  *
  * Detailed settings and diagnostics page for a single installed plugin.
- * Navigated to from {@link PluginManager} via the Settings gear icon.
+ * Navigated to from {@link PluginManager} via the Настройки gear icon.
  *
  * Displays:
  * - Plugin identity: display name, id, version, description, categories.
  * - Manifest-declared capabilities (what data and features the plugin can access).
  * - Health check results (only for `ready` plugins; polled every 30 seconds).
- * - Runtime dashboard: worker status/uptime, recent job runs, webhook deliveries.
- * - Auto-generated config form from `instanceConfigSchema` (when no custom settings page).
+ * - Запуститьtime dashboard: worker status/uptime, recent job runs, webhook deliveries.
+ * - Авто-generated config form from `instanceConfigSchema` (when no custom settings page).
  * - Plugin-contributed settings UI via `<PluginSlotOutlet type="settingsPage" />`.
  *
  * Data flow:
@@ -57,157 +57,157 @@ import {
  *
  * @see PluginManager — parent list page.
  * @see doc/plugins/PLUGIN_SPEC.md §13 — Plugin Health Checks.
- * @see doc/plugins/PLUGIN_SPEC.md §19.8 — Plugin Settings UI.
+ * @see doc/plugins/PLUGIN_SPEC.md §19.8 — Plugin Настройки UI.
  */
-export function PluginSettings() {
-  const { selectedCompany, selectedCompanyId } = useCompany();
+export function PluginНастройки() {
+  const { selectedКомпания, selectedКомпанияId } = useКомпания();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { companyPrefix, pluginId } = useParams<{ companyPrefix?: string; pluginId: string }>();
-  const [activeTab, setActiveTab] = useState<"configuration" | "status">("configuration");
+  const [activeTab, setАктивенTab] = useState<"configuration" | "status">("configuration");
 
-  const { data: plugin, isLoading: pluginLoading } = useQuery({
-    queryKey: queryKeys.plugins.detail(pluginId!),
+  const { data: plugin, isЗагрузка: pluginЗагрузка } = useQuery({
+    queryКлюч: queryКлючs.plugins.detail(pluginId!),
     queryFn: () => pluginsApi.get(pluginId!),
     enabled: !!pluginId,
   });
 
-  const { data: healthData, isLoading: healthLoading } = useQuery({
-    queryKey: queryKeys.plugins.health(pluginId!),
+  const { data: healthData, isЗагрузка: healthЗагрузка } = useQuery({
+    queryКлюч: queryКлючs.plugins.health(pluginId!),
     queryFn: () => pluginsApi.health(pluginId!),
     enabled: !!pluginId && plugin?.status === "ready",
     refetchInterval: 30000,
   });
 
   const { data: dashboardData } = useQuery({
-    queryKey: queryKeys.plugins.dashboard(pluginId!),
+    queryКлюч: queryКлючs.plugins.dashboard(pluginId!),
     queryFn: () => pluginsApi.dashboard(pluginId!),
     enabled: !!pluginId,
     refetchInterval: 30000,
   });
 
   const { data: recentLogs } = useQuery({
-    queryKey: queryKeys.plugins.logs(pluginId!),
+    queryКлюч: queryКлючs.plugins.logs(pluginId!),
     queryFn: () => pluginsApi.logs(pluginId!, { limit: 50 }),
     enabled: !!pluginId && plugin?.status === "ready",
     refetchInterval: 30000,
   });
 
   // Fetch existing config for the plugin
-  const configSchema = plugin?.manifestJson?.instanceConfigSchema as JsonSchemaNode | undefined;
+  const configSchema = plugin?.manifestJson?.instanceConfigSchema as JsonSchemaНетde | undefined;
   const hasConfigSchema = configSchema && configSchema.properties && Object.keys(configSchema.properties).length > 0;
 
-  const { data: configData, isLoading: configLoading } = useQuery({
-    queryKey: queryKeys.plugins.config(pluginId!),
+  const { data: configData, isЗагрузка: configЗагрузка } = useQuery({
+    queryКлюч: queryКлючs.plugins.config(pluginId!),
     queryFn: () => pluginsApi.getConfig(pluginId!),
     enabled: !!pluginId && !!hasConfigSchema,
   });
 
   const { slots } = usePluginSlots({
-    slotTypes: ["settingsPage"],
-    companyId: selectedCompanyId,
-    enabled: !!selectedCompanyId,
+    slotТипs: ["settingsPage"],
+    companyId: selectedКомпанияId,
+    enabled: !!selectedКомпанияId,
   });
 
-  // Filter slots to only show settings pages for this specific plugin
+  // Фильтр slots to only show settings pages for this specific plugin
   const pluginSlots = slots.filter((slot) => slot.pluginId === pluginId);
 
   // If the plugin has a custom settingsPage slot, prefer that over auto-generated form
-  const hasCustomSettingsPage = pluginSlots.length > 0;
+  const hasСвойНастройкиPage = pluginSlots.length > 0;
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
-      { label: "Settings", href: "/instance/settings/heartbeats" },
+      { label: selectedКомпания?.name ?? "Компания", href: "/dashboard" },
+      { label: "Настройки", href: "/instance/settings/heartbeats" },
       { label: "Plugins", href: "/instance/settings/plugins" },
-      { label: plugin?.manifestJson?.displayName ?? plugin?.packageName ?? "Plugin Details" },
+      { label: plugin?.manifestJson?.displayИмя ?? plugin?.packageИмя ?? "Plugin Детали" },
     ]);
-  }, [selectedCompany?.name, setBreadcrumbs, companyPrefix, plugin]);
+  }, [selectedКомпания?.name, setBreadcrumbs, companyPrefix, plugin]);
 
   useEffect(() => {
-    setActiveTab("configuration");
+    setАктивенTab("configuration");
   }, [pluginId]);
 
-  if (pluginLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading plugin details...</div>;
+  if (pluginЗагрузка) {
+    return <div classИмя="p-4 text-sm text-muted-foreground">Загрузка plugin details...</div>;
   }
 
   if (!plugin) {
     return <Navigate to="/instance/settings/plugins" replace />;
   }
 
-  const displayStatus = plugin.status;
+  const displayСтатус = plugin.status;
   const statusVariant =
     plugin.status === "ready"
       ? "default"
       : plugin.status === "error"
         ? "destructive"
         : "secondary";
-  const pluginDescription = plugin.manifestJson.description || "No description provided.";
+  const pluginОписание = plugin.manifestJson.description || "Нет описания provided.";
   const pluginCapabilities = plugin.manifestJson.capabilities ?? [];
   const environmentDrivers = plugin.manifestJson.environmentDrivers ?? [];
-  const localFolderDeclarations = plugin.manifestJson.localFolders ?? [];
-  const hasLocalFolders = localFolderDeclarations.length > 0;
-  const environmentDriverNames = environmentDrivers
-    .map((driver) => driver.displayName?.trim() || driver.driverKey)
+  const localПапкаDeclarations = plugin.manifestJson.localПапкаs ?? [];
+  const hasLocalПапкаs = localПапкаDeclarations.length > 0;
+  const environmentDriverИмяs = environmentDrivers
+    .map((driver) => driver.displayИмя?.trim() || driver.driverКлюч)
     .filter((name, index, values) => values.indexOf(name) === index);
-  const driverLabel = environmentDriverNames.join(", ");
+  const driverLabel = environmentDriverИмяs.join(", ");
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <div className="flex items-center gap-4">
+    <div classИмя="space-y-6 max-w-5xl">
+      <div classИмя="flex items-center gap-4">
         <Link to="/instance/settings/plugins">
-          <Button variant="outline" size="icon" className="h-8 w-8">
-            <ArrowLeft className="h-4 w-4" />
+          <Button variant="outline" size="icon" classИмя="h-8 w-8">
+            <ArrowLeft classИмя="h-4 w-4" />
           </Button>
         </Link>
-        <div className="flex items-center gap-2">
-          <Puzzle className="h-6 w-6 text-muted-foreground" />
-          <h1 className="text-xl font-semibold">{plugin.manifestJson.displayName ?? plugin.packageName}</h1>
-          <Badge variant={statusVariant} className="ml-2">
-            {displayStatus}
+        <div classИмя="flex items-center gap-2">
+          <Puzzle classИмя="h-6 w-6 text-muted-foreground" />
+          <h1 classИмя="text-xl font-semibold">{plugin.manifestJson.displayИмя ?? plugin.packageИмя}</h1>
+          <Badge variant={statusVariant} classИмя="ml-2">
+            {displayСтатус}
           </Badge>
-          <Badge variant="outline" className="ml-1">
+          <Badge variant="outline" classИмя="ml-1">
             v{plugin.manifestJson.version ?? plugin.version}
           </Badge>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "configuration" | "status")} className="space-y-6">
+      <Tabs value={activeTab} onЗначениеChange={(value) => setАктивенTab(value as "configuration" | "status")} classИмя="space-y-6">
         <PageTabBar
           align="start"
           items={[
-            { value: "configuration", label: "Configuration" },
-            { value: "status", label: "Status" },
+            { value: "configuration", label: "Конфигурация" },
+            { value: "status", label: "Статус" },
           ]}
           value={activeTab}
-          onValueChange={(value) => setActiveTab(value as "configuration" | "status")}
+          onЗначениеChange={(value) => setАктивенTab(value as "configuration" | "status")}
         />
 
-        <TabsContent value="configuration" className="space-y-6">
-          <div className="space-y-8">
-            <section className="space-y-5">
-              <h2 className="text-base font-semibold">About</h2>
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(220px,0.8fr)]">
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-                  <p className="text-sm leading-6 text-foreground/90">{pluginDescription}</p>
+        <TabsContent value="configuration" classИмя="space-y-6">
+          <div classИмя="space-y-8">
+            <section classИмя="space-y-5">
+              <h2 classИмя="text-base font-semibold">About</h2>
+              <div classИмя="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(220px,0.8fr)]">
+                <div classИмя="space-y-2">
+                  <h3 classИмя="text-sm font-medium text-muted-foreground">Описание</h3>
+                  <p classИмя="text-sm leading-6 text-foreground/90">{pluginОписание}</p>
                 </div>
-                <div className="space-y-4 text-sm">
-                  <div className="space-y-1.5">
-                    <h3 className="font-medium text-muted-foreground">Author</h3>
-                    <p className="text-foreground">{plugin.manifestJson.author}</p>
+                <div classИмя="space-y-4 text-sm">
+                  <div classИмя="space-y-1.5">
+                    <h3 classИмя="font-medium text-muted-foreground">Author</h3>
+                    <p classИмя="text-foreground">{plugin.manifestJson.author}</p>
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-muted-foreground">Categories</h3>
-                    <div className="flex flex-wrap gap-2">
+                  <div classИмя="space-y-2">
+                    <h3 classИмя="font-medium text-muted-foreground">Categories</h3>
+                    <div classИмя="flex flex-wrap gap-2">
                       {plugin.categories.length > 0 ? (
                         plugin.categories.map((category) => (
-                          <Badge key={category} variant="outline" className="capitalize">
+                          <Badge key={category} variant="outline" classИмя="capitalize">
                             {category}
                           </Badge>
                         ))
                       ) : (
-                        <span className="text-foreground">None</span>
+                        <span classИмя="text-foreground">Нет</span>
                       )}
                     </div>
                   </div>
@@ -217,25 +217,25 @@ export function PluginSettings() {
 
             <Separator />
 
-            <section className="space-y-4">
-              <div className="space-y-1">
-                <h2 className="text-base font-semibold">Settings</h2>
+            <section classИмя="space-y-4">
+              <div classИмя="space-y-1">
+                <h2 classИмя="text-base font-semibold">Настройки</h2>
               </div>
-              {hasLocalFolders ? (
-                <PluginLocalFoldersSettings
+              {hasLocalПапкаs ? (
+                <PluginLocalПапкаsНастройки
                   pluginId={pluginId!}
-                  companyId={selectedCompanyId}
-                  declarations={localFolderDeclarations}
+                  companyId={selectedКомпанияId}
+                  declarations={localПапкаDeclarations}
                 />
               ) : null}
-              {hasCustomSettingsPage ? (
-                <div className="space-y-3">
+              {hasСвойНастройкиPage ? (
+                <div classИмя="space-y-3">
                   {pluginSlots.map((slot) => (
                     <PluginSlotMount
-                      key={`${slot.pluginKey}:${slot.id}`}
+                      key={`${slot.pluginКлюч}:${slot.id}`}
                       slot={slot}
                       context={{
-                        companyId: selectedCompanyId,
+                        companyId: selectedКомпанияId,
                         companyPrefix: companyPrefix ?? null,
                       }}
                       missingBehavior="placeholder"
@@ -246,26 +246,26 @@ export function PluginSettings() {
                 <PluginConfigForm
                   pluginId={pluginId!}
                   schema={configSchema!}
-                  initialValues={configData?.configJson}
-                  isLoading={configLoading}
-                  pluginStatus={plugin.status}
-                  supportsConfigTest={(plugin as unknown as { supportsConfigTest?: boolean }).supportsConfigTest === true}
+                  initialЗначениеs={configData?.configJson}
+                  isЗагрузка={configЗагрузка}
+                  pluginСтатус={plugin.status}
+                  supportsConfigПроверить={(plugin as unknown as { supportsConfigПроверить?: boolean }).supportsConfigПроверить === true}
                 />
               ) : environmentDrivers.length > 0 ? (
-                <div className="rounded-md border border-border/60 bg-muted/20 px-4 py-3 text-sm">
-                  <p className="font-medium text-foreground">Configure this plugin from Company Environments.</p>
-                  <p className="mt-1 text-muted-foreground">
+                <div classИмя="rounded-md border border-border/60 bg-muted/20 px-4 py-3 text-sm">
+                  <p classИмя="font-medium text-foreground">Configure this plugin from Компания Окружения.</p>
+                  <p classИмя="mt-1 text-muted-foreground">
                     {driverLabel || "This plugin"} registers environment runtime settings there so credentials stay
                     company-scoped instead of instance-global.
                   </p>
-                  <div className="mt-3">
+                  <div classИмя="mt-3">
                     <Link to="/company/settings/environments">
-                      <Button variant="outline" size="sm">Open Company Environments</Button>
+                      <Button variant="outline" size="sm">Open Компания Окружения</Button>
                     </Link>
                   </div>
                 </div>
-              ) : !hasLocalFolders ? (
-                <p className="text-sm text-muted-foreground">
+              ) : !hasLocalПапкаs ? (
+                <p classИмя="text-sm text-muted-foreground">
                   This plugin does not require any settings.
                 </p>
               ) : null}
@@ -273,96 +273,96 @@ export function PluginSettings() {
           </div>
         </TabsContent>
 
-        <TabsContent value="status" className="space-y-6">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_320px]">
-            <div className="space-y-6">
+        <TabsContent value="status" classИмя="space-y-6">
+          <div classИмя="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_320px]">
+            <div classИмя="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-1.5">
-                    <Cpu className="h-4 w-4" />
-                    Runtime Dashboard
-                  </CardTitle>
-                  <CardDescription>
-                    Worker process, scheduled jobs, and webhook deliveries
-                  </CardDescription>
+                  <CardНазвание classИмя="text-base flex items-center gap-1.5">
+                    <Cpu classИмя="h-4 w-4" />
+                    Запуститьtime Панель управления
+                  </CardНазвание>
+                  <CardОписание>
+                    Работаer process, scheduled jobs, and webhook deliveries
+                  </CardОписание>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent classИмя="space-y-6">
                   {dashboardData ? (
                     <>
                       <div>
-                        <h3 className="text-sm font-medium mb-3 flex items-center gap-1.5">
-                          <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
-                          Worker Process
+                        <h3 classИмя="text-sm font-medium mb-3 flex items-center gap-1.5">
+                          <Cpu classИмя="h-3.5 w-3.5 text-muted-foreground" />
+                          Работаer Process
                         </h3>
                         {dashboardData.worker ? (
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Status</span>
+                          <div classИмя="grid grid-cols-2 gap-3 text-sm">
+                            <div classИмя="flex justify-between">
+                              <span classИмя="text-muted-foreground">Статус</span>
                               <Badge variant={dashboardData.worker.status === "running" ? "default" : "secondary"}>
                                 {dashboardData.worker.status}
                               </Badge>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">PID</span>
-                              <span className="font-mono text-xs">{dashboardData.worker.pid ?? "—"}</span>
+                            <div classИмя="flex justify-between">
+                              <span classИмя="text-muted-foreground">PID</span>
+                              <span classИмя="font-mono text-xs">{dashboardData.worker.pid ?? "—"}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Uptime</span>
-                              <span className="text-xs">{formatUptime(dashboardData.worker.uptime)}</span>
+                            <div classИмя="flex justify-between">
+                              <span classИмя="text-muted-foreground">Uptime</span>
+                              <span classИмя="text-xs">{formatUptime(dashboardData.worker.uptime)}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Pending RPCs</span>
-                              <span className="text-xs">{dashboardData.worker.pendingRequests}</span>
+                            <div classИмя="flex justify-between">
+                              <span classИмя="text-muted-foreground">Ожидание RPCs</span>
+                              <span classИмя="text-xs">{dashboardData.worker.pendingRequests}</span>
                             </div>
                             {dashboardData.worker.totalCrashes > 0 && (
                               <>
-                                <div className="flex justify-between col-span-2">
-                                  <span className="text-muted-foreground flex items-center gap-1">
-                                    <AlertTriangle className="h-3 w-3 text-amber-500" />
+                                <div classИмя="flex justify-between col-span-2">
+                                  <span classИмя="text-muted-foreground flex items-center gap-1">
+                                    <AlertTriangle classИмя="h-3 w-3 text-amber-500" />
                                     Crashes
                                   </span>
-                                  <span className="text-xs">
+                                  <span classИмя="text-xs">
                                     {dashboardData.worker.consecutiveCrashes} consecutive / {dashboardData.worker.totalCrashes} total
                                   </span>
                                 </div>
                                 {dashboardData.worker.lastCrashAt && (
-                                  <div className="flex justify-between col-span-2">
-                                    <span className="text-muted-foreground">Last Crash</span>
-                                    <span className="text-xs">{formatTimestamp(dashboardData.worker.lastCrashAt)}</span>
+                                  <div classИмя="flex justify-between col-span-2">
+                                    <span classИмя="text-muted-foreground">Last Crash</span>
+                                    <span classИмя="text-xs">{formatTimestamp(dashboardData.worker.lastCrashAt)}</span>
                                   </div>
                                 )}
                               </>
                             )}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground italic">No worker process registered.</p>
+                          <p classИмя="text-sm text-muted-foreground italic">Нет worker process registered.</p>
                         )}
                       </div>
 
                       <Separator />
 
                       <div>
-                        <h3 className="text-sm font-medium mb-3 flex items-center gap-1.5">
-                          <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
-                          Recent Job Runs
+                        <h3 classИмя="text-sm font-medium mb-3 flex items-center gap-1.5">
+                          <CalendarClock classИмя="h-3.5 w-3.5 text-muted-foreground" />
+                          Recent Job Запуститьs
                         </h3>
-                        {dashboardData.recentJobRuns.length > 0 ? (
-                          <div className="space-y-2">
-                            {dashboardData.recentJobRuns.map((run) => (
+                        {dashboardData.recentJobЗапуститьs.length > 0 ? (
+                          <div classИмя="space-y-2">
+                            {dashboardData.recentJobЗапуститьs.map((run) => (
                               <div
                                 key={run.id}
-                                className="flex items-center justify-between gap-2 rounded-md bg-muted/50 px-2 py-1.5 text-sm"
+                                classИмя="flex items-center justify-between gap-2 rounded-md bg-muted/50 px-2 py-1.5 text-sm"
                               >
-                                <div className="flex min-w-0 items-center gap-2">
-                                  <JobStatusDot status={run.status} />
-                                  <span className="truncate font-mono text-xs" title={run.jobKey ?? run.jobId}>
-                                    {run.jobKey ?? run.jobId.slice(0, 8)}
+                                <div classИмя="flex min-w-0 items-center gap-2">
+                                  <JobСтатусDot status={run.status} />
+                                  <span classИмя="truncate font-mono text-xs" title={run.jobКлюч ?? run.jobId}>
+                                    {run.jobКлюч ?? run.jobId.slice(0, 8)}
                                   </span>
-                                  <Badge variant="outline" className="px-1 py-0 text-[10px]">
+                                  <Badge variant="outline" classИмя="px-1 py-0 text-[10px]">
                                     {run.trigger}
                                   </Badge>
                                 </div>
-                                <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                                <div classИмя="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                                   {run.durationMs != null ? <span>{formatDuration(run.durationMs)}</span> : null}
                                   <span title={run.createdAt}>{formatRelativeTime(run.createdAt)}</span>
                                 </div>
@@ -370,31 +370,31 @@ export function PluginSettings() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground italic">No job runs recorded yet.</p>
+                          <p classИмя="text-sm text-muted-foreground italic">Нет job runs recorded yet.</p>
                         )}
                       </div>
 
                       <Separator />
 
                       <div>
-                        <h3 className="text-sm font-medium mb-3 flex items-center gap-1.5">
-                          <Webhook className="h-3.5 w-3.5 text-muted-foreground" />
+                        <h3 classИмя="text-sm font-medium mb-3 flex items-center gap-1.5">
+                          <Webhook classИмя="h-3.5 w-3.5 text-muted-foreground" />
                           Recent Webhook Deliveries
                         </h3>
                         {dashboardData.recentWebhookDeliveries.length > 0 ? (
-                          <div className="space-y-2">
+                          <div classИмя="space-y-2">
                             {dashboardData.recentWebhookDeliveries.map((delivery) => (
                               <div
                                 key={delivery.id}
-                                className="flex items-center justify-between gap-2 rounded-md bg-muted/50 px-2 py-1.5 text-sm"
+                                classИмя="flex items-center justify-between gap-2 rounded-md bg-muted/50 px-2 py-1.5 text-sm"
                               >
-                                <div className="flex min-w-0 items-center gap-2">
-                                  <DeliveryStatusDot status={delivery.status} />
-                                  <span className="truncate font-mono text-xs" title={delivery.webhookKey}>
-                                    {delivery.webhookKey}
+                                <div classИмя="flex min-w-0 items-center gap-2">
+                                  <DeliveryСтатусDot status={delivery.status} />
+                                  <span classИмя="truncate font-mono text-xs" title={delivery.webhookКлюч}>
+                                    {delivery.webhookКлюч}
                                   </span>
                                 </div>
-                                <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                                <div classИмя="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                                   {delivery.durationMs != null ? <span>{formatDuration(delivery.durationMs)}</span> : null}
                                   <span title={delivery.createdAt}>{formatRelativeTime(delivery.createdAt)}</span>
                                 </div>
@@ -402,18 +402,18 @@ export function PluginSettings() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground italic">No webhook deliveries recorded yet.</p>
+                          <p classИмя="text-sm text-muted-foreground italic">Нет webhook deliveries recorded yet.</p>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1.5 border-t border-border/50 pt-2 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
+                      <div classИмя="flex items-center gap-1.5 border-t border-border/50 pt-2 text-xs text-muted-foreground">
+                        <Clock classИмя="h-3 w-3" />
                         Last checked: {new Date(dashboardData.checkedAt).toLocaleTimeString()}
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Runtime diagnostics are unavailable right now.
+                    <p classИмя="text-sm text-muted-foreground">
+                      Запуститьtime diagnostics are unavailable right now.
                     </p>
                   )}
                 </CardContent>
@@ -422,18 +422,18 @@ export function PluginSettings() {
               {recentLogs && recentLogs.length > 0 ? (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-1.5">
-                      <ActivitySquare className="h-4 w-4" />
+                    <CardНазвание classИмя="text-base flex items-center gap-1.5">
+                      <АктивностьSquare classИмя="h-4 w-4" />
                       Recent Logs
-                    </CardTitle>
-                    <CardDescription>Last {recentLogs.length} log entries</CardDescription>
+                    </CardНазвание>
+                    <CardОписание>Last {recentLogs.length} log entries</CardОписание>
                   </CardHeader>
                   <CardContent>
-                    <div className="max-h-64 space-y-1 overflow-y-auto font-mono text-xs">
+                    <div classИмя="max-h-64 space-y-1 overflow-y-auto font-mono text-xs">
                       {recentLogs.map((entry) => (
                         <div
                           key={entry.id}
-                          className={`flex gap-2 py-0.5 ${
+                          classИмя={`flex gap-2 py-0.5 ${
                             entry.level === "error"
                               ? "text-destructive"
                               : entry.level === "warn"
@@ -443,9 +443,9 @@ export function PluginSettings() {
                                   : "text-muted-foreground"
                           }`}
                         >
-                          <span className="shrink-0 text-muted-foreground/50">{new Date(entry.createdAt).toLocaleTimeString()}</span>
-                          <Badge variant="outline" className="h-4 shrink-0 px-1 text-[10px]">{entry.level}</Badge>
-                          <span className="truncate" title={entry.message}>{entry.message}</span>
+                          <span classИмя="shrink-0 text-muted-foreground/50">{new Date(entry.createdAt).toLocaleTimeString()}</span>
+                          <Badge variant="outline" classИмя="h-4 shrink-0 px-1 text-[10px]">{entry.level}</Badge>
+                          <span classИмя="truncate" title={entry.message}>{entry.message}</span>
                         </div>
                       ))}
                     </div>
@@ -454,59 +454,59 @@ export function PluginSettings() {
               ) : null}
             </div>
 
-            <div className="space-y-6">
+            <div classИмя="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-1.5">
-                    <ActivitySquare className="h-4 w-4" />
-                    Health Status
-                  </CardTitle>
+                  <CardНазвание classИмя="text-base flex items-center gap-1.5">
+                    <АктивностьSquare classИмя="h-4 w-4" />
+                    Health Статус
+                  </CardНазвание>
                 </CardHeader>
                 <CardContent>
-                  {healthLoading ? (
-                    <p className="text-sm text-muted-foreground">Checking health...</p>
+                  {healthЗагрузка ? (
+                    <p classИмя="text-sm text-muted-foreground">Checking health...</p>
                   ) : healthData ? (
-                    <div className="space-y-4 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Overall</span>
+                    <div classИмя="space-y-4 text-sm">
+                      <div classИмя="flex items-center justify-between">
+                        <span classИмя="text-muted-foreground">Overall</span>
                         <Badge variant={healthData.healthy ? "default" : "destructive"}>
                           {healthData.status}
                         </Badge>
                       </div>
 
                       {healthData.checks.length > 0 ? (
-                        <div className="space-y-2 border-t border-border/50 pt-2">
+                        <div classИмя="space-y-2 border-t border-border/50 pt-2">
                           {healthData.checks.map((check, i) => (
-                            <div key={i} className="flex items-start justify-between gap-2">
-                              <span className="truncate text-muted-foreground" title={check.name}>
+                            <div key={i} classИмя="flex items-start justify-between gap-2">
+                              <span classИмя="truncate text-muted-foreground" title={check.name}>
                                 {check.name}
                               </span>
                               {check.passed ? (
-                                <CheckCircle className="h-4 w-4 shrink-0 text-green-500" />
+                                <CheckCircle classИмя="h-4 w-4 shrink-0 text-green-500" />
                               ) : (
-                                <XCircle className="h-4 w-4 shrink-0 text-destructive" />
+                                <XCircle classИмя="h-4 w-4 shrink-0 text-destructive" />
                               )}
                             </div>
                           ))}
                         </div>
                       ) : null}
 
-                      {healthData.lastError ? (
-                        <div className="break-words rounded border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive">
-                          {healthData.lastError}
+                      {healthData.lastОшибка ? (
+                        <div classИмя="break-words rounded border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive">
+                          {healthData.lastОшибка}
                         </div>
                       ) : null}
                     </div>
                   ) : (
-                    <div className="space-y-3 text-sm text-muted-foreground">
-                      <div className="flex items-center justify-between">
+                    <div classИмя="space-y-3 text-sm text-muted-foreground">
+                      <div classИмя="flex items-center justify-between">
                         <span>Lifecycle</span>
-                        <Badge variant={statusVariant}>{displayStatus}</Badge>
+                        <Badge variant={statusVariant}>{displayСтатус}</Badge>
                       </div>
                       <p>Health checks run once the plugin is ready.</p>
-                      {plugin.lastError ? (
-                        <div className="break-words rounded border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive">
-                          {plugin.lastError}
+                      {plugin.lastОшибка ? (
+                        <div classИмя="break-words rounded border border-destructive/20 bg-destructive/10 p-2 text-xs text-destructive">
+                          {plugin.lastОшибка}
                         </div>
                       ) : null}
                     </div>
@@ -516,48 +516,48 @@ export function PluginSettings() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Details</CardTitle>
+                  <CardНазвание classИмя="text-base">Детали</CardНазвание>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <div className="flex justify-between gap-3">
+                <CardContent classИмя="space-y-3 text-sm text-muted-foreground">
+                  <div classИмя="flex justify-between gap-3">
                     <span>Plugin ID</span>
-                    <span className="font-mono text-xs text-right">{plugin.id}</span>
+                    <span classИмя="font-mono text-xs text-right">{plugin.id}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
-                    <span>Plugin Key</span>
-                    <span className="font-mono text-xs text-right">{plugin.pluginKey}</span>
+                  <div classИмя="flex justify-between gap-3">
+                    <span>Plugin Ключ</span>
+                    <span classИмя="font-mono text-xs text-right">{plugin.pluginКлюч}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
+                  <div classИмя="flex justify-between gap-3">
                     <span>NPM Package</span>
-                    <span className="max-w-[170px] truncate text-right text-xs" title={plugin.packageName}>
-                      {plugin.packageName}
+                    <span classИмя="max-w-[170px] truncate text-right text-xs" title={plugin.packageИмя}>
+                      {plugin.packageИмя}
                     </span>
                   </div>
-                  <div className="flex justify-between gap-3">
-                    <span>Version</span>
-                    <span className="text-right text-foreground">v{plugin.manifestJson.version ?? plugin.version}</span>
+                  <div classИмя="flex justify-between gap-3">
+                    <span>Версия</span>
+                    <span classИмя="text-right text-foreground">v{plugin.manifestJson.version ?? plugin.version}</span>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-1.5">
-                    <ShieldAlert className="h-4 w-4" />
+                  <CardНазвание classИмя="text-base flex items-center gap-1.5">
+                    <ShieldAlert classИмя="h-4 w-4" />
                     Permissions
-                  </CardTitle>
+                  </CardНазвание>
                 </CardHeader>
                 <CardContent>
                   {pluginCapabilities.length > 0 ? (
-                    <ul className="space-y-2 text-sm text-muted-foreground">
+                    <ul classИмя="space-y-2 text-sm text-muted-foreground">
                       {pluginCapabilities.map((cap) => (
-                        <li key={cap} className="rounded-md bg-muted/40 px-2.5 py-2 font-mono text-xs text-foreground/85">
+                        <li key={cap} classИмя="rounded-md bg-muted/40 px-2.5 py-2 font-mono text-xs text-foreground/85">
                           {cap}
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">No special permissions requested.</p>
+                    <p classИмя="text-sm text-muted-foreground italic">Нет special permissions requested.</p>
                   )}
                 </CardContent>
               </Card>
@@ -570,59 +570,59 @@ export function PluginSettings() {
 }
 
 // ---------------------------------------------------------------------------
-// PluginLocalFoldersSettings — host-managed company-scoped folders
+// PluginLocalПапкаsНастройки — host-managed company-scoped folders
 // ---------------------------------------------------------------------------
 
-interface PluginLocalFoldersSettingsProps {
+interface PluginLocalПапкаsНастройкиProps {
   pluginId: string;
   companyId: string | null;
-  declarations: PluginLocalFolderDeclaration[];
+  declarations: PluginLocalПапкаDeclaration[];
 }
 
-function PluginLocalFoldersSettings({ pluginId, companyId, declarations }: PluginLocalFoldersSettingsProps) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: companyId
-      ? queryKeys.plugins.localFolders(pluginId, companyId)
+function PluginLocalПапкаsНастройки({ pluginId, companyId, declarations }: PluginLocalПапкаsНастройкиProps) {
+  const { data, isЗагрузка, error } = useQuery({
+    queryКлюч: companyId
+      ? queryКлючs.plugins.localПапкаs(pluginId, companyId)
       : ["plugins", pluginId, "companies", "none", "local-folders"],
-    queryFn: () => pluginsApi.listLocalFolders(pluginId, companyId!),
+    queryFn: () => pluginsApi.listLocalПапкаs(pluginId, companyId!),
     enabled: !!companyId,
   });
 
-  const statusByKey = new Map((data?.folders ?? []).map((folder) => [folder.folderKey, folder]));
+  const statusByКлюч = new Map((data?.folders ?? []).map((folder) => [folder.folderКлюч, folder]));
 
   if (!companyId) {
     return (
-      <div className="rounded-md border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+      <div classИмя="rounded-md border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
         Select a company to configure this plugin's local folders.
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <FolderOpen className="h-4 w-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Local folders</h3>
+    <div classИмя="space-y-3">
+      <div classИмя="flex items-center gap-2">
+        <ПапкаOpen classИмя="h-4 w-4 text-muted-foreground" />
+        <h3 classИмя="text-sm font-medium">Локальная папкаs</h3>
       </div>
       {error ? (
-        <div className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {(error as Error).message || "Failed to load local folder settings."}
+        <div classИмя="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {(error as Ошибка).message || "Ошибка to load local folder settings."}
         </div>
       ) : null}
-      {isLoading ? (
-        <div className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Loading local folders...
+      {isЗагрузка ? (
+        <div classИмя="flex items-center gap-2 py-3 text-sm text-muted-foreground">
+          <Loader2 classИмя="h-4 w-4 animate-spin" />
+          Загрузка local folders...
         </div>
       ) : (
-        <div className="space-y-3">
+        <div classИмя="space-y-3">
           {declarations.map((declaration) => (
-            <PluginLocalFolderRow
-              key={declaration.folderKey}
+            <PluginLocalПапкаRow
+              key={declaration.folderКлюч}
               pluginId={pluginId}
               companyId={companyId}
               declaration={declaration}
-              status={statusByKey.get(declaration.folderKey)}
+              status={statusByКлюч.get(declaration.folderКлюч)}
             />
           ))}
         </div>
@@ -631,78 +631,78 @@ function PluginLocalFoldersSettings({ pluginId, companyId, declarations }: Plugi
   );
 }
 
-interface PluginLocalFolderRowProps {
+interface PluginLocalПапкаRowProps {
   pluginId: string;
   companyId: string;
-  declaration: PluginLocalFolderDeclaration;
-  status?: PluginLocalFolderStatus;
+  declaration: PluginLocalПапкаDeclaration;
+  status?: PluginLocalПапкаСтатус;
 }
 
-function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: PluginLocalFolderRowProps) {
+function PluginLocalПапкаRow({ pluginId, companyId, declaration, status }: PluginLocalПапкаRowProps) {
   const queryClient = useQueryClient();
-  const serverPath = status?.path ?? "";
-  const [pathValue, setPathValue] = useState(serverPath);
+  const serverПуть = status?.path ?? "";
+  const [pathЗначение, setПутьЗначение] = useState(serverПуть);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    setPathValue(serverPath);
+    setПутьЗначение(serverПуть);
     setMessage(null);
-  }, [serverPath, declaration.folderKey]);
+  }, [serverПуть, declaration.folderКлюч]);
 
   const saveMutation = useMutation({
     mutationFn: (path: string) =>
-      pluginsApi.configureLocalFolder(pluginId, companyId, declaration.folderKey, {
+      pluginsApi.configureLocalПапка(pluginId, companyId, declaration.folderКлюч, {
         path,
         access: declaration.access,
         requiredDirectories: declaration.requiredDirectories,
-        requiredFiles: declaration.requiredFiles,
+        requiredФайлы: declaration.requiredФайлы,
       }),
-    onSuccess: (nextStatus) => {
+    onУспешно: (nextСтатус) => {
       setMessage({
-        type: nextStatus.healthy ? "success" : "error",
-        text: nextStatus.healthy
-          ? "Local folder saved."
-          : "Local folder saved, but validation still needs attention.",
+        type: nextСтатус.healthy ? "success" : "error",
+        text: nextСтатус.healthy
+          ? "Локальная папка saved."
+          : "Локальная папка saved, but validation still needs attention.",
       });
-      queryClient.invalidateQueries({ queryKey: queryKeys.plugins.localFolders(pluginId, companyId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.plugins.localПапкаs(pluginId, companyId) });
     },
-    onError: (err: Error) => {
-      setMessage({ type: "error", text: err.message || "Failed to save local folder." });
+    onОшибка: (err: Ошибка) => {
+      setMessage({ type: "error", text: err.message || "Ошибка to save local folder." });
     },
   });
 
-  const trimmedPath = pathValue.trim();
-  const isDirty = trimmedPath !== serverPath;
+  const trimmedПуть = pathЗначение.trim();
+  const isDirty = trimmedПуть !== serverПуть;
   const access = status?.access ?? declaration.access ?? "readWrite";
 
-  const handleSave = useCallback(() => {
-    if (!trimmedPath) {
-      setMessage({ type: "error", text: "Local folder path is required." });
+  const handleСохранить = useCallback(() => {
+    if (!trimmedПуть) {
+      setMessage({ type: "error", text: "Локальная папка path is required." });
       return;
     }
-    if (!isLikelyAbsolutePath(trimmedPath)) {
-      setMessage({ type: "error", text: "Local folder must be a full absolute path." });
+    if (!isLikelyAbsoluteПуть(trimmedПуть)) {
+      setMessage({ type: "error", text: "Локальная папка must be a full absolute path." });
       return;
     }
     setMessage(null);
-    saveMutation.mutate(trimmedPath);
-  }, [saveMutation, trimmedPath]);
+    saveMutation.mutate(trimmedПуть);
+  }, [saveMutation, trimmedПуть]);
 
   return (
-    <div className="space-y-4 rounded-md border border-border/70 bg-background px-4 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-sm font-medium">{declaration.displayName}</h4>
-            <Badge variant="outline" className="font-mono text-[10px]">
-              {declaration.folderKey}
+    <div classИмя="space-y-4 rounded-md border border-border/70 bg-background px-4 py-4">
+      <div classИмя="flex flex-wrap items-start justify-between gap-3">
+        <div classИмя="min-w-0 space-y-1">
+          <div classИмя="flex flex-wrap items-center gap-2">
+            <h4 classИмя="text-sm font-medium">{declaration.displayИмя}</h4>
+            <Badge variant="outline" classИмя="font-mono text-[10px]">
+              {declaration.folderКлюч}
             </Badge>
             <Badge variant={status?.healthy ? "default" : "secondary"}>
-              {status?.healthy ? "Healthy" : "Needs attention"}
+              {status?.healthy ? "Работает" : "Needs attention"}
             </Badge>
           </div>
           {declaration.description ? (
-            <p className="max-w-3xl text-sm leading-5 text-muted-foreground">
+            <p classИмя="max-w-3xl text-sm leading-5 text-muted-foreground">
               {declaration.description}
             </p>
           ) : null}
@@ -712,66 +712,66 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
         </Badge>
       </div>
 
-      <div className="grid gap-3 text-sm sm:grid-cols-3">
-        <FolderStatusMetric label="Configured" value={status?.configured ? "Yes" : "No"} ok={!!status?.configured} />
-        <FolderStatusMetric label="Readable" value={status?.readable ? "Yes" : "No"} ok={!!status?.readable} />
-        <FolderStatusMetric
+      <div classИмя="grid gap-3 text-sm sm:grid-cols-3">
+        <ПапкаСтатусMetric label="Configured" value={status?.configured ? "Да" : "Нет"} ok={!!status?.configured} />
+        <ПапкаСтатусMetric label="Readable" value={status?.readable ? "Да" : "Нет"} ok={!!status?.readable} />
+        <ПапкаСтатусMetric
           label="Writable"
-          value={access === "read" ? "Not requested" : status?.writable ? "Yes" : "No"}
+          value={access === "read" ? "Нетt requested" : status?.writable ? "Да" : "Нет"}
           ok={access === "read" || !!status?.writable}
         />
       </div>
 
       {status?.path ? (
-        <div className="space-y-1 text-sm">
-          <div className="text-xs font-medium text-muted-foreground">Configured path</div>
-          <div className="break-all rounded-md bg-muted/60 px-2 py-1.5 font-mono text-xs text-foreground">
+        <div classИмя="space-y-1 text-sm">
+          <div classИмя="text-xs font-medium text-muted-foreground">Configured path</div>
+          <div classИмя="break-all rounded-md bg-muted/60 px-2 py-1.5 font-mono text-xs text-foreground">
             {status.path}
           </div>
         </div>
       ) : null}
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground" htmlFor={`local-folder-${declaration.folderKey}`}>
-          Local folder path
+      <div classИмя="space-y-1.5">
+        <label classИмя="text-xs font-medium text-muted-foreground" htmlFor={`local-folder-${declaration.folderКлюч}`}>
+          Локальная папка path
         </label>
-        <div className="flex items-center gap-2">
+        <div classИмя="flex items-center gap-2">
           <input
-            id={`local-folder-${declaration.folderKey}`}
-            className="min-w-0 flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 font-mono text-sm outline-none focus:border-foreground/40 focus:ring-2 focus:ring-ring/20"
-            value={pathValue}
+            id={`local-folder-${declaration.folderКлюч}`}
+            classИмя="min-w-0 flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 font-mono text-sm outline-none focus:border-foreground/40 focus:ring-2 focus:ring-ring/20"
+            value={pathЗначение}
             onChange={(event) => {
-              setPathValue(event.target.value);
+              setПутьЗначение(event.target.value);
               setMessage(null);
             }}
             placeholder="/absolute/path/to/folder"
           />
-          <ChoosePathButton className="h-8" />
+          <ChooseПутьButton classИмя="h-8" />
           <Button
             size="sm"
-            onClick={handleSave}
-            disabled={saveMutation.isPending || !isDirty}
+            onClick={handleСохранить}
+            disabled={saveMutation.isОжидание || !isDirty}
           >
-            {saveMutation.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {saveMutation.isОжидание ? (
+              <Loader2 classИмя="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <Save className="h-3.5 w-3.5" />
+              <Сохранить classИмя="h-3.5 w-3.5" />
             )}
-            Save
+            Сохранить
           </Button>
         </div>
       </div>
 
-      <FolderRequirements status={status} declaration={declaration} />
+      <ПапкаRequirements status={status} declaration={declaration} />
 
       {status?.problems?.length ? (
-        <div className="space-y-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          <div className="font-medium">Validation problems</div>
-          <ul className="space-y-1">
+        <div classИмя="space-y-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div classИмя="font-medium">Validation problems</div>
+          <ul classИмя="space-y-1">
             {status.problems.map((problem, index) => (
               <li key={`${problem.code}:${problem.path ?? ""}:${index}`}>
                 {problem.message}
-                {problem.path ? <span className="font-mono"> {problem.path}</span> : null}
+                {problem.path ? <span classИмя="font-mono"> {problem.path}</span> : null}
               </li>
             ))}
           </ul>
@@ -780,7 +780,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
 
       {message ? (
         <div
-          className={`rounded-md border px-3 py-2 text-sm ${
+          classИмя={`rounded-md border px-3 py-2 text-sm ${
             message.type === "success"
               ? "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400"
               : "border-destructive/20 bg-destructive/10 text-destructive"
@@ -793,51 +793,51 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
   );
 }
 
-function FolderStatusMetric({ label, value, ok }: { label: string; value: string; ok: boolean }) {
+function ПапкаСтатусMetric({ label, value, ok }: { label: string; value: string; ok: boolean }) {
   return (
-    <div className="flex items-center justify-between rounded-md border border-border/60 px-2.5 py-2">
-      <span className="text-muted-foreground">{label}</span>
+    <div classИмя="flex items-center justify-between rounded-md border border-border/60 px-2.5 py-2">
+      <span classИмя="text-muted-foreground">{label}</span>
       <Badge variant={ok ? "default" : "secondary"}>{value}</Badge>
     </div>
   );
 }
 
-function FolderRequirements({
+function ПапкаRequirements({
   status,
   declaration,
 }: {
-  status?: PluginLocalFolderStatus;
-  declaration: PluginLocalFolderDeclaration;
+  status?: PluginLocalПапкаСтатус;
+  declaration: PluginLocalПапкаDeclaration;
 }) {
   const requiredDirectories = status?.requiredDirectories ?? declaration.requiredDirectories ?? [];
-  const requiredFiles = status?.requiredFiles ?? declaration.requiredFiles ?? [];
+  const requiredФайлы = status?.requiredФайлы ?? declaration.requiredФайлы ?? [];
   const missingDirectories = status?.missingDirectories ?? requiredDirectories;
-  const missingFiles = status?.missingFiles ?? requiredFiles;
-  const rootNotInspected = isRootNotInspected(status);
+  const missingФайлы = status?.missingФайлы ?? requiredФайлы;
+  const rootНетtInspected = isRootНетtInspected(status);
 
-  if (requiredDirectories.length === 0 && requiredFiles.length === 0) return null;
+  if (requiredDirectories.length === 0 && requiredФайлы.length === 0) return null;
 
   return (
-    <div className="grid gap-3 text-sm md:grid-cols-2">
+    <div classИмя="grid gap-3 text-sm md:grid-cols-2">
       <RequirementList
-        title="Required directories"
+        title="Обязательно directories"
         items={requiredDirectories}
         missingItems={missingDirectories}
         missingLabel="Missing directories"
-        inspectionUnavailable={rootNotInspected}
+        inspectionUnavailable={rootНетtInspected}
       />
       <RequirementList
-        title="Required files"
-        items={requiredFiles}
-        missingItems={missingFiles}
+        title="Обязательно files"
+        items={requiredФайлы}
+        missingItems={missingФайлы}
         missingLabel="Missing files"
-        inspectionUnavailable={rootNotInspected}
+        inspectionUnavailable={rootНетtInspected}
       />
     </div>
   );
 }
 
-function isRootNotInspected(status?: PluginLocalFolderStatus) {
+function isRootНетtInspected(status?: PluginLocalПапкаСтатус) {
   if (!status?.configured || status.readable) return false;
   return status.problems.some((problem) =>
     problem.code === "missing" || problem.code === "not_readable" || problem.code === "not_directory"
@@ -858,29 +858,29 @@ function RequirementList({
   inspectionUnavailable?: boolean;
 }) {
   return (
-    <div className="space-y-2 rounded-md border border-border/60 px-3 py-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">{title}</span>
+    <div classИмя="space-y-2 rounded-md border border-border/60 px-3 py-2">
+      <div classИмя="flex items-center justify-between gap-2">
+        <span classИмя="text-xs font-medium text-muted-foreground">{title}</span>
         {inspectionUnavailable ? (
-          <Badge variant="secondary" className="text-[10px]">
-            Not inspected
+          <Badge variant="secondary" classИмя="text-[10px]">
+            Нетt inspected
           </Badge>
         ) : missingItems.length > 0 ? (
-          <Badge variant="destructive" className="text-[10px]">
+          <Badge variant="destructive" classИмя="text-[10px]">
             {missingItems.length} missing
           </Badge>
         ) : (
-          <Badge variant="outline" className="text-[10px]">Present</Badge>
+          <Badge variant="outline" classИмя="text-[10px]">Present</Badge>
         )}
       </div>
       {items.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
+        <div classИмя="flex flex-wrap gap-1.5">
           {items.map((item) => {
             const missing = missingItems.includes(item);
             return (
               <span
                 key={item}
-                className={`rounded border px-1.5 py-0.5 font-mono text-[11px] ${
+                classИмя={`rounded border px-1.5 py-0.5 font-mono text-[11px] ${
                   inspectionUnavailable
                     ? "border-amber-300/60 bg-amber-50 text-amber-700 dark:border-amber-800/70 dark:bg-amber-950/30 dark:text-amber-300"
                     : missing
@@ -894,22 +894,22 @@ function RequirementList({
           })}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">None declared.</p>
+        <p classИмя="text-xs text-muted-foreground">Нет declared.</p>
       )}
       {inspectionUnavailable ? (
-        <p className="text-xs text-amber-700 dark:text-amber-300">Configured root was not inspected.</p>
+        <p classИмя="text-xs text-amber-700 dark:text-amber-300">Configured root was not inspected.</p>
       ) : missingItems.length > 0 ? (
-        <p className="text-xs text-destructive">{missingLabel}: {missingItems.join(", ")}</p>
+        <p classИмя="text-xs text-destructive">{missingLabel}: {missingItems.join(", ")}</p>
       ) : null}
     </div>
   );
 }
 
-function isLikelyAbsolutePath(pathValue: string) {
+function isLikelyAbsoluteПуть(pathЗначение: string) {
   return (
-    pathValue.startsWith("/") ||
-    /^[A-Za-z]:[\\/]/.test(pathValue) ||
-    pathValue.startsWith("\\\\")
+    pathЗначение.startsWith("/") ||
+    /^[A-Za-z]:[\\/]/.test(pathЗначение) ||
+    pathЗначение.startsWith("\\\\")
   );
 }
 
@@ -919,29 +919,29 @@ function isLikelyAbsolutePath(pathValue: string) {
 
 interface PluginConfigFormProps {
   pluginId: string;
-  schema: JsonSchemaNode;
-  initialValues?: Record<string, unknown>;
-  isLoading?: boolean;
-  /** Current plugin lifecycle status — "Test Configuration" only available when `ready`. */
-  pluginStatus?: string;
+  schema: JsonSchemaНетde;
+  initialЗначениеs?: Record<string, unknown>;
+  isЗагрузка?: boolean;
+  /** Current plugin lifecycle status — "Проверить Конфигурация" only available when `ready`. */
+  pluginСтатус?: string;
   /** Whether the plugin worker implements `validateConfig`. */
-  supportsConfigTest?: boolean;
+  supportsConfigПроверить?: boolean;
 }
 
 /**
- * Inner component that manages form state, validation, save, and "Test Configuration"
+ * Inner component that manages form state, validation, save, and "Проверить Конфигурация"
  * for the auto-generated plugin config form.
  *
- * Separated from PluginSettings to isolate re-render scope — only the form
+ * Separated from PluginНастройки to isolate re-render scope — only the form
  * re-renders on field changes, not the entire page.
  */
-function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginStatus, supportsConfigTest }: PluginConfigFormProps) {
+function PluginConfigForm({ pluginId, schema, initialЗначениеs, isЗагрузка, pluginСтатус, supportsConfigПроверить }: PluginConfigFormProps) {
   const queryClient = useQueryClient();
 
   // Form values: start with saved values, fall back to schema defaults
-  const [values, setValues] = useState<Record<string, unknown>>(() => ({
-    ...getDefaultValues(schema),
-    ...(initialValues ?? {}),
+  const [values, setЗначениеs] = useState<Record<string, unknown>>(() => ({
+    ...getПо умолчаниюЗначениеs(schema),
+    ...(initialЗначениеs ?? {}),
   }));
 
   // Sync when saved config loads asynchronously — only on first load so we
@@ -949,110 +949,110 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
   // window focus).
   const hasHydratedRef = useRef(false);
   useEffect(() => {
-    if (initialValues && !hasHydratedRef.current) {
+    if (initialЗначениеs && !hasHydratedRef.current) {
       hasHydratedRef.current = true;
-      setValues({
-        ...getDefaultValues(schema),
-        ...initialValues,
+      setЗначениеs({
+        ...getПо умолчаниюЗначениеs(schema),
+        ...initialЗначениеs,
       });
     }
-  }, [initialValues, schema]);
+  }, [initialЗначениеs, schema]);
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [testResult, setTestResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [errors, setОшибкаs] = useState<Record<string, string>>({});
+  const [saveMessage, setСохранитьMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [testResult, setПроверитьResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Dirty tracking: compare against initial values
   const isDirty = JSON.stringify(values) !== JSON.stringify({
-    ...getDefaultValues(schema),
-    ...(initialValues ?? {}),
+    ...getПо умолчаниюЗначениеs(schema),
+    ...(initialЗначениеs ?? {}),
   });
 
-  // Save mutation
+  // Сохранить mutation
   const saveMutation = useMutation({
     mutationFn: (configJson: Record<string, unknown>) =>
       pluginsApi.saveConfig(pluginId, configJson),
-    onSuccess: () => {
-      setSaveMessage({ type: "success", text: "Configuration saved." });
-      setTestResult(null);
-      queryClient.invalidateQueries({ queryKey: queryKeys.plugins.config(pluginId) });
-      // Clear success message after 3s
-      setTimeout(() => setSaveMessage(null), 3000);
+    onУспешно: () => {
+      setСохранитьMessage({ type: "success", text: "Конфигурация saved." });
+      setПроверитьResult(null);
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.plugins.config(pluginId) });
+      // Очистить success message after 3s
+      setTimeout(() => setСохранитьMessage(null), 3000);
     },
-    onError: (err: Error) => {
-      setSaveMessage({ type: "error", text: err.message || "Failed to save configuration." });
+    onОшибка: (err: Ошибка) => {
+      setСохранитьMessage({ type: "error", text: err.message || "Ошибка to save configuration." });
     },
   });
 
-  // Test configuration mutation
+  // Проверить configuration mutation
   const testMutation = useMutation({
     mutationFn: (configJson: Record<string, unknown>) =>
       pluginsApi.testConfig(pluginId, configJson),
-    onSuccess: (result) => {
+    onУспешно: (result) => {
       if (result.valid) {
-        setTestResult({ type: "success", text: "Configuration test passed." });
+        setПроверитьResult({ type: "success", text: "Конфигурация test passed." });
       } else {
-        setTestResult({ type: "error", text: result.message || "Configuration test failed." });
+        setПроверитьResult({ type: "error", text: result.message || "Конфигурация test failed." });
       }
     },
-    onError: (err: Error) => {
-      setTestResult({ type: "error", text: err.message || "Configuration test failed." });
+    onОшибка: (err: Ошибка) => {
+      setПроверитьResult({ type: "error", text: err.message || "Конфигурация test failed." });
     },
   });
 
-  const handleChange = useCallback((newValues: Record<string, unknown>) => {
-    setValues(newValues);
-    // Clear field-level errors as the user types
-    setErrors({});
-    setSaveMessage(null);
+  const handleChange = useCallback((newЗначениеs: Record<string, unknown>) => {
+    setЗначениеs(newЗначениеs);
+    // Очистить field-level errors as the user types
+    setОшибкаs({});
+    setСохранитьMessage(null);
   }, []);
 
-  const handleSave = useCallback(() => {
+  const handleСохранить = useCallback(() => {
     // Validate before saving
-    const validationErrors = validateJsonSchemaForm(schema, values);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    const validationОшибкаs = validateJsonSchemaForm(schema, values);
+    if (Object.keys(validationОшибкаs).length > 0) {
+      setОшибкаs(validationОшибкаs);
       return;
     }
-    setErrors({});
+    setОшибкаs({});
     saveMutation.mutate(values);
   }, [schema, values, saveMutation]);
 
-  const handleTestConnection = useCallback(() => {
+  const handleПроверитьConnection = useCallback(() => {
     // Validate before testing
-    const validationErrors = validateJsonSchemaForm(schema, values);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    const validationОшибкаs = validateJsonSchemaForm(schema, values);
+    if (Object.keys(validationОшибкаs).length > 0) {
+      setОшибкаs(validationОшибкаs);
       return;
     }
-    setErrors({});
-    setTestResult(null);
+    setОшибкаs({});
+    setПроверитьResult(null);
     testMutation.mutate(values);
   }, [schema, values, testMutation]);
 
-  if (isLoading) {
+  if (isЗагрузка) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading configuration...
+      <div classИмя="flex items-center gap-2 text-sm text-muted-foreground py-4">
+        <Loader2 classИмя="h-4 w-4 animate-spin" />
+        Загрузка configuration...
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div classИмя="space-y-4">
       <JsonSchemaForm
         schema={schema}
         values={values}
         onChange={handleChange}
         errors={errors}
-        disabled={saveMutation.isPending}
+        disabled={saveMutation.isОжидание}
       />
 
-      {/* Status messages */}
+      {/* Статус messages */}
       {saveMessage && (
         <div
-          className={`text-sm p-2 rounded border ${
+          classИмя={`text-sm p-2 rounded border ${
             saveMessage.type === "success"
               ? "text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/30 dark:border-green-900"
               : "text-destructive bg-destructive/10 border-destructive/20"
@@ -1064,7 +1064,7 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
 
       {testResult && (
         <div
-          className={`text-sm p-2 rounded border ${
+          classИмя={`text-sm p-2 rounded border ${
             testResult.type === "success"
               ? "text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950/30 dark:border-green-900"
               : "text-destructive bg-destructive/10 border-destructive/20"
@@ -1075,35 +1075,35 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
       )}
 
       {/* Action buttons */}
-      <div className="flex items-center gap-2 pt-2">
+      <div classИмя="flex items-center gap-2 pt-2">
         <Button
-          onClick={handleSave}
-          disabled={saveMutation.isPending || !isDirty}
+          onClick={handleСохранить}
+          disabled={saveMutation.isОжидание || !isDirty}
           size="sm"
         >
-          {saveMutation.isPending ? (
+          {saveMutation.isОжидание ? (
             <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 classИмя="h-3.5 w-3.5 animate-spin" />
               Saving...
             </>
           ) : (
-            "Save Configuration"
+            "Сохранить Конфигурация"
           )}
         </Button>
-        {pluginStatus === "ready" && supportsConfigTest && (
+        {pluginСтатус === "ready" && supportsConfigПроверить && (
           <Button
             variant="outline"
-            onClick={handleTestConnection}
-            disabled={testMutation.isPending}
+            onClick={handleПроверитьConnection}
+            disabled={testMutation.isОжидание}
             size="sm"
           >
-            {testMutation.isPending ? (
+            {testMutation.isОжидание ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Testing...
+                <Loader2 classИмя="h-3.5 w-3.5 animate-spin" />
+                Проверитьing...
               </>
             ) : (
-              "Test Configuration"
+              "Проверить Конфигурация"
             )}
           </Button>
         )}
@@ -1113,7 +1113,7 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
 }
 
 // ---------------------------------------------------------------------------
-// Dashboard helper components and formatting utilities
+// Панель управления helper components and formatting utilities
 // ---------------------------------------------------------------------------
 
 /**
@@ -1167,9 +1167,9 @@ function formatTimestamp(epochMs: number): string {
 }
 
 /**
- * Status indicator dot for job run statuses.
+ * Статус indicator dot for job run statuses.
  */
-function JobStatusDot({ status }: { status: string }) {
+function JobСтатусDot({ status }: { status: string }) {
   const colorClass =
     status === "success" || status === "succeeded"
       ? "bg-green-500"
@@ -1182,16 +1182,16 @@ function JobStatusDot({ status }: { status: string }) {
             : "bg-amber-500"; // queued, pending
   return (
     <span
-      className={`inline-block h-2 w-2 rounded-full shrink-0 ${colorClass}`}
+      classИмя={`inline-block h-2 w-2 rounded-full shrink-0 ${colorClass}`}
       title={status}
     />
   );
 }
 
 /**
- * Status indicator dot for webhook delivery statuses.
+ * Статус indicator dot for webhook delivery statuses.
  */
-function DeliveryStatusDot({ status }: { status: string }) {
+function DeliveryСтатусDot({ status }: { status: string }) {
   const colorClass =
     status === "processed" || status === "success"
       ? "bg-green-500"
@@ -1202,7 +1202,7 @@ function DeliveryStatusDot({ status }: { status: string }) {
           : "bg-amber-500"; // pending
   return (
     <span
-      className={`inline-block h-2 w-2 rounded-full shrink-0 ${colorClass}`}
+      classИмя={`inline-block h-2 w-2 rounded-full shrink-0 ${colorClass}`}
       title={status}
     />
   );

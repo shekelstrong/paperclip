@@ -3,28 +3,28 @@ import { StrictMode } from "react";
 import * as ReactDOM from "react-dom";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "@/lib/router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientПровайдер } from "@tanstack/react-query";
 import { App } from "./App";
-import { CompanyProvider, useCompany } from "./context/CompanyContext";
-import { LiveUpdatesProvider } from "./context/LiveUpdatesProvider";
-import { BreadcrumbProvider } from "./context/BreadcrumbContext";
-import { PanelProvider } from "./context/PanelContext";
-import { SidebarProvider } from "./context/SidebarContext";
-import { DialogProvider } from "./context/DialogContext";
-import { EditorAutocompleteProvider } from "./context/EditorAutocompleteContext";
-import { ToastProvider } from "./context/ToastContext";
-import { ThemeProvider } from "./context/ThemeContext";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { КомпанияПровайдер, useКомпания } from "./context/КомпанияContext";
+import { LiveОбновитьsПровайдер } from "./context/LiveОбновитьsПровайдер";
+import { BreadcrumbПровайдер } from "./context/BreadcrumbContext";
+import { PanelПровайдер } from "./context/PanelContext";
+import { SidebarПровайдер } from "./context/SidebarContext";
+import { DialogПровайдер } from "./context/DialogContext";
+import { ИзменитьorАвтоcompleteПровайдер } from "./context/ИзменитьorАвтоcompleteContext";
+import { ToastПровайдер } from "./context/ToastContext";
+import { ThemeПровайдер } from "./context/ThemeContext";
+import { TooltipПровайдер } from "@/components/ui/tooltip";
 import { initPluginBridge } from "./plugins/bridge-init";
-import { PluginLauncherProvider } from "./plugins/launchers";
+import { PluginLauncherПровайдер } from "./plugins/launchers";
 import "@mdxeditor/editor/style.css";
 import "./index.css";
 
 initPluginBridge(React, ReactDOM);
 
-if ("serviceWorker" in navigator) {
+if ("serviceРаботаer" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js");
+    navigator.serviceРаботаer.register("/sw.js");
   });
 }
 
@@ -37,39 +37,39 @@ const queryClient = new QueryClient({
   },
 });
 
-function CompanyAwareBreadcrumbProvider({ children }: { children: React.ReactNode }) {
-  const { selectedCompany } = useCompany();
-  return <BreadcrumbProvider companyName={selectedCompany?.name ?? null}>{children}</BreadcrumbProvider>;
+function КомпанияAwareBreadcrumbПровайдер({ children }: { children: React.ReactНетde }) {
+  const { selectedКомпания } = useКомпания();
+  return <BreadcrumbПровайдер companyИмя={selectedКомпания?.name ?? null}>{children}</BreadcrumbПровайдер>;
 }
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
+    <QueryClientПровайдер client={queryClient}>
+      <ThemeПровайдер>
         <BrowserRouter>
-          <CompanyProvider>
-            <EditorAutocompleteProvider>
-              <ToastProvider>
-                <LiveUpdatesProvider>
-                  <TooltipProvider>
-                    <CompanyAwareBreadcrumbProvider>
-                      <SidebarProvider>
-                        <PanelProvider>
-                          <PluginLauncherProvider>
-                            <DialogProvider>
+          <КомпанияПровайдер>
+            <ИзменитьorАвтоcompleteПровайдер>
+              <ToastПровайдер>
+                <LiveОбновитьsПровайдер>
+                  <TooltipПровайдер>
+                    <КомпанияAwareBreadcrumbПровайдер>
+                      <SidebarПровайдер>
+                        <PanelПровайдер>
+                          <PluginLauncherПровайдер>
+                            <DialogПровайдер>
                               <App />
-                            </DialogProvider>
-                          </PluginLauncherProvider>
-                        </PanelProvider>
-                      </SidebarProvider>
-                    </CompanyAwareBreadcrumbProvider>
-                  </TooltipProvider>
-                </LiveUpdatesProvider>
-              </ToastProvider>
-            </EditorAutocompleteProvider>
-          </CompanyProvider>
+                            </DialogПровайдер>
+                          </PluginLauncherПровайдер>
+                        </PanelПровайдер>
+                      </SidebarПровайдер>
+                    </КомпанияAwareBreadcrumbПровайдер>
+                  </TooltipПровайдер>
+                </LiveОбновитьsПровайдер>
+              </ToastПровайдер>
+            </ИзменитьorАвтоcompleteПровайдер>
+          </КомпанияПровайдер>
         </BrowserRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
+      </ThemeПровайдер>
+    </QueryClientПровайдер>
   </StrictMode>
 );

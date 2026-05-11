@@ -1,50 +1,50 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { LiveEvent } from "@paperclipai/shared";
-import { ApiError } from "../../api/client";
-import { instanceSettingsApi } from "../../api/instanceSettings";
+import { ApiОшибка } from "../../api/client";
+import { instanceНастройкиApi } from "../../api/instanceНастройки";
 import { heartbeatsApi } from "../../api/heartbeats";
-import { buildTranscript, getUIAdapter, onAdapterChange, type RunLogChunk, type TranscriptEntry } from "../../adapters";
-import { queryKeys } from "../../lib/queryKeys";
+import { buildTranscript, getUIАдаптер, onАдаптерChange, type ЗапуститьLogChunk, type TranscriptEntry } from "../../adapters";
+import { queryКлючs } from "../../lib/queryКлючs";
 
 const LOG_POLL_INTERVAL_MS = 2000;
 const LOG_READ_LIMIT_BYTES = 256_000;
-const EMPTY_RUN_LOG_CHUNKS: RunLogChunk[] = [];
+const EMPTY_RUN_LOG_CHUNKS: ЗапуститьLogChunk[] = [];
 
-export interface RunTranscriptSource {
+export interface ЗапуститьTranscriptSource {
   id: string;
   status: string;
-  adapterType: string;
+  adapterТип: string;
   hasStoredOutput?: boolean;
   logBytes?: number | null;
   lastOutputBytes?: number | null;
 }
 
-interface UseLiveRunTranscriptsOptions {
-  runs: RunTranscriptSource[];
+interface UseLiveЗапуститьTranscriptsOptions {
+  runs: ЗапуститьTranscriptSource[];
   companyId?: string | null;
-  maxChunksPerRun?: number;
+  maxChunksPerЗапустить?: number;
   logPollIntervalMs?: number;
   logReadLimitBytes?: number;
-  enableRealtimeUpdates?: boolean;
+  enableRealtimeОбновитьs?: boolean;
 }
 
 function readString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
-function isTerminalStatus(status: string): boolean {
+function isTerminalСтатус(status: string): boolean {
   return status === "failed" || status === "timed_out" || status === "cancelled" || status === "succeeded";
 }
 
-function runKnownLogBytes(run: RunTranscriptSource): number | null {
+function runKnownLogBytes(run: ЗапуститьTranscriptSource): number | null {
   const bytes = run.status === "queued"
     ? run.logBytes
     : run.lastOutputBytes ?? run.logBytes;
   return typeof bytes === "number" && Number.isFinite(bytes) && bytes > 0 ? bytes : null;
 }
 
-export function resolveInitialLogOffset(run: RunTranscriptSource, limitBytes: number): number {
+export function resolveInitialLogOffset(run: ЗапуститьTranscriptSource, limitBytes: number): number {
   const knownBytes = runKnownLogBytes(run);
   if (knownBytes === null) return 0;
   return Math.max(0, knownBytes - Math.max(0, limitBytes));
@@ -53,16 +53,16 @@ export function resolveInitialLogOffset(run: RunTranscriptSource, limitBytes: nu
 function parsePersistedLogContent(
   runId: string,
   content: string,
-  pendingByRun: Map<string, string>,
-): Array<RunLogChunk & { dedupeKey: string }> {
+  pendingByЗапустить: Map<string, string>,
+): Array<ЗапуститьLogChunk & { dedupeКлюч: string }> {
   if (!content) return [];
 
-  const pendingKey = `${runId}:records`;
-  const combined = `${pendingByRun.get(pendingKey) ?? ""}${content}`;
+  const pendingКлюч = `${runId}:records`;
+  const combined = `${pendingByЗапустить.get(pendingКлюч) ?? ""}${content}`;
   const split = combined.split("\n");
-  pendingByRun.set(pendingKey, split.pop() ?? "");
+  pendingByЗапустить.set(pendingКлюч, split.pop() ?? "");
 
-  const parsed: Array<RunLogChunk & { dedupeKey: string }> = [];
+  const parsed: Array<ЗапуститьLogChunk & { dedupeКлюч: string }> = [];
   for (const line of split) {
     const trimmed = line.trim();
     if (!trimmed) continue;
@@ -76,7 +76,7 @@ function parsePersistedLogContent(
         ts,
         stream,
         chunk,
-        dedupeKey: `log:${runId}:${ts}:${stream}:${chunk}`,
+        dedupeКлюч: `log:${runId}:${ts}:${stream}:${chunk}`,
       });
     } catch {
       // Ignore malformed log rows.
@@ -86,36 +86,36 @@ function parsePersistedLogContent(
   return parsed;
 }
 
-export function useLiveRunTranscripts({
+export function useLiveЗапуститьTranscripts({
   runs,
   companyId,
-  maxChunksPerRun = 200,
+  maxChunksPerЗапустить = 200,
   logPollIntervalMs = LOG_POLL_INTERVAL_MS,
   logReadLimitBytes = LOG_READ_LIMIT_BYTES,
-  enableRealtimeUpdates = true,
-}: UseLiveRunTranscriptsOptions) {
-  const runsKey = useMemo(
+  enableRealtimeОбновитьs = true,
+}: UseLiveЗапуститьTranscriptsOptions) {
+  const runsКлюч = useMemo(
     () =>
       runs
         .map((run) => {
           const logBytes = typeof run.logBytes === "number" ? run.logBytes : "";
           const lastOutputBytes = typeof run.lastOutputBytes === "number" ? run.lastOutputBytes : "";
-          return `${run.id}:${run.status}:${run.adapterType}:${run.hasStoredOutput === true ? "1" : "0"}:${logBytes}:${lastOutputBytes}`;
+          return `${run.id}:${run.status}:${run.adapterТип}:${run.hasStoredOutput === true ? "1" : "0"}:${logBytes}:${lastOutputBytes}`;
         })
         .sort((a, b) => a.localeCompare(b))
         .join(","),
     [runs],
   );
-  const normalizedRuns = useMemo(() => runs.map((run) => ({ ...run })), [runsKey]);
-  const [chunksByRun, setChunksByRun] = useState<Map<string, RunLogChunk[]>>(new Map());
-  const [hydratedRunIds, setHydratedRunIds] = useState<Set<string>>(new Set());
-  const seenChunkKeysRef = useRef(new Set<string>());
-  const pendingLogRowsByRunRef = useRef(new Map<string, string>());
-  const logOffsetByRunRef = useRef(new Map<string, number>());
-  const missingTerminalLogRunIdsRef = useRef(new Set<string>());
+  const normalizedЗапуститьs = useMemo(() => runs.map((run) => ({ ...run })), [runsКлюч]);
+  const [chunksByЗапустить, setChunksByЗапустить] = useState<Map<string, ЗапуститьLogChunk[]>>(new Map());
+  const [hydratedЗапуститьIds, setHydratedЗапуститьIds] = useState<Set<string>>(new Set());
+  const seenChunkКлючsRef = useRef(new Set<string>());
+  const pendingLogRowsByЗапуститьRef = useRef(new Map<string, string>());
+  const logOffsetByЗапуститьRef = useRef(new Map<string, number>());
+  const missingTerminalLogЗапуститьIdsRef = useRef(new Set<string>());
   const transcriptCacheRef = useRef(new Map<string, {
-    adapterType: string;
-    chunks: RunLogChunk[];
+    adapterТип: string;
+    chunks: ЗапуститьLogChunk[];
     censorUsernameInLogs: boolean;
     parserTick: number;
     transcript: TranscriptEntry[];
@@ -123,120 +123,120 @@ export function useLiveRunTranscripts({
   // Tick counter to force transcript recomputation when dynamic parser loads
   const [parserTick, setParserTick] = useState(0);
   useEffect(() => {
-    return onAdapterChange(() => setParserTick((t) => t + 1));
+    return onАдаптерChange(() => setParserTick((t) => t + 1));
   }, []);
-  const { data: generalSettings } = useQuery({
-    queryKey: queryKeys.instance.generalSettings,
-    queryFn: () => instanceSettingsApi.getGeneral(),
+  const { data: generalНастройки } = useQuery({
+    queryКлюч: queryКлючs.instance.generalНастройки,
+    queryFn: () => instanceНастройкиApi.getОбщие(),
   });
 
-  const runById = useMemo(() => new Map(normalizedRuns.map((run) => [run.id, run])), [normalizedRuns]);
-  const activeRunIds = useMemo(
-    () => new Set(normalizedRuns.filter((run) => !isTerminalStatus(run.status)).map((run) => run.id)),
-    [normalizedRuns],
+  const runById = useMemo(() => new Map(normalizedЗапуститьs.map((run) => [run.id, run])), [normalizedЗапуститьs]);
+  const activeЗапуститьIds = useMemo(
+    () => new Set(normalizedЗапуститьs.filter((run) => !isTerminalСтатус(run.status)).map((run) => run.id)),
+    [normalizedЗапуститьs],
   );
-  const runIdsKey = useMemo(
-    () => normalizedRuns.map((run) => run.id).sort((a, b) => a.localeCompare(b)).join(","),
-    [normalizedRuns],
+  const runIdsКлюч = useMemo(
+    () => normalizedЗапуститьs.map((run) => run.id).sort((a, b) => a.localeCompare(b)).join(","),
+    [normalizedЗапуститьs],
   );
 
-  const appendChunks = (runId: string, chunks: Array<RunLogChunk & { dedupeKey: string }>) => {
+  const appendChunks = (runId: string, chunks: Array<ЗапуститьLogChunk & { dedupeКлюч: string }>) => {
     if (chunks.length === 0) return;
-    setChunksByRun((prev) => {
+    setChunksByЗапустить((prev) => {
       const next = new Map(prev);
       const existing = [...(next.get(runId) ?? [])];
       let changed = false;
 
       for (const chunk of chunks) {
-        if (seenChunkKeysRef.current.has(chunk.dedupeKey)) continue;
-        seenChunkKeysRef.current.add(chunk.dedupeKey);
+        if (seenChunkКлючsRef.current.has(chunk.dedupeКлюч)) continue;
+        seenChunkКлючsRef.current.add(chunk.dedupeКлюч);
         existing.push({ ts: chunk.ts, stream: chunk.stream, chunk: chunk.chunk });
         changed = true;
       }
 
       if (!changed) return prev;
-      if (seenChunkKeysRef.current.size > 12000) {
-        seenChunkKeysRef.current.clear();
+      if (seenChunkКлючsRef.current.size > 12000) {
+        seenChunkКлючsRef.current.clear();
       }
-      next.set(runId, existing.slice(-maxChunksPerRun));
+      next.set(runId, existing.slice(-maxChunksPerЗапустить));
       return next;
     });
   };
 
   useEffect(() => {
-    const knownRunIds = new Set(normalizedRuns.map((run) => run.id));
-    setChunksByRun((prev) => {
-      const next = new Map<string, RunLogChunk[]>();
+    const knownЗапуститьIds = new Set(normalizedЗапуститьs.map((run) => run.id));
+    setChunksByЗапустить((prev) => {
+      const next = new Map<string, ЗапуститьLogChunk[]>();
       for (const [runId, chunks] of prev) {
-        if (knownRunIds.has(runId)) {
+        if (knownЗапуститьIds.has(runId)) {
           next.set(runId, chunks);
         }
       }
       return next.size === prev.size ? prev : next;
     });
-    setHydratedRunIds((prev) => {
+    setHydratedЗапуститьIds((prev) => {
       const next = new Set<string>();
       for (const runId of prev) {
-        if (knownRunIds.has(runId)) {
+        if (knownЗапуститьIds.has(runId)) {
           next.add(runId);
         }
       }
       return next.size === prev.size ? prev : next;
     });
 
-    for (const key of pendingLogRowsByRunRef.current.keys()) {
+    for (const key of pendingLogRowsByЗапуститьRef.current.keys()) {
       const runId = key.replace(/:records$/, "");
-      if (!knownRunIds.has(runId)) {
-        pendingLogRowsByRunRef.current.delete(key);
+      if (!knownЗапуститьIds.has(runId)) {
+        pendingLogRowsByЗапуститьRef.current.delete(key);
       }
     }
-    for (const runId of logOffsetByRunRef.current.keys()) {
-      if (!knownRunIds.has(runId)) {
-        logOffsetByRunRef.current.delete(runId);
+    for (const runId of logOffsetByЗапуститьRef.current.keys()) {
+      if (!knownЗапуститьIds.has(runId)) {
+        logOffsetByЗапуститьRef.current.delete(runId);
       }
     }
-    for (const runId of missingTerminalLogRunIdsRef.current.keys()) {
-      if (!knownRunIds.has(runId)) {
-        missingTerminalLogRunIdsRef.current.delete(runId);
+    for (const runId of missingTerminalLogЗапуститьIdsRef.current.keys()) {
+      if (!knownЗапуститьIds.has(runId)) {
+        missingTerminalLogЗапуститьIdsRef.current.delete(runId);
       }
     }
     for (const runId of transcriptCacheRef.current.keys()) {
-      if (!knownRunIds.has(runId)) {
+      if (!knownЗапуститьIds.has(runId)) {
         transcriptCacheRef.current.delete(runId);
       }
     }
-  }, [normalizedRuns]);
+  }, [normalizedЗапуститьs]);
 
   useEffect(() => {
-    if (normalizedRuns.length === 0) return;
+    if (normalizedЗапуститьs.length === 0) return;
 
     let cancelled = false;
 
-    const readRunLog = async (run: RunTranscriptSource) => {
-      if (missingTerminalLogRunIdsRef.current.has(run.id)) {
+    const readЗапуститьLog = async (run: ЗапуститьTranscriptSource) => {
+      if (missingTerminalLogЗапуститьIdsRef.current.has(run.id)) {
         return;
       }
-      const offset = logOffsetByRunRef.current.get(run.id) ?? resolveInitialLogOffset(run, logReadLimitBytes);
+      const offset = logOffsetByЗапуститьRef.current.get(run.id) ?? resolveInitialLogOffset(run, logReadLimitBytes);
       try {
         const result = await heartbeatsApi.log(run.id, offset, logReadLimitBytes);
         if (cancelled) return;
 
-        appendChunks(run.id, parsePersistedLogContent(run.id, result.content, pendingLogRowsByRunRef.current));
+        appendChunks(run.id, parsePersistedLogContent(run.id, result.content, pendingLogRowsByЗапуститьRef.current));
 
         if (result.nextOffset !== undefined) {
-          logOffsetByRunRef.current.set(run.id, result.nextOffset);
+          logOffsetByЗапуститьRef.current.set(run.id, result.nextOffset);
           return;
         }
         if (result.content.length > 0) {
-          logOffsetByRunRef.current.set(run.id, offset + result.content.length);
+          logOffsetByЗапуститьRef.current.set(run.id, offset + result.content.length);
         }
       } catch (error) {
-        if (error instanceof ApiError && error.status === 404 && isTerminalStatus(run.status)) {
-          missingTerminalLogRunIdsRef.current.add(run.id);
+        if (error instanceof ApiОшибка && error.status === 404 && isTerminalСтатус(run.status)) {
+          missingTerminalLogЗапуститьIdsRef.current.add(run.id);
         }
       } finally {
         if (!cancelled) {
-          setHydratedRunIds((prev) => {
+          setHydratedЗапуститьIds((prev) => {
             if (prev.has(run.id)) return prev;
             const next = new Set(prev);
             next.add(run.id);
@@ -246,15 +246,15 @@ export function useLiveRunTranscripts({
       }
     };
 
-    const readAll = async () => {
-      await Promise.all(normalizedRuns.map((run) => readRunLog(run)));
+    const readВсе = async () => {
+      await Promise.all(normalizedЗапуститьs.map((run) => readЗапуститьLog(run)));
     };
 
-    void readAll();
-    const activeRuns = normalizedRuns.filter((run) => !isTerminalStatus(run.status));
-    const interval = activeRuns.length > 0 && logPollIntervalMs > 0
+    void readВсе();
+    const activeЗапуститьs = normalizedЗапуститьs.filter((run) => !isTerminalСтатус(run.status));
+    const interval = activeЗапуститьs.length > 0 && logPollIntervalMs > 0
       ? window.setInterval(() => {
-          void Promise.all(activeRuns.map((run) => readRunLog(run)));
+          void Promise.all(activeЗапуститьs.map((run) => readЗапуститьLog(run)));
         }, logPollIntervalMs)
       : null;
 
@@ -262,11 +262,11 @@ export function useLiveRunTranscripts({
       cancelled = true;
       if (interval !== null) window.clearInterval(interval);
     };
-  }, [logPollIntervalMs, logReadLimitBytes, normalizedRuns, runIdsKey]);
+  }, [logPollIntervalMs, logReadLimitBytes, normalizedЗапуститьs, runIdsКлюч]);
 
   useEffect(() => {
-    if (!enableRealtimeUpdates) return;
-    if (!companyId || activeRunIds.size === 0) return;
+    if (!enableRealtimeОбновитьs) return;
+    if (!companyId || activeЗапуститьIds.size === 0) return;
 
     let closed = false;
     let reconnectTimer: number | null = null;
@@ -297,7 +297,7 @@ export function useLiveRunTranscripts({
         if (event.companyId !== companyId) return;
         const payload = event.payload ?? {};
         const runId = readString(payload["runId"]);
-        if (!runId || !activeRunIds.has(runId)) return;
+        if (!runId || !activeЗапуститьIds.has(runId)) return;
         if (!runById.has(runId)) return;
 
         if (event.type === "heartbeat.run.log") {
@@ -314,20 +314,20 @@ export function useLiveRunTranscripts({
             ts,
             stream,
             chunk,
-            dedupeKey: `log:${runId}:${ts}:${stream}:${chunk}`,
+            dedupeКлюч: `log:${runId}:${ts}:${stream}:${chunk}`,
           }]);
           return;
         }
 
         if (event.type === "heartbeat.run.event") {
           const seq = typeof payload["seq"] === "number" ? payload["seq"] : null;
-          const eventType = readString(payload["eventType"]) ?? "event";
-          const messageText = readString(payload["message"]) ?? eventType;
+          const eventТип = readString(payload["eventТип"]) ?? "event";
+          const messageText = readString(payload["message"]) ?? eventТип;
           appendChunks(runId, [{
             ts: event.createdAt,
-            stream: eventType === "error" ? "stderr" : "system",
+            stream: eventТип === "error" ? "stderr" : "system",
             chunk: messageText,
-            dedupeKey: `socket:event:${runId}:${seq ?? `${eventType}:${messageText}:${event.createdAt}`}`,
+            dedupeКлюч: `socket:event:${runId}:${seq ?? `${eventТип}:${messageText}:${event.createdAt}`}`,
           }]);
           return;
         }
@@ -336,9 +336,9 @@ export function useLiveRunTranscripts({
           const status = readString(payload["status"]) ?? "updated";
           appendChunks(runId, [{
             ts: event.createdAt,
-            stream: isTerminalStatus(status) && status !== "succeeded" ? "stderr" : "system",
+            stream: isTerminalСтатус(status) && status !== "succeeded" ? "stderr" : "system",
             chunk: `run ${status}`,
-            dedupeKey: `socket:status:${runId}:${status}:${readString(payload["finishedAt"]) ?? ""}`,
+            dedupeКлюч: `socket:status:${runId}:${status}:${readString(payload["finishedAt"]) ?? ""}`,
           }]);
         }
       };
@@ -373,20 +373,20 @@ export function useLiveRunTranscripts({
         }
       }
     };
-  }, [activeRunIds, companyId, enableRealtimeUpdates, runById]);
+  }, [activeЗапуститьIds, companyId, enableRealtimeОбновитьs, runById]);
 
-  const transcriptByRun = useMemo(() => {
+  const transcriptByЗапустить = useMemo(() => {
     const next = new Map<string, TranscriptEntry[]>();
-    const censorUsernameInLogs = generalSettings?.censorUsernameInLogs === true;
+    const censorUsernameInLogs = generalНастройки?.censorUsernameInLogs === true;
     const cache = transcriptCacheRef.current;
-    const currentRunIds = new Set<string>();
-    for (const run of normalizedRuns) {
-      currentRunIds.add(run.id);
-      const chunks = chunksByRun.get(run.id) ?? EMPTY_RUN_LOG_CHUNKS;
+    const currentЗапуститьIds = new Set<string>();
+    for (const run of normalizedЗапуститьs) {
+      currentЗапуститьIds.add(run.id);
+      const chunks = chunksByЗапустить.get(run.id) ?? EMPTY_RUN_LOG_CHUNKS;
       const cached = cache.get(run.id);
       if (
         cached &&
-        cached.adapterType === run.adapterType &&
+        cached.adapterТип === run.adapterТип &&
         cached.chunks === chunks &&
         cached.censorUsernameInLogs === censorUsernameInLogs &&
         cached.parserTick === parserTick
@@ -395,12 +395,12 @@ export function useLiveRunTranscripts({
         continue;
       }
 
-      const adapter = getUIAdapter(run.adapterType);
+      const adapter = getUIАдаптер(run.adapterТип);
       const transcript = buildTranscript(chunks, adapter, {
         censorUsernameInLogs,
       });
       cache.set(run.id, {
-        adapterType: run.adapterType,
+        adapterТип: run.adapterТип,
         chunks,
         censorUsernameInLogs,
         parserTick,
@@ -409,18 +409,18 @@ export function useLiveRunTranscripts({
       next.set(run.id, transcript);
     }
     for (const runId of cache.keys()) {
-      if (!currentRunIds.has(runId)) {
+      if (!currentЗапуститьIds.has(runId)) {
         cache.delete(runId);
       }
     }
     return next;
-  }, [chunksByRun, generalSettings?.censorUsernameInLogs, normalizedRuns, parserTick]);
+  }, [chunksByЗапустить, generalНастройки?.censorUsernameInLogs, normalizedЗапуститьs, parserTick]);
 
   return {
-    transcriptByRun,
-    isInitialHydrating: normalizedRuns.some((run) => !hydratedRunIds.has(run.id)),
-    hasOutputForRun(runId: string) {
-      return (chunksByRun.get(runId)?.length ?? 0) > 0 || runById.get(runId)?.hasStoredOutput === true;
+    transcriptByЗапустить,
+    isInitialHydrating: normalizedЗапуститьs.some((run) => !hydratedЗапуститьIds.has(run.id)),
+    hasOutputForЗапустить(runId: string) {
+      return (chunksByЗапустить.get(runId)?.length ?? 0) > 0 || runById.get(runId)?.hasStoredOutput === true;
     },
   };
 }

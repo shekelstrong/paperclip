@@ -10,33 +10,33 @@ import {
   Info,
   Link2,
   Loader2,
-  RefreshCw,
-  Search,
+  ОбновитьCw,
+  Поиск,
   X,
   XCircle,
 } from "lucide-react";
 import type {
-  CompanySecret,
-  CompanySecretProviderConfig,
-  RemoteSecretImportCandidate,
-  RemoteSecretImportPreviewResult,
-  RemoteSecretImportResult,
-  RemoteSecretImportRowResult,
+  КомпанияСекрет,
+  КомпанияСекретПровайдерConfig,
+  RemoteСекретИмпортCandidate,
+  RemoteСекретИмпортПредпросмотрResult,
+  RemoteСекретИмпортResult,
+  RemoteСекретИмпортRowResult,
 } from "@paperclipai/shared";
-import { ApiError } from "../../api/client";
+import { ApiОшибка } from "../../api/client";
 import {
   secretsApi,
-  type RemoteImportInput,
-  type RemoteImportSelectionInput,
+  type RemoteИмпортInput,
+  type RemoteИмпортSelectionInput,
 } from "../../api/secrets";
 import { useToastActions } from "../../context/ToastContext";
-import { queryKeys } from "../../lib/queryKeys";
+import { queryКлючs } from "../../lib/queryКлючs";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogTitle,
+  DialogОписание,
+  DialogНазвание,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,25 +47,25 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectЗначение,
 } from "@/components/ui/select";
 import { EmptyState } from "../../components/EmptyState";
 import { cn } from "../../lib/utils";
 
 type Step = "select" | "review" | "result";
 
-interface ImportFromVaultDialogProps {
+interface ИмпортFromVaultDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companyId: string;
-  providerConfigs: CompanySecretProviderConfig[];
-  existingSecrets: CompanySecret[];
-  onImportComplete?: (result: RemoteSecretImportResult) => void;
+  providerConfigs: КомпанияСекретПровайдерConfig[];
+  existingСекреты: КомпанияСекрет[];
+  onИмпортComplete?: (result: RemoteСекретИмпортResult) => void;
   onManageVaults?: () => void;
 }
 
-interface DraftSelection {
-  candidate: RemoteSecretImportCandidate;
+interface ЧерновикSelection {
+  candidate: RemoteСекретИмпортCandidate;
   name: string;
   key: string;
   description: string;
@@ -74,26 +74,26 @@ interface DraftSelection {
 const KEY_PATTERN = /^[a-z0-9_.-]+$/;
 const PAGE_SIZE = 50;
 
-function isAwsSelectable(config: CompanySecretProviderConfig) {
+function isAwsSelectable(config: КомпанияСекретПровайдерConfig) {
   if (config.provider !== "aws_secrets_manager") return false;
   return config.status === "ready" || config.status === "warning";
 }
 
-function eligibleVaults(configs: CompanySecretProviderConfig[]): CompanySecretProviderConfig[] {
+function eligibleVaults(configs: КомпанияСекретПровайдерConfig[]): КомпанияСекретПровайдерConfig[] {
   return configs.filter(isAwsSelectable);
 }
 
-function pickDefaultVault(configs: CompanySecretProviderConfig[]): string | null {
+function pickПо умолчаниюVault(configs: КомпанияСекретПровайдерConfig[]): string | null {
   const eligible = eligibleVaults(configs);
   if (eligible.length === 0) return null;
-  return (eligible.find((vault) => vault.isDefault) ?? eligible[0]).id;
+  return (eligible.find((vault) => vault.isПо умолчанию) ?? eligible[0]).id;
 }
 
-function awsVaultOptions(configs: CompanySecretProviderConfig[]): CompanySecretProviderConfig[] {
+function awsVaultOptions(configs: КомпанияСекретПровайдерConfig[]): КомпанияСекретПровайдерConfig[] {
   return configs.filter((vault) => vault.provider === "aws_secrets_manager");
 }
 
-function statusToneClasses(status: RemoteSecretImportCandidate["status"]) {
+function statusToneClasses(status: RemoteСекретИмпортCandidate["status"]) {
   switch (status) {
     case "duplicate":
       return "text-muted-foreground border-border/60";
@@ -105,22 +105,22 @@ function statusToneClasses(status: RemoteSecretImportCandidate["status"]) {
   }
 }
 
-function statusBadgeLabel(status: RemoteSecretImportCandidate["status"]) {
+function statusBadgeLabel(status: RemoteСекретИмпортCandidate["status"]) {
   switch (status) {
     case "duplicate":
-      return "Imported";
+      return "Импортed";
     case "conflict":
       return "Conflict";
     case "ready":
     default:
-      return "Ready";
+      return "Готово";
   }
 }
 
-function StatusBadge({
+function СтатусBadge({
   status,
 }: {
-  status: RemoteSecretImportCandidate["status"];
+  status: RemoteСекретИмпортCandidate["status"];
 }) {
   const Icon =
     status === "conflict"
@@ -129,31 +129,31 @@ function StatusBadge({
         ? Link2
         : CheckCircle2;
   return (
-    <Badge variant="outline" className={cn("gap-1 px-1.5 py-0 font-normal", statusToneClasses(status))}>
-      <Icon className="h-3 w-3" />
+    <Badge variant="outline" classИмя={cn("gap-1 px-1.5 py-0 font-normal", statusToneClasses(status))}>
+      <Icon classИмя="h-3 w-3" />
       {statusBadgeLabel(status)}
     </Badge>
   );
 }
 
-function RowResultBadge({ status }: { status: RemoteSecretImportRowResult["status"] }) {
+function RowResultBadge({ status }: { status: RemoteСекретИмпортRowResult["status"] }) {
   switch (status) {
     case "imported":
       return (
         <Badge
           variant="outline"
-          className="gap-1 px-1.5 py-0 font-normal text-emerald-600 border-emerald-500/40 dark:text-emerald-400"
+          classИмя="gap-1 px-1.5 py-0 font-normal text-emerald-600 border-emerald-500/40 dark:text-emerald-400"
         >
-          <CheckCircle2 className="h-3 w-3" /> Created
+          <CheckCircle2 classИмя="h-3 w-3" /> Создано
         </Badge>
       );
     case "skipped":
       return (
         <Badge
           variant="outline"
-          className="gap-1 px-1.5 py-0 font-normal text-muted-foreground border-border/60"
+          classИмя="gap-1 px-1.5 py-0 font-normal text-muted-foreground border-border/60"
         >
-          <Link2 className="h-3 w-3" /> Skipped
+          <Link2 classИмя="h-3 w-3" /> Skipped
         </Badge>
       );
     case "error":
@@ -161,9 +161,9 @@ function RowResultBadge({ status }: { status: RemoteSecretImportRowResult["statu
       return (
         <Badge
           variant="outline"
-          className="gap-1 px-1.5 py-0 font-normal text-destructive border-destructive/40"
+          classИмя="gap-1 px-1.5 py-0 font-normal text-destructive border-destructive/40"
         >
-          <XCircle className="h-3 w-3" /> Failed
+          <XCircle classИмя="h-3 w-3" /> Ошибка
         </Badge>
       );
   }
@@ -193,15 +193,15 @@ function formatRelativeShort(value: string | null | undefined): string {
   return date.toLocaleDateString();
 }
 
-function readableErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    return error.message || `Request failed: ${error.status}`;
+function readableОшибкаMessage(error: unknown): string {
+  if (error instanceof ApiОшибка) {
+    return error.message || `Запрос не удался: ${error.status}`;
   }
-  if (error instanceof Error) return error.message;
-  return "Unexpected error";
+  if (error instanceof Ошибка) return error.message;
+  return "Неожиданная ошибка";
 }
 
-function apiErrorCode(error: ApiError): string | null {
+function apiОшибкаCode(error: ApiОшибка): string | null {
   const body = error.body;
   if (!body || typeof body !== "object") return null;
   const record = body as Record<string, unknown>;
@@ -214,11 +214,11 @@ function apiErrorCode(error: ApiError): string | null {
   return null;
 }
 
-function isPermissionError(error: unknown): boolean {
-  if (!(error instanceof ApiError)) return false;
-  if (apiErrorCode(error) === "access_denied") return true;
+function isPermissionОшибка(error: unknown): boolean {
+  if (!(error instanceof ApiОшибка)) return false;
+  if (apiОшибкаCode(error) === "access_denied") return true;
   if (error.status === 401 || error.status === 403) return true;
-  const message = error.message.toLowerCase();
+  const message = error.message.toНизкийerCase();
   return (
     message.includes("accessdenied") ||
     message.includes("access denied") ||
@@ -226,14 +226,14 @@ function isPermissionError(error: unknown): boolean {
   );
 }
 
-function isThrottlingError(error: unknown): boolean {
-  if (!(error instanceof ApiError)) return false;
-  if (apiErrorCode(error) === "throttled") return true;
-  const message = error.message.toLowerCase();
+function isThrottlingОшибка(error: unknown): boolean {
+  if (!(error instanceof ApiОшибка)) return false;
+  if (apiОшибкаCode(error) === "throttled") return true;
+  const message = error.message.toНизкийerCase();
   return message.includes("throttl") || message.includes("toomanyrequests");
 }
 
-function buildDraft(candidate: RemoteSecretImportCandidate): DraftSelection {
+function buildЧерновик(candidate: RemoteСекретИмпортCandidate): ЧерновикSelection {
   return {
     candidate,
     name: candidate.name,
@@ -242,54 +242,54 @@ function buildDraft(candidate: RemoteSecretImportCandidate): DraftSelection {
   };
 }
 
-function safeImportProviderMetadata(
+function safeИмпортПровайдерMetadata(
   metadata: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> | null {
   if (!metadata) return null;
   const safe: Record<string, unknown> = {};
-  for (const key of ["createdDate", "lastAccessedDate", "lastChangedDate", "deletedDate"]) {
+  for (const key of ["createdDate", "lastДоступedDate", "lastChangedDate", "deletedDate"]) {
     const value = metadata[key];
     if (typeof value === "string" || value === null) safe[key] = value;
   }
-  for (const key of ["hasDescription", "hasKmsKey", "tagCount"]) {
+  for (const key of ["hasОписание", "hasKmsКлюч", "tagCount"]) {
     const value = metadata[key];
     if (typeof value === "boolean" || typeof value === "number") safe[key] = value;
   }
   return Object.keys(safe).length > 0 ? safe : null;
 }
 
-function validateDraftRow(
-  draft: DraftSelection,
-  existing: CompanySecret[],
-  otherDrafts: DraftSelection[],
+function validateЧерновикRow(
+  draft: ЧерновикSelection,
+  existing: КомпанияСекрет[],
+  otherЧерновикs: ЧерновикSelection[],
 ): string | null {
-  if (!draft.name.trim()) return "Name is required.";
-  if (draft.name.length > 160) return "Name must be 160 characters or fewer.";
-  if (!draft.key.trim()) return "Key is required.";
+  if (!draft.name.trim()) return "Имя is required.";
+  if (draft.name.length > 160) return "Имя must be 160 characters or fewer.";
+  if (!draft.key.trim()) return "Ключ is required.";
   if (!KEY_PATTERN.test(draft.key)) {
-    return "Key may only contain lowercase letters, numbers, dot, underscore, or hyphen.";
+    return "Ключ may only contain lowercase letters, numbers, dot, underscore, or hyphen.";
   }
-  if (draft.key.length > 120) return "Key must be 120 characters or fewer.";
-  if (draft.description.length > 500) return "Description must be 500 characters or fewer.";
+  if (draft.key.length > 120) return "Ключ must be 120 characters or fewer.";
+  if (draft.description.length > 500) return "Описание must be 500 characters or fewer.";
 
-  const lowerName = draft.name.trim().toLowerCase();
-  const lowerKey = draft.key.trim().toLowerCase();
+  const lowerИмя = draft.name.trim().toНизкийerCase();
+  const lowerКлюч = draft.key.trim().toНизкийerCase();
 
-  for (const existingSecret of existing) {
-    if (existingSecret.name.trim().toLowerCase() === lowerName) {
+  for (const existingСекрет of existing) {
+    if (existingСекрет.name.trim().toНизкийerCase() === lowerИмя) {
       return "A Paperclip secret already uses this name.";
     }
-    if (existingSecret.key.trim().toLowerCase() === lowerKey) {
+    if (existingСекрет.key.trim().toНизкийerCase() === lowerКлюч) {
       return "A Paperclip secret already uses this key.";
     }
   }
 
-  for (const other of otherDrafts) {
+  for (const other of otherЧерновикs) {
     if (other === draft) continue;
-    if (other.name.trim().toLowerCase() === lowerName) {
+    if (other.name.trim().toНизкийerCase() === lowerИмя) {
       return "Another row in this batch already uses this name.";
     }
-    if (other.key.trim().toLowerCase() === lowerKey) {
+    if (other.key.trim().toНизкийerCase() === lowerКлюч) {
       return "Another row in this batch already uses this key.";
     }
   }
@@ -297,10 +297,10 @@ function validateDraftRow(
   return null;
 }
 
-function normalizeDraftKey(input: string): string {
+function normalizeЧерновикКлюч(input: string): string {
   return input
     .trim()
-    .toLowerCase()
+    .toНизкийerCase()
     .replace(/[^a-z0-9_.-]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
@@ -314,22 +314,22 @@ function useDebounced<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
-interface PreviewState {
-  candidates: RemoteSecretImportCandidate[];
-  nextToken: string | null;
+interface ПредпросмотрState {
+  candidates: RemoteСекретИмпортCandidate[];
+  nextТокен: string | null;
 }
 
-const EMPTY_PREVIEW: PreviewState = { candidates: [], nextToken: null };
+const EMPTY_PREVIEW: ПредпросмотрState = { candidates: [], nextТокен: null };
 
-export function ImportFromVaultDialog({
+export function ИмпортFromVaultDialog({
   open,
   onOpenChange,
   companyId,
   providerConfigs,
-  existingSecrets,
-  onImportComplete,
+  existingСекреты,
+  onИмпортComplete,
   onManageVaults,
-}: ImportFromVaultDialogProps) {
+}: ИмпортFromVaultDialogProps) {
   const queryClient = useQueryClient();
   const toast = useToastActions();
   const awsVaults = useMemo(() => awsVaultOptions(providerConfigs), [providerConfigs]);
@@ -338,29 +338,29 @@ export function ImportFromVaultDialog({
 
   const [step, setStep] = useState<Step>("select");
   const [vaultId, setVaultId] = useState<string | null>(null);
-  const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setПоискInput] = useState("");
   const debouncedQuery = useDebounced(searchInput.trim(), 250);
 
-  const [preview, setPreview] = useState<PreviewState>(EMPTY_PREVIEW);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<unknown>(null);
+  const [preview, setПредпросмотр] = useState<ПредпросмотрState>(EMPTY_PREVIEW);
+  const [previewЗагрузка, setПредпросмотрЗагрузка] = useState(false);
+  const [pageЗагрузка, setPageЗагрузка] = useState(false);
+  const [previewОшибка, setПредпросмотрОшибка] = useState<unknown>(null);
   const [showOnlySelected, setShowOnlySelected] = useState(false);
 
-  const [selection, setSelection] = useState<Map<string, DraftSelection>>(new Map());
-  const [importResult, setImportResult] = useState<RemoteSecretImportResult | null>(null);
+  const [selection, setSelection] = useState<Map<string, ЧерновикSelection>>(new Map());
+  const [importResult, setИмпортResult] = useState<RemoteСекретИмпортResult | null>(null);
 
-  // Reset state on open transition.
+  // Сбросить state on open transition.
   useEffect(() => {
     if (!open) return;
     setStep("select");
-    setSearchInput("");
-    setPreview(EMPTY_PREVIEW);
-    setPreviewError(null);
+    setПоискInput("");
+    setПредпросмотр(EMPTY_PREVIEW);
+    setПредпросмотрОшибка(null);
     setSelection(new Map());
-    setImportResult(null);
+    setИмпортResult(null);
     setShowOnlySelected(false);
-    const next = pickDefaultVault(providerConfigs);
+    const next = pickПо умолчаниюVault(providerConfigs);
     setVaultId(next);
     // We deliberately depend only on open so that re-opens reset the dialog;
     // providerConfigs changes during a session are handled by next preview fetch.
@@ -369,35 +369,35 @@ export function ImportFromVaultDialog({
 
   const requestIdRef = useRef(0);
 
-  // Run preview when vault or query changes (only on step "select").
+  // Запустить preview when vault or query changes (only on step "select").
   useEffect(() => {
     if (!open || step !== "select" || !vaultId) return;
     let cancelled = false;
     const requestId = ++requestIdRef.current;
-    setPreviewLoading(true);
-    setPreviewError(null);
-    setPreview(EMPTY_PREVIEW);
+    setПредпросмотрЗагрузка(true);
+    setПредпросмотрОшибка(null);
+    setПредпросмотр(EMPTY_PREVIEW);
     secretsApi
-      .remoteImportPreview(companyId, {
+      .remoteИмпортПредпросмотр(companyId, {
         providerConfigId: vaultId,
         query: debouncedQuery || null,
-        nextToken: null,
+        nextТокен: null,
         pageSize: PAGE_SIZE,
       })
-      .then((result: RemoteSecretImportPreviewResult) => {
+      .then((result: RemoteСекретИмпортПредпросмотрResult) => {
         if (cancelled || requestId !== requestIdRef.current) return;
-        setPreview({
+        setПредпросмотр({
           candidates: result.candidates,
-          nextToken: result.nextToken,
+          nextТокен: result.nextТокен,
         });
       })
       .catch((error) => {
         if (cancelled || requestId !== requestIdRef.current) return;
-        setPreviewError(error);
+        setПредпросмотрОшибка(error);
       })
       .finally(() => {
         if (cancelled || requestId !== requestIdRef.current) return;
-        setPreviewLoading(false);
+        setПредпросмотрЗагрузка(false);
       });
     return () => {
       cancelled = true;
@@ -410,7 +410,7 @@ export function ImportFromVaultDialog({
     setShowOnlySelected(false);
   }, [vaultId]);
 
-  const visibleCandidates = useMemo<RemoteSecretImportCandidate[]>(() => {
+  const visibleCandidates = useMemo<RemoteСекретИмпортCandidate[]>(() => {
     if (!showOnlySelected) return preview.candidates;
     return preview.candidates.filter((candidate) => selection.has(candidate.externalRef));
   }, [preview.candidates, selection, showOnlySelected]);
@@ -435,7 +435,7 @@ export function ImportFromVaultDialog({
           : "indeterminate";
 
   const totalSelected = selection.size;
-  const selectedNotVisible = useMemo(() => {
+  const selectedНетtVisible = useMemo(() => {
     if (!debouncedQuery) return 0;
     let count = 0;
     for (const ref of selection.keys()) {
@@ -446,45 +446,45 @@ export function ImportFromVaultDialog({
 
   const draftList = useMemo(() => Array.from(selection.values()), [selection]);
 
-  const reviewErrors = useMemo<Map<string, string>>(() => {
+  const reviewОшибкаs = useMemo<Map<string, string>>(() => {
     const errors = new Map<string, string>();
     for (const draft of draftList) {
-      const error = validateDraftRow(draft, existingSecrets, draftList);
+      const error = validateЧерновикRow(draft, existingСекреты, draftList);
       if (error) errors.set(draft.candidate.externalRef, error);
     }
     return errors;
-  }, [draftList, existingSecrets]);
+  }, [draftList, existingСекреты]);
 
-  const blockedReviewCount = reviewErrors.size;
+  const blockedReviewCount = reviewОшибкаs.size;
   const readyReviewCount = draftList.length - blockedReviewCount;
 
   const importMutation = useMutation({
-    mutationFn: (input: RemoteImportInput) => secretsApi.remoteImport(companyId, input),
-    onSuccess: (result) => {
-      setImportResult(result);
+    mutationFn: (input: RemoteИмпортInput) => secretsApi.remoteИмпорт(companyId, input),
+    onУспешно: (result) => {
+      setИмпортResult(result);
       setStep("result");
-      queryClient.invalidateQueries({ queryKey: queryKeys.secrets.list(companyId) });
-      onImportComplete?.(result);
-      const vaultName =
-        awsVaults.find((vault) => vault.id === vaultId)?.displayName ?? "AWS";
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.secrets.list(companyId) });
+      onИмпортComplete?.(result);
+      const vaultИмя =
+        awsVaults.find((vault) => vault.id === vaultId)?.displayИмя ?? "AWS";
       if (result.errorCount === draftList.length && result.errorCount > 0) {
         toast.pushToast({
-          title: "Import failed",
-          body: `No secrets were imported from ${vaultName}.`,
+          title: "Импорт failed",
+          body: `Нет secrets were imported from ${vaultИмя}.`,
           tone: "error",
         });
       } else {
         toast.pushToast({
-          title: result.errorCount > 0 ? "Import completed with errors" : "Import complete",
+          title: result.errorCount > 0 ? "Импорт completed with errors" : "Импорт complete",
           body: `${result.importedCount} created · ${result.skippedCount} skipped · ${result.errorCount} failed`,
           tone: result.errorCount > 0 ? "warn" : "success",
         });
       }
     },
-    onError: (error) => {
+    onОшибка: (error) => {
       toast.pushToast({
-        title: "Import failed",
-        body: readableErrorMessage(error),
+        title: "Импорт failed",
+        body: readableОшибкаMessage(error),
         tone: "error",
       });
     },
@@ -492,80 +492,80 @@ export function ImportFromVaultDialog({
 
   function handleVaultChange(nextId: string) {
     setVaultId(nextId);
-    setSearchInput("");
+    setПоискInput("");
   }
 
-  function handleRefresh() {
+  function handleОбновить() {
     if (!vaultId || step !== "select") return;
     let cancelled = false;
     const requestId = ++requestIdRef.current;
-    setPreviewLoading(true);
-    setPreviewError(null);
+    setПредпросмотрЗагрузка(true);
+    setПредпросмотрОшибка(null);
     secretsApi
-      .remoteImportPreview(companyId, {
+      .remoteИмпортПредпросмотр(companyId, {
         providerConfigId: vaultId,
         query: debouncedQuery || null,
-        nextToken: null,
+        nextТокен: null,
         pageSize: PAGE_SIZE,
       })
       .then((result) => {
         if (cancelled || requestId !== requestIdRef.current) return;
-        setPreview({ candidates: result.candidates, nextToken: result.nextToken });
+        setПредпросмотр({ candidates: result.candidates, nextТокен: result.nextТокен });
       })
       .catch((error) => {
         if (cancelled || requestId !== requestIdRef.current) return;
-        setPreviewError(error);
+        setПредпросмотрОшибка(error);
       })
       .finally(() => {
         if (cancelled || requestId !== requestIdRef.current) return;
-        setPreviewLoading(false);
+        setПредпросмотрЗагрузка(false);
       });
   }
 
   function handleLoadMore() {
-    if (!vaultId || !preview.nextToken || pageLoading) return;
-    setPageLoading(true);
+    if (!vaultId || !preview.nextТокен || pageЗагрузка) return;
+    setPageЗагрузка(true);
     secretsApi
-      .remoteImportPreview(companyId, {
+      .remoteИмпортПредпросмотр(companyId, {
         providerConfigId: vaultId,
         query: debouncedQuery || null,
-        nextToken: preview.nextToken,
+        nextТокен: preview.nextТокен,
         pageSize: PAGE_SIZE,
       })
       .then((result) => {
-        setPreview((prev) => {
+        setПредпросмотр((prev) => {
           const seen = new Set(prev.candidates.map((c) => c.externalRef));
           const merged = [...prev.candidates];
           for (const candidate of result.candidates) {
             if (!seen.has(candidate.externalRef)) merged.push(candidate);
           }
-          return { candidates: merged, nextToken: result.nextToken };
+          return { candidates: merged, nextТокен: result.nextТокен };
         });
       })
       .catch((error) => {
         toast.pushToast({
           title: "Could not load more results",
-          body: readableErrorMessage(error),
+          body: readableОшибкаMessage(error),
           tone: "error",
         });
       })
-      .finally(() => setPageLoading(false));
+      .finally(() => setPageЗагрузка(false));
   }
 
-  function toggleRow(candidate: RemoteSecretImportCandidate) {
+  function toggleRow(candidate: RemoteСекретИмпортCandidate) {
     if (!candidate.importable) return;
     setSelection((prev) => {
       const next = new Map(prev);
       if (next.has(candidate.externalRef)) {
         next.delete(candidate.externalRef);
       } else {
-        next.set(candidate.externalRef, buildDraft(candidate));
+        next.set(candidate.externalRef, buildЧерновик(candidate));
       }
       return next;
     });
   }
 
-  function toggleAllLoaded() {
+  function toggleВсеLoaded() {
     setSelection((prev) => {
       const next = new Map(prev);
       const allSelected = selectableInLoaded.every((c) => next.has(c.externalRef));
@@ -576,7 +576,7 @@ export function ImportFromVaultDialog({
       } else {
         for (const candidate of selectableInLoaded) {
           if (!next.has(candidate.externalRef)) {
-            next.set(candidate.externalRef, buildDraft(candidate));
+            next.set(candidate.externalRef, buildЧерновик(candidate));
           }
         }
       }
@@ -584,7 +584,7 @@ export function ImportFromVaultDialog({
     });
   }
 
-  function updateDraft(externalRef: string, patch: Partial<DraftSelection>) {
+  function updateЧерновик(externalRef: string, patch: Partial<ЧерновикSelection>) {
     setSelection((prev) => {
       const next = new Map(prev);
       const existing = next.get(externalRef);
@@ -594,7 +594,7 @@ export function ImportFromVaultDialog({
     });
   }
 
-  function removeDraft(externalRef: string) {
+  function removeЧерновик(externalRef: string) {
     setSelection((prev) => {
       const next = new Map(prev);
       next.delete(externalRef);
@@ -602,8 +602,8 @@ export function ImportFromVaultDialog({
     });
   }
 
-  function handleClose(force = false) {
-    if (importMutation.isPending) return;
+  function handleЗакрыть(force = false) {
+    if (importMutation.isОжидание) return;
     if (!force && step !== "result" && selection.size > 0 && !importResult) {
       const ok = window.confirm(
         `Discard ${selection.size} pending import${selection.size === 1 ? "" : "s"}?`,
@@ -613,17 +613,17 @@ export function ImportFromVaultDialog({
     onOpenChange(false);
   }
 
-  function handleSubmitImport() {
-    if (!vaultId || importMutation.isPending) return;
+  function handleОтправитьИмпорт() {
+    if (!vaultId || importMutation.isОжидание) return;
     if (blockedReviewCount > 0) return;
     if (draftList.length === 0) return;
-    const items: RemoteImportSelectionInput[] = draftList.map((draft) => ({
+    const items: RemoteИмпортSelectionInput[] = draftList.map((draft) => ({
       externalRef: draft.candidate.externalRef,
       name: draft.name.trim(),
       key: draft.key.trim(),
       description: draft.description.trim() || null,
-      providerVersionRef: draft.candidate.providerVersionRef,
-      providerMetadata: safeImportProviderMetadata(draft.candidate.providerMetadata),
+      providerВерсияRef: draft.candidate.providerВерсияRef,
+      providerMetadata: safeИмпортПровайдерMetadata(draft.candidate.providerMetadata),
     }));
     importMutation.mutate({ providerConfigId: vaultId, secrets: items });
   }
@@ -635,37 +635,37 @@ export function ImportFromVaultDialog({
         if (next) {
           onOpenChange(true);
         } else {
-          handleClose();
+          handleЗакрыть();
         }
       }}
     >
       <DialogContent
-        showCloseButton={false}
-        className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
+        showЗакрытьButton={false}
+        classИмя="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
         data-testid="import-from-vault-dialog"
       >
-        <header className="flex items-start justify-between gap-3 border-b border-border/60 px-5 py-4">
-          <div className="flex flex-col gap-1">
-            <DialogTitle className="text-base font-semibold">
-              Import from AWS Secrets Manager
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
+        <header classИмя="flex items-start justify-between gap-3 border-b border-border/60 px-5 py-4">
+          <div classИмя="flex flex-col gap-1">
+            <DialogНазвание classИмя="text-base font-semibold">
+              Импорт from AWS Секреты Manager
+            </DialogНазвание>
+            <DialogОписание classИмя="text-xs text-muted-foreground">
               Bring AWS-managed secrets into Paperclip as external references.
-            </DialogDescription>
+            </DialogОписание>
             <Stepper step={step} />
           </div>
           <button
             type="button"
-            className="rounded-sm text-muted-foreground transition-opacity hover:opacity-100 opacity-70"
-            onClick={() => handleClose()}
-            aria-label="Close import dialog"
+            classИмя="rounded-sm text-muted-foreground transition-opacity hover:opacity-100 opacity-70"
+            onClick={() => handleЗакрыть()}
+            aria-label="Закрыть import dialog"
           >
-            <X className="h-4 w-4" />
+            <X classИмя="h-4 w-4" />
           </button>
         </header>
 
         <div
-          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          classИмя="flex min-h-0 flex-1 flex-col overflow-hidden"
           aria-live="polite"
         >
           {step === "select" && (
@@ -675,24 +675,24 @@ export function ImportFromVaultDialog({
               vaultId={vaultId}
               onVaultChange={handleVaultChange}
               searchInput={searchInput}
-              onSearchInput={setSearchInput}
+              onПоискInput={setПоискInput}
               debouncedQuery={debouncedQuery}
-              onRefresh={handleRefresh}
-              previewLoading={previewLoading}
-              pageLoading={pageLoading}
-              previewError={previewError}
+              onОбновить={handleОбновить}
+              previewЗагрузка={previewЗагрузка}
+              pageЗагрузка={pageЗагрузка}
+              previewОшибка={previewОшибка}
               candidates={preview.candidates}
               visibleCandidates={visibleCandidates}
               selectableInLoaded={selectableInLoaded}
               selection={selection}
               toggleRow={toggleRow}
-              toggleAllLoaded={toggleAllLoaded}
+              toggleВсеLoaded={toggleВсеLoaded}
               headerCheckboxState={headerCheckboxState}
-              hasNextPage={Boolean(preview.nextToken)}
+              hasДалееPage={Boolean(preview.nextТокен)}
               onLoadMore={handleLoadMore}
               showOnlySelected={showOnlySelected}
               onShowOnlySelectedChange={setShowOnlySelected}
-              selectedNotVisible={selectedNotVisible}
+              selectedНетtVisible={selectedНетtVisible}
               noEligibleVaults={noEligibleVaults}
               onManageVaults={onManageVaults}
             />
@@ -700,10 +700,10 @@ export function ImportFromVaultDialog({
           {step === "review" && (
             <ReviewStep
               drafts={draftList}
-              reviewErrors={reviewErrors}
-              updateDraft={updateDraft}
-              removeDraft={removeDraft}
-              importing={importMutation.isPending}
+              reviewОшибкаs={reviewОшибкаs}
+              updateЧерновик={updateЧерновик}
+              removeЧерновик={removeЧерновик}
+              importing={importMutation.isОжидание}
             />
           )}
           {step === "result" && importResult && (
@@ -711,18 +711,18 @@ export function ImportFromVaultDialog({
           )}
         </div>
 
-        <footer className="flex items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-5 py-3">
-          <FooterStatus
+        <footer classИмя="flex items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-5 py-3">
+          <FooterСтатус
             step={step}
             totalSelected={totalSelected}
             readyReviewCount={readyReviewCount}
             blockedReviewCount={blockedReviewCount}
             result={importResult}
           />
-          <div className="flex items-center gap-2">
+          <div classИмя="flex items-center gap-2">
             {step !== "result" && (
-              <Button variant="ghost" size="sm" onClick={() => handleClose()}>
-                Cancel
+              <Button variant="ghost" size="sm" onClick={() => handleЗакрыть()}>
+                Отмена
               </Button>
             )}
             {step === "review" && (
@@ -730,9 +730,9 @@ export function ImportFromVaultDialog({
                 variant="outline"
                 size="sm"
                 onClick={() => setStep("select")}
-                disabled={importMutation.isPending}
+                disabled={importMutation.isОжидание}
               >
-                Back
+                Назад
               </Button>
             )}
             {step === "select" && (
@@ -741,31 +741,31 @@ export function ImportFromVaultDialog({
                 onClick={() => setStep("review")}
                 disabled={totalSelected === 0}
               >
-                Continue → Review
+                Продолжить → Review
               </Button>
             )}
             {step === "review" && (
               <Button
                 size="sm"
-                onClick={handleSubmitImport}
+                onClick={handleОтправитьИмпорт}
                 disabled={
                   draftList.length === 0 ||
                   blockedReviewCount > 0 ||
-                  importMutation.isPending
+                  importMutation.isОжидание
                 }
               >
-                {importMutation.isPending ? (
+                {importMutation.isОжидание ? (
                   <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Importing…
+                    <Loader2 classИмя="mr-1.5 h-3.5 w-3.5 animate-spin" /> Импортing…
                   </>
                 ) : (
-                  `Import ${draftList.length}`
+                  `Импорт ${draftList.length}`
                 )}
               </Button>
             )}
             {step === "result" && (
-              <Button size="sm" onClick={() => handleClose(true)}>
-                Done
+              <Button size="sm" onClick={() => handleЗакрыть(true)}>
+                Готово
               </Button>
             )}
           </div>
@@ -783,11 +783,11 @@ function Stepper({ step }: { step: Step }) {
   ];
   const activeIndex = steps.findIndex((s) => s.id === step);
   return (
-    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+    <div classИмя="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
       {steps.map((s, index) => (
-        <span key={s.id} className="flex items-center gap-2">
+        <span key={s.id} classИмя="flex items-center gap-2">
           <span
-            className={cn(
+            classИмя={cn(
               "inline-flex h-4 w-4 items-center justify-center rounded-full border text-[10px]",
               index === activeIndex
                 ? "border-primary bg-primary text-primary-foreground"
@@ -799,14 +799,14 @@ function Stepper({ step }: { step: Step }) {
             {index + 1}
           </span>
           <span
-            className={cn(
+            classИмя={cn(
               index === activeIndex ? "text-foreground font-medium" : undefined,
             )}
           >
             {s.label}
           </span>
           {index < steps.length - 1 && (
-            <span className="text-muted-foreground/60">›</span>
+            <span classИмя="text-muted-foreground/60">›</span>
           )}
         </span>
       ))}
@@ -815,29 +815,29 @@ function Stepper({ step }: { step: Step }) {
 }
 
 interface SelectStepProps {
-  awsVaults: CompanySecretProviderConfig[];
-  eligible: CompanySecretProviderConfig[];
+  awsVaults: КомпанияСекретПровайдерConfig[];
+  eligible: КомпанияСекретПровайдерConfig[];
   vaultId: string | null;
   onVaultChange: (id: string) => void;
   searchInput: string;
-  onSearchInput: (value: string) => void;
+  onПоискInput: (value: string) => void;
   debouncedQuery: string;
-  onRefresh: () => void;
-  previewLoading: boolean;
-  pageLoading: boolean;
-  previewError: unknown;
-  candidates: RemoteSecretImportCandidate[];
-  visibleCandidates: RemoteSecretImportCandidate[];
-  selectableInLoaded: RemoteSecretImportCandidate[];
-  selection: Map<string, DraftSelection>;
-  toggleRow: (candidate: RemoteSecretImportCandidate) => void;
-  toggleAllLoaded: () => void;
+  onОбновить: () => void;
+  previewЗагрузка: boolean;
+  pageЗагрузка: boolean;
+  previewОшибка: unknown;
+  candidates: RemoteСекретИмпортCandidate[];
+  visibleCandidates: RemoteСекретИмпортCandidate[];
+  selectableInLoaded: RemoteСекретИмпортCandidate[];
+  selection: Map<string, ЧерновикSelection>;
+  toggleRow: (candidate: RemoteСекретИмпортCandidate) => void;
+  toggleВсеLoaded: () => void;
   headerCheckboxState: boolean | "indeterminate";
-  hasNextPage: boolean;
+  hasДалееPage: boolean;
   onLoadMore: () => void;
   showOnlySelected: boolean;
   onShowOnlySelectedChange: (value: boolean) => void;
-  selectedNotVisible: number;
+  selectedНетtVisible: number;
   noEligibleVaults: boolean;
   onManageVaults?: () => void;
 }
@@ -849,34 +849,34 @@ function SelectStep(props: SelectStepProps) {
     vaultId,
     onVaultChange,
     searchInput,
-    onSearchInput,
+    onПоискInput,
     debouncedQuery,
-    onRefresh,
-    previewLoading,
-    pageLoading,
-    previewError,
+    onОбновить,
+    previewЗагрузка,
+    pageЗагрузка,
+    previewОшибка,
     candidates,
     visibleCandidates,
     selectableInLoaded,
     selection,
     toggleRow,
-    toggleAllLoaded,
+    toggleВсеLoaded,
     headerCheckboxState,
-    hasNextPage,
+    hasДалееPage,
     onLoadMore,
     showOnlySelected,
     onShowOnlySelectedChange,
-    selectedNotVisible,
+    selectedНетtVisible,
     noEligibleVaults,
     onManageVaults,
   } = props;
 
   if (noEligibleVaults) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center p-6" data-testid="select-empty-vaults">
+      <div classИмя="flex min-h-0 flex-1 items-center justify-center p-6" data-testid="select-empty-vaults">
         <EmptyState
           icon={Cloud}
-          message="No AWS provider vault configured. Add one to import secrets."
+          message="Нет AWS provider vault configured. Добавить one to import secrets."
           action={onManageVaults ? "Manage vaults" : undefined}
           onAction={onManageVaults}
         />
@@ -884,23 +884,23 @@ function SelectStep(props: SelectStepProps) {
     );
   }
 
-  const showSearchSpinner = previewLoading && Boolean(debouncedQuery);
+  const showПоискSpinner = previewЗагрузка && Boolean(debouncedQuery);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border/60 px-5 py-3">
-        <label className="text-xs uppercase tracking-wide text-muted-foreground">Vault</label>
+    <div classИмя="flex min-h-0 flex-1 flex-col">
+      <div classИмя="flex flex-wrap items-center gap-2 border-b border-border/60 px-5 py-3">
+        <label classИмя="text-xs uppercase tracking-wide text-muted-foreground">Vault</label>
         {awsVaults.length === 1 && eligible.length === 1 ? (
-          <span className="text-xs font-medium" data-testid="vault-static-label">
-            {eligible[0].displayName}
+          <span classИмя="text-xs font-medium" data-testid="vault-static-label">
+            {eligible[0].displayИмя}
           </span>
         ) : (
           <Select
             value={vaultId ?? undefined}
-            onValueChange={onVaultChange}
+            onЗначениеChange={onVaultChange}
           >
-            <SelectTrigger size="sm" className="text-xs" aria-label="Select AWS vault">
-              <SelectValue placeholder="Select an AWS vault" />
+            <SelectTrigger size="sm" classИмя="text-xs" aria-label="Select AWS vault">
+              <SelectЗначение placeholder="Select an AWS vault" />
             </SelectTrigger>
             <SelectContent>
               {awsVaults.map((vault) => {
@@ -912,16 +912,16 @@ function SelectStep(props: SelectStepProps) {
                     disabled={blocked}
                     aria-disabled={blocked}
                   >
-                    <span className="flex items-center gap-2">
-                      <span>{vault.displayName}</span>
-                      {vault.isDefault && (
-                        <Badge variant="outline" className="px-1 py-0 text-[10px]">default</Badge>
+                    <span classИмя="flex items-center gap-2">
+                      <span>{vault.displayИмя}</span>
+                      {vault.isПо умолчанию && (
+                        <Badge variant="outline" classИмя="px-1 py-0 text-[10px]">default</Badge>
                       )}
                       {vault.status === "warning" && (
-                        <Badge variant="outline" className="px-1 py-0 text-[10px] text-amber-500 border-amber-500/40">warning</Badge>
+                        <Badge variant="outline" classИмя="px-1 py-0 text-[10px] text-amber-500 border-amber-500/40">warning</Badge>
                       )}
                       {blocked && (
-                        <Badge variant="outline" className="px-1 py-0 text-[10px] text-muted-foreground">
+                        <Badge variant="outline" classИмя="px-1 py-0 text-[10px] text-muted-foreground">
                           {vault.status === "coming_soon" ? "coming soon" : vault.status}
                         </Badge>
                       )}
@@ -933,72 +933,72 @@ function SelectStep(props: SelectStepProps) {
           </Select>
         )}
 
-        <div className="relative ml-auto w-64">
-          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <div classИмя="relative ml-auto w-64">
+          <Поиск classИмя="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchInput}
-            onChange={(event) => onSearchInput(event.target.value)}
-            placeholder="Search by name, ARN, tag"
-            className="pl-7 pr-7 text-xs"
-            aria-label="Search remote secrets"
+            onChange={(event) => onПоискInput(event.target.value)}
+            placeholder="Поиск by name, ARN, tag"
+            classИмя="pl-7 pr-7 text-xs"
+            aria-label="Поиск remote secrets"
             data-testid="vault-search"
           />
-          {showSearchSpinner && (
-            <Loader2 className="absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+          {showПоискSpinner && (
+            <Loader2 classИмя="absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
           )}
         </div>
 
         <Button
           variant="outline"
           size="sm"
-          onClick={onRefresh}
-          disabled={previewLoading || !vaultId}
-          aria-label="Refresh remote secrets"
+          onClick={onОбновить}
+          disabled={previewЗагрузка || !vaultId}
+          aria-label="Обновить remote secrets"
         >
-          <RefreshCw className={cn("h-3.5 w-3.5", previewLoading && "animate-spin")} />
+          <ОбновитьCw classИмя={cn("h-3.5 w-3.5", previewЗагрузка && "animate-spin")} />
         </Button>
       </div>
 
-      {selectedNotVisible > 0 && (
-        <div className="flex items-center justify-between border-b border-border/60 bg-muted/20 px-5 py-1.5 text-xs text-muted-foreground">
+      {selectedНетtVisible > 0 && (
+        <div classИмя="flex items-center justify-between border-b border-border/60 bg-muted/20 px-5 py-1.5 text-xs text-muted-foreground">
           <span>
-            {selection.size} selected · {selectedNotVisible} not visible with current search
+            {selection.size} selected · {selectedНетtVisible} not visible with current search
           </span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 px-2 text-xs"
+            classИмя="h-6 px-2 text-xs"
             onClick={() => onShowOnlySelectedChange(!showOnlySelected)}
           >
-            {showOnlySelected ? "Show all" : "Show selected"}
+            {showOnlySelected ? "Показать все" : "Show selected"}
           </Button>
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto" data-testid="vault-table-scroll">
-        {previewError ? (
-          <PreviewErrorBanner error={previewError} onRetry={onRefresh} />
-        ) : previewLoading && candidates.length === 0 ? (
+      <div classИмя="min-h-0 flex-1 overflow-y-auto" data-testid="vault-table-scroll">
+        {previewОшибка ? (
+          <ПредпросмотрОшибкаBanner error={previewОшибка} onПовторить={onОбновить} />
+        ) : previewЗагрузка && candidates.length === 0 ? (
           <SkeletonRows rows={8} />
         ) : candidates.length === 0 ? (
           <EmptyCandidates query={debouncedQuery} />
         ) : (
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+          <table classИмя="w-full text-sm">
+            <thead classИмя="sticky top-0 z-10 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-3 py-2 text-left">
+                <th classИмя="px-3 py-2 text-left">
                   <Checkbox
                     checked={headerCheckboxState}
-                    onCheckedChange={() => toggleAllLoaded()}
+                    onCheckedChange={() => toggleВсеLoaded()}
                     aria-label={`Select all loaded (${selectableInLoaded.length})`}
                     disabled={selectableInLoaded.length === 0}
                   />
                 </th>
-                <th className="px-2 py-2 text-left font-medium">Remote name</th>
-                <th className="px-2 py-2 text-left font-medium">Reference</th>
-                <th className="px-2 py-2 text-left font-medium">Last changed</th>
-                <th className="px-2 py-2 text-left font-medium">Suggested name</th>
-                <th className="px-2 py-2 text-left font-medium">State</th>
+                <th classИмя="px-2 py-2 text-left font-medium">Remote name</th>
+                <th classИмя="px-2 py-2 text-left font-medium">Reference</th>
+                <th classИмя="px-2 py-2 text-left font-medium">Last changed</th>
+                <th classИмя="px-2 py-2 text-left font-medium">Suggested name</th>
+                <th classИмя="px-2 py-2 text-left font-medium">State</th>
               </tr>
             </thead>
             <tbody data-testid="vault-table-body">
@@ -1014,7 +1014,7 @@ function SelectStep(props: SelectStepProps) {
                 return (
                   <tr
                     key={candidate.externalRef}
-                    className={cn(
+                    classИмя={cn(
                       "border-b border-border/60 transition-colors",
                       candidate.importable
                         ? "cursor-pointer hover:bg-accent/40"
@@ -1025,41 +1025,41 @@ function SelectStep(props: SelectStepProps) {
                     data-testid={`vault-row-${candidate.externalRef}`}
                     data-row-state={candidate.status}
                   >
-                    <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                    <td classИмя="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleRow(candidate)}
                         disabled={!candidate.importable}
-                        aria-label={`Select ${candidate.remoteName}`}
+                        aria-label={`Select ${candidate.remoteИмя}`}
                       />
                     </td>
-                    <td className="px-2 py-2.5">
-                      <div className="text-sm font-medium leading-tight">{candidate.remoteName}</div>
+                    <td classИмя="px-2 py-2.5">
+                      <div classИмя="text-sm font-medium leading-tight">{candidate.remoteИмя}</div>
                     </td>
-                    <td className="px-2 py-2.5 text-xs">
+                    <td classИмя="px-2 py-2.5 text-xs">
                       <span
-                        className="font-mono text-muted-foreground"
+                        classИмя="font-mono text-muted-foreground"
                         title={candidate.externalRef}
                       >
                         {middleTruncate(candidate.externalRef, 50)}
                       </span>
                     </td>
-                    <td className="px-2 py-2.5 text-xs text-muted-foreground">
+                    <td classИмя="px-2 py-2.5 text-xs text-muted-foreground">
                       {formatRelativeShort(lastChanged)}
                     </td>
-                    <td className="px-2 py-2.5 text-xs font-mono">{candidate.key}</td>
-                    <td className="px-2 py-2.5 text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <StatusBadge status={candidate.status} />
+                    <td classИмя="px-2 py-2.5 text-xs font-mono">{candidate.key}</td>
+                    <td classИмя="px-2 py-2.5 text-xs">
+                      <div classИмя="flex items-center gap-1.5">
+                        <СтатусBadge status={candidate.status} />
                         {candidate.status === "duplicate" &&
-                          candidate.conflicts.find((c) => c.type === "exact_reference")?.existingSecretId && (
-                            <span className="text-[11px] text-muted-foreground">
+                          candidate.conflicts.find((c) => c.type === "exact_reference")?.existingСекретId && (
+                            <span classИмя="text-[11px] text-muted-foreground">
                               Already imported
                             </span>
                           )}
                       </div>
                       {candidate.status === "conflict" && candidate.conflicts.length > 0 && (
-                        <div className="mt-0.5 text-[11px] text-amber-600 dark:text-amber-400">
+                        <div classИмя="mt-0.5 text-[11px] text-amber-600 dark:text-amber-400">
                           {candidate.conflicts[0].message}
                         </div>
                       )}
@@ -1067,9 +1067,9 @@ function SelectStep(props: SelectStepProps) {
                   </tr>
                 );
               })}
-              {pageLoading && (
+              {pageЗагрузка && (
                 <tr>
-                  <td colSpan={6} className="p-0">
+                  <td colSpan={6} classИмя="p-0">
                     <SkeletonRows rows={4} />
                   </td>
                 </tr>
@@ -1078,8 +1078,8 @@ function SelectStep(props: SelectStepProps) {
           </table>
         )}
 
-        {hasNextPage && !previewError && (
-          <div className="flex items-center justify-between border-t border-border/60 px-5 py-2 text-xs text-muted-foreground">
+        {hasДалееPage && !previewОшибка && (
+          <div classИмя="flex items-center justify-between border-t border-border/60 px-5 py-2 text-xs text-muted-foreground">
             <span>
               {candidates.length} loaded
               {selectableInLoaded.length > 0 && (
@@ -1090,12 +1090,12 @@ function SelectStep(props: SelectStepProps) {
               variant="outline"
               size="sm"
               onClick={onLoadMore}
-              disabled={pageLoading}
+              disabled={pageЗагрузка}
               data-testid="vault-load-more"
             >
-              {pageLoading ? (
+              {pageЗагрузка ? (
                 <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Loading…
+                  <Loader2 classИмя="mr-1.5 h-3.5 w-3.5 animate-spin" /> Загрузка…
                 </>
               ) : (
                 `Load ${PAGE_SIZE} more`
@@ -1108,42 +1108,42 @@ function SelectStep(props: SelectStepProps) {
   );
 }
 
-function PreviewErrorBanner({ error, onRetry }: { error: unknown; onRetry: () => void }) {
-  const isPermission = isPermissionError(error);
-  const isThrottling = isThrottlingError(error);
-  const message = readableErrorMessage(error);
+function ПредпросмотрОшибкаBanner({ error, onПовторить }: { error: unknown; onПовторить: () => void }) {
+  const isPermission = isPermissionОшибка(error);
+  const isThrottling = isThrottlingОшибка(error);
+  const message = readableОшибкаMessage(error);
   return (
     <div
-      className="m-5 flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
+      classИмя="m-5 flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
       role="alert"
       data-testid="preview-error-banner"
     >
-      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-      <div className="flex-1">
-        <div className="font-medium">
+      <AlertCircle classИмя="mt-0.5 h-4 w-4 shrink-0" />
+      <div classИмя="flex-1">
+        <div classИмя="font-medium">
           {isPermission
             ? "AWS denied list access"
             : isThrottling
               ? "AWS throttled the listing request"
               : "Could not load remote secrets"}
         </div>
-        <div className="mt-1 text-xs leading-relaxed text-destructive/80">
+        <div classИмя="mt-1 text-xs leading-relaxed text-destructive/80">
           {isPermission
-            ? "The AWS principal behind this vault is missing secretsmanager:ListSecrets. Update IAM and try again."
+            ? "The AWS principal behind this vault is missing secretsmanager:ListСекреты. Обновить IAM and try again."
             : message}
         </div>
-        <div className="mt-2 flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onRetry}>
-            <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Retry
+        <div classИмя="mt-2 flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onПовторить}>
+            <ОбновитьCw classИмя="mr-1.5 h-3.5 w-3.5" /> Повторить
           </Button>
           {isPermission && (
             <a
               href="https://docs.aws.amazon.com/service-authorization/latest/reference/list_awssecretsmanager.html"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-medium underline"
+              classИмя="inline-flex items-center gap-1 text-xs font-medium underline"
             >
-              IAM reference <ExternalLink className="h-3 w-3" />
+              IAM reference <ExternalLink classИмя="h-3 w-3" />
             </a>
           )}
         </div>
@@ -1154,9 +1154,9 @@ function PreviewErrorBanner({ error, onRetry }: { error: unknown; onRetry: () =>
 
 function SkeletonRows({ rows }: { rows: number }) {
   return (
-    <div className="flex flex-col gap-1.5 p-3">
+    <div classИмя="flex flex-col gap-1.5 p-3">
       {Array.from({ length: rows }).map((_, idx) => (
-        <Skeleton key={idx} className="h-8 w-full" />
+        <Skeleton key={idx} classИмя="h-8 w-full" />
       ))}
     </div>
   );
@@ -1166,117 +1166,117 @@ function EmptyCandidates({ query }: { query: string }) {
   if (query) {
     return (
       <EmptyState
-        icon={Search}
-        message={`No remote secrets match "${query}".`}
+        icon={Поиск}
+        message={`Нет remote secrets match "${query}".`}
       />
     );
   }
   return (
     <EmptyState
       icon={Database}
-      message="No secrets visible to this vault."
+      message="Нет secrets visible to this vault."
     />
   );
 }
 
 interface ReviewStepProps {
-  drafts: DraftSelection[];
-  reviewErrors: Map<string, string>;
-  updateDraft: (externalRef: string, patch: Partial<DraftSelection>) => void;
-  removeDraft: (externalRef: string) => void;
+  drafts: ЧерновикSelection[];
+  reviewОшибкаs: Map<string, string>;
+  updateЧерновик: (externalRef: string, patch: Partial<ЧерновикSelection>) => void;
+  removeЧерновик: (externalRef: string) => void;
   importing: boolean;
 }
 
-function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing }: ReviewStepProps) {
+function ReviewStep({ drafts, reviewОшибкаs, updateЧерновик, removeЧерновик, importing }: ReviewStepProps) {
   if (drafts.length === 0) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+      <div classИмя="flex min-h-0 flex-1 items-center justify-center p-6">
         <EmptyState
           icon={Info}
-          message="No secrets selected. Go back to pick remote secrets to import."
+          message="Нет secrets selected. Go back to pick remote secrets to import."
         />
       </div>
     );
   }
 
-  const blocked = reviewErrors.size;
+  const blocked = reviewОшибкаs.size;
   const ready = drafts.length - blocked;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border/60 bg-muted/20 px-5 py-3 text-xs">
-        <span className="font-medium">{ready} secrets ready to import</span>
+    <div classИмя="flex min-h-0 flex-1 flex-col">
+      <div classИмя="flex flex-wrap items-center gap-3 border-b border-border/60 bg-muted/20 px-5 py-3 text-xs">
+        <span classИмя="font-medium">{ready} secrets ready to import</span>
         {blocked > 0 && (
-          <span className="text-amber-600 dark:text-amber-400">
+          <span classИмя="text-amber-600 dark:text-amber-400">
             {blocked} need attention before import
           </span>
         )}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto" data-testid="review-list">
+      <div classИмя="min-h-0 flex-1 overflow-y-auto" data-testid="review-list">
         {drafts.map((draft) => {
-          const error = reviewErrors.get(draft.candidate.externalRef);
+          const error = reviewОшибкаs.get(draft.candidate.externalRef);
           return (
             <div
               key={draft.candidate.externalRef}
-              className={cn(
+              classИмя={cn(
                 "border-b border-border/60 p-4",
                 error && "border-l-2 border-l-amber-500/60 bg-amber-500/5",
               )}
               data-testid={`review-row-${draft.candidate.externalRef}`}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1 space-y-2">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-medium">{draft.candidate.remoteName}</span>
+              <div classИмя="flex items-start justify-between gap-4">
+                <div classИмя="min-w-0 flex-1 space-y-2">
+                  <div classИмя="flex flex-col gap-0.5">
+                    <span classИмя="text-sm font-medium">{draft.candidate.remoteИмя}</span>
                     <span
-                      className="font-mono text-xs text-muted-foreground"
+                      classИмя="font-mono text-xs text-muted-foreground"
                       title={draft.candidate.externalRef}
                     >
                       {middleTruncate(draft.candidate.externalRef, 60)}
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <label className="flex flex-col gap-1 text-xs">
-                      <span className="text-muted-foreground">Paperclip name</span>
+                  <div classИмя="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <label classИмя="flex flex-col gap-1 text-xs">
+                      <span classИмя="text-muted-foreground">Paperclip name</span>
                       <Input
                         value={draft.name}
                         onChange={(e) =>
-                          updateDraft(draft.candidate.externalRef, { name: e.target.value })
+                          updateЧерновик(draft.candidate.externalRef, { name: e.target.value })
                         }
-                        className="text-xs"
+                        classИмя="text-xs"
                         aria-invalid={Boolean(error)}
                         disabled={importing}
                         data-testid={`review-name-${draft.candidate.externalRef}`}
                       />
                     </label>
-                    <label className="flex flex-col gap-1 text-xs">
-                      <span className="text-muted-foreground">Key</span>
+                    <label classИмя="flex flex-col gap-1 text-xs">
+                      <span classИмя="text-muted-foreground">Ключ</span>
                       <Input
                         value={draft.key}
                         onChange={(e) =>
-                          updateDraft(draft.candidate.externalRef, { key: e.target.value })
+                          updateЧерновик(draft.candidate.externalRef, { key: e.target.value })
                         }
                         onBlur={(e) =>
-                          updateDraft(draft.candidate.externalRef, {
-                            key: normalizeDraftKey(e.target.value),
+                          updateЧерновик(draft.candidate.externalRef, {
+                            key: normalizeЧерновикКлюч(e.target.value),
                           })
                         }
-                        className="font-mono text-xs"
+                        classИмя="font-mono text-xs"
                         aria-invalid={Boolean(error)}
                         disabled={importing}
                         data-testid={`review-key-${draft.candidate.externalRef}`}
                       />
                     </label>
-                    <label className="flex flex-col gap-1 text-xs">
-                      <span className="text-muted-foreground">Description (optional)</span>
+                    <label classИмя="flex flex-col gap-1 text-xs">
+                      <span classИмя="text-muted-foreground">Описание (optional)</span>
                       <Input
                         value={draft.description}
                         onChange={(e) =>
-                          updateDraft(draft.candidate.externalRef, {
+                          updateЧерновик(draft.candidate.externalRef, {
                             description: e.target.value,
                           })
                         }
-                        className="text-xs"
+                        classИмя="text-xs"
                         disabled={importing}
                         data-testid={`review-description-${draft.candidate.externalRef}`}
                       />
@@ -1284,11 +1284,11 @@ function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing 
                   </div>
                   {error && (
                     <div
-                      className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400"
+                      classИмя="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400"
                       role="alert"
                       data-testid={`review-error-${draft.candidate.externalRef}`}
                     >
-                      <AlertTriangle className="h-3.5 w-3.5" />
+                      <AlertTriangle classИмя="h-3.5 w-3.5" />
                       {error}
                     </div>
                   )}
@@ -1296,12 +1296,12 @@ function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing 
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => removeDraft(draft.candidate.externalRef)}
-                  aria-label={`Remove ${draft.candidate.remoteName}`}
-                  className="h-7 w-7"
+                  onClick={() => removeЧерновик(draft.candidate.externalRef)}
+                  aria-label={`Удалить ${draft.candidate.remoteИмя}`}
+                  classИмя="h-7 w-7"
                   disabled={importing}
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X classИмя="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
@@ -1313,15 +1313,15 @@ function ReviewStep({ drafts, reviewErrors, updateDraft, removeDraft, importing 
 }
 
 interface ResultStepProps {
-  result: RemoteSecretImportResult;
-  draftList: DraftSelection[];
+  result: RemoteСекретИмпортResult;
+  draftList: ЧерновикSelection[];
 }
 
 function ResultStep({ result, draftList }: ResultStepProps) {
   const grouped = useMemo(() => {
-    const created: RemoteSecretImportRowResult[] = [];
-    const skipped: RemoteSecretImportRowResult[] = [];
-    const failed: RemoteSecretImportRowResult[] = [];
+    const created: RemoteСекретИмпортRowResult[] = [];
+    const skipped: RemoteСекретИмпортRowResult[] = [];
+    const failed: RemoteСекретИмпортRowResult[] = [];
     for (const row of result.results) {
       if (row.status === "imported") created.push(row);
       else if (row.status === "skipped") skipped.push(row);
@@ -1331,37 +1331,37 @@ function ResultStep({ result, draftList }: ResultStepProps) {
   }, [result]);
 
   const draftLookup = useMemo(() => {
-    const map = new Map<string, DraftSelection>();
+    const map = new Map<string, ЧерновикSelection>();
     for (const draft of draftList) map.set(draft.candidate.externalRef, draft);
     return map;
   }, [draftList]);
 
   const heading =
     result.errorCount === result.results.length && result.errorCount > 0
-      ? "Import failed"
+      ? "Импорт failed"
       : result.errorCount === 0 && result.skippedCount === 0
-        ? `All ${result.importedCount} secrets imported`
-        : "Import complete";
+        ? `Все ${result.importedCount} secrets imported`
+        : "Импорт complete";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="border-b border-border/60 px-5 py-3" data-testid="result-summary">
-        <h3 className="text-sm font-semibold">{heading}</h3>
-        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <span className="text-emerald-600 dark:text-emerald-400">✓ {result.importedCount} created</span>
+    <div classИмя="flex min-h-0 flex-1 flex-col">
+      <div classИмя="border-b border-border/60 px-5 py-3" data-testid="result-summary">
+        <h3 classИмя="text-sm font-semibold">{heading}</h3>
+        <div classИмя="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <span classИмя="text-emerald-600 dark:text-emerald-400">✓ {result.importedCount} created</span>
           <span>⊘ {result.skippedCount} skipped</span>
-          <span className="text-destructive">⨯ {result.errorCount} failed</span>
+          <span classИмя="text-destructive">⨯ {result.errorCount} failed</span>
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div classИмя="min-h-0 flex-1 overflow-y-auto">
         {grouped.created.length > 0 && (
-          <ResultGroup label="Created" rows={grouped.created} draftLookup={draftLookup} />
+          <ResultGroup label="Создано" rows={grouped.created} draftLookup={draftLookup} />
         )}
         {grouped.skipped.length > 0 && (
           <ResultGroup label="Skipped" rows={grouped.skipped} draftLookup={draftLookup} />
         )}
         {grouped.failed.length > 0 && (
-          <ResultGroup label="Failed" rows={grouped.failed} draftLookup={draftLookup} />
+          <ResultGroup label="Ошибка" rows={grouped.failed} draftLookup={draftLookup} />
         )}
       </div>
     </div>
@@ -1374,41 +1374,41 @@ function ResultGroup({
   draftLookup,
 }: {
   label: string;
-  rows: RemoteSecretImportRowResult[];
-  draftLookup: Map<string, DraftSelection>;
+  rows: RemoteСекретИмпортRowResult[];
+  draftLookup: Map<string, ЧерновикSelection>;
 }) {
   return (
     <section>
-      <header className="bg-muted/30 px-5 py-1.5 text-xs uppercase tracking-wide text-muted-foreground">
+      <header classИмя="bg-muted/30 px-5 py-1.5 text-xs uppercase tracking-wide text-muted-foreground">
         {label} · {rows.length}
       </header>
-      <ul className="divide-y divide-border/60">
+      <ul classИмя="divide-y divide-border/60">
         {rows.map((row) => {
           const draft = draftLookup.get(row.externalRef);
-          const remoteName = draft?.candidate.remoteName ?? row.name;
+          const remoteИмя = draft?.candidate.remoteИмя ?? row.name;
           return (
             <li
               key={row.externalRef}
-              className="flex flex-wrap items-start gap-2 px-5 py-2.5 text-xs"
+              classИмя="flex flex-wrap items-start gap-2 px-5 py-2.5 text-xs"
               data-testid={`result-row-${row.externalRef}`}
               data-row-status={row.status}
             >
               <RowResultBadge status={row.status} />
-              <span className="font-medium">{row.name}</span>
-              <span className="font-mono text-muted-foreground">{row.key}</span>
+              <span classИмя="font-medium">{row.name}</span>
+              <span classИмя="font-mono text-muted-foreground">{row.key}</span>
               <span
-                className="font-mono text-muted-foreground"
+                classИмя="font-mono text-muted-foreground"
                 title={row.externalRef}
               >
                 {middleTruncate(row.externalRef, 40)}
               </span>
-              <span className="ml-auto flex items-center gap-2">
+              <span classИмя="ml-auto flex items-center gap-2">
                 {row.status === "imported" && row.secretId && (
-                  <span className="text-muted-foreground">{remoteName}</span>
+                  <span classИмя="text-muted-foreground">{remoteИмя}</span>
                 )}
                 {row.reason && (
                   <span
-                    className={cn(
+                    classИмя={cn(
                       "max-w-[24rem] truncate",
                       row.status === "error"
                         ? "text-destructive"
@@ -1428,24 +1428,24 @@ function ResultGroup({
   );
 }
 
-interface FooterStatusProps {
+interface FooterСтатусProps {
   step: Step;
   totalSelected: number;
   readyReviewCount: number;
   blockedReviewCount: number;
-  result: RemoteSecretImportResult | null;
+  result: RemoteСекретИмпортResult | null;
 }
 
-function FooterStatus({
+function FooterСтатус({
   step,
   totalSelected,
   readyReviewCount,
   blockedReviewCount,
   result,
-}: FooterStatusProps) {
+}: FooterСтатусProps) {
   if (step === "select") {
     return (
-      <div className="text-xs text-muted-foreground">
+      <div classИмя="text-xs text-muted-foreground">
         {totalSelected === 0
           ? "Select remote secrets to import"
           : `${totalSelected} selected`}
@@ -1454,10 +1454,10 @@ function FooterStatus({
   }
   if (step === "review") {
     return (
-      <div className="text-xs text-muted-foreground">
+      <div classИмя="text-xs text-muted-foreground">
         {readyReviewCount} ready
         {blockedReviewCount > 0 && (
-          <span className="ml-2 text-amber-600 dark:text-amber-400">
+          <span classИмя="ml-2 text-amber-600 dark:text-amber-400">
             · {blockedReviewCount} blocked
           </span>
         )}
@@ -1466,7 +1466,7 @@ function FooterStatus({
   }
   if (result) {
     return (
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <div classИмя="flex items-center gap-3 text-xs text-muted-foreground">
         <span>{result.importedCount} created</span>
         <span>{result.skippedCount} skipped</span>
         <span>{result.errorCount} failed</span>

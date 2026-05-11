@@ -1,12 +1,12 @@
 const BASE = "/api";
 
-export class ApiError extends Error {
+export class ApiОшибка extends Ошибка {
   status: number;
   body: unknown;
 
   constructor(message: string, status: number, body: unknown) {
     super(message);
-    this.name = "ApiError";
+    this.name = "ApiОшибка";
     this.status = status;
     this.body = body;
   }
@@ -15,8 +15,8 @@ export class ApiError extends Error {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers ?? undefined);
   const body = init?.body;
-  if (!(body instanceof FormData) && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
+  if (!(body instanceof FormData) && !headers.has("Content-Тип")) {
+    headers.set("Content-Тип", "application/json");
   }
 
   const res = await fetch(`${BASE}${path}`, {
@@ -26,8 +26,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const errorBody = await res.json().catch(() => null);
-    throw new ApiError(
-      (errorBody as { error?: string } | null)?.error ?? `Request failed: ${res.status}`,
+    throw new ApiОшибка(
+      (errorBody as { error?: string } | null)?.error ?? `Запрос не удался: ${res.status}`,
       res.status,
       errorBody,
     );

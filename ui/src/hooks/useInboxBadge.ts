@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { accessApi } from "../api/access";
-import { ApiError } from "../api/client";
-import { inboxDismissalsApi } from "../api/inboxDismissals";
+import { ApiОшибка } from "../api/client";
+import { inboxЗакрытьalsApi } from "../api/inboxЗакрытьals";
 import { approvalsApi } from "../api/approvals";
 import { authApi } from "../api/auth";
 import { dashboardApi } from "../api/dashboard";
 import { heartbeatsApi } from "../api/heartbeats";
 import { issuesApi } from "../api/issues";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import {
-  buildInboxDismissedAtByKey,
-  computeInboxBadgeData,
-  getRecentTouchedIssues,
-  loadDismissedInboxAlerts,
-  saveDismissedInboxAlerts,
-  loadReadInboxItems,
-  saveReadInboxItems,
+  buildВходящиеЗакрытьedAtByКлюч,
+  computeВходящиеBadgeData,
+  getRecentTouchedЗадачи,
+  loadЗакрытьedВходящиеAlerts,
+  saveЗакрытьedВходящиеAlerts,
+  loadReadВходящиеItems,
+  saveReadВходящиеItems,
   READ_ITEMS_KEY,
 } from "../lib/inbox";
 
@@ -24,23 +24,23 @@ const INBOX_ISSUE_STATUSES = "backlog,todo,in_progress,in_review,blocked,done";
 const INBOX_BADGE_ISSUE_LIMIT = 500;
 const INBOX_BADGE_HEARTBEAT_RUN_LIMIT = 200;
 
-export function useDismissedInboxAlerts() {
-  const [dismissed, setDismissed] = useState<Set<string>>(loadDismissedInboxAlerts);
+export function useЗакрытьedВходящиеAlerts() {
+  const [dismissed, setЗакрытьed] = useState<Set<string>>(loadЗакрытьedВходящиеAlerts);
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== "paperclip:inbox:dismissed") return;
-      setDismissed(loadDismissedInboxAlerts());
+      setЗакрытьed(loadЗакрытьedВходящиеAlerts());
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const dismiss = (id: string) => {
-    setDismissed((prev) => {
+    setЗакрытьed((prev) => {
       const next = new Set(prev);
       next.add(id);
-      saveDismissedInboxAlerts(next);
+      saveЗакрытьedВходящиеAlerts(next);
       return next;
     });
   };
@@ -48,70 +48,70 @@ export function useDismissedInboxAlerts() {
   return { dismissed, dismiss };
 }
 
-export function useInboxDismissals(companyId: string | null | undefined) {
+export function useВходящиеЗакрытьals(companyId: string | null | undefined) {
   const queryClient = useQueryClient();
-  const queryKey = companyId
-    ? queryKeys.inboxDismissals(companyId)
+  const queryКлюч = companyId
+    ? queryКлючs.inboxЗакрытьals(companyId)
     : ["inbox-dismissals", "__disabled__"] as const;
 
   const { data: dismissals = [] } = useQuery({
-    queryKey,
-    queryFn: () => inboxDismissalsApi.list(companyId!),
+    queryКлюч,
+    queryFn: () => inboxЗакрытьalsApi.list(companyId!),
     enabled: !!companyId,
   });
 
   const dismissMutation = useMutation({
-    mutationFn: ({ itemKey }: { itemKey: string }) => inboxDismissalsApi.dismiss(companyId!, itemKey),
-    onMutate: async ({ itemKey }) => {
+    mutationFn: ({ itemКлюч }: { itemКлюч: string }) => inboxЗакрытьalsApi.dismiss(companyId!, itemКлюч),
+    onMutate: async ({ itemКлюч }) => {
       if (!companyId) return { previous: [] as typeof dismissals };
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<typeof dismissals>(queryKey) ?? [];
+      await queryClient.cancelQueries({ queryКлюч });
+      const previous = queryClient.getQueryData<typeof dismissals>(queryКлюч) ?? [];
       const now = new Date();
-      queryClient.setQueryData(queryKey, [
+      queryClient.setQueryData(queryКлюч, [
         {
-          id: `optimistic:${itemKey}`,
+          id: `optimistic:${itemКлюч}`,
           companyId,
           userId: "me",
-          itemKey,
+          itemКлюч,
           dismissedAt: now,
           createdAt: now,
           updatedAt: now,
         },
-        ...previous.filter((dismissal) => dismissal.itemKey !== itemKey),
+        ...previous.filter((dismissal) => dismissal.itemКлюч !== itemКлюч),
       ]);
       return { previous };
     },
-    onError: (_error, _variables, context) => {
+    onОшибка: (_error, _variables, context) => {
       if (!context) return;
-      queryClient.setQueryData(queryKey, context.previous);
+      queryClient.setQueryData(queryКлюч, context.previous);
     },
     onSettled: () => {
       if (!companyId) return;
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(companyId) });
+      queryClient.invalidateQueries({ queryКлюч });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(companyId) });
     },
   });
 
-  const dismissedAtByKey = useMemo(
-    () => buildInboxDismissedAtByKey(dismissals),
+  const dismissedAtByКлюч = useMemo(
+    () => buildВходящиеЗакрытьedAtByКлюч(dismissals),
     [dismissals],
   );
 
   return {
     dismissals,
-    dismissedAtByKey,
-    dismiss: (itemKey: string) => dismissMutation.mutate({ itemKey }),
-    isPending: dismissMutation.isPending,
+    dismissedAtByКлюч,
+    dismiss: (itemКлюч: string) => dismissMutation.mutate({ itemКлюч }),
+    isОжидание: dismissMutation.isОжидание,
   };
 }
 
-export function useReadInboxItems() {
-  const [readItems, setReadItems] = useState<Set<string>>(loadReadInboxItems);
+export function useReadВходящиеItems() {
+  const [readItems, setReadItems] = useState<Set<string>>(loadReadВходящиеItems);
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== READ_ITEMS_KEY) return;
-      setReadItems(loadReadInboxItems());
+      setReadItems(loadReadВходящиеItems());
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
@@ -121,7 +121,7 @@ export function useReadInboxItems() {
     setReadItems((prev) => {
       const next = new Set(prev);
       next.add(id);
-      saveReadInboxItems(next);
+      saveReadВходящиеItems(next);
       return next;
     });
   };
@@ -130,7 +130,7 @@ export function useReadInboxItems() {
     setReadItems((prev) => {
       const next = new Set(prev);
       next.delete(id);
-      saveReadInboxItems(next);
+      saveReadВходящиеItems(next);
       return next;
     });
   };
@@ -138,27 +138,27 @@ export function useReadInboxItems() {
   return { readItems, markRead, markUnread };
 }
 
-export function useInboxBadge(companyId: string | null | undefined) {
-  const { dismissed: dismissedAlerts } = useDismissedInboxAlerts();
-  const { dismissedAtByKey } = useInboxDismissals(companyId);
+export function useВходящиеBadge(companyId: string | null | undefined) {
+  const { dismissed: dismissedAlerts } = useЗакрытьedВходящиеAlerts();
+  const { dismissedAtByКлюч } = useВходящиеЗакрытьals(companyId);
   const { data: session } = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
   });
 
   const { data: approvals = [] } = useQuery({
-    queryKey: queryKeys.approvals.list(companyId!),
+    queryКлюч: queryКлючs.approvals.list(companyId!),
     queryFn: () => approvalsApi.list(companyId!),
     enabled: !!companyId,
   });
 
   const { data: joinRequests = [] } = useQuery({
-    queryKey: queryKeys.access.joinRequests(companyId!),
+    queryКлюч: queryКлючs.access.joinRequests(companyId!),
     queryFn: async () => {
       try {
         return await accessApi.listJoinRequests(companyId!, "pending_approval");
       } catch (err) {
-        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        if (err instanceof ApiОшибка && (err.status === 401 || err.status === 403)) {
           return [];
         }
         throw err;
@@ -169,44 +169,44 @@ export function useInboxBadge(companyId: string | null | undefined) {
   });
 
   const { data: dashboard } = useQuery({
-    queryKey: queryKeys.dashboard(companyId!),
+    queryКлюч: queryКлючs.dashboard(companyId!),
     queryFn: () => dashboardApi.summary(companyId!),
     enabled: !!companyId,
   });
 
-  const { data: mineIssuesRaw = [] } = useQuery({
-    queryKey: queryKeys.issues.listMineByMe(companyId!),
+  const { data: mineЗадачиRaw = [] } = useQuery({
+    queryКлюч: queryКлючs.issues.listMineByMe(companyId!),
     queryFn: () =>
       issuesApi.list(companyId!, {
         touchedByUserId: "me",
-        inboxArchivedByUserId: "me",
+        inboxАрхивированByUserId: "me",
         status: INBOX_ISSUE_STATUSES,
         limit: INBOX_BADGE_ISSUE_LIMIT,
       }),
     enabled: !!companyId,
   });
 
-  const mineIssues = useMemo(() => getRecentTouchedIssues(mineIssuesRaw), [mineIssuesRaw]);
+  const mineЗадачи = useMemo(() => getRecentTouchedЗадачи(mineЗадачиRaw), [mineЗадачиRaw]);
   const currentUserId = session?.user.id ?? session?.session.userId ?? null;
 
-  const { data: heartbeatRuns = [] } = useQuery({
-    queryKey: [...queryKeys.heartbeats(companyId!), "limit", INBOX_BADGE_HEARTBEAT_RUN_LIMIT],
+  const { data: heartbeatЗапуститьs = [] } = useQuery({
+    queryКлюч: [...queryКлючs.heartbeats(companyId!), "limit", INBOX_BADGE_HEARTBEAT_RUN_LIMIT],
     queryFn: () => heartbeatsApi.list(companyId!, undefined, INBOX_BADGE_HEARTBEAT_RUN_LIMIT),
     enabled: !!companyId,
   });
 
   return useMemo(
     () =>
-      computeInboxBadgeData({
+      computeВходящиеBadgeData({
         approvals,
         joinRequests,
         dashboard,
-        heartbeatRuns,
-        mineIssues,
+        heartbeatЗапуститьs,
+        mineЗадачи,
         dismissedAlerts,
-        dismissedAtByKey,
+        dismissedAtByКлюч,
         currentUserId,
       }),
-    [approvals, joinRequests, dashboard, heartbeatRuns, mineIssues, dismissedAlerts, dismissedAtByKey, currentUserId],
+    [approvals, joinRequests, dashboard, heartbeatЗапуститьs, mineЗадачи, dismissedAlerts, dismissedAtByКлюч, currentUserId],
   );
 }

@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from "react";
 import { Link, Navigate, useParams } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
-import { useCompany } from "@/context/CompanyContext";
+import { useКомпания } from "@/context/КомпанияContext";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { pluginsApi } from "@/api/plugins";
-import { queryKeys } from "@/lib/queryKeys";
+import { queryКлючs } from "@/lib/queryКлючs";
 import {
   PluginSlotMount,
   resolveRouteSidebarSlot,
@@ -12,49 +12,49 @@ import {
 } from "@/plugins/slots";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { NotFoundPage } from "./NotFound";
+import { НетtFoundPage } from "./НетtFound";
 
 /**
- * Company-context plugin page. Renders a plugin's `page` slot at
+ * Компания-context plugin page. Renders a plugin's `page` slot at
  * `/:companyPrefix/plugins/:pluginId` when the plugin declares a page slot
  * and is enabled for that company.
  *
- * @see doc/plugins/PLUGIN_SPEC.md §19.2 — Company-Context Routes
- * @see doc/plugins/PLUGIN_SPEC.md §24.4 — Company-Context Plugin Page
+ * @see doc/plugins/PLUGIN_SPEC.md §19.2 — Компания-Context Routes
+ * @see doc/plugins/PLUGIN_SPEC.md §24.4 — Компания-Context Plugin Page
  */
 export function PluginPage() {
   const params = useParams<{
     companyPrefix?: string;
     pluginId?: string;
-    pluginRoutePath?: string;
+    pluginRouteПуть?: string;
     "*": string | undefined;
   }>();
-  const { companyPrefix: routeCompanyPrefix, pluginId, pluginRoutePath } = params;
+  const { companyPrefix: routeКомпанияPrefix, pluginId, pluginRouteПуть } = params;
   const pluginRouteSplat = params["*"];
-  const { companies, selectedCompanyId } = useCompany();
+  const { companies, selectedКомпанияId } = useКомпания();
   const { setBreadcrumbs } = useBreadcrumbs();
-  const routeCompany = useMemo(() => {
-    if (!routeCompanyPrefix) return null;
-    const requested = routeCompanyPrefix.toUpperCase();
+  const routeКомпания = useMemo(() => {
+    if (!routeКомпанияPrefix) return null;
+    const requested = routeКомпанияPrefix.toUpperCase();
     return companies.find((c) => c.issuePrefix.toUpperCase() === requested) ?? null;
-  }, [companies, routeCompanyPrefix]);
-  const hasInvalidCompanyPrefix = Boolean(routeCompanyPrefix) && !routeCompany;
+  }, [companies, routeКомпанияPrefix]);
+  const hasInvalidКомпанияPrefix = Boolean(routeКомпанияPrefix) && !routeКомпания;
 
-  const resolvedCompanyId = useMemo(() => {
-    if (routeCompany) return routeCompany.id;
-    if (routeCompanyPrefix) return null;
-    return selectedCompanyId ?? null;
-  }, [routeCompany, routeCompanyPrefix, selectedCompanyId]);
+  const resolvedКомпанияId = useMemo(() => {
+    if (routeКомпания) return routeКомпания.id;
+    if (routeКомпанияPrefix) return null;
+    return selectedКомпанияId ?? null;
+  }, [routeКомпания, routeКомпанияPrefix, selectedКомпанияId]);
 
   const companyPrefix = useMemo(
-    () => (resolvedCompanyId ? companies.find((c) => c.id === resolvedCompanyId)?.issuePrefix ?? null : null),
-    [companies, resolvedCompanyId],
+    () => (resolvedКомпанияId ? companies.find((c) => c.id === resolvedКомпанияId)?.issuePrefix ?? null : null),
+    [companies, resolvedКомпанияId],
   );
 
   const { data: contributions } = useQuery({
-    queryKey: queryKeys.plugins.uiContributions,
+    queryКлюч: queryКлючs.plugins.uiContributions,
     queryFn: () => pluginsApi.listUiContributions(),
-    enabled: !!resolvedCompanyId && (!!pluginId || !!pluginRoutePath),
+    enabled: !!resolvedКомпанияId && (!!pluginId || !!pluginRouteПуть),
   });
 
   const pageSlot = useMemo(() => {
@@ -67,108 +67,108 @@ export function PluginPage() {
       return {
         ...slot,
         pluginId: contribution.pluginId,
-        pluginKey: contribution.pluginKey,
-        pluginDisplayName: contribution.displayName,
-        pluginVersion: contribution.version,
+        pluginКлюч: contribution.pluginКлюч,
+        pluginDisplayИмя: contribution.displayИмя,
+        pluginВерсия: contribution.version,
       };
     }
-    if (!pluginRoutePath) return null;
+    if (!pluginRouteПуть) return null;
     const matches = contributions.flatMap((contribution) => {
-      const slot = contribution.slots.find((entry) => entry.type === "page" && entry.routePath === pluginRoutePath);
+      const slot = contribution.slots.find((entry) => entry.type === "page" && entry.routeПуть === pluginRouteПуть);
       if (!slot) return [];
       return [{
         ...slot,
         pluginId: contribution.pluginId,
-        pluginKey: contribution.pluginKey,
-        pluginDisplayName: contribution.displayName,
-        pluginVersion: contribution.version,
+        pluginКлюч: contribution.pluginКлюч,
+        pluginDisplayИмя: contribution.displayИмя,
+        pluginВерсия: contribution.version,
       }];
     });
     if (matches.length !== 1) return null;
     return matches[0] ?? null;
-  }, [pluginId, pluginRoutePath, contributions]);
+  }, [pluginId, pluginRouteПуть, contributions]);
 
   const context = useMemo(
     () => ({
-      companyId: resolvedCompanyId ?? null,
+      companyId: resolvedКомпанияId ?? null,
       companyPrefix,
     }),
-    [resolvedCompanyId, companyPrefix],
+    [resolvedКомпанияId, companyPrefix],
   );
 
   // When the active route has a routeSidebar slot, the sidebar provides the
   // back affordance, but the top bar still needs a route-specific title.
-  const routeSidebarActive = useMemo(() => {
-    if (!pluginRoutePath || !contributions) return false;
+  const routeSidebarАктивен = useMemo(() => {
+    if (!pluginRouteПуть || !contributions) return false;
     const flattened: ResolvedPluginSlot[] = contributions.flatMap((contribution) =>
       contribution.slots.map((slot) => ({
         ...slot,
         pluginId: contribution.pluginId,
-        pluginKey: contribution.pluginKey,
-        pluginDisplayName: contribution.displayName,
-        pluginVersion: contribution.version,
+        pluginКлюч: contribution.pluginКлюч,
+        pluginDisplayИмя: contribution.displayИмя,
+        pluginВерсия: contribution.version,
       })),
     );
-    return resolveRouteSidebarSlot(flattened, pluginRoutePath) !== null;
-  }, [contributions, pluginRoutePath]);
+    return resolveRouteSidebarSlot(flattened, pluginRouteПуть) !== null;
+  }, [contributions, pluginRouteПуть]);
 
   useEffect(() => {
     if (!pageSlot) return;
-    if (routeSidebarActive) {
-      setBreadcrumbs([{ label: resolveRouteSidebarPageTitle(pageSlot, pluginRouteSplat) }]);
+    if (routeSidebarАктивен) {
+      setBreadcrumbs([{ label: resolveRouteSidebarPageНазвание(pageSlot, pluginRouteSplat) }]);
       return;
     }
     setBreadcrumbs([
       { label: "Plugins", href: "/instance/settings/plugins" },
-      { label: pageSlot.pluginDisplayName },
+      { label: pageSlot.pluginDisplayИмя },
     ]);
-  }, [pageSlot, pluginRouteSplat, setBreadcrumbs, routeSidebarActive]);
+  }, [pageSlot, pluginRouteSplat, setBreadcrumbs, routeSidebarАктивен]);
 
-  if (!resolvedCompanyId) {
-    if (hasInvalidCompanyPrefix) {
-      return <NotFoundPage scope="invalid_company_prefix" requestedPrefix={routeCompanyPrefix} />;
+  if (!resolvedКомпанияId) {
+    if (hasInvalidКомпанияPrefix) {
+      return <НетtFoundPage scope="invalid_company_prefix" requestedPrefix={routeКомпанияPrefix} />;
     }
     return (
-      <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">Select a company to view this page.</p>
+      <div classИмя="space-y-4">
+        <p classИмя="text-sm text-muted-foreground">Select a company to view this page.</p>
       </div>
     );
   }
 
   if (!contributions) {
-    return <div className="text-sm text-muted-foreground">Loading…</div>;
+    return <div classИмя="text-sm text-muted-foreground">Загрузка…</div>;
   }
 
-  if (!pluginId && pluginRoutePath) {
+  if (!pluginId && pluginRouteПуть) {
     const duplicateMatches = contributions.filter((contribution) =>
-      contribution.slots.some((slot) => slot.type === "page" && slot.routePath === pluginRoutePath),
+      contribution.slots.some((slot) => slot.type === "page" && slot.routeПуть === pluginRouteПуть),
     );
     if (duplicateMatches.length > 1) {
       return (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          Multiple plugins declare the route <code>{pluginRoutePath}</code>. Use the plugin-id route until the conflict is resolved.
+        <div classИмя="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          Multiple plugins declare the route <code>{pluginRouteПуть}</code>. Use the plugin-id route until the conflict is resolved.
         </div>
       );
     }
   }
 
   if (!pageSlot) {
-    if (pluginRoutePath) {
-      return <NotFoundPage scope="board" />;
+    if (pluginRouteПуть) {
+      return <НетtFoundPage scope="board" />;
     }
-    // No page slot: redirect to plugin settings where plugin info is always shown
-    const settingsPath = pluginId ? `/instance/settings/plugins/${pluginId}` : "/instance/settings/plugins";
-    return <Navigate to={settingsPath} replace />;
+    // Нет page slot: redirect to plugin settings where plugin info is always shown
+    const settingsПуть = pluginId ? `/instance/settings/plugins/${pluginId}` : "/instance/settings/plugins";
+    return <Navigate to={settingsПуть} replace />;
   }
 
   return (
-    <div className="space-y-4">
-      {!routeSidebarActive && (
-        <div className="flex items-center gap-2">
+    <div classИмя="space-y-4">
+      {!routeSidebarАктивен && (
+        <div classИмя="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
             <Link to={companyPrefix ? `/${companyPrefix}/dashboard` : "/dashboard"}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
+              <ArrowLeft classИмя="h-4 w-4 mr-1" />
+              Назад
             </Link>
           </Button>
         </div>
@@ -176,16 +176,16 @@ export function PluginPage() {
       <PluginSlotMount
         slot={pageSlot}
         context={context}
-        className="min-h-[200px]"
+        classИмя="min-h-[200px]"
         missingBehavior="placeholder"
       />
     </div>
   );
 }
 
-function resolveRouteSidebarPageTitle(pageSlot: ResolvedPluginSlot, routeSplat: string | undefined): string {
+function resolveRouteSidebarPageНазвание(pageSlot: ResolvedPluginSlot, routeSplat: string | undefined): string {
   const title = titleFromRouteSplat(routeSplat);
-  return title ?? pageSlot.displayName ?? pageSlot.pluginDisplayName;
+  return title ?? pageSlot.displayИмя ?? pageSlot.pluginDisplayИмя;
 }
 
 function titleFromRouteSplat(routeSplat: string | undefined): string | null {
@@ -196,18 +196,18 @@ function titleFromRouteSplat(routeSplat: string | undefined): string | null {
   if (segments.length === 0) return null;
 
   if (segments[0] === "page" && segments.length > 1) {
-    return titleFromPath(segments.slice(1).join("/"), { preserveCase: true });
+    return titleFromПуть(segments.slice(1).join("/"), { preserveCase: true });
   }
 
-  return titleFromPath(segments[0] ?? null);
+  return titleFromПуть(segments[0] ?? null);
 }
 
-function titleFromPath(path: string | null | undefined, options: { preserveCase?: boolean } = {}): string | null {
+function titleFromПуть(path: string | null | undefined, options: { preserveCase?: boolean } = {}): string | null {
   const trimmed = path?.trim();
   if (!trimmed) return null;
   const basename = trimmed.split("/").filter(Boolean).at(-1) ?? trimmed;
-  const withoutNamespace = basename.split("::").at(-1) ?? basename;
-  const withoutExtension = withoutNamespace.replace(/\.[^.]+$/, "");
+  const withoutИмяspace = basename.split("::").at(-1) ?? basename;
+  const withoutExtension = withoutИмяspace.replace(/\.[^.]+$/, "");
   const normalized = withoutExtension.replace(/[-_]+/g, " ").trim();
   if (!normalized) return null;
   if (options.preserveCase) return normalized;

@@ -1,24 +1,24 @@
-import type { ExecutionWorkspace, Issue, Project } from "@paperclipai/shared";
+import type { ExecutionРабочая область, Задача, Project } from "@paperclipai/shared";
 
-type ProjectWorkspaceLike = Pick<Project, "workspaces" | "primaryWorkspace">;
+type ProjectРабочая областьLike = Pick<Project, "workspaces" | "primaryРабочая область">;
 
-export interface ProjectWorkspaceSummary {
+export interface ProjectРабочая областьSummary {
   key: string;
   kind: "execution_workspace" | "project_workspace";
   workspaceId: string;
-  workspaceName: string;
+  workspaceИмя: string;
   cwd: string | null;
-  branchName: string | null;
-  lastUpdatedAt: Date;
-  projectWorkspaceId: string | null;
-  executionWorkspaceId: string | null;
-  executionWorkspaceStatus: ExecutionWorkspace["status"] | null;
+  branchИмя: string | null;
+  lastОбновленоAt: Date;
+  projectРабочая областьId: string | null;
+  executionРабочая областьId: string | null;
+  executionРабочая областьСтатус: ExecutionРабочая область["status"] | null;
   serviceCount: number;
   runningServiceCount: number;
   primaryServiceUrl: string | null;
-  primaryServiceUrlRunning: boolean;
-  hasRuntimeConfig: boolean;
-  issues: Issue[];
+  primaryServiceUrlВыполняется: boolean;
+  hasЗапуститьtimeConfig: boolean;
+  issues: Задача[];
 }
 
 function toDate(value: Date | string | null | undefined): Date | null {
@@ -36,25 +36,25 @@ function maxDate(...values: Array<Date | string | null | undefined>): Date {
   return latest;
 }
 
-function primaryWorkspaceId(project: ProjectWorkspaceLike): string | null {
-  return project.primaryWorkspace?.id
+function primaryРабочая областьId(project: ProjectРабочая областьLike): string | null {
+  return project.primaryРабочая область?.id
     ?? project.workspaces.find((workspace) => workspace.isPrimary)?.id
     ?? project.workspaces[0]?.id
     ?? null;
 }
 
-function isDefaultSharedExecutionWorkspace(input: {
-  executionWorkspace: ExecutionWorkspace;
-  issue: Issue;
-  primaryWorkspaceId: string | null;
+function isПо умолчаниюSharedExecutionРабочая область(input: {
+  executionРабочая область: ExecutionРабочая область;
+  issue: Задача;
+  primaryРабочая областьId: string | null;
 }) {
-  const linkedProjectWorkspaceId =
-    input.executionWorkspace.projectWorkspaceId ?? input.issue.projectWorkspaceId ?? null;
-  return input.executionWorkspace.mode === "shared_workspace" && linkedProjectWorkspaceId === input.primaryWorkspaceId;
+  const linkedProjectРабочая областьId =
+    input.executionРабочая область.projectРабочая областьId ?? input.issue.projectРабочая областьId ?? null;
+  return input.executionРабочая область.mode === "shared_workspace" && linkedProjectРабочая областьId === input.primaryРабочая областьId;
 }
 
 function runtimeServiceSummary(
-  services: NonNullable<ExecutionWorkspace["runtimeServices"]> | undefined,
+  services: НетnNullable<ExecutionРабочая область["runtimeServices"]> | undefined,
 ) {
   const serviceCount = services?.length ?? 0;
   const runningServiceCount = services?.filter((service) => service.status === "running").length ?? 0;
@@ -67,116 +67,116 @@ function runtimeServiceSummary(
     serviceCount,
     runningServiceCount,
     primaryServiceUrl: primaryService?.url ?? null,
-    primaryServiceUrlRunning: primaryService?.status === "running",
+    primaryServiceUrlВыполняется: primaryService?.status === "running",
   };
 }
 
-export function buildProjectWorkspaceSummaries(input: {
-  project: ProjectWorkspaceLike;
-  issues: Issue[];
-  executionWorkspaces: ExecutionWorkspace[];
-}): ProjectWorkspaceSummary[] {
-  const primaryId = primaryWorkspaceId(input.project);
-  const executionWorkspacesById = new Map(
-    input.executionWorkspaces.map((workspace) => [workspace.id, workspace] as const),
+export function buildProjectРабочая областьSummaries(input: {
+  project: ProjectРабочая областьLike;
+  issues: Задача[];
+  executionРабочие области: ExecutionРабочая область[];
+}): ProjectРабочая областьSummary[] {
+  const primaryId = primaryРабочая областьId(input.project);
+  const executionРабочие областиById = new Map(
+    input.executionРабочие области.map((workspace) => [workspace.id, workspace] as const),
   );
-  const projectWorkspacesById = new Map(
+  const projectРабочие областиById = new Map(
     input.project.workspaces.map((workspace) => [workspace.id, workspace] as const),
   );
-  const summaries = new Map<string, ProjectWorkspaceSummary>();
+  const summaries = new Map<string, ProjectРабочая областьSummary>();
 
   for (const issue of input.issues) {
-    if (issue.executionWorkspaceId) {
-      const executionWorkspace = executionWorkspacesById.get(issue.executionWorkspaceId);
-      if (!executionWorkspace) continue;
-      if (executionWorkspace.status === "archived") continue;
-      if (isDefaultSharedExecutionWorkspace({
-        executionWorkspace,
+    if (issue.executionРабочая областьId) {
+      const executionРабочая область = executionРабочие областиById.get(issue.executionРабочая областьId);
+      if (!executionРабочая область) continue;
+      if (executionРабочая область.status === "archived") continue;
+      if (isПо умолчаниюSharedExecutionРабочая область({
+        executionРабочая область,
         issue,
-        primaryWorkspaceId: primaryId,
+        primaryРабочая областьId: primaryId,
       })) continue;
 
-      const existing = summaries.get(`execution:${executionWorkspace.id}`);
-      const nextIssues = [...(existing?.issues ?? []), issue].sort(
+      const existing = summaries.get(`execution:${executionРабочая область.id}`);
+      const nextЗадачи = [...(existing?.issues ?? []), issue].sort(
         (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
       );
-      const runtimeSummary = runtimeServiceSummary(executionWorkspace.runtimeServices);
+      const runtimeSummary = runtimeServiceSummary(executionРабочая область.runtimeServices);
 
-      summaries.set(`execution:${executionWorkspace.id}`, {
-        key: `execution:${executionWorkspace.id}`,
+      summaries.set(`execution:${executionРабочая область.id}`, {
+        key: `execution:${executionРабочая область.id}`,
         kind: "execution_workspace",
-        workspaceId: executionWorkspace.id,
-        workspaceName: executionWorkspace.name,
-        cwd: executionWorkspace.cwd ?? null,
-        branchName: executionWorkspace.branchName ?? executionWorkspace.baseRef ?? null,
-        lastUpdatedAt: maxDate(
-          existing?.lastUpdatedAt,
-          executionWorkspace.lastUsedAt,
-          executionWorkspace.updatedAt,
+        workspaceId: executionРабочая область.id,
+        workspaceИмя: executionРабочая область.name,
+        cwd: executionРабочая область.cwd ?? null,
+        branchИмя: executionРабочая область.branchИмя ?? executionРабочая область.baseRef ?? null,
+        lastОбновленоAt: maxDate(
+          existing?.lastОбновленоAt,
+          executionРабочая область.lastUsedAt,
+          executionРабочая область.updatedAt,
           issue.updatedAt,
         ),
-        projectWorkspaceId: executionWorkspace.projectWorkspaceId ?? issue.projectWorkspaceId ?? null,
-        executionWorkspaceId: executionWorkspace.id,
-        executionWorkspaceStatus: executionWorkspace.status,
+        projectРабочая областьId: executionРабочая область.projectРабочая областьId ?? issue.projectРабочая областьId ?? null,
+        executionРабочая областьId: executionРабочая область.id,
+        executionРабочая областьСтатус: executionРабочая область.status,
         ...runtimeSummary,
-        hasRuntimeConfig: Boolean(
-          executionWorkspace.config?.workspaceRuntime
-          ?? projectWorkspacesById.get(executionWorkspace.projectWorkspaceId ?? issue.projectWorkspaceId ?? "")?.runtimeConfig?.workspaceRuntime,
+        hasЗапуститьtimeConfig: Boolean(
+          executionРабочая область.config?.workspaceЗапуститьtime
+          ?? projectРабочие областиById.get(executionРабочая область.projectРабочая областьId ?? issue.projectРабочая областьId ?? "")?.runtimeConfig?.workspaceЗапуститьtime,
         ),
-        issues: nextIssues,
+        issues: nextЗадачи,
       });
       continue;
     }
 
-    if (!issue.projectWorkspaceId || issue.projectWorkspaceId === primaryId) continue;
-    const projectWorkspace = projectWorkspacesById.get(issue.projectWorkspaceId);
-    if (!projectWorkspace) continue;
+    if (!issue.projectРабочая областьId || issue.projectРабочая областьId === primaryId) continue;
+    const projectРабочая область = projectРабочие областиById.get(issue.projectРабочая областьId);
+    if (!projectРабочая область) continue;
 
-    const existing = summaries.get(`project:${projectWorkspace.id}`);
-    const nextIssues = [...(existing?.issues ?? []), issue].sort(
+    const existing = summaries.get(`project:${projectРабочая область.id}`);
+    const nextЗадачи = [...(existing?.issues ?? []), issue].sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     );
-    const runtimeSummary = runtimeServiceSummary(projectWorkspace.runtimeServices);
+    const runtimeSummary = runtimeServiceSummary(projectРабочая область.runtimeServices);
 
-    summaries.set(`project:${projectWorkspace.id}`, {
-      key: `project:${projectWorkspace.id}`,
+    summaries.set(`project:${projectРабочая область.id}`, {
+      key: `project:${projectРабочая область.id}`,
       kind: "project_workspace",
-      workspaceId: projectWorkspace.id,
-      workspaceName: projectWorkspace.name,
-      cwd: projectWorkspace.cwd ?? null,
-      branchName: projectWorkspace.repoRef ?? projectWorkspace.defaultRef ?? null,
-      lastUpdatedAt: maxDate(existing?.lastUpdatedAt, projectWorkspace.updatedAt, issue.updatedAt),
-      projectWorkspaceId: projectWorkspace.id,
-      executionWorkspaceId: null,
-      executionWorkspaceStatus: null,
+      workspaceId: projectРабочая область.id,
+      workspaceИмя: projectРабочая область.name,
+      cwd: projectРабочая область.cwd ?? null,
+      branchИмя: projectРабочая область.repoRef ?? projectРабочая область.defaultRef ?? null,
+      lastОбновленоAt: maxDate(existing?.lastОбновленоAt, projectРабочая область.updatedAt, issue.updatedAt),
+      projectРабочая областьId: projectРабочая область.id,
+      executionРабочая областьId: null,
+      executionРабочая областьСтатус: null,
       ...runtimeSummary,
-      hasRuntimeConfig: Boolean(projectWorkspace.runtimeConfig?.workspaceRuntime),
-      issues: nextIssues,
+      hasЗапуститьtimeConfig: Boolean(projectРабочая область.runtimeConfig?.workspaceЗапуститьtime),
+      issues: nextЗадачи,
     });
   }
 
-  for (const projectWorkspace of input.project.workspaces) {
-    const key = `project:${projectWorkspace.id}`;
+  for (const projectРабочая область of input.project.workspaces) {
+    const key = `project:${projectРабочая область.id}`;
     if (summaries.has(key)) continue;
-    const shouldSurfaceWorkspace =
-      projectWorkspace.isPrimary
-      || Boolean(projectWorkspace.runtimeConfig?.workspaceRuntime)
-      || (projectWorkspace.runtimeServices?.length ?? 0) > 0;
-    if (!shouldSurfaceWorkspace) continue;
-    const runtimeSummary = runtimeServiceSummary(projectWorkspace.runtimeServices);
+    const shouldSurfaceРабочая область =
+      projectРабочая область.isPrimary
+      || Boolean(projectРабочая область.runtimeConfig?.workspaceЗапуститьtime)
+      || (projectРабочая область.runtimeServices?.length ?? 0) > 0;
+    if (!shouldSurfaceРабочая область) continue;
+    const runtimeSummary = runtimeServiceSummary(projectРабочая область.runtimeServices);
     summaries.set(key, {
       key,
       kind: "project_workspace",
-      workspaceId: projectWorkspace.id,
-      workspaceName: projectWorkspace.name,
-      cwd: projectWorkspace.cwd ?? null,
-      branchName: projectWorkspace.repoRef ?? projectWorkspace.defaultRef ?? null,
-      lastUpdatedAt: maxDate(projectWorkspace.updatedAt),
-      projectWorkspaceId: projectWorkspace.id,
-      executionWorkspaceId: null,
-      executionWorkspaceStatus: null,
+      workspaceId: projectРабочая область.id,
+      workspaceИмя: projectРабочая область.name,
+      cwd: projectРабочая область.cwd ?? null,
+      branchИмя: projectРабочая область.repoRef ?? projectРабочая область.defaultRef ?? null,
+      lastОбновленоAt: maxDate(projectРабочая область.updatedAt),
+      projectРабочая областьId: projectРабочая область.id,
+      executionРабочая областьId: null,
+      executionРабочая областьСтатус: null,
       ...runtimeSummary,
-      hasRuntimeConfig: Boolean(projectWorkspace.runtimeConfig?.workspaceRuntime),
+      hasЗапуститьtimeConfig: Boolean(projectРабочая область.runtimeConfig?.workspaceЗапуститьtime),
       issues: [],
     });
   }
@@ -184,7 +184,7 @@ export function buildProjectWorkspaceSummaries(input: {
   return [...summaries.values()].sort((a, b) => {
     const liveDiff = Number(b.runningServiceCount > 0) - Number(a.runningServiceCount > 0);
     if (liveDiff !== 0) return liveDiff;
-    const diff = b.lastUpdatedAt.getTime() - a.lastUpdatedAt.getTime();
-    return diff !== 0 ? diff : a.workspaceName.localeCompare(b.workspaceName);
+    const diff = b.lastОбновленоAt.getTime() - a.lastОбновленоAt.getTime();
+    return diff !== 0 ? diff : a.workspaceИмя.localeCompare(b.workspaceИмя);
   });
 }

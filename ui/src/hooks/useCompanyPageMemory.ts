@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "@/lib/router";
-import { useCompany } from "../context/CompanyContext";
-import { toCompanyRelativePath } from "../lib/company-routes";
+import { useКомпания } from "../context/КомпанияContext";
+import { toКомпанияRelativeПуть } from "../lib/company-routes";
 import {
-  getRememberedPathOwnerCompanyId,
-  isRememberableCompanyPath,
-  sanitizeRememberedPathForCompany,
+  getRememberedПутьВладелецКомпанияId,
+  isRememberableКомпанияПуть,
+  sanitizeRememberedПутьForКомпания,
 } from "../lib/company-page-memory";
 
-const STORAGE_KEY = "paperclip.companyPaths";
+const STORAGE_KEY = "paperclip.companyПутьs";
 
-function getCompanyPaths(): Record<string, string> {
+function getКомпанияПутьs(): Record<string, string> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
@@ -20,8 +20,8 @@ function getCompanyPaths(): Record<string, string> {
   return {};
 }
 
-function saveCompanyPath(companyId: string, path: string) {
-  const paths = getCompanyPaths();
+function saveКомпанияПуть(companyId: string, path: string) {
+  const paths = getКомпанияПутьs();
   paths[companyId] = path;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(paths));
 }
@@ -30,50 +30,50 @@ function saveCompanyPath(companyId: string, path: string) {
  * Remembers the last visited page per company and navigates to it on company switch.
  * Falls back to /dashboard if no page was previously visited for a company.
  */
-export function useCompanyPageMemory() {
-  const { companies, selectedCompanyId, selectedCompany, selectionSource } = useCompany();
+export function useКомпанияPageMemory() {
+  const { companies, selectedКомпанияId, selectedКомпания, selectionSource } = useКомпания();
   const location = useLocation();
   const navigate = useNavigate();
-  const prevCompanyId = useRef<string | null>(selectedCompanyId);
-  const rememberedPathOwnerCompanyId = useMemo(
+  const prevКомпанияId = useRef<string | null>(selectedКомпанияId);
+  const rememberedПутьВладелецКомпанияId = useMemo(
     () =>
-      getRememberedPathOwnerCompanyId({
+      getRememberedПутьВладелецКомпанияId({
         companies,
         pathname: location.pathname,
-        fallbackCompanyId: prevCompanyId.current,
+        fallbackКомпанияId: prevКомпанияId.current,
       }),
     [companies, location.pathname],
   );
 
-  // Save current path for current company on every location change.
-  // Uses prevCompanyId ref so we save under the correct company even
-  // during the render where selectedCompanyId has already changed.
-  const fullPath = location.pathname + location.search;
+  // Сохранить current path for current company on every location change.
+  // Uses prevКомпанияId ref so we save under the correct company even
+  // during the render where selectedКомпанияId has already changed.
+  const fullПуть = location.pathname + location.search;
   useEffect(() => {
-    const companyId = rememberedPathOwnerCompanyId;
-    const relativePath = toCompanyRelativePath(fullPath);
-    if (companyId && isRememberableCompanyPath(relativePath)) {
-      saveCompanyPath(companyId, relativePath);
+    const companyId = rememberedПутьВладелецКомпанияId;
+    const relativeПуть = toКомпанияRelativeПуть(fullПуть);
+    if (companyId && isRememberableКомпанияПуть(relativeПуть)) {
+      saveКомпанияПуть(companyId, relativeПуть);
     }
-  }, [fullPath, rememberedPathOwnerCompanyId]);
+  }, [fullПуть, rememberedПутьВладелецКомпанияId]);
 
   // Navigate to saved path when company changes
   useEffect(() => {
-    if (!selectedCompanyId) return;
+    if (!selectedКомпанияId) return;
 
     if (
-      prevCompanyId.current !== null &&
-      selectedCompanyId !== prevCompanyId.current
+      prevКомпанияId.current !== null &&
+      selectedКомпанияId !== prevКомпанияId.current
     ) {
-      if (selectionSource !== "route_sync" && selectedCompany) {
-        const paths = getCompanyPaths();
-        const targetPath = sanitizeRememberedPathForCompany({
-          path: paths[selectedCompanyId],
-          companyPrefix: selectedCompany.issuePrefix,
+      if (selectionSource !== "route_sync" && selectedКомпания) {
+        const paths = getКомпанияПутьs();
+        const targetПуть = sanitizeRememberedПутьForКомпания({
+          path: paths[selectedКомпанияId],
+          companyPrefix: selectedКомпания.issuePrefix,
         });
-        navigate(`/${selectedCompany.issuePrefix}${targetPath}`, { replace: true });
+        navigate(`/${selectedКомпания.issuePrefix}${targetПуть}`, { replace: true });
       }
     }
-    prevCompanyId.current = selectedCompanyId;
-  }, [selectedCompany, selectedCompanyId, selectionSource, navigate]);
+    prevКомпанияId.current = selectedКомпанияId;
+  }, [selectedКомпания, selectedКомпанияId, selectionSource, navigate]);
 }

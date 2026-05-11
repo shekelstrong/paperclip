@@ -2,27 +2,27 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DocumentRevision } from "@paperclipai/shared";
 import { issuesApi } from "../api/issues";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import { buildLineDiff, type DiffRow } from "../lib/line-diff";
 import { relativeTime } from "../lib/utils";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
+  DialogНазвание,
 } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectЗначение,
 } from "@/components/ui/select";
 
 function getRevisionLabel(revision: DocumentRevision) {
   const actor = revision.createdByUserId
     ? "board"
-    : revision.createdByAgentId
+    : revision.createdByАгентId
       ? "agent"
       : "system";
   return `rev ${revision.revisionNumber} — ${relativeTime(revision.createdAt)} • ${actor}`;
@@ -30,20 +30,20 @@ function getRevisionLabel(revision: DocumentRevision) {
 
 export function DocumentDiffModal({
   issueId,
-  documentKey,
+  documentКлюч,
   latestRevisionNumber,
   open,
   onOpenChange,
 }: {
   issueId: string;
-  documentKey: string;
+  documentКлюч: string;
   latestRevisionNumber: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const { data: revisions } = useQuery({
-    queryKey: queryKeys.issues.documentRevisions(issueId, documentKey),
-    queryFn: () => issuesApi.listDocumentRevisions(issueId, documentKey),
+    queryКлюч: queryКлючs.issues.documentRevisions(issueId, documentКлюч),
+    queryFn: () => issuesApi.listDocumentRevisions(issueId, documentКлюч),
     enabled: open,
   });
 
@@ -52,7 +52,7 @@ export function DocumentDiffModal({
     return [...revisions].sort((a, b) => b.revisionNumber - a.revisionNumber);
   }, [revisions]);
 
-  // Default: compare previous (latestRevisionNumber - 1) with current (latestRevisionNumber)
+  // По умолчанию: compare previous (latestRevisionNumber - 1) with current (latestRevisionNumber)
   const [leftRevisionId, setLeftRevisionId] = useState<string | null>(null);
   const [rightRevisionId, setRightRevisionId] = useState<string | null>(null);
 
@@ -85,45 +85,45 @@ export function DocumentDiffModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-[90%] w-full max-h-[85vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between gap-4">
-          <DialogHeader className="shrink-0">
-            <DialogTitle>
-              Diff — <span className="font-mono text-sm">{documentKey}</span>
-            </DialogTitle>
+      <DialogContent classИмя="!max-w-[90%] w-full max-h-[85vh] overflow-hidden flex flex-col">
+        <div classИмя="flex items-center justify-between gap-4">
+          <DialogHeader classИмя="shrink-0">
+            <DialogНазвание>
+              Diff — <span classИмя="font-mono text-sm">{documentКлюч}</span>
+            </DialogНазвание>
           </DialogHeader>
 
-          <div className="flex items-center gap-4 shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-red-400">Old</span>
+          <div classИмя="flex items-center gap-4 shrink-0">
+            <div classИмя="flex items-center gap-2">
+              <span classИмя="rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-red-400">Old</span>
               <Select
                 value={effectiveLeftId ?? ""}
-                onValueChange={(value) => setLeftRevisionId(value)}
+                onЗначениеChange={(value) => setLeftRevisionId(value)}
               >
-                <SelectTrigger className="h-7 w-60 text-xs border-border/60">
-                  <SelectValue placeholder="Select revision" />
+                <SelectTrigger classИмя="h-7 w-60 text-xs border-border/60">
+                  <SelectЗначение placeholder="Select revision" />
                 </SelectTrigger>
                 <SelectContent>
                   {sortedRevisions.map((revision) => (
-                    <SelectItem key={revision.id} value={revision.id} className="text-xs">
+                    <SelectItem key={revision.id} value={revision.id} classИмя="text-xs">
                       {getRevisionLabel(revision)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-green-400">New</span>
+            <div classИмя="flex items-center gap-2">
+              <span classИмя="rounded-full border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-green-400">New</span>
               <Select
                 value={effectiveRightId ?? ""}
-                onValueChange={(value) => setRightRevisionId(value)}
+                onЗначениеChange={(value) => setRightRevisionId(value)}
               >
-                <SelectTrigger className="h-7 w-60 text-xs border-border/60">
-                  <SelectValue placeholder="Select revision" />
+                <SelectTrigger classИмя="h-7 w-60 text-xs border-border/60">
+                  <SelectЗначение placeholder="Select revision" />
                 </SelectTrigger>
                 <SelectContent>
                   {sortedRevisions.map((revision) => (
-                    <SelectItem key={revision.id} value={revision.id} className="text-xs">
+                    <SelectItem key={revision.id} value={revision.id} classИмя="text-xs">
                       {getRevisionLabel(revision)}
                     </SelectItem>
                   ))}
@@ -133,16 +133,16 @@ export function DocumentDiffModal({
           </div>
         </div>
 
-        <div className="overflow-auto flex-1 rounded-md border border-border text-xs">
+        <div classИмя="overflow-auto flex-1 rounded-md border border-border text-xs">
           {!revisions ? (
-            <div className="p-6 text-center text-muted-foreground text-sm">Loading revisions...</div>
+            <div classИмя="p-6 text-center text-muted-foreground text-sm">Загрузка revisions...</div>
           ) : !leftRevision || !rightRevision ? (
-            <div className="p-6 text-center text-muted-foreground text-sm">Select two revisions to compare.</div>
+            <div classИмя="p-6 text-center text-muted-foreground text-sm">Select two revisions to compare.</div>
           ) : leftRevision.id === rightRevision.id ? (
-            <div className="p-6 text-center text-muted-foreground text-sm">Both sides are the same revision.</div>
+            <div classИмя="p-6 text-center text-muted-foreground text-sm">Ботh sides are the same revision.</div>
           ) : (
-            <div className="font-mono text-[12px] leading-6">
-              <div className="grid grid-cols-[56px_56px_24px_minmax(0,1fr)] border-b border-border/60 bg-muted/30 px-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+            <div classИмя="font-mono text-[12px] leading-6">
+              <div classИмя="grid grid-cols-[56px_56px_24px_minmax(0,1fr)] border-b border-border/60 bg-muted/30 px-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground">
                 <span>Old</span>
                 <span>New</span>
                 <span />
@@ -151,18 +151,18 @@ export function DocumentDiffModal({
               {diffRows.map((row, index) => (
                 <div
                   key={`${row.kind}-${index}-${row.oldLineNumber ?? "x"}-${row.newLineNumber ?? "x"}`}
-                  className={`grid grid-cols-[56px_56px_24px_minmax(0,1fr)] gap-0 border-b border-border/30 px-3 ${lineClassesByKind[row.kind]}`}
+                  classИмя={`grid grid-cols-[56px_56px_24px_minmax(0,1fr)] gap-0 border-b border-border/30 px-3 ${lineClassesByKind[row.kind]}`}
                 >
-                  <span className="select-none border-r border-border/30 pr-3 text-right text-muted-foreground">
+                  <span classИмя="select-none border-r border-border/30 pr-3 text-right text-muted-foreground">
                     {row.oldLineNumber ?? ""}
                   </span>
-                  <span className="select-none border-r border-border/30 px-3 text-right text-muted-foreground">
+                  <span classИмя="select-none border-r border-border/30 px-3 text-right text-muted-foreground">
                     {row.newLineNumber ?? ""}
                   </span>
-                  <span className="select-none px-3 text-center text-muted-foreground">
+                  <span classИмя="select-none px-3 text-center text-muted-foreground">
                     {markerByKind[row.kind]}
                   </span>
-                  <pre className="overflow-x-auto whitespace-pre-wrap break-words px-3 py-0 text-inherit">
+                  <pre classИмя="overflow-x-auto whitespace-pre-wrap break-words px-3 py-0 text-inherit">
                     {row.text.length > 0 ? row.text : " "}
                   </pre>
                 </div>

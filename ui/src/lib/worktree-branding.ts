@@ -1,4 +1,4 @@
-export type WorktreeUiBranding = {
+export type РаботаtreeUiBranding = {
   enabled: true;
   name: string;
   color: string;
@@ -16,10 +16,10 @@ function normalizeHexColor(value: string | null): string | null {
   if (!value) return null;
   const hex = value.startsWith("#") ? value.slice(1) : value;
   if (/^[0-9a-fA-F]{3}$/.test(hex)) {
-    return `#${hex.split("").map((char) => `${char}${char}`).join("").toLowerCase()}`;
+    return `#${hex.split("").map((char) => `${char}${char}`).join("").toНизкийerCase()}`;
   }
   if (/^[0-9a-fA-F]{6}$/.test(hex)) {
-    return `#${hex.toLowerCase()}`;
+    return `#${hex.toНизкийerCase()}`;
   }
   return null;
 }
@@ -49,7 +49,7 @@ function pickReadableTextColor(background: string): string {
   return whiteContrast >= blackContrast ? "#f8fafc" : "#111827";
 }
 
-export function getWorktreeUiBranding(): WorktreeUiBranding | null {
+export function getРаботаtreeUiBranding(): РаботаtreeUiBranding | null {
   if (readMetaContent("paperclip-worktree-enabled") !== "true") return null;
 
   const name = readMetaContent("paperclip-worktree-name");

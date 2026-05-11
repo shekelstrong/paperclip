@@ -1,64 +1,64 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useDialogActions } from "../context/DialogContext";
 import { useSidebar } from "../context/SidebarContext";
 import { issuesApi } from "../api/issues";
 import { agentsApi } from "../api/agents";
 import { projectsApi } from "../api/projects";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
+  КомандаDialog,
+  КомандаEmpty,
+  КомандаGroup,
+  КомандаInput,
+  КомандаItem,
+  КомандаList,
+  КомандаSeparator,
 } from "@/components/ui/command";
 import {
   CircleDot,
-  Bot,
+  Бот,
   Hexagon,
-  Target,
-  LayoutDashboard,
-  Inbox,
+  Цель,
+  LayoutПанель управления,
+  Входящие,
   DollarSign,
-  History,
+  История,
   SquarePen,
   Plus,
-  Search,
+  Поиск,
 } from "lucide-react";
 import { Identity } from "./Identity";
 import { agentUrl, projectUrl } from "../lib/utils";
 
 const SEARCH_ALL_VALUE = "__paperclip-search-all__";
 
-export function buildFullSearchPath(query: string) {
+export function buildFullПоискПуть(query: string) {
   const trimmed = query.trim();
   return trimmed.length === 0 ? "/search" : `/search?q=${encodeURIComponent(trimmed)}`;
 }
 
-export function CommandPalette() {
+export function КомандаPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
-  const { selectedCompanyId } = useCompany();
-  const { openNewIssue, openNewAgent } = useDialogActions();
+  const { selectedКомпанияId } = useКомпания();
+  const { openNewЗадача, openNewАгент } = useDialogActions();
   const { isMobile, setSidebarOpen } = useSidebar();
   const searchQuery = query.trim();
 
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
+    function handleКлючDown(e: КлючboardEvent) {
+      if (e.key === "k" && (e.metaКлюч || e.ctrlКлюч)) {
+        e.preventПо умолчанию();
         setOpen(true);
         if (isMobile) setSidebarOpen(false);
       }
     }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleКлючDown);
+    return () => document.removeEventListener("keydown", handleКлючDown);
   }, [isMobile, setSidebarOpen]);
 
   useEffect(() => {
@@ -66,31 +66,31 @@ export function CommandPalette() {
   }, [open]);
 
   const { data: issues = [] } = useQuery({
-    queryKey: queryKeys.issues.list(selectedCompanyId!),
-    queryFn: () => issuesApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId && open && searchQuery.length === 0,
+    queryКлюч: queryКлючs.issues.list(selectedКомпанияId!),
+    queryFn: () => issuesApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId && open && searchQuery.length === 0,
   });
 
-  const { data: searchedIssues = [] } = useQuery({
-    queryKey: queryKeys.issues.search(selectedCompanyId!, searchQuery, undefined, 10),
-    queryFn: () => issuesApi.list(selectedCompanyId!, { q: searchQuery, limit: 10, includeRoutineExecutions: true }),
-    enabled: !!selectedCompanyId && open && searchQuery.length > 0,
+  const { data: searchedЗадачи = [] } = useQuery({
+    queryКлюч: queryКлючs.issues.search(selectedКомпанияId!, searchQuery, undefined, 10),
+    queryFn: () => issuesApi.list(selectedКомпанияId!, { q: searchQuery, limit: 10, includeПроцедураExecutions: true }),
+    enabled: !!selectedКомпанияId && open && searchQuery.length > 0,
   });
 
   const { data: agents = [] } = useQuery({
-    queryKey: queryKeys.agents.list(selectedCompanyId!),
-    queryFn: () => agentsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId && open,
+    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
+    queryFn: () => agentsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId && open,
   });
 
-  const { data: allProjects = [] } = useQuery({
-    queryKey: queryKeys.projects.list(selectedCompanyId!),
-    queryFn: () => projectsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId && open,
+  const { data: allПроекты = [] } = useQuery({
+    queryКлюч: queryКлючs.projects.list(selectedКомпанияId!),
+    queryFn: () => projectsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId && open,
   });
   const projects = useMemo(
-    () => allProjects.filter((p) => !p.archivedAt),
-    [allProjects],
+    () => allПроекты.filter((p) => !p.archivedAt),
+    [allПроекты],
   );
 
   function go(path: string) {
@@ -98,143 +98,143 @@ export function CommandPalette() {
     navigate(path);
   }
 
-  function goFullSearch() {
-    go(buildFullSearchPath(searchQuery));
+  function goFullПоиск() {
+    go(buildFullПоискПуть(searchQuery));
   }
 
-  const agentName = (id: string | null) => {
+  const agentИмя = (id: string | null) => {
     if (!id) return null;
     return agents.find((a) => a.id === id)?.name ?? null;
   };
 
-  const visibleIssues = useMemo(
-    () => (searchQuery.length > 0 ? searchedIssues : issues),
-    [issues, searchedIssues, searchQuery],
+  const visibleЗадачи = useMemo(
+    () => (searchQuery.length > 0 ? searchedЗадачи : issues),
+    [issues, searchedЗадачи, searchQuery],
   );
 
-  const showSearchAll = searchQuery.length > 0;
-  const showEmptyHint = showSearchAll && visibleIssues.length === 0;
+  const showПоискВсе = searchQuery.length > 0;
+  const showEmptyHint = showПоискВсе && visibleЗадачи.length === 0;
 
   return (
-    <CommandDialog open={open} onOpenChange={(v) => {
+    <КомандаDialog open={open} onOpenChange={(v) => {
         setOpen(v);
         if (v && isMobile) setSidebarOpen(false);
       }}>
-      <CommandInput
-        placeholder="Search issues, agents, projects..."
+      <КомандаInput
+        placeholder="Поиск issues, agents, projects..."
         value={query}
-        onValueChange={setQuery}
-        onKeyDown={(event) => {
+        onЗначениеChange={setQuery}
+        onКлючDown={(event) => {
           if (event.key === "Enter" && showEmptyHint) {
-            event.preventDefault();
-            goFullSearch();
+            event.preventПо умолчанию();
+            goFullПоиск();
           }
         }}
       />
-      <CommandList>
-        <CommandEmpty>
-          {showSearchAll ? (
+      <КомандаList>
+        <КомандаEmpty>
+          {showПоискВсе ? (
             <span>
-              No quick issue matches. Press{" "}
-              <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px]">↵</kbd>{" "}
-              to <span className="font-medium">search all</span> or keep typing to refine.
+              Нет quick issue matches. Press{" "}
+              <kbd classИмя="rounded border border-border bg-muted px-1 py-0.5 text-[10px]">↵</kbd>{" "}
+              to <span classИмя="font-medium">search all</span> or keep typing to refine.
             </span>
           ) : (
-            "No results found."
+            "Результаты не найдены."
           )}
-        </CommandEmpty>
+        </КомандаEmpty>
 
-        {showSearchAll ? (
-          <CommandGroup heading="Search">
-            <CommandItem
+        {showПоискВсе ? (
+          <КомандаGroup heading="Поиск">
+            <КомандаItem
               value={`${SEARCH_ALL_VALUE} ${searchQuery}`}
-              onSelect={goFullSearch}
-              className="bg-accent/40 border border-accent data-[selected=true]:bg-accent/60"
+              onSelect={goFullПоиск}
+              classИмя="bg-accent/40 border border-accent data-[selected=true]:bg-accent/60"
               data-testid="command-search-all"
             >
-              <Search className="mr-2 h-4 w-4" />
-              <span className="flex-1 truncate">
-                Search all for <span className="font-semibold">&ldquo;{searchQuery}&rdquo;</span>
+              <Поиск classИмя="mr-2 h-4 w-4" />
+              <span classИмя="flex-1 truncate">
+                Поиск all for <span classИмя="font-semibold">&ldquo;{searchQuery}&rdquo;</span>
               </span>
-              <span className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <span classИмя="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <span>open full search</span>
-                <kbd className="rounded border border-border bg-background px-1 py-0.5 text-[10px]">↵</kbd>
+                <kbd classИмя="rounded border border-border bg-background px-1 py-0.5 text-[10px]">↵</kbd>
               </span>
-            </CommandItem>
-          </CommandGroup>
+            </КомандаItem>
+          </КомандаGroup>
         ) : null}
 
-        {showSearchAll ? <CommandSeparator /> : null}
+        {showПоискВсе ? <КомандаSeparator /> : null}
 
-        <CommandGroup heading="Actions">
-          <CommandItem
+        <КомандаGroup heading="Actions">
+          <КомандаItem
             onSelect={() => {
               setOpen(false);
-              openNewIssue();
+              openNewЗадача();
             }}
           >
-            <SquarePen className="mr-2 h-4 w-4" />
-            Create new issue
-            <span className="ml-auto text-xs text-muted-foreground">C</span>
-          </CommandItem>
-          <CommandItem
+            <SquarePen classИмя="mr-2 h-4 w-4" />
+            Создать new issue
+            <span classИмя="ml-auto text-xs text-muted-foreground">C</span>
+          </КомандаItem>
+          <КомандаItem
             onSelect={() => {
               setOpen(false);
-              openNewAgent();
+              openNewАгент();
             }}
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Create new agent
-          </CommandItem>
-          <CommandItem onSelect={() => go("/projects")}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create new project
-          </CommandItem>
-        </CommandGroup>
+            <Plus classИмя="mr-2 h-4 w-4" />
+            Создать new agent
+          </КомандаItem>
+          <КомандаItem onSelect={() => go("/projects")}>
+            <Plus classИмя="mr-2 h-4 w-4" />
+            Создать new project
+          </КомандаItem>
+        </КомандаGroup>
 
-        <CommandSeparator />
+        <КомандаSeparator />
 
-        <CommandGroup heading="Pages">
-          <CommandItem onSelect={() => go("/dashboard")}>
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Dashboard
-          </CommandItem>
-          <CommandItem onSelect={() => go("/inbox")}>
-            <Inbox className="mr-2 h-4 w-4" />
-            Inbox
-          </CommandItem>
-          <CommandItem onSelect={() => go("/issues")}>
-            <CircleDot className="mr-2 h-4 w-4" />
-            Issues
-          </CommandItem>
-          <CommandItem onSelect={() => go("/projects")}>
-            <Hexagon className="mr-2 h-4 w-4" />
-            Projects
-          </CommandItem>
-          <CommandItem onSelect={() => go("/goals")}>
-            <Target className="mr-2 h-4 w-4" />
-            Goals
-          </CommandItem>
-          <CommandItem onSelect={() => go("/agents")}>
-            <Bot className="mr-2 h-4 w-4" />
-            Agents
-          </CommandItem>
-          <CommandItem onSelect={() => go("/costs")}>
-            <DollarSign className="mr-2 h-4 w-4" />
-            Costs
-          </CommandItem>
-          <CommandItem onSelect={() => go("/activity")}>
-            <History className="mr-2 h-4 w-4" />
-            Activity
-          </CommandItem>
-        </CommandGroup>
+        <КомандаGroup heading="Pages">
+          <КомандаItem onSelect={() => go("/dashboard")}>
+            <LayoutПанель управления classИмя="mr-2 h-4 w-4" />
+            Панель управления
+          </КомандаItem>
+          <КомандаItem onSelect={() => go("/inbox")}>
+            <Входящие classИмя="mr-2 h-4 w-4" />
+            Входящие
+          </КомандаItem>
+          <КомандаItem onSelect={() => go("/issues")}>
+            <CircleDot classИмя="mr-2 h-4 w-4" />
+            Задачи
+          </КомандаItem>
+          <КомандаItem onSelect={() => go("/projects")}>
+            <Hexagon classИмя="mr-2 h-4 w-4" />
+            Проекты
+          </КомандаItem>
+          <КомандаItem onSelect={() => go("/goals")}>
+            <Цель classИмя="mr-2 h-4 w-4" />
+            Цели
+          </КомандаItem>
+          <КомандаItem onSelect={() => go("/agents")}>
+            <Бот classИмя="mr-2 h-4 w-4" />
+            Агенты
+          </КомандаItem>
+          <КомандаItem onSelect={() => go("/costs")}>
+            <DollarSign classИмя="mr-2 h-4 w-4" />
+            Расходы
+          </КомандаItem>
+          <КомандаItem onSelect={() => go("/activity")}>
+            <История classИмя="mr-2 h-4 w-4" />
+            Активность
+          </КомандаItem>
+        </КомандаGroup>
 
-        {visibleIssues.length > 0 && (
+        {visibleЗадачи.length > 0 && (
           <>
-            <CommandSeparator />
-            <CommandGroup heading="Issues">
-              {visibleIssues.slice(0, 10).map((issue) => (
-                <CommandItem
+            <КомандаSeparator />
+            <КомандаGroup heading="Задачи">
+              {visibleЗадачи.slice(0, 10).map((issue) => (
+                <КомандаItem
                   key={issue.id}
                   value={
                     searchQuery.length > 0
@@ -243,50 +243,50 @@ export function CommandPalette() {
                   }
                   onSelect={() => go(`/issues/${issue.identifier ?? issue.id}`)}
                 >
-                  <CircleDot className="mr-2 h-4 w-4" />
-                  <span className="text-muted-foreground mr-2 font-mono text-xs">
+                  <CircleDot classИмя="mr-2 h-4 w-4" />
+                  <span classИмя="text-muted-foreground mr-2 font-mono text-xs">
                     {issue.identifier ?? issue.id.slice(0, 8)}
                   </span>
-                  <span className="flex-1 truncate">{issue.title}</span>
-                  {issue.assigneeAgentId && (() => {
-                    const name = agentName(issue.assigneeAgentId);
-                    return name ? <Identity name={name} size="sm" className="ml-2 hidden sm:inline-flex" /> : null;
+                  <span classИмя="flex-1 truncate">{issue.title}</span>
+                  {issue.assigneeАгентId && (() => {
+                    const name = agentИмя(issue.assigneeАгентId);
+                    return name ? <Identity name={name} size="sm" classИмя="ml-2 hidden sm:inline-flex" /> : null;
                   })()}
-                </CommandItem>
+                </КомандаItem>
               ))}
-            </CommandGroup>
+            </КомандаGroup>
           </>
         )}
 
         {agents.length > 0 && (
           <>
-            <CommandSeparator />
-            <CommandGroup heading="Agents">
+            <КомандаSeparator />
+            <КомандаGroup heading="Агенты">
               {agents.slice(0, 10).map((agent) => (
-                <CommandItem key={agent.id} onSelect={() => go(agentUrl(agent))}>
-                  <Bot className="mr-2 h-4 w-4" />
+                <КомандаItem key={agent.id} onSelect={() => go(agentUrl(agent))}>
+                  <Бот classИмя="mr-2 h-4 w-4" />
                   {agent.name}
-                  <span className="text-xs text-muted-foreground ml-2">{agent.role}</span>
-                </CommandItem>
+                  <span classИмя="text-xs text-muted-foreground ml-2">{agent.role}</span>
+                </КомандаItem>
               ))}
-            </CommandGroup>
+            </КомандаGroup>
           </>
         )}
 
         {projects.length > 0 && (
           <>
-            <CommandSeparator />
-            <CommandGroup heading="Projects">
+            <КомандаSeparator />
+            <КомандаGroup heading="Проекты">
               {projects.slice(0, 10).map((project) => (
-                <CommandItem key={project.id} onSelect={() => go(projectUrl(project))}>
-                  <Hexagon className="mr-2 h-4 w-4" />
+                <КомандаItem key={project.id} onSelect={() => go(projectUrl(project))}>
+                  <Hexagon classИмя="mr-2 h-4 w-4" />
                   {project.name}
-                </CommandItem>
+                </КомандаItem>
               ))}
-            </CommandGroup>
+            </КомандаGroup>
           </>
         )}
-      </CommandList>
-    </CommandDialog>
+      </КомандаList>
+    </КомандаDialog>
   );
 }

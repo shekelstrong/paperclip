@@ -2,8 +2,8 @@ import type { SidebarOrderPreference, UpsertSidebarOrderPreference } from "@pape
 import { api } from "./client";
 
 export const sidebarPreferencesApi = {
-  getCompanyOrder: () => api.get<SidebarOrderPreference>("/sidebar-preferences/me"),
-  updateCompanyOrder: (data: UpsertSidebarOrderPreference) =>
+  getКомпанияOrder: () => api.get<SidebarOrderPreference>("/sidebar-preferences/me"),
+  updateКомпанияOrder: (data: UpsertSidebarOrderPreference) =>
     api.put<SidebarOrderPreference>("/sidebar-preferences/me", data),
   getProjectOrder: (companyId: string) =>
     api.get<SidebarOrderPreference>(`/companies/${companyId}/sidebar-preferences/me`),

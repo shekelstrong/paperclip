@@ -1,21 +1,21 @@
-export type NavigationType = "POP" | "PUSH" | "REPLACE";
+export type NavigationТип = "POP" | "PUSH" | "REPLACE";
 
 export const SIDEBAR_SCROLL_RESET_STATE = {
-  paperclipSidebarScrollReset: true,
+  paperclipSidebarScrollСбросить: true,
 } as const;
 
-export function shouldResetScrollOnNavigation(params: {
-  previousPathname: string | null;
+export function shouldСброситьScrollOnNavigation(params: {
+  previousПутьname: string | null;
   pathname: string;
-  navigationType: NavigationType;
+  navigationТип: NavigationТип;
   state: unknown;
 }): boolean {
-  const { previousPathname, pathname, navigationType, state } = params;
-  if (previousPathname === null) return false;
-  if (previousPathname === pathname) return false;
-  if (navigationType === "POP") return false;
-  if (isIssueDetailPathChange(previousPathname, pathname)) return true;
-  return hasSidebarScrollResetState(state);
+  const { previousПутьname, pathname, navigationТип, state } = params;
+  if (previousПутьname === null) return false;
+  if (previousПутьname === pathname) return false;
+  if (navigationТип === "POP") return false;
+  if (isЗадачаDetailПутьChange(previousПутьname, pathname)) return true;
+  return hasSidebarScrollСброситьState(state);
 }
 
 export function resetNavigationScroll(mainElement: HTMLElement | null): void {
@@ -40,18 +40,18 @@ export function resetNavigationScroll(mainElement: HTMLElement | null): void {
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
-function hasSidebarScrollResetState(state: unknown): boolean {
+function hasSidebarScrollСброситьState(state: unknown): boolean {
   if (!state || typeof state !== "object") return false;
-  return (state as Record<string, unknown>).paperclipSidebarScrollReset === true;
+  return (state as Record<string, unknown>).paperclipSidebarScrollСбросить === true;
 }
 
-function isIssueDetailPathChange(previousPathname: string, pathname: string): boolean {
-  const previousIssueRef = readIssueDetailPathRef(previousPathname);
-  const nextIssueRef = readIssueDetailPathRef(pathname);
-  return previousIssueRef !== null && nextIssueRef !== null && previousIssueRef !== nextIssueRef;
+function isЗадачаDetailПутьChange(previousПутьname: string, pathname: string): boolean {
+  const previousЗадачаRef = readЗадачаDetailПутьRef(previousПутьname);
+  const nextЗадачаRef = readЗадачаDetailПутьRef(pathname);
+  return previousЗадачаRef !== null && nextЗадачаRef !== null && previousЗадачаRef !== nextЗадачаRef;
 }
 
-function readIssueDetailPathRef(pathname: string): string | null {
+function readЗадачаDetailПутьRef(pathname: string): string | null {
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length === 2 && segments[0] === "issues") {
     return segments[1] ?? null;

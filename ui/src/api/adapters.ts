@@ -4,58 +4,58 @@
 
 import { api } from "./client";
 
-export interface AdapterCapabilities {
+export interface АдаптерCapabilities {
   supportsInstructionsBundle: boolean;
-  supportsSkills: boolean;
-  supportsLocalAgentJwt: boolean;
-  requiresMaterializedRuntimeSkills: boolean;
-  supportsModelProfiles: boolean;
+  supportsНавыки: boolean;
+  supportsLocalАгентJwt: boolean;
+  requiresMaterializedЗапуститьtimeНавыки: boolean;
+  supportsМодельПрофильs: boolean;
 }
 
-export interface AdapterInfo {
+export interface АдаптерInfo {
   type: string;
   label: string;
   source: "builtin" | "external";
   modelsCount: number;
   loaded: boolean;
   disabled: boolean;
-  capabilities: AdapterCapabilities;
+  capabilities: АдаптерCapabilities;
   /** Installed version (for external npm adapters) */
   version?: string;
   /** Package name (for external adapters) */
-  packageName?: string;
+  packageИмя?: string;
   /** Whether the adapter was installed from a local path (vs npm). */
-  isLocalPath?: boolean;
+  isLocalПуть?: boolean;
   /** True when an external plugin has replaced a built-in adapter of the same type. */
   overriddenBuiltin?: boolean;
   /** True when the external override for a builtin type is currently paused. */
-  overridePaused?: boolean;
+  overrideПриостановлен?: boolean;
 }
 
-export interface AdapterInstallResult {
+export interface АдаптерInstallResult {
   type: string;
-  packageName: string;
+  packageИмя: string;
   version?: string;
   installedAt: string;
 }
 
 export const adaptersApi = {
   /** List all registered adapters (built-in + external). */
-  list: () => api.get<AdapterInfo[]>("/adapters"),
+  list: () => api.get<АдаптерInfo[]>("/adapters"),
 
   /** Install an external adapter from npm or a local path. */
-  install: (params: { packageName: string; version?: string; isLocalPath?: boolean }) =>
-    api.post<AdapterInstallResult>("/adapters/install", params),
+  install: (params: { packageИмя: string; version?: string; isLocalПуть?: boolean }) =>
+    api.post<АдаптерInstallResult>("/adapters/install", params),
 
-  /** Remove an external adapter by type. */
+  /** Удалить an external adapter by type. */
   remove: (type: string) => api.delete<{ type: string; removed: boolean }>(`/adapters/${type}`),
 
-  /** Enable or disable an adapter (disabled adapters hidden from agent menus). */
-  setDisabled: (type: string, disabled: boolean) =>
+  /** Включить or disable an adapter (disabled adapters hidden from agent menus). */
+  setОтключитьd: (type: string, disabled: boolean) =>
     api.patch<{ type: string; disabled: boolean; changed: boolean }>(`/adapters/${type}`, { disabled }),
 
-  /** Pause or resume an external override of a builtin type. */
-  setOverridePaused: (type: string, paused: boolean) =>
+  /** Пауза or resume an external override of a builtin type. */
+  setOverrideПриостановлен: (type: string, paused: boolean) =>
     api.patch<{ type: string; paused: boolean; changed: boolean }>(`/adapters/${type}/override`, { paused }),
 
   /** Reload an external adapter (bust server + client caches). */

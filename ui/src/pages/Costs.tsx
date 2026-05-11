@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentТип } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-  BudgetPolicySummary,
-  CostByAgentModel,
+  БюджетPolicySummary,
+  CostByАгентМодель,
   CostByBiller,
-  CostByProviderModel,
+  CostByПровайдерМодель,
   CostWindowSpendRow,
   FinanceEvent,
   QuotaWindow,
@@ -13,8 +13,8 @@ import { ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight, Coins, DollarSi
 import { budgetsApi } from "../api/budgets";
 import { costsApi } from "../api/costs";
 import { BillerSpendCard } from "../components/BillerSpendCard";
-import { BudgetIncidentCard } from "../components/BudgetIncidentCard";
-import { BudgetPolicyCard } from "../components/BudgetPolicyCard";
+import { БюджетIncidentCard } from "../components/БюджетIncidentCard";
+import { БюджетPolicyCard } from "../components/БюджетPolicyCard";
 import { EmptyState } from "../components/EmptyState";
 import { FinanceBillerCard } from "../components/FinanceBillerCard";
 import { FinanceKindCard } from "../components/FinanceKindCard";
@@ -22,15 +22,15 @@ import { FinanceTimelineCard } from "../components/FinanceTimelineCard";
 import { Identity } from "../components/Identity";
 import { PageSkeleton } from "../components/PageSkeleton";
 import { PageTabBar } from "../components/PageTabBar";
-import { ProviderQuotaCard } from "../components/ProviderQuotaCard";
-import { StatusBadge } from "../components/StatusBadge";
+import { ПровайдерQuotaCard } from "../components/ПровайдерQuotaCard";
+import { СтатусBadge } from "../components/СтатусBadge";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useDateRange, PRESET_KEYS, PRESET_LABELS } from "../hooks/useDateRange";
-import { queryKeys } from "../lib/queryKeys";
-import { billingTypeDisplayName, cn, formatCents, formatTokens, providerDisplayName } from "../lib/utils";
+import { queryКлючs } from "../lib/queryКлючs";
+import { billingТипDisplayИмя, cn, formatCents, formatТокенs, providerDisplayИмя } from "../lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardОписание, CardHeader, CardНазвание } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const NO_COMPANY = "__none__";
@@ -44,26 +44,26 @@ function currentWeekRange(): { from: string; to: string } {
   return { from: mon.toISOString(), to: sun.toISOString() };
 }
 
-function ProviderTabLabel({ provider, rows }: { provider: string; rows: CostByProviderModel[] }) {
-  const totalTokens = rows.reduce((sum, row) => sum + row.inputTokens + row.cachedInputTokens + row.outputTokens, 0);
+function ПровайдерTabLabel({ provider, rows }: { provider: string; rows: CostByПровайдерМодель[] }) {
+  const totalТокенs = rows.reduce((sum, row) => sum + row.inputТокенs + row.cachedInputТокенs + row.outputТокенs, 0);
   const totalCost = rows.reduce((sum, row) => sum + row.costCents, 0);
   return (
-    <span className="flex items-center gap-1.5">
-      <span>{providerDisplayName(provider)}</span>
-      <span className="font-mono text-xs text-muted-foreground">{formatTokens(totalTokens)}</span>
-      <span className="text-xs text-muted-foreground">{formatCents(totalCost)}</span>
+    <span classИмя="flex items-center gap-1.5">
+      <span>{providerDisplayИмя(provider)}</span>
+      <span classИмя="font-mono text-xs text-muted-foreground">{formatТокенs(totalТокенs)}</span>
+      <span classИмя="text-xs text-muted-foreground">{formatCents(totalCost)}</span>
     </span>
   );
 }
 
 function BillerTabLabel({ biller, rows }: { biller: string; rows: CostByBiller[] }) {
-  const totalTokens = rows.reduce((sum, row) => sum + row.inputTokens + row.cachedInputTokens + row.outputTokens, 0);
+  const totalТокенs = rows.reduce((sum, row) => sum + row.inputТокенs + row.cachedInputТокенs + row.outputТокенs, 0);
   const totalCost = rows.reduce((sum, row) => sum + row.costCents, 0);
   return (
-    <span className="flex items-center gap-1.5">
-      <span>{providerDisplayName(biller)}</span>
-      <span className="font-mono text-xs text-muted-foreground">{formatTokens(totalTokens)}</span>
-      <span className="text-xs text-muted-foreground">{formatCents(totalCost)}</span>
+    <span classИмя="flex items-center gap-1.5">
+      <span>{providerDisplayИмя(biller)}</span>
+      <span classИмя="font-mono text-xs text-muted-foreground">{formatТокенs(totalТокенs)}</span>
+      <span classИмя="text-xs text-muted-foreground">{formatCents(totalCost)}</span>
     </span>
   );
 }
@@ -77,18 +77,18 @@ function MetricTile({
   label: string;
   value: string;
   subtitle: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: ComponentТип<{ classИмя?: string }>;
 }) {
   return (
-    <div className="border border-border p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-          <div className="mt-2 text-2xl font-semibold tabular-nums">{value}</div>
-          <div className="mt-1 text-xs leading-5 text-muted-foreground">{subtitle}</div>
+    <div classИмя="border border-border p-4">
+      <div classИмя="flex items-center justify-between gap-3">
+        <div classИмя="min-w-0">
+          <div classИмя="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+          <div classИмя="mt-2 text-2xl font-semibold tabular-nums">{value}</div>
+          <div classИмя="mt-1 text-xs leading-5 text-muted-foreground">{subtitle}</div>
         </div>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-border">
-          <Icon className="h-4 w-4 text-muted-foreground" />
+        <div classИмя="flex h-9 w-9 shrink-0 items-center justify-center border border-border">
+          <Icon classИмя="h-4 w-4 text-muted-foreground" />
         </div>
       </div>
     </div>
@@ -110,13 +110,13 @@ function FinanceSummaryCard({
 }) {
   return (
     <Card>
-      <CardHeader className="px-5 pt-5 pb-2">
-        <CardTitle className="text-base">Finance ledger</CardTitle>
-        <CardDescription>
-          Account-level charges that do not map to a single inference request.
-        </CardDescription>
+      <CardHeader classИмя="px-5 pt-5 pb-2">
+        <CardНазвание classИмя="text-base">Finance ledger</CardНазвание>
+        <CardОписание>
+          Аккаунт-level charges that do not map to a single inference request.
+        </CardОписание>
       </CardHeader>
-      <CardContent className="grid gap-3 px-5 pb-5 pt-2 sm:grid-cols-2 xl:grid-cols-4">
+      <CardContent classИмя="grid gap-3 px-5 pb-5 pt-2 sm:grid-cols-2 xl:grid-cols-4">
         <MetricTile
           label="Debits"
           value={formatCents(debitCents)}
@@ -124,7 +124,7 @@ function FinanceSummaryCard({
           icon={ArrowUpRight}
         />
         <MetricTile
-          label="Credits"
+          label="Кредиты"
           value={formatCents(creditCents)}
           subtitle="Refunds, offsets, and credit returns"
           icon={ArrowDownLeft}
@@ -146,39 +146,39 @@ function FinanceSummaryCard({
   );
 }
 
-export function Costs() {
-  const { selectedCompanyId } = useCompany();
+export function Расходы() {
+  const { selectedКомпанияId } = useКомпания();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
 
   const [mainTab, setMainTab] = useState<"overview" | "budgets" | "providers" | "billers" | "finance">("overview");
-  const [activeProvider, setActiveProvider] = useState("all");
-  const [activeBiller, setActiveBiller] = useState("all");
+  const [activeПровайдер, setАктивенПровайдер] = useState("all");
+  const [activeBiller, setАктивенBiller] = useState("all");
 
   const {
     preset,
     setPreset,
     customFrom,
-    setCustomFrom,
+    setСвойFrom,
     customTo,
-    setCustomTo,
+    setСвойTo,
     from,
     to,
-    customReady,
+    customГотово,
   } = useDateRange();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Costs" }]);
+    setBreadcrumbs([{ label: "Расходы" }]);
   }, [setBreadcrumbs]);
 
-  const [today, setToday] = useState(() => new Date().toDateString());
-  const todayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [today, setСегодня] = useState(() => new Date().toDateString());
+  const todayTimerRef = useRef<ReturnТип<typeof setTimeout> | null>(null);
   useEffect(() => {
     const schedule = () => {
       const now = new Date();
       const ms = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
       todayTimerRef.current = setTimeout(() => {
-        setToday(new Date().toDateString());
+        setСегодня(new Date().toDateString());
         schedule();
       }, ms);
     };
@@ -189,66 +189,66 @@ export function Costs() {
   }, []);
 
   const weekRange = useMemo(() => currentWeekRange(), [today]);
-  const companyId = selectedCompanyId ?? NO_COMPANY;
+  const companyId = selectedКомпанияId ?? NO_COMPANY;
 
-  const { data: budgetData, isLoading: budgetLoading, error: budgetError } = useQuery({
-    queryKey: queryKeys.budgets.overview(companyId),
+  const { data: budgetData, isЗагрузка: budgetЗагрузка, error: budgetОшибка } = useQuery({
+    queryКлюч: queryКлючs.budgets.overview(companyId),
     queryFn: () => budgetsApi.overview(companyId),
-    enabled: !!selectedCompanyId && customReady,
+    enabled: !!selectedКомпанияId && customГотово,
     refetchInterval: 30_000,
     staleTime: 5_000,
   });
 
-  const invalidateBudgetViews = () => {
-    if (!selectedCompanyId) return;
-    queryClient.invalidateQueries({ queryKey: queryKeys.budgets.overview(selectedCompanyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(selectedCompanyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(selectedCompanyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(selectedCompanyId) });
+  const invalidateБюджетViews = () => {
+    if (!selectedКомпанияId) return;
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.budgets.overview(selectedКомпанияId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.dashboard(selectedКомпанияId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.agents.list(selectedКомпанияId) });
+    queryClient.invalidateQueries({ queryКлюч: queryКлючs.projects.list(selectedКомпанияId) });
   };
 
   const policyMutation = useMutation({
     mutationFn: (input: {
-      scopeType: BudgetPolicySummary["scopeType"];
+      scopeТип: БюджетPolicySummary["scopeТип"];
       scopeId: string;
       amount: number;
-      windowKind: BudgetPolicySummary["windowKind"];
+      windowKind: БюджетPolicySummary["windowKind"];
     }) =>
       budgetsApi.upsertPolicy(companyId, {
-        scopeType: input.scopeType,
+        scopeТип: input.scopeТип,
         scopeId: input.scopeId,
         amount: input.amount,
         windowKind: input.windowKind,
       }),
-    onSuccess: invalidateBudgetViews,
+    onУспешно: invalidateБюджетViews,
   });
 
   const incidentMutation = useMutation({
     mutationFn: (input: { incidentId: string; action: "keep_paused" | "raise_budget_and_resume"; amount?: number }) =>
       budgetsApi.resolveIncident(companyId, input.incidentId, input),
-    onSuccess: invalidateBudgetViews,
+    onУспешно: invalidateБюджетViews,
   });
 
-  const { data: spendData, isLoading: spendLoading, error: spendError } = useQuery({
-    queryKey: queryKeys.costs(companyId, from || undefined, to || undefined),
+  const { data: spendData, isЗагрузка: spendЗагрузка, error: spendОшибка } = useQuery({
+    queryКлюч: queryКлючs.costs(companyId, from || undefined, to || undefined),
     queryFn: async () => {
-      const [summary, byAgent, byProject, byAgentModel] = await Promise.all([
+      const [summary, byАгент, byProject, byАгентМодель] = await Promise.all([
         costsApi.summary(companyId, from || undefined, to || undefined),
-        costsApi.byAgent(companyId, from || undefined, to || undefined),
+        costsApi.byАгент(companyId, from || undefined, to || undefined),
         costsApi.byProject(companyId, from || undefined, to || undefined),
-        costsApi.byAgentModel(companyId, from || undefined, to || undefined),
+        costsApi.byАгентМодель(companyId, from || undefined, to || undefined),
       ]);
-      return { summary, byAgent, byProject, byAgentModel };
+      return { summary, byАгент, byProject, byАгентМодель };
     },
-    enabled: !!selectedCompanyId && customReady,
+    enabled: !!selectedКомпанияId && customГотово,
   });
 
-  const { data: financeData, isLoading: financeLoading, error: financeError } = useQuery({
-    queryKey: [
-      queryKeys.financeSummary(companyId, from || undefined, to || undefined),
-      queryKeys.financeByBiller(companyId, from || undefined, to || undefined),
-      queryKeys.financeByKind(companyId, from || undefined, to || undefined),
-      queryKeys.financeEvents(companyId, from || undefined, to || undefined, 18),
+  const { data: financeData, isЗагрузка: financeЗагрузка, error: financeОшибка } = useQuery({
+    queryКлюч: [
+      queryКлючs.financeSummary(companyId, from || undefined, to || undefined),
+      queryКлючs.financeByBiller(companyId, from || undefined, to || undefined),
+      queryКлючs.financeByKind(companyId, from || undefined, to || undefined),
+      queryКлючs.financeEvents(companyId, from || undefined, to || undefined, 18),
     ],
     queryFn: async () => {
       const [summary, byBiller, byKind, events] = await Promise.all([
@@ -259,16 +259,16 @@ export function Costs() {
       ]);
       return { summary, byBiller, byKind, events };
     },
-    enabled: !!selectedCompanyId && customReady,
+    enabled: !!selectedКомпанияId && customГотово,
   });
 
-  const [expandedAgents, setExpandedAgents] = useState<Set<string>>(new Set());
+  const [expandedАгенты, setExpandedАгенты] = useState<Set<string>>(new Set());
   useEffect(() => {
-    setExpandedAgents(new Set());
+    setExpandedАгенты(new Set());
   }, [companyId, from, to]);
 
-  function toggleAgent(agentId: string) {
-    setExpandedAgents((prev) => {
+  function toggleАгент(agentId: string) {
+    setExpandedАгенты((prev) => {
       const next = new Set(prev);
       if (next.has(agentId)) next.delete(agentId);
       else next.add(agentId);
@@ -276,9 +276,9 @@ export function Costs() {
     });
   }
 
-  const agentModelRows = useMemo(() => {
-    const map = new Map<string, CostByAgentModel[]>();
-    for (const row of spendData?.byAgentModel ?? []) {
+  const agentМодельRows = useMemo(() => {
+    const map = new Map<string, CostByАгентМодель[]>();
+    for (const row of spendData?.byАгентМодель ?? []) {
       const rows = map.get(row.agentId) ?? [];
       rows.push(row);
       map.set(row.agentId, rows);
@@ -287,58 +287,58 @@ export function Costs() {
       map.set(agentId, rows.slice().sort((a, b) => b.costCents - a.costCents));
     }
     return map;
-  }, [spendData?.byAgentModel]);
+  }, [spendData?.byАгентМодель]);
 
   const { data: providerData } = useQuery({
-    queryKey: queryKeys.usageByProvider(companyId, from || undefined, to || undefined),
-    queryFn: () => costsApi.byProvider(companyId, from || undefined, to || undefined),
-    enabled: !!selectedCompanyId && customReady && (mainTab === "providers" || mainTab === "billers"),
+    queryКлюч: queryКлючs.usageByПровайдер(companyId, from || undefined, to || undefined),
+    queryFn: () => costsApi.byПровайдер(companyId, from || undefined, to || undefined),
+    enabled: !!selectedКомпанияId && customГотово && (mainTab === "providers" || mainTab === "billers"),
     refetchInterval: 30_000,
     staleTime: 10_000,
   });
 
   const { data: billerData } = useQuery({
-    queryKey: queryKeys.usageByBiller(companyId, from || undefined, to || undefined),
+    queryКлюч: queryКлючs.usageByBiller(companyId, from || undefined, to || undefined),
     queryFn: () => costsApi.byBiller(companyId, from || undefined, to || undefined),
-    enabled: !!selectedCompanyId && customReady && mainTab === "billers",
+    enabled: !!selectedКомпанияId && customГотово && mainTab === "billers",
     refetchInterval: 30_000,
     staleTime: 10_000,
   });
 
   const { data: weekData } = useQuery({
-    queryKey: queryKeys.usageByProvider(companyId, weekRange.from, weekRange.to),
-    queryFn: () => costsApi.byProvider(companyId, weekRange.from, weekRange.to),
-    enabled: !!selectedCompanyId && (mainTab === "providers" || mainTab === "billers"),
+    queryКлюч: queryКлючs.usageByПровайдер(companyId, weekRange.from, weekRange.to),
+    queryFn: () => costsApi.byПровайдер(companyId, weekRange.from, weekRange.to),
+    enabled: !!selectedКомпанияId && (mainTab === "providers" || mainTab === "billers"),
     refetchInterval: 30_000,
     staleTime: 10_000,
   });
 
   const { data: weekBillerData } = useQuery({
-    queryKey: queryKeys.usageByBiller(companyId, weekRange.from, weekRange.to),
+    queryКлюч: queryКлючs.usageByBiller(companyId, weekRange.from, weekRange.to),
     queryFn: () => costsApi.byBiller(companyId, weekRange.from, weekRange.to),
-    enabled: !!selectedCompanyId && mainTab === "billers",
+    enabled: !!selectedКомпанияId && mainTab === "billers",
     refetchInterval: 30_000,
     staleTime: 10_000,
   });
 
   const { data: windowData } = useQuery({
-    queryKey: queryKeys.usageWindowSpend(companyId),
+    queryКлюч: queryКлючs.usageWindowSpend(companyId),
     queryFn: () => costsApi.windowSpend(companyId),
-    enabled: !!selectedCompanyId && mainTab === "providers",
+    enabled: !!selectedКомпанияId && mainTab === "providers",
     refetchInterval: 30_000,
     staleTime: 10_000,
   });
 
-  const { data: quotaData, isLoading: quotaLoading } = useQuery({
-    queryKey: queryKeys.usageQuotaWindows(companyId),
+  const { data: quotaData, isЗагрузка: quotaЗагрузка } = useQuery({
+    queryКлюч: queryКлючs.usageQuotaWindows(companyId),
     queryFn: () => costsApi.quotaWindows(companyId),
-    enabled: !!selectedCompanyId && mainTab === "providers",
+    enabled: !!selectedКомпанияId && mainTab === "providers",
     refetchInterval: 300_000,
     staleTime: 60_000,
   });
 
-  const byProvider = useMemo(() => {
-    const map = new Map<string, CostByProviderModel[]>();
+  const byПровайдер = useMemo(() => {
+    const map = new Map<string, CostByПровайдерМодель[]>();
     for (const row of providerData ?? []) {
       const rows = map.get(row.provider) ?? [];
       rows.push(row);
@@ -357,7 +357,7 @@ export function Costs() {
     return map;
   }, [billerData]);
 
-  const weekSpendByProvider = useMemo(() => {
+  const weekSpendByПровайдер = useMemo(() => {
     const map = new Map<string, number>();
     for (const row of weekData ?? []) {
       map.set(row.provider, (map.get(row.provider) ?? 0) + row.costCents);
@@ -373,7 +373,7 @@ export function Costs() {
     return map;
   }, [weekBillerData]);
 
-  const windowSpendByProvider = useMemo(() => {
+  const windowSpendByПровайдер = useMemo(() => {
     const map = new Map<string, CostWindowSpendRow[]>();
     for (const row of windowData ?? []) {
       const rows = map.get(row.provider) ?? [];
@@ -383,7 +383,7 @@ export function Costs() {
     return map;
   }, [windowData]);
 
-  const quotaWindowsByProvider = useMemo(() => {
+  const quotaWindowsByПровайдер = useMemo(() => {
     const map = new Map<string, QuotaWindow[]>();
     for (const result of quotaData ?? []) {
       if (result.ok && result.windows.length > 0) {
@@ -393,7 +393,7 @@ export function Costs() {
     return map;
   }, [quotaData]);
 
-  const quotaErrorsByProvider = useMemo(() => {
+  const quotaОшибкаsByПровайдер = useMemo(() => {
     const map = new Map<string, string>();
     for (const result of quotaData ?? []) {
       if (!result.ok && result.error) map.set(result.provider, result.error);
@@ -401,7 +401,7 @@ export function Costs() {
     return map;
   }, [quotaData]);
 
-  const quotaSourcesByProvider = useMemo(() => {
+  const quotaSourcesByПровайдер = useMemo(() => {
     const map = new Map<string, string>();
     for (const result of quotaData ?? []) {
       if (typeof result.source === "string" && result.source.length > 0) {
@@ -411,7 +411,7 @@ export function Costs() {
     return map;
   }, [quotaData]);
 
-  const deficitNotchByProvider = useMemo(() => {
+  const deficitНетtchByПровайдер = useMemo(() => {
     const map = new Map<string, boolean>();
     if (preset !== "mtd") return map;
     const budget = spendData?.summary.budgetCents ?? 0;
@@ -420,74 +420,74 @@ export function Costs() {
     const now = new Date();
     const daysElapsed = now.getDate();
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    for (const [providerKey, rows] of byProvider) {
+    for (const [providerКлюч, rows] of byПровайдер) {
       const providerCostCents = rows.reduce((sum, row) => sum + row.costCents, 0);
       const providerShare = totalSpend > 0 ? providerCostCents / totalSpend : 0;
-      const providerBudget = budget * providerShare;
-      if (providerBudget <= 0) {
-        map.set(providerKey, false);
+      const providerБюджет = budget * providerShare;
+      if (providerБюджет <= 0) {
+        map.set(providerКлюч, false);
         continue;
       }
       const burnRate = providerCostCents / Math.max(daysElapsed, 1);
-      map.set(providerKey, providerCostCents + burnRate * (daysInMonth - daysElapsed) > providerBudget);
+      map.set(providerКлюч, providerCostCents + burnRate * (daysInMonth - daysElapsed) > providerБюджет);
     }
     return map;
-  }, [preset, spendData, byProvider]);
+  }, [preset, spendData, byПровайдер]);
 
-  const providers = useMemo(() => Array.from(byProvider.keys()), [byProvider]);
+  const providers = useMemo(() => Array.from(byПровайдер.keys()), [byПровайдер]);
   const billers = useMemo(() => Array.from(byBiller.keys()), [byBiller]);
 
-  const effectiveProvider =
-    activeProvider === "all" || providers.includes(activeProvider) ? activeProvider : "all";
+  const effectiveПровайдер =
+    activeПровайдер === "all" || providers.includes(activeПровайдер) ? activeПровайдер : "all";
   useEffect(() => {
-    if (effectiveProvider !== activeProvider) setActiveProvider("all");
-  }, [effectiveProvider, activeProvider]);
+    if (effectiveПровайдер !== activeПровайдер) setАктивенПровайдер("all");
+  }, [effectiveПровайдер, activeПровайдер]);
 
   const effectiveBiller =
     activeBiller === "all" || billers.includes(activeBiller) ? activeBiller : "all";
   useEffect(() => {
-    if (effectiveBiller !== activeBiller) setActiveBiller("all");
+    if (effectiveBiller !== activeBiller) setАктивенBiller("all");
   }, [effectiveBiller, activeBiller]);
 
   const providerTabItems = useMemo(() => {
-    const providerKeys = Array.from(byProvider.keys());
-    const allTokens = providerKeys.reduce(
-      (sum, provider) => sum + (byProvider.get(provider)?.reduce((acc, row) => acc + row.inputTokens + row.cachedInputTokens + row.outputTokens, 0) ?? 0),
+    const providerКлючs = Array.from(byПровайдер.keys());
+    const allТокенs = providerКлючs.reduce(
+      (sum, provider) => sum + (byПровайдер.get(provider)?.reduce((acc, row) => acc + row.inputТокенs + row.cachedInputТокенs + row.outputТокенs, 0) ?? 0),
       0,
     );
-    const allCents = providerKeys.reduce(
-      (sum, provider) => sum + (byProvider.get(provider)?.reduce((acc, row) => acc + row.costCents, 0) ?? 0),
+    const allCents = providerКлючs.reduce(
+      (sum, provider) => sum + (byПровайдер.get(provider)?.reduce((acc, row) => acc + row.costCents, 0) ?? 0),
       0,
     );
     return [
       {
         value: "all",
         label: (
-          <span className="flex items-center gap-1.5">
-            <span>All providers</span>
-            {providerKeys.length > 0 ? (
+          <span classИмя="flex items-center gap-1.5">
+            <span>Все providers</span>
+            {providerКлючs.length > 0 ? (
               <>
-                <span className="font-mono text-xs text-muted-foreground">{formatTokens(allTokens)}</span>
-                <span className="text-xs text-muted-foreground">{formatCents(allCents)}</span>
+                <span classИмя="font-mono text-xs text-muted-foreground">{formatТокенs(allТокенs)}</span>
+                <span classИмя="text-xs text-muted-foreground">{formatCents(allCents)}</span>
               </>
             ) : null}
           </span>
         ),
       },
-      ...providerKeys.map((provider) => ({
+      ...providerКлючs.map((provider) => ({
         value: provider,
-        label: <ProviderTabLabel provider={provider} rows={byProvider.get(provider) ?? []} />,
+        label: <ПровайдерTabLabel provider={provider} rows={byПровайдер.get(provider) ?? []} />,
       })),
     ];
-  }, [byProvider]);
+  }, [byПровайдер]);
 
   const billerTabItems = useMemo(() => {
-    const billerKeys = Array.from(byBiller.keys());
-    const allTokens = billerKeys.reduce(
-      (sum, biller) => sum + (byBiller.get(biller)?.reduce((acc, row) => acc + row.inputTokens + row.cachedInputTokens + row.outputTokens, 0) ?? 0),
+    const billerКлючs = Array.from(byBiller.keys());
+    const allТокенs = billerКлючs.reduce(
+      (sum, biller) => sum + (byBiller.get(biller)?.reduce((acc, row) => acc + row.inputТокенs + row.cachedInputТокенs + row.outputТокенs, 0) ?? 0),
       0,
     );
-    const allCents = billerKeys.reduce(
+    const allCents = billerКлючs.reduce(
       (sum, biller) => sum + (byBiller.get(biller)?.reduce((acc, row) => acc + row.costCents, 0) ?? 0),
       0,
     );
@@ -495,59 +495,59 @@ export function Costs() {
       {
         value: "all",
         label: (
-          <span className="flex items-center gap-1.5">
-            <span>All billers</span>
-            {billerKeys.length > 0 ? (
+          <span classИмя="flex items-center gap-1.5">
+            <span>Все billers</span>
+            {billerКлючs.length > 0 ? (
               <>
-                <span className="font-mono text-xs text-muted-foreground">{formatTokens(allTokens)}</span>
-                <span className="text-xs text-muted-foreground">{formatCents(allCents)}</span>
+                <span classИмя="font-mono text-xs text-muted-foreground">{formatТокенs(allТокенs)}</span>
+                <span classИмя="text-xs text-muted-foreground">{formatCents(allCents)}</span>
               </>
             ) : null}
           </span>
         ),
       },
-      ...billerKeys.map((biller) => ({
+      ...billerКлючs.map((biller) => ({
         value: biller,
         label: <BillerTabLabel biller={biller} rows={byBiller.get(biller) ?? []} />,
       })),
     ];
   }, [byBiller]);
 
-  const inferenceTokenTotal =
-    (spendData?.byAgent ?? []).reduce(
-      (sum, row) => sum + row.inputTokens + row.cachedInputTokens + row.outputTokens,
+  const inferenceТокенTotal =
+    (spendData?.byАгент ?? []).reduce(
+      (sum, row) => sum + row.inputТокенs + row.cachedInputТокенs + row.outputТокенs,
       0,
     );
 
   const topFinanceEvents = (financeData?.events ?? []) as FinanceEvent[];
   const budgetPolicies = budgetData?.policies ?? [];
-  const activeBudgetIncidents = budgetData?.activeIncidents ?? [];
-  const budgetPoliciesByScope = useMemo(() => ({
-    company: budgetPolicies.filter((policy) => policy.scopeType === "company"),
-    agent: budgetPolicies.filter((policy) => policy.scopeType === "agent"),
-    project: budgetPolicies.filter((policy) => policy.scopeType === "project"),
+  const activeБюджетIncidents = budgetData?.activeIncidents ?? [];
+  const budgetPoliciesByОбласть = useMemo(() => ({
+    company: budgetPolicies.filter((policy) => policy.scopeТип === "company"),
+    agent: budgetPolicies.filter((policy) => policy.scopeТип === "agent"),
+    project: budgetPolicies.filter((policy) => policy.scopeТип === "project"),
   }), [budgetPolicies]);
 
-  if (!selectedCompanyId) {
+  if (!selectedКомпанияId) {
     return <EmptyState icon={DollarSign} message="Select a company to view costs." />;
   }
 
-  const showCustomPrompt = preset === "custom" && !customReady;
-  const showOverviewLoading = (spendLoading || financeLoading) && customReady;
-  const overviewError = spendError ?? financeError;
+  const showСвойPrompt = preset === "custom" && !customГотово;
+  const showОбзорЗагрузка = (spendЗагрузка || financeЗагрузка) && customГотово;
+  const overviewОшибка = spendОшибка ?? financeОшибка;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div classИмя="space-y-6">
+      <div classИмя="space-y-5">
+          <div classИмя="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-                <h1 className="text-3xl font-semibold tracking-tight">Costs</h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                <h1 classИмя="text-3xl font-semibold tracking-tight">Расходы</h1>
+                <p classИмя="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
                   Inference spend, platform fees, credits, and live quota windows.
                 </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div classИмя="flex flex-wrap items-center gap-2">
               {PRESET_KEYS.map((key) => (
                 <Button
                   key={key}
@@ -562,43 +562,43 @@ export function Costs() {
           </div>
 
           {preset === "custom" ? (
-            <div className="flex flex-wrap items-center gap-2 border border-border p-3">
+            <div classИмя="flex flex-wrap items-center gap-2 border border-border p-3">
               <input
                 type="date"
                 value={customFrom}
-                onChange={(event) => setCustomFrom(event.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                onChange={(event) => setСвойFrom(event.target.value)}
+                classИмя="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
               />
-              <span className="text-sm text-muted-foreground">to</span>
+              <span classИмя="text-sm text-muted-foreground">to</span>
               <input
                 type="date"
                 value={customTo}
-                onChange={(event) => setCustomTo(event.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                onChange={(event) => setСвойTo(event.target.value)}
+                classИмя="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
               />
             </div>
           ) : null}
 
-          <div className="grid gap-3 lg:grid-cols-4">
+          <div classИмя="grid gap-3 lg:grid-cols-4">
             <MetricTile
               label="Inference spend"
               value={formatCents(spendData?.summary.spendCents ?? 0)}
-              subtitle={`${formatTokens(inferenceTokenTotal)} tokens across request-scoped events`}
+              subtitle={`${formatТокенs(inferenceТокенTotal)} tokens across request-scoped events`}
               icon={DollarSign}
             />
             <MetricTile
-              label="Budget"
-              value={activeBudgetIncidents.length > 0 ? String(activeBudgetIncidents.length) : (
+              label="Бюджет"
+              value={activeБюджетIncidents.length > 0 ? String(activeБюджетIncidents.length) : (
                 spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
                   ? `${spendData.summary.utilizationPercent}%`
                   : "Open"
               )}
               subtitle={
-                activeBudgetIncidents.length > 0
-                  ? `${budgetData?.pausedAgentCount ?? 0} agents paused · ${budgetData?.pausedProjectCount ?? 0} projects paused`
+                activeБюджетIncidents.length > 0
+                  ? `${budgetData?.pausedАгентCount ?? 0} agents paused · ${budgetData?.pausedProjectCount ?? 0} projects paused`
                   : spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
                     ? `${formatCents(spendData.summary.spendCents)} of ${formatCents(spendData.summary.budgetCents)}`
-                    : "No monthly cap configured"
+                    : "Нет monthly cap configured"
               }
               icon={Coins}
             />
@@ -617,33 +617,33 @@ export function Costs() {
           </div>
       </div>
 
-      <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as typeof mainTab)}>
-        <TabsList variant="line" className="justify-start">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="budgets">Budgets</TabsTrigger>
-          <TabsTrigger value="providers">Providers</TabsTrigger>
+      <Tabs value={mainTab} onЗначениеChange={(value) => setMainTab(value as typeof mainTab)}>
+        <TabsList variant="line" classИмя="justify-start">
+          <TabsTrigger value="overview">Обзор</TabsTrigger>
+          <TabsTrigger value="budgets">Бюджетs</TabsTrigger>
+          <TabsTrigger value="providers">Провайдерs</TabsTrigger>
           <TabsTrigger value="billers">Billers</TabsTrigger>
           <TabsTrigger value="finance">Finance</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4 space-y-4">
-          {showCustomPrompt ? (
-            <p className="text-sm text-muted-foreground">Select a start and end date to load data.</p>
-          ) : showOverviewLoading ? (
+        <TabsContent value="overview" classИмя="mt-4 space-y-4">
+          {showСвойPrompt ? (
+            <p classИмя="text-sm text-muted-foreground">Select a start and end date to load data.</p>
+          ) : showОбзорЗагрузка ? (
             <PageSkeleton variant="costs" />
-          ) : overviewError ? (
-            <p className="text-sm text-destructive">{(overviewError as Error).message}</p>
+          ) : overviewОшибка ? (
+            <p classИмя="text-sm text-destructive">{(overviewОшибка as Ошибка).message}</p>
           ) : (
             <>
-              {activeBudgetIncidents.length > 0 ? (
-                <div className="grid gap-4 xl:grid-cols-2">
-                  {activeBudgetIncidents.slice(0, 2).map((incident) => (
-                    <BudgetIncidentCard
+              {activeБюджетIncidents.length > 0 ? (
+                <div classИмя="grid gap-4 xl:grid-cols-2">
+                  {activeБюджетIncidents.slice(0, 2).map((incident) => (
+                    <БюджетIncidentCard
                       key={incident.id}
                       incident={incident}
-                      isMutating={incidentMutation.isPending}
-                      onKeepPaused={() => incidentMutation.mutate({ incidentId: incident.id, action: "keep_paused" })}
-                      onRaiseAndResume={(amount) =>
+                      isMutating={incidentMutation.isОжидание}
+                      onKeepПриостановлен={() => incidentMutation.mutate({ incidentId: incident.id, action: "keep_paused" })}
+                      onRaiseAndПродолжить={(amount) =>
                         incidentMutation.mutate({
                           incidentId: incident.id,
                           action: "raise_budget_and_resume",
@@ -654,38 +654,38 @@ export function Costs() {
                 </div>
               ) : null}
 
-              <div className="grid gap-4 xl:grid-cols-[1.3fr,1fr]">
+              <div classИмя="grid gap-4 xl:grid-cols-[1.3fr,1fr]">
                 <Card>
-                  <CardHeader className="px-5 pt-5 pb-2">
-                    <CardTitle className="text-base">Inference ledger</CardTitle>
-                    <CardDescription>
+                  <CardHeader classИмя="px-5 pt-5 pb-2">
+                    <CardНазвание classИмя="text-base">Inference ledger</CardНазвание>
+                    <CardОписание>
                       Request-scoped inference spend for the selected period.
-                    </CardDescription>
+                    </CardОписание>
                   </CardHeader>
-                  <CardContent className="space-y-4 px-5 pb-5 pt-2">
-                    <div className="flex flex-wrap items-end justify-between gap-3">
+                  <CardContent classИмя="space-y-4 px-5 pb-5 pt-2">
+                    <div classИмя="flex flex-wrap items-end justify-between gap-3">
                       <div>
-                        <div className="text-3xl font-semibold tabular-nums">
+                        <div classИмя="text-3xl font-semibold tabular-nums">
                           {formatCents(spendData?.summary.spendCents ?? 0)}
                         </div>
-                        <div className="mt-1 text-sm text-muted-foreground">
+                        <div classИмя="mt-1 text-sm text-muted-foreground">
                           {spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
-                            ? `Budget ${formatCents(spendData.summary.budgetCents)}`
-                            : "Unlimited budget"}
+                            ? `Бюджет ${formatCents(spendData.summary.budgetCents)}`
+                            : "Безлимит budget"}
                         </div>
                       </div>
-                      <div className="border border-border px-4 py-3 text-right">
-                        <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">usage</div>
-                        <div className="mt-1 text-lg font-medium tabular-nums">
-                          {formatTokens(inferenceTokenTotal)}
+                      <div classИмя="border border-border px-4 py-3 text-right">
+                        <div classИмя="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">usage</div>
+                        <div classИмя="mt-1 text-lg font-medium tabular-nums">
+                          {formatТокенs(inferenceТокенTotal)}
                         </div>
                       </div>
                     </div>
                     {spendData?.summary.budgetCents && spendData.summary.budgetCents > 0 ? (
-                      <div className="space-y-2">
-                        <div className="h-2 overflow-hidden bg-muted">
+                      <div classИмя="space-y-2">
+                        <div classИмя="h-2 overflow-hidden bg-muted">
                           <div
-                            className={cn(
+                            classИмя={cn(
                               "h-full transition-[width,background-color] duration-150",
                               spendData.summary.utilizationPercent > 90
                                 ? "bg-red-400"
@@ -696,7 +696,7 @@ export function Costs() {
                             style={{ width: `${Math.min(100, spendData.summary.utilizationPercent)}%` }}
                           />
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div classИмя="text-xs text-muted-foreground">
                           {spendData.summary.utilizationPercent}% of monthly budget consumed in this range.
                         </div>
                       </div>
@@ -713,48 +713,48 @@ export function Costs() {
                 />
               </div>
 
-              <div className="grid gap-4 xl:grid-cols-[1.25fr,0.95fr]">
+              <div classИмя="grid gap-4 xl:grid-cols-[1.25fr,0.95fr]">
                 <Card>
-                  <CardHeader className="px-5 pt-5 pb-2">
-                    <CardTitle className="text-base">By agent</CardTitle>
-                    <CardDescription>What each agent consumed in the selected period.</CardDescription>
+                  <CardHeader classИмя="px-5 pt-5 pb-2">
+                    <CardНазвание classИмя="text-base">By agent</CardНазвание>
+                    <CardОписание>What each agent consumed in the selected period.</CardОписание>
                   </CardHeader>
-                  <CardContent className="space-y-2 px-5 pb-5 pt-2">
-                    {(spendData?.byAgent.length ?? 0) === 0 ? (
-                      <p className="text-sm text-muted-foreground">No cost events yet.</p>
+                  <CardContent classИмя="space-y-2 px-5 pb-5 pt-2">
+                    {(spendData?.byАгент.length ?? 0) === 0 ? (
+                      <p classИмя="text-sm text-muted-foreground">Нет cost events yet.</p>
                     ) : (
-                      spendData?.byAgent.map((row) => {
-                        const modelRows = agentModelRows.get(row.agentId) ?? [];
-                        const isExpanded = expandedAgents.has(row.agentId);
+                      spendData?.byАгент.map((row) => {
+                        const modelRows = agentМодельRows.get(row.agentId) ?? [];
+                        const isExpanded = expandedАгенты.has(row.agentId);
                         const hasBreakdown = modelRows.length > 0;
                         return (
-                          <div key={row.agentId} className="border border-border px-4 py-3">
+                          <div key={row.agentId} classИмя="border border-border px-4 py-3">
                             <div
-                              className={cn("flex items-start justify-between gap-3", hasBreakdown ? "cursor-pointer select-none" : "")}
-                              onClick={() => hasBreakdown && toggleAgent(row.agentId)}
+                              classИмя={cn("flex items-start justify-between gap-3", hasBreakdown ? "cursor-pointer select-none" : "")}
+                              onClick={() => hasBreakdown && toggleАгент(row.agentId)}
                             >
-                              <div className="flex min-w-0 items-center gap-2">
+                              <div classИмя="flex min-w-0 items-center gap-2">
                                 {hasBreakdown ? (
                                   isExpanded
-                                    ? <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
-                                    : <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                    ? <ChevronDown classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
+                                    : <ChevronRight classИмя="h-3 w-3 shrink-0 text-muted-foreground" />
                                 ) : (
-                                  <span className="h-3 w-3 shrink-0" />
+                                  <span classИмя="h-3 w-3 shrink-0" />
                                 )}
-                                <Identity name={row.agentName ?? row.agentId} size="sm" />
-                                {row.agentStatus === "terminated" ? <StatusBadge status="terminated" /> : null}
+                                <Identity name={row.agentИмя ?? row.agentId} size="sm" />
+                                {row.agentСтатус === "terminated" ? <СтатусBadge status="terminated" /> : null}
                               </div>
-                              <div className="text-right text-sm tabular-nums">
-                                <div className="font-medium">{formatCents(row.costCents)}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  in {formatTokens(row.inputTokens + row.cachedInputTokens)} · out {formatTokens(row.outputTokens)}
+                              <div classИмя="text-right text-sm tabular-nums">
+                                <div classИмя="font-medium">{formatCents(row.costCents)}</div>
+                                <div classИмя="text-xs text-muted-foreground">
+                                  in {formatТокенs(row.inputТокенs + row.cachedInputТокенs)} · out {formatТокенs(row.outputТокенs)}
                                 </div>
-                                {(row.apiRunCount > 0 || row.subscriptionRunCount > 0) ? (
-                                  <div className="text-xs text-muted-foreground">
-                                    {row.apiRunCount > 0 ? `${row.apiRunCount} api` : "0 api"}
+                                {(row.apiЗапуститьCount > 0 || row.subscriptionЗапуститьCount > 0) ? (
+                                  <div classИмя="text-xs text-muted-foreground">
+                                    {row.apiЗапуститьCount > 0 ? `${row.apiЗапуститьCount} api` : "0 api"}
                                     {" · "}
-                                    {row.subscriptionRunCount > 0
-                                      ? `${row.subscriptionRunCount} subscription`
+                                    {row.subscriptionЗапуститьCount > 0
+                                      ? `${row.subscriptionЗапуститьCount} subscription`
                                       : "0 subscription"}
                                   </div>
                                 ) : null}
@@ -762,31 +762,31 @@ export function Costs() {
                             </div>
 
                             {isExpanded && modelRows.length > 0 ? (
-                              <div className="mt-3 space-y-2 border-l border-border pl-4">
+                              <div classИмя="mt-3 space-y-2 border-l border-border pl-4">
                                 {modelRows.map((modelRow) => {
                                   const sharePct = row.costCents > 0 ? Math.round((modelRow.costCents / row.costCents) * 100) : 0;
                                   return (
                                     <div
-                                      key={`${modelRow.provider}:${modelRow.model}:${modelRow.billingType}`}
-                                      className="flex items-start justify-between gap-3 text-xs"
+                                      key={`${modelRow.provider}:${modelRow.model}:${modelRow.billingТип}`}
+                                      classИмя="flex items-start justify-between gap-3 text-xs"
                                     >
-                                      <div className="min-w-0">
-                                        <div className="truncate font-medium text-foreground">
-                                          {providerDisplayName(modelRow.provider)}
-                                          <span className="mx-1 text-border">/</span>
-                                          <span className="font-mono">{modelRow.model}</span>
+                                      <div classИмя="min-w-0">
+                                        <div classИмя="truncate font-medium text-foreground">
+                                          {providerDisplayИмя(modelRow.provider)}
+                                          <span classИмя="mx-1 text-border">/</span>
+                                          <span classИмя="font-mono">{modelRow.model}</span>
                                         </div>
-                                        <div className="truncate text-muted-foreground">
-                                          {providerDisplayName(modelRow.biller)} · {billingTypeDisplayName(modelRow.billingType)}
+                                        <div classИмя="truncate text-muted-foreground">
+                                          {providerDisplayИмя(modelRow.biller)} · {billingТипDisplayИмя(modelRow.billingТип)}
                                         </div>
                                       </div>
-                                      <div className="text-right tabular-nums">
-                                        <div className="font-medium">
+                                      <div classИмя="text-right tabular-nums">
+                                        <div classИмя="font-medium">
                                           {formatCents(modelRow.costCents)}
-                                          <span className="ml-1 font-normal text-muted-foreground">({sharePct}%)</span>
+                                          <span classИмя="ml-1 font-normal text-muted-foreground">({sharePct}%)</span>
                                         </div>
-                                        <div className="text-muted-foreground">
-                                          {formatTokens(modelRow.inputTokens + modelRow.cachedInputTokens + modelRow.outputTokens)} tok
+                                        <div classИмя="text-muted-foreground">
+                                          {formatТокенs(modelRow.inputТокенs + modelRow.cachedInputТокенs + modelRow.outputТокенs)} tok
                                         </div>
                                       </div>
                                     </div>
@@ -801,71 +801,71 @@ export function Costs() {
                   </CardContent>
                 </Card>
 
-                <div className="space-y-4">
+                <div classИмя="space-y-4">
                   <Card>
-                    <CardHeader className="px-5 pt-5 pb-2">
-                      <CardTitle className="text-base">By project</CardTitle>
-                      <CardDescription>Run costs attributed through project-linked issues.</CardDescription>
+                    <CardHeader classИмя="px-5 pt-5 pb-2">
+                      <CardНазвание classИмя="text-base">By project</CardНазвание>
+                      <CardОписание>Запустить costs attributed through project-linked issues.</CardОписание>
                     </CardHeader>
-                    <CardContent className="space-y-2 px-5 pb-5 pt-2">
+                    <CardContent classИмя="space-y-2 px-5 pb-5 pt-2">
                       {(spendData?.byProject.length ?? 0) === 0 ? (
-                        <p className="text-sm text-muted-foreground">No project-attributed run costs yet.</p>
+                        <p classИмя="text-sm text-muted-foreground">Нет project-attributed run costs yet.</p>
                       ) : (
                         spendData?.byProject.map((row, index) => (
                           <div
                             key={row.projectId ?? `unattributed-${index}`}
-                            className="flex items-center justify-between gap-3 border border-border px-3 py-2 text-sm"
+                            classИмя="flex items-center justify-between gap-3 border border-border px-3 py-2 text-sm"
                           >
-                            <span className="truncate">{row.projectName ?? row.projectId ?? "Unattributed"}</span>
-                            <span className="font-medium tabular-nums">{formatCents(row.costCents)}</span>
+                            <span classИмя="truncate">{row.projectИмя ?? row.projectId ?? "Unattributed"}</span>
+                            <span classИмя="font-medium tabular-nums">{formatCents(row.costCents)}</span>
                           </div>
                         ))
                       )}
                     </CardContent>
                   </Card>
 
-                  <FinanceTimelineCard rows={topFinanceEvents.slice(0, 6)} emptyMessage="No finance events yet. Add account-level charges once biller invoices or credits land." />
+                  <FinanceTimelineCard rows={topFinanceEvents.slice(0, 6)} emptyMessage="Нет finance events yet. Добавить account-level charges once biller invoices or credits land." />
                 </div>
               </div>
             </>
           )}
         </TabsContent>
 
-        <TabsContent value="budgets" className="mt-4 space-y-4">
-          {budgetLoading ? (
+        <TabsContent value="budgets" classИмя="mt-4 space-y-4">
+          {budgetЗагрузка ? (
             <PageSkeleton variant="costs" />
-          ) : budgetError ? (
-            <p className="text-sm text-destructive">{(budgetError as Error).message}</p>
+          ) : budgetОшибка ? (
+            <p classИмя="text-sm text-destructive">{(budgetОшибка as Ошибка).message}</p>
           ) : (
             <>
-              <Card className="border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
-                <CardHeader className="px-5 pt-5 pb-3">
-                  <CardTitle className="text-base">Budget control plane</CardTitle>
-                  <CardDescription>
-                    Hard-stop spend limits for agents and projects. Provider subscription quota stays separate and appears under Providers.
-                  </CardDescription>
+              <Card classИмя="border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
+                <CardHeader classИмя="px-5 pt-5 pb-3">
+                  <CardНазвание classИмя="text-base">Бюджет control plane</CardНазвание>
+                  <CardОписание>
+                    Hard-stop spend limits for agents and projects. Провайдер subscription quota stays separate and appears under Провайдерs.
+                  </CardОписание>
                 </CardHeader>
-                <CardContent className="grid gap-3 px-5 pb-5 pt-0 md:grid-cols-4">
+                <CardContent classИмя="grid gap-3 px-5 pb-5 pt-0 md:grid-cols-4">
                   <MetricTile
-                    label="Active incidents"
-                    value={String(activeBudgetIncidents.length)}
+                    label="Активен incidents"
+                    value={String(activeБюджетIncidents.length)}
                     subtitle="Open soft or hard threshold crossings"
                     icon={ReceiptText}
                   />
                   <MetricTile
-                    label="Pending approvals"
-                    value={String(budgetData?.pendingApprovalCount ?? 0)}
-                    subtitle="Budget override approvals awaiting board action"
+                    label="Ожидание approvals"
+                    value={String(budgetData?.pendingСогласованиеCount ?? 0)}
+                    subtitle="Бюджет override approvals awaiting board action"
                     icon={ArrowUpRight}
                   />
                   <MetricTile
-                    label="Paused agents"
-                    value={String(budgetData?.pausedAgentCount ?? 0)}
-                    subtitle="Agent heartbeats blocked by budget"
+                    label="Приостановлен agents"
+                    value={String(budgetData?.pausedАгентCount ?? 0)}
+                    subtitle="Пульс агента заблокирован (бюджет)"
                     icon={Coins}
                   />
                   <MetricTile
-                    label="Paused projects"
+                    label="Приостановлен projects"
                     value={String(budgetData?.pausedProjectCount ?? 0)}
                     subtitle="Project execution blocked by budget"
                     icon={DollarSign}
@@ -873,22 +873,22 @@ export function Costs() {
                 </CardContent>
               </Card>
 
-              {activeBudgetIncidents.length > 0 ? (
-                <div className="space-y-3">
+              {activeБюджетIncidents.length > 0 ? (
+                <div classИмя="space-y-3">
                   <div>
-                    <h2 className="text-lg font-semibold">Active incidents</h2>
-                    <p className="text-sm text-muted-foreground">
+                    <h2 classИмя="text-lg font-semibold">Активен incidents</h2>
+                    <p classИмя="text-sm text-muted-foreground">
                       Resolve hard stops here by raising the budget or explicitly keeping the scope paused.
                     </p>
                   </div>
-                  <div className="grid gap-4 xl:grid-cols-2">
-                    {activeBudgetIncidents.map((incident) => (
-                      <BudgetIncidentCard
+                  <div classИмя="grid gap-4 xl:grid-cols-2">
+                    {activeБюджетIncidents.map((incident) => (
+                      <БюджетIncidentCard
                         key={incident.id}
                         incident={incident}
-                        isMutating={incidentMutation.isPending}
-                        onKeepPaused={() => incidentMutation.mutate({ incidentId: incident.id, action: "keep_paused" })}
-                        onRaiseAndResume={(amount) =>
+                        isMutating={incidentMutation.isОжидание}
+                        onKeepПриостановлен={() => incidentMutation.mutate({ incidentId: incident.id, action: "keep_paused" })}
+                        onRaiseAndПродолжить={(amount) =>
                           incidentMutation.mutate({
                             incidentId: incident.id,
                             action: "raise_budget_and_resume",
@@ -900,31 +900,31 @@ export function Costs() {
                 </div>
               ) : null}
 
-              <div className="space-y-5">
-                {(["company", "agent", "project"] as const).map((scopeType) => {
-                  const rows = budgetPoliciesByScope[scopeType];
+              <div classИмя="space-y-5">
+                {(["company", "agent", "project"] as const).map((scopeТип) => {
+                  const rows = budgetPoliciesByОбласть[scopeТип];
                   if (rows.length === 0) return null;
                   return (
-                    <section key={scopeType} className="space-y-3">
+                    <section key={scopeТип} classИмя="space-y-3">
                       <div>
-                        <h2 className="text-lg font-semibold capitalize">{scopeType} budgets</h2>
-                        <p className="text-sm text-muted-foreground">
-                          {scopeType === "company"
-                            ? "Company-wide monthly policy."
-                            : scopeType === "agent"
+                        <h2 classИмя="text-lg font-semibold capitalize">{scopeТип} budgets</h2>
+                        <p classИмя="text-sm text-muted-foreground">
+                          {scopeТип === "company"
+                            ? "Компания-wide monthly policy."
+                            : scopeТип === "agent"
                               ? "Recurring monthly spend policies for individual agents."
                               : "Lifetime spend policies for execution-bound projects."}
                         </p>
                       </div>
-                      <div className="grid gap-4 xl:grid-cols-2">
+                      <div classИмя="grid gap-4 xl:grid-cols-2">
                         {rows.map((summary) => (
-                          <BudgetPolicyCard
+                          <БюджетPolicyCard
                             key={summary.policyId}
                             summary={summary}
-                            isSaving={policyMutation.isPending}
-                            onSave={(amount) =>
+                            isSaving={policyMutation.isОжидание}
+                            onСохранить={(amount) =>
                               policyMutation.mutate({
-                                scopeType: summary.scopeType,
+                                scopeТип: summary.scopeТип,
                                 scopeId: summary.scopeId,
                                 amount,
                                 windowKind: summary.windowKind,
@@ -938,8 +938,8 @@ export function Costs() {
 
                 {budgetPolicies.length === 0 ? (
                   <Card>
-                    <CardContent className="px-5 py-8 text-sm text-muted-foreground">
-                      No budget policies yet. Set agent and project budgets from their detail pages, or use the existing company monthly budget control.
+                    <CardContent classИмя="px-5 py-8 text-sm text-muted-foreground">
+                      Нет budget policies yet. Set agent and project budgets from their detail pages, or use the existing company monthly budget control.
                     </CardContent>
                   </Card>
                 ) : null}
@@ -948,33 +948,33 @@ export function Costs() {
           )}
         </TabsContent>
 
-        <TabsContent value="providers" className="mt-4 space-y-4">
-          {showCustomPrompt ? (
-            <p className="text-sm text-muted-foreground">Select a start and end date to load data.</p>
+        <TabsContent value="providers" classИмя="mt-4 space-y-4">
+          {showСвойPrompt ? (
+            <p classИмя="text-sm text-muted-foreground">Select a start and end date to load data.</p>
           ) : (
             <>
-              <Tabs value={effectiveProvider} onValueChange={setActiveProvider}>
-                <PageTabBar items={providerTabItems} value={effectiveProvider} />
+              <Tabs value={effectiveПровайдер} onЗначениеChange={setАктивенПровайдер}>
+                <PageTabBar items={providerTabItems} value={effectiveПровайдер} />
 
-                <TabsContent value="all" className="mt-4">
+                <TabsContent value="all" classИмя="mt-4">
                   {providers.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No cost events in this period.</p>
+                    <p classИмя="text-sm text-muted-foreground">Нет cost events in this period.</p>
                   ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div classИмя="grid gap-4 md:grid-cols-2">
                       {providers.map((provider) => (
-                        <ProviderQuotaCard
+                        <ПровайдерQuotaCard
                           key={provider}
                           provider={provider}
-                          rows={byProvider.get(provider) ?? []}
+                          rows={byПровайдер.get(provider) ?? []}
                           budgetMonthlyCents={spendData?.summary.budgetCents ?? 0}
-                          totalCompanySpendCents={spendData?.summary.spendCents ?? 0}
-                          weekSpendCents={weekSpendByProvider.get(provider) ?? 0}
-                          windowRows={windowSpendByProvider.get(provider) ?? []}
-                          showDeficitNotch={deficitNotchByProvider.get(provider) ?? false}
-                          quotaWindows={quotaWindowsByProvider.get(provider) ?? []}
-                          quotaError={quotaErrorsByProvider.get(provider) ?? null}
-                          quotaSource={quotaSourcesByProvider.get(provider) ?? null}
-                          quotaLoading={quotaLoading}
+                          totalКомпанияSpendCents={spendData?.summary.spendCents ?? 0}
+                          weekSpendCents={weekSpendByПровайдер.get(provider) ?? 0}
+                          windowRows={windowSpendByПровайдер.get(provider) ?? []}
+                          showDeficitНетtch={deficitНетtchByПровайдер.get(provider) ?? false}
+                          quotaWindows={quotaWindowsByПровайдер.get(provider) ?? []}
+                          quotaОшибка={quotaОшибкаsByПровайдер.get(provider) ?? null}
+                          quotaSource={quotaSourcesByПровайдер.get(provider) ?? null}
+                          quotaЗагрузка={quotaЗагрузка}
                         />
                       ))}
                     </div>
@@ -982,19 +982,19 @@ export function Costs() {
                 </TabsContent>
 
                 {providers.map((provider) => (
-                  <TabsContent key={provider} value={provider} className="mt-4">
-                    <ProviderQuotaCard
+                  <TabsContent key={provider} value={provider} classИмя="mt-4">
+                    <ПровайдерQuotaCard
                       provider={provider}
-                      rows={byProvider.get(provider) ?? []}
+                      rows={byПровайдер.get(provider) ?? []}
                       budgetMonthlyCents={spendData?.summary.budgetCents ?? 0}
-                      totalCompanySpendCents={spendData?.summary.spendCents ?? 0}
-                      weekSpendCents={weekSpendByProvider.get(provider) ?? 0}
-                      windowRows={windowSpendByProvider.get(provider) ?? []}
-                      showDeficitNotch={deficitNotchByProvider.get(provider) ?? false}
-                      quotaWindows={quotaWindowsByProvider.get(provider) ?? []}
-                      quotaError={quotaErrorsByProvider.get(provider) ?? null}
-                      quotaSource={quotaSourcesByProvider.get(provider) ?? null}
-                      quotaLoading={quotaLoading}
+                      totalКомпанияSpendCents={spendData?.summary.spendCents ?? 0}
+                      weekSpendCents={weekSpendByПровайдер.get(provider) ?? 0}
+                      windowRows={windowSpendByПровайдер.get(provider) ?? []}
+                      showDeficitНетtch={deficitНетtchByПровайдер.get(provider) ?? false}
+                      quotaWindows={quotaWindowsByПровайдер.get(provider) ?? []}
+                      quotaОшибка={quotaОшибкаsByПровайдер.get(provider) ?? null}
+                      quotaSource={quotaSourcesByПровайдер.get(provider) ?? null}
+                      quotaЗагрузка={quotaЗагрузка}
                     />
                   </TabsContent>
                 ))}
@@ -1003,19 +1003,19 @@ export function Costs() {
           )}
         </TabsContent>
 
-        <TabsContent value="billers" className="mt-4 space-y-4">
-          {showCustomPrompt ? (
-            <p className="text-sm text-muted-foreground">Select a start and end date to load data.</p>
+        <TabsContent value="billers" classИмя="mt-4 space-y-4">
+          {showСвойPrompt ? (
+            <p classИмя="text-sm text-muted-foreground">Select a start and end date to load data.</p>
           ) : (
             <>
-              <Tabs value={effectiveBiller} onValueChange={setActiveBiller}>
+              <Tabs value={effectiveBiller} onЗначениеChange={setАктивенBiller}>
                 <PageTabBar items={billerTabItems} value={effectiveBiller} />
 
-                <TabsContent value="all" className="mt-4">
+                <TabsContent value="all" classИмя="mt-4">
                   {billers.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No billable events in this period.</p>
+                    <p classИмя="text-sm text-muted-foreground">Нет billable events in this period.</p>
                   ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div classИмя="grid gap-4 md:grid-cols-2">
                       {billers.map((biller) => {
                         const row = (byBiller.get(biller) ?? [])[0];
                         if (!row) return null;
@@ -1026,7 +1026,7 @@ export function Costs() {
                             row={row}
                             weekSpendCents={weekSpendByBiller.get(biller) ?? 0}
                             budgetMonthlyCents={spendData?.summary.budgetCents ?? 0}
-                            totalCompanySpendCents={spendData?.summary.spendCents ?? 0}
+                            totalКомпанияSpendCents={spendData?.summary.spendCents ?? 0}
                             providerRows={providerRows}
                           />
                         );
@@ -1040,12 +1040,12 @@ export function Costs() {
                   if (!row) return null;
                   const providerRows = (providerData ?? []).filter((entry) => entry.biller === biller);
                   return (
-                    <TabsContent key={biller} value={biller} className="mt-4">
+                    <TabsContent key={biller} value={biller} classИмя="mt-4">
                       <BillerSpendCard
                         row={row}
                         weekSpendCents={weekSpendByBiller.get(biller) ?? 0}
                         budgetMonthlyCents={spendData?.summary.budgetCents ?? 0}
-                        totalCompanySpendCents={spendData?.summary.spendCents ?? 0}
+                        totalКомпанияSpendCents={spendData?.summary.spendCents ?? 0}
                         providerRows={providerRows}
                       />
                     </TabsContent>
@@ -1056,13 +1056,13 @@ export function Costs() {
           )}
         </TabsContent>
 
-        <TabsContent value="finance" className="mt-4 space-y-4">
-          {showCustomPrompt ? (
-            <p className="text-sm text-muted-foreground">Select a start and end date to load data.</p>
-          ) : financeLoading ? (
+        <TabsContent value="finance" classИмя="mt-4 space-y-4">
+          {showСвойPrompt ? (
+            <p classИмя="text-sm text-muted-foreground">Select a start and end date to load data.</p>
+          ) : financeЗагрузка ? (
             <PageSkeleton variant="costs" />
-          ) : financeError ? (
-            <p className="text-sm text-destructive">{(financeError as Error).message}</p>
+          ) : financeОшибка ? (
+            <p classИмя="text-sm text-destructive">{(financeОшибка as Ошибка).message}</p>
           ) : (
             <>
               <FinanceSummaryCard
@@ -1073,16 +1073,16 @@ export function Costs() {
                 eventCount={financeData?.summary.eventCount ?? 0}
               />
 
-              <div className="grid gap-4 xl:grid-cols-[1.2fr,0.95fr]">
-                <div className="space-y-4">
+              <div classИмя="grid gap-4 xl:grid-cols-[1.2fr,0.95fr]">
+                <div classИмя="space-y-4">
                   <Card>
-                    <CardHeader className="px-5 pt-5 pb-2">
-                      <CardTitle className="text-base">By biller</CardTitle>
-                      <CardDescription>Account-level financial events grouped by who charged or credited them.</CardDescription>
+                    <CardHeader classИмя="px-5 pt-5 pb-2">
+                      <CardНазвание classИмя="text-base">By biller</CardНазвание>
+                      <CardОписание>Аккаунт-level financial events grouped by who charged or credited them.</CardОписание>
                     </CardHeader>
-                    <CardContent className="grid gap-4 px-5 pb-5 pt-2 md:grid-cols-2">
+                    <CardContent classИмя="grid gap-4 px-5 pb-5 pt-2 md:grid-cols-2">
                       {(financeData?.byBiller.length ?? 0) === 0 ? (
-                        <p className="text-sm text-muted-foreground">No finance events yet.</p>
+                        <p classИмя="text-sm text-muted-foreground">Нет finance events yet.</p>
                       ) : (
                         financeData?.byBiller.map((row) => <FinanceBillerCard key={row.biller} row={row} />)
                       )}

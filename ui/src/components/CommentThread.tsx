@@ -1,42 +1,42 @@
 import { memo, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type {
-  Agent,
-  Approval,
+  Агент,
+  Согласование,
   FeedbackDataSharingPreference,
   FeedbackVote,
-  FeedbackVoteValue,
-  IssueComment,
+  FeedbackVoteЗначение,
+  ЗадачаComment,
 } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Check, Copy, Paperclip } from "lucide-react";
+import { ArrowRight, Check, Копировать, Paperclip } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Identity } from "./Identity";
 import { InlineEntitySelector, type InlineEntityOption } from "./InlineEntitySelector";
 import { MarkdownBody } from "./MarkdownBody";
-import { MarkdownEditor, type MarkdownEditorRef, type MentionOption } from "./MarkdownEditor";
+import { MarkdownИзменитьor, type MarkdownИзменитьorRef, type MentionOption } from "./MarkdownИзменитьor";
 import { OutputFeedbackButtons } from "./OutputFeedbackButtons";
-import { ApprovalCard } from "./ApprovalCard";
-import { AgentIcon } from "./AgentIconPicker";
-import { formatAssigneeUserLabel } from "../lib/assignees";
-import { formatTimelineWorkspaceLabel, type IssueTimelineAssignee, type IssueTimelineEvent } from "../lib/issue-timeline-events";
+import { СогласованиеCard } from "./СогласованиеCard";
+import { АгентIcon } from "./АгентIconPicker";
+import { formatИсполнительUserLabel } from "../lib/assignees";
+import { formatTimelineРабочая областьLabel, type ЗадачаTimelineИсполнитель, type ЗадачаTimelineEvent } from "../lib/issue-timeline-events";
 import { timeAgo } from "../lib/timeAgo";
 import { cn, formatDateTime } from "../lib/utils";
-import { restoreSubmittedCommentDraft } from "../lib/comment-submit-draft";
+import { restoreОтправитьtedCommentЧерновик } from "../lib/comment-submit-draft";
 import { PluginSlotOutlet } from "@/plugins/slots";
 
-interface CommentWithRunMeta extends IssueComment {
+interface CommentWithЗапуститьMeta extends ЗадачаComment {
   runId?: string | null;
-  runAgentId?: string | null;
+  runАгентId?: string | null;
   clientId?: string;
-  clientStatus?: "pending" | "queued";
+  clientСтатус?: "pending" | "queued";
   queueState?: "queued";
-  queueTargetRunId?: string | null;
+  queueЦельЗапуститьId?: string | null;
   followUpRequested?: boolean;
 }
 
-interface LinkedRunItem {
+interface LinkedЗапуститьItem {
   runId: string;
   status: string;
   agentId: string;
@@ -53,92 +53,92 @@ interface LinkedRunItem {
     leasePolicy: string;
     provider: string | null;
     providerLeaseId: string | null;
-    executionWorkspaceId: string | null;
-    workspacePath: string | null;
+    executionРабочая областьId: string | null;
+    workspaceПуть: string | null;
     failureReason: string | null;
-    cleanupStatus: string | null;
+    cleanupСтатус: string | null;
   } | null;
   finishedAt?: Date | string | null;
 }
 
 interface CommentReassignment {
-  assigneeAgentId: string | null;
+  assigneeАгентId: string | null;
   assigneeUserId: string | null;
 }
 
 interface CommentThreadProps {
-  comments: CommentWithRunMeta[];
-  queuedComments?: CommentWithRunMeta[];
-  linkedApprovals?: Approval[];
+  comments: CommentWithЗапуститьMeta[];
+  queuedКомментарии?: CommentWithЗапуститьMeta[];
+  linkedСогласования?: Согласование[];
   feedbackVotes?: FeedbackVote[];
   feedbackDataSharingPreference?: FeedbackDataSharingPreference;
   feedbackTermsUrl?: string | null;
-  linkedRuns?: LinkedRunItem[];
-  timelineEvents?: IssueTimelineEvent[];
+  linkedЗапуститьs?: LinkedЗапуститьItem[];
+  timelineEvents?: ЗадачаTimelineEvent[];
   companyId?: string | null;
   projectId?: string | null;
-  onApproveApproval?: (approvalId: string) => Promise<void>;
-  onRejectApproval?: (approvalId: string) => Promise<void>;
-  pendingApprovalAction?: {
+  onОдобритьСогласование?: (approvalId: string) => Promise<void>;
+  onОтклонитьСогласование?: (approvalId: string) => Promise<void>;
+  pendingСогласованиеAction?: {
     approvalId: string;
     action: "approve" | "reject";
   } | null;
   onVote?: (
     commentId: string,
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     options?: { allowSharing?: boolean; reason?: string },
   ) => Promise<void>;
-  onAdd: (body: string, reopen?: boolean, reassignment?: CommentReassignment) => Promise<void>;
-  issueStatus?: string;
-  agentMap?: Map<string, Agent>;
+  onДобавить: (body: string, reopen?: boolean, reassignment?: CommentReassignment) => Promise<void>;
+  issueСтатус?: string;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
-  imageUploadHandler?: (file: File) => Promise<string>;
+  imageЗагрузитьHandler?: (file: File) => Promise<string>;
   /** Callback to attach an image file to the parent issue (not inline in a comment). */
   onAttachImage?: (file: File) => Promise<void>;
-  draftKey?: string;
-  liveRunSlot?: React.ReactNode;
+  draftКлюч?: string;
+  liveЗапуститьSlot?: React.ReactНетde;
   enableReassign?: boolean;
   reassignOptions?: InlineEntityOption[];
-  currentAssigneeValue?: string;
-  suggestedAssigneeValue?: string;
+  currentИсполнительЗначение?: string;
+  suggestedИсполнительЗначение?: string;
   mentions?: MentionOption[];
   onInterruptQueued?: (runId: string) => Promise<void>;
-  interruptingQueuedRunId?: string | null;
-  composerDisabledReason?: string | null;
+  interruptingQueuedЗапуститьId?: string | null;
+  composerОтключитьdReason?: string | null;
 }
 
 const DRAFT_DEBOUNCE_MS = 800;
 
-function loadDraft(draftKey: string): string {
+function loadЧерновик(draftКлюч: string): string {
   try {
-    return localStorage.getItem(draftKey) ?? "";
+    return localStorage.getItem(draftКлюч) ?? "";
   } catch {
     return "";
   }
 }
 
-function saveDraft(draftKey: string, value: string) {
+function saveЧерновик(draftКлюч: string, value: string) {
   try {
     if (value.trim()) {
-      localStorage.setItem(draftKey, value);
+      localStorage.setItem(draftКлюч, value);
     } else {
-      localStorage.removeItem(draftKey);
+      localStorage.removeItem(draftКлюч);
     }
   } catch {
     // Ignore localStorage failures.
   }
 }
 
-function clearDraft(draftKey: string) {
+function clearЧерновик(draftКлюч: string) {
   try {
-    localStorage.removeItem(draftKey);
+    localStorage.removeItem(draftКлюч);
   } catch {
     // Ignore localStorage failures.
   }
 }
 
-function BreakablePath({ text }: { text: string }) {
-  const parts: React.ReactNode[] = [];
+function BreakableПуть({ text }: { text: string }) {
+  const parts: React.ReactНетde[] = [];
   const segments = text.split(/(?<=[\/-])/);
   for (let i = 0; i < segments.length; i++) {
     if (i > 0) parts.push(<wbr key={i} />);
@@ -149,59 +149,59 @@ function BreakablePath({ text }: { text: string }) {
 
 function parseReassignment(target: string): CommentReassignment | null {
   if (!target || target === "__none__") {
-    return { assigneeAgentId: null, assigneeUserId: null };
+    return { assigneeАгентId: null, assigneeUserId: null };
   }
   if (target.startsWith("agent:")) {
-    const assigneeAgentId = target.slice("agent:".length);
-    return assigneeAgentId ? { assigneeAgentId, assigneeUserId: null } : null;
+    const assigneeАгентId = target.slice("agent:".length);
+    return assigneeАгентId ? { assigneeАгентId, assigneeUserId: null } : null;
   }
   if (target.startsWith("user:")) {
     const assigneeUserId = target.slice("user:".length);
-    return assigneeUserId ? { assigneeAgentId: null, assigneeUserId } : null;
+    return assigneeUserId ? { assigneeАгентId: null, assigneeUserId } : null;
   }
   return null;
 }
 
-function shouldImplicitlyReopenComment(issueStatus: string | undefined, assigneeValue: string) {
-  const resumesToTodo = issueStatus === "done" || issueStatus === "cancelled" || issueStatus === "blocked";
-  return resumesToTodo && assigneeValue.startsWith("agent:");
+function shouldImplicitlyReopenComment(issueСтатус: string | undefined, assigneeЗначение: string) {
+  const resumesToTodo = issueСтатус === "done" || issueСтатус === "cancelled" || issueСтатус === "blocked";
+  return resumesToTodo && assigneeЗначение.startsWith("agent:");
 }
 
-function humanizeValue(value: string | null): string {
-  if (!value) return "None";
+function humanizeЗначение(value: string | null): string {
+  if (!value) return "Нет";
   return value.replace(/_/g, " ");
 }
 
-function formatTimelineAssigneeLabel(
-  assignee: IssueTimelineAssignee,
-  agentMap?: Map<string, Agent>,
+function formatTimelineИсполнительLabel(
+  assignee: ЗадачаTimelineИсполнитель,
+  agentMap?: Map<string, Агент>,
   currentUserId?: string | null,
 ) {
   if (assignee.agentId) {
     return agentMap?.get(assignee.agentId)?.name ?? assignee.agentId.slice(0, 8);
   }
   if (assignee.userId) {
-    return formatAssigneeUserLabel(assignee.userId, currentUserId) ?? "Board";
+    return formatИсполнительUserLabel(assignee.userId, currentUserId) ?? "Совет";
   }
-  return "Unassigned";
+  return "Не назначен";
 }
 
-function formatTimelineActorName(
-  actorType: IssueTimelineEvent["actorType"],
+function formatTimelineActorИмя(
+  actorТип: ЗадачаTimelineEvent["actorТип"],
   actorId: string,
-  agentMap?: Map<string, Agent>,
+  agentMap?: Map<string, Агент>,
   currentUserId?: string | null,
 ) {
-  if (actorType === "agent") {
+  if (actorТип === "agent") {
     return agentMap?.get(actorId)?.name ?? actorId.slice(0, 8);
   }
-  if (actorType === "system") {
+  if (actorТип === "system") {
     return "System";
   }
-  return formatAssigneeUserLabel(actorId, currentUserId) ?? "Board";
+  return formatИсполнительUserLabel(actorId, currentUserId) ?? "Совет";
 }
 
-function initialsForName(name: string) {
+function initialsForИмя(name: string) {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -209,7 +209,7 @@ function initialsForName(name: string) {
   return name.slice(0, 2).toUpperCase();
 }
 
-function formatRunStatusLabel(status: string) {
+function formatЗапуститьСтатусLabel(status: string) {
   switch (status) {
     case "timed_out":
       return "timed out";
@@ -218,11 +218,11 @@ function formatRunStatusLabel(status: string) {
   }
 }
 
-function runTimestamp(run: LinkedRunItem) {
+function runTimestamp(run: LinkedЗапуститьItem) {
   return run.finishedAt ?? run.startedAt ?? run.createdAt;
 }
 
-function runStatusClass(status: string) {
+function runСтатусClass(status: string) {
   switch (status) {
     case "succeeded":
       return "text-green-700 dark:text-green-300";
@@ -257,16 +257,16 @@ async function copyTextWithFallback(text: string) {
 
   try {
     textarea.select();
-    const success = document.execCommand("copy");
-    if (!success) throw new Error("execCommand copy failed");
+    const success = document.execКоманда("copy");
+    if (!success) throw new Ошибка("execКоманда copy failed");
   } finally {
     document.body.removeChild(textarea);
   }
 }
 
-function CopyMarkdownButton({ text }: { text: string }) {
-  const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+function КопироватьMarkdownButton({ text }: { text: string }) {
+  const [status, setСтатус] = useState<"idle" | "copied" | "failed">("idle");
+  const timeoutRef = useRef<ReturnТип<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
     if (timeoutRef.current) {
@@ -274,12 +274,12 @@ function CopyMarkdownButton({ text }: { text: string }) {
     }
   }, []);
 
-  const label = status === "copied" ? "Copied" : status === "failed" ? "Copy failed" : "Copy";
+  const label = status === "copied" ? "Copied" : status === "failed" ? "Копировать failed" : "Копировать";
 
   return (
     <button
       type="button"
-      className={cn(
+      classИмя={cn(
         "inline-flex min-h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors",
         status === "copied"
           ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300"
@@ -288,24 +288,24 @@ function CopyMarkdownButton({ text }: { text: string }) {
             : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
       )}
       title={label}
-      aria-label="Copy comment as markdown"
+      aria-label="Копировать comment as markdown"
       onClick={() => {
         void copyTextWithFallback(text)
-          .then(() => setStatus("copied"))
-          .catch(() => setStatus("failed"));
+          .then(() => setСтатус("copied"))
+          .catch(() => setСтатус("failed"));
 
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
         }
         timeoutRef.current = setTimeout(() => {
-          setStatus("idle");
+          setСтатус("idle");
           timeoutRef.current = null;
         }, 1500);
       }}
     >
-      {status === "copied" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-      <span className="sm:hidden">{label}</span>
-      <span className="sr-only" aria-live="polite">
+      {status === "copied" ? <Check classИмя="h-3.5 w-3.5" /> : <Копировать classИмя="h-3.5 w-3.5" />}
+      <span classИмя="sm:hidden">{label}</span>
+      <span classИмя="sr-only" aria-live="polite">
         {label}
       </span>
     </button>
@@ -325,142 +325,142 @@ function CommentCard({
   highlightCommentId,
   queued = false,
 }: {
-  comment: CommentWithRunMeta;
-  agentMap?: Map<string, Agent>;
+  comment: CommentWithЗапуститьMeta;
+  agentMap?: Map<string, Агент>;
   companyId?: string | null;
   projectId?: string | null;
-  feedbackVote?: FeedbackVoteValue | null;
+  feedbackVote?: FeedbackVoteЗначение | null;
   feedbackDataSharingPreference?: FeedbackDataSharingPreference;
   feedbackTermsUrl?: string | null;
   onVote?: (
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     options?: { allowSharing?: boolean; reason?: string },
   ) => Promise<void>;
   voting?: boolean;
   highlightCommentId?: string | null;
   queued?: boolean;
 }) {
-  const isHighlighted = highlightCommentId === comment.id;
-  const isPending = comment.clientStatus === "pending";
-  const isQueued = queued || comment.queueState === "queued" || comment.clientStatus === "queued";
+  const isВысокийlighted = highlightCommentId === comment.id;
+  const isОжидание = comment.clientСтатус === "pending";
+  const isQueued = queued || comment.queueState === "queued" || comment.clientСтатус === "queued";
   const followUpRequested = comment.followUpRequested === true;
 
   return (
     <div
       key={comment.id}
       id={`comment-${comment.id}`}
-      className={`border p-3 overflow-hidden min-w-0 rounded-sm transition-colors duration-1000 ${
+      classИмя={`border p-3 overflow-hidden min-w-0 rounded-sm transition-colors duration-1000 ${
         isQueued
           ? "border-amber-300/70 bg-amber-50/70 dark:border-amber-500/40 dark:bg-amber-500/10"
-          : isHighlighted
+          : isВысокийlighted
             ? "border-primary/50 bg-primary/5"
             : "border-border"
-      } ${isPending ? "opacity-80" : ""}`}
+      } ${isОжидание ? "opacity-80" : ""}`}
     >
-      <div className="flex items-center justify-between mb-1">
-        {comment.authorAgentId ? (
-          <Link to={`/agents/${comment.authorAgentId}`} className="hover:underline">
+      <div classИмя="flex items-center justify-between mb-1">
+        {comment.authorАгентId ? (
+          <Link to={`/agents/${comment.authorАгентId}`} classИмя="hover:underline">
             <Identity
-              name={agentMap?.get(comment.authorAgentId)?.name ?? comment.authorAgentId.slice(0, 8)}
+              name={agentMap?.get(comment.authorАгентId)?.name ?? comment.authorАгентId.slice(0, 8)}
               size="sm"
             />
           </Link>
         ) : (
           <Identity name="You" size="sm" />
         )}
-        <span className="flex items-center gap-1.5">
+        <span classИмя="flex items-center gap-1.5">
           {isQueued ? (
-            <span className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/20 dark:text-amber-200">
+            <span classИмя="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/20 dark:text-amber-200">
               Queued
             </span>
           ) : null}
           {followUpRequested ? (
-            <Badge variant="outline" className="text-[10px] uppercase tracking-[0.14em]">
+            <Badge variant="outline" classИмя="text-[10px] uppercase tracking-[0.14em]">
               Follow-up
             </Badge>
           ) : null}
-          {companyId && !isPending ? (
+          {companyId && !isОжидание ? (
             <PluginSlotOutlet
-              slotTypes={["commentContextMenuItem"]}
-              entityType="comment"
+              slotТипs={["commentContextMenuItem"]}
+              entityТип="comment"
               context={{
                 companyId,
                 projectId: projectId ?? null,
                 entityId: comment.id,
-                entityType: "comment",
+                entityТип: "comment",
                 parentEntityId: comment.issueId,
               }}
-              className="flex flex-wrap items-center gap-1.5"
-              itemClassName="inline-flex"
+              classИмя="flex flex-wrap items-center gap-1.5"
+              itemClassИмя="inline-flex"
               missingBehavior="placeholder"
             />
           ) : null}
-          {isPending ? (
-            <span className="text-xs text-muted-foreground">{isQueued ? "Queueing..." : "Sending..."}</span>
+          {isОжидание ? (
+            <span classИмя="text-xs text-muted-foreground">{isQueued ? "Queueing..." : "Отправитьing..."}</span>
           ) : (
             <a
               href={`#comment-${comment.id}`}
-              className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors"
+              classИмя="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors"
             >
               {formatDateTime(comment.createdAt)}
             </a>
           )}
-          <CopyMarkdownButton text={comment.body} />
+          <КопироватьMarkdownButton text={comment.body} />
         </span>
       </div>
-      <MarkdownBody className="text-sm" softBreaks>{comment.body}</MarkdownBody>
-      {companyId && !isPending ? (
-        <div className="mt-2 space-y-2">
+      <MarkdownBody classИмя="text-sm" softBreaks>{comment.body}</MarkdownBody>
+      {companyId && !isОжидание ? (
+        <div classИмя="mt-2 space-y-2">
           <PluginSlotOutlet
-            slotTypes={["commentAnnotation"]}
-            entityType="comment"
+            slotТипs={["commentAnnotation"]}
+            entityТип="comment"
             context={{
               companyId,
               projectId: projectId ?? null,
               entityId: comment.id,
-              entityType: "comment",
+              entityТип: "comment",
               parentEntityId: comment.issueId,
             }}
-            className="space-y-2"
-            itemClassName="rounded-md"
+            classИмя="space-y-2"
+            itemClassИмя="rounded-md"
             missingBehavior="placeholder"
           />
         </div>
       ) : null}
-      {comment.authorAgentId && onVote && !isQueued && !isPending ? (
+      {comment.authorАгентId && onVote && !isQueued && !isОжидание ? (
         <OutputFeedbackButtons
           activeVote={feedbackVote}
           disabled={voting}
           sharingPreference={feedbackDataSharingPreference}
           termsUrl={feedbackTermsUrl}
           onVote={onVote}
-          rightSlot={comment.runId && !isPending ? (
-            comment.runAgentId ? (
+          rightSlot={comment.runId && !isОжидание ? (
+            comment.runАгентId ? (
               <Link
-                to={`/agents/${comment.runAgentId}/runs/${comment.runId}`}
-                className="inline-flex items-center rounded-md border border-border bg-accent/30 px-2 py-1 text-[10px] font-mono text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                to={`/agents/${comment.runАгентId}/runs/${comment.runId}`}
+                classИмя="inline-flex items-center rounded-md border border-border bg-accent/30 px-2 py-1 text-[10px] font-mono text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
               >
                 run {comment.runId.slice(0, 8)}
               </Link>
             ) : (
-              <span className="inline-flex items-center rounded-md border border-border bg-accent/30 px-2 py-1 text-[10px] font-mono text-muted-foreground">
+              <span classИмя="inline-flex items-center rounded-md border border-border bg-accent/30 px-2 py-1 text-[10px] font-mono text-muted-foreground">
                 run {comment.runId.slice(0, 8)}
               </span>
             )
           ) : undefined}
         />
       ) : null}
-      {comment.runId && !isPending && !(comment.authorAgentId && onVote && !isQueued) ? (
-        <div className="mt-3 pt-3 border-t border-border/60">
-          {comment.runAgentId ? (
+      {comment.runId && !isОжидание && !(comment.authorАгентId && onVote && !isQueued) ? (
+        <div classИмя="mt-3 pt-3 border-t border-border/60">
+          {comment.runАгентId ? (
             <Link
-              to={`/agents/${comment.runAgentId}/runs/${comment.runId}`}
-              className="inline-flex items-center rounded-md border border-border bg-accent/30 px-2 py-1 text-[10px] font-mono text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+              to={`/agents/${comment.runАгентId}/runs/${comment.runId}`}
+              classИмя="inline-flex items-center rounded-md border border-border bg-accent/30 px-2 py-1 text-[10px] font-mono text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
             >
               run {comment.runId.slice(0, 8)}
             </Link>
           ) : (
-            <span className="inline-flex items-center rounded-md border border-border bg-accent/30 px-2 py-1 text-[10px] font-mono text-muted-foreground">
+            <span classИмя="inline-flex items-center rounded-md border border-border bg-accent/30 px-2 py-1 text-[10px] font-mono text-muted-foreground">
               run {comment.runId.slice(0, 8)}
             </span>
           )}
@@ -471,82 +471,82 @@ function CommentCard({
 }
 
 type TimelineItem =
-  | { kind: "comment"; id: string; createdAtMs: number; comment: CommentWithRunMeta }
-  | { kind: "approval"; id: string; createdAtMs: number; approval: Approval }
-  | { kind: "event"; id: string; createdAtMs: number; event: IssueTimelineEvent }
-  | { kind: "run"; id: string; createdAtMs: number; run: LinkedRunItem };
+  | { kind: "comment"; id: string; createdAtMs: number; comment: CommentWithЗапуститьMeta }
+  | { kind: "approval"; id: string; createdAtMs: number; approval: Согласование }
+  | { kind: "event"; id: string; createdAtMs: number; event: ЗадачаTimelineEvent }
+  | { kind: "run"; id: string; createdAtMs: number; run: LinkedЗапуститьItem };
 
 function TimelineEventCard({
   event,
   agentMap,
   currentUserId,
 }: {
-  event: IssueTimelineEvent;
-  agentMap?: Map<string, Agent>;
+  event: ЗадачаTimelineEvent;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
 }) {
-  const actorName = formatTimelineActorName(event.actorType, event.actorId, agentMap, currentUserId);
+  const actorИмя = formatTimelineActorИмя(event.actorТип, event.actorId, agentMap, currentUserId);
   const actionLabel = event.followUpRequested ? "requested follow-up" : "updated this task";
 
   return (
-    <div id={`activity-${event.id}`} className="flex items-start gap-2.5 py-1.5">
-      <Avatar size="sm" className="mt-0.5">
-        <AvatarFallback>{initialsForName(actorName)}</AvatarFallback>
+    <div id={`activity-${event.id}`} classИмя="flex items-start gap-2.5 py-1.5">
+      <Avatar size="sm" classИмя="mt-0.5">
+        <AvatarFallback>{initialsForИмя(actorИмя)}</AvatarFallback>
       </Avatar>
 
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm">
-          <span className="font-medium text-foreground">{actorName}</span>
-          <span className="text-muted-foreground">{actionLabel}</span>
+      <div classИмя="min-w-0 flex-1 space-y-1.5">
+        <div classИмя="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm">
+          <span classИмя="font-medium text-foreground">{actorИмя}</span>
+          <span classИмя="text-muted-foreground">{actionLabel}</span>
           <a
             href={`#activity-${event.id}`}
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
+            classИмя="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
           >
             {timeAgo(event.createdAt)}
           </a>
         </div>
 
         {event.statusChange ? (
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="w-14 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Status
+          <div classИмя="flex flex-wrap items-center gap-2 text-sm">
+            <span classИмя="w-14 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Статус
             </span>
-            <span className="text-muted-foreground">
-              {humanizeValue(event.statusChange.from)}
+            <span classИмя="text-muted-foreground">
+              {humanizeЗначение(event.statusChange.from)}
             </span>
-            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium text-foreground">
-              {humanizeValue(event.statusChange.to)}
+            <ArrowRight classИмя="h-3.5 w-3.5 text-muted-foreground" />
+            <span classИмя="font-medium text-foreground">
+              {humanizeЗначение(event.statusChange.to)}
             </span>
           </div>
         ) : null}
 
         {event.assigneeChange ? (
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="w-14 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Assignee
+          <div classИмя="flex flex-wrap items-center gap-2 text-sm">
+            <span classИмя="w-14 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Исполнитель
             </span>
-            <span className="text-muted-foreground">
-              {formatTimelineAssigneeLabel(event.assigneeChange.from, agentMap, currentUserId)}
+            <span classИмя="text-muted-foreground">
+              {formatTimelineИсполнительLabel(event.assigneeChange.from, agentMap, currentUserId)}
             </span>
-            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium text-foreground">
-              {formatTimelineAssigneeLabel(event.assigneeChange.to, agentMap, currentUserId)}
+            <ArrowRight classИмя="h-3.5 w-3.5 text-muted-foreground" />
+            <span classИмя="font-medium text-foreground">
+              {formatTimelineИсполнительLabel(event.assigneeChange.to, agentMap, currentUserId)}
             </span>
           </div>
         ) : null}
 
         {event.workspaceChange ? (
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="w-14 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Workspace
+          <div classИмя="flex flex-wrap items-center gap-2 text-sm">
+            <span classИмя="w-14 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Рабочая область
             </span>
-            <span className="text-muted-foreground">
-              {formatTimelineWorkspaceLabel(event.workspaceChange.from)}
+            <span classИмя="text-muted-foreground">
+              {formatTimelineРабочая областьLabel(event.workspaceChange.from)}
             </span>
-            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium text-foreground">
-              {formatTimelineWorkspaceLabel(event.workspaceChange.to)}
+            <ArrowRight classИмя="h-3.5 w-3.5 text-muted-foreground" />
+            <span classИмя="font-medium text-foreground">
+              {formatTimelineРабочая областьLabel(event.workspaceChange.to)}
             </span>
           </div>
         ) : null}
@@ -561,44 +561,44 @@ const TimelineList = memo(function TimelineList({
   currentUserId,
   companyId,
   projectId,
-  onApproveApproval,
-  onRejectApproval,
-  pendingApprovalAction,
-  feedbackVoteByTargetId,
+  onОдобритьСогласование,
+  onОтклонитьСогласование,
+  pendingСогласованиеAction,
+  feedbackVoteByЦельId,
   feedbackDataSharingPreference = "prompt",
   feedbackTermsUrl = null,
   onVote,
-  votingTargetId,
+  votingЦельId,
   highlightCommentId,
 }: {
   timeline: TimelineItem[];
-  agentMap?: Map<string, Agent>;
+  agentMap?: Map<string, Агент>;
   currentUserId?: string | null;
   companyId?: string | null;
   projectId?: string | null;
-  onApproveApproval?: (approvalId: string) => Promise<void>;
-  onRejectApproval?: (approvalId: string) => Promise<void>;
-  pendingApprovalAction?: {
+  onОдобритьСогласование?: (approvalId: string) => Promise<void>;
+  onОтклонитьСогласование?: (approvalId: string) => Promise<void>;
+  pendingСогласованиеAction?: {
     approvalId: string;
     action: "approve" | "reject";
   } | null;
-  feedbackVoteByTargetId?: Map<string, FeedbackVoteValue>;
+  feedbackVoteByЦельId?: Map<string, FeedbackVoteЗначение>;
   feedbackDataSharingPreference?: FeedbackDataSharingPreference;
   feedbackTermsUrl?: string | null;
   onVote?: (
     commentId: string,
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     options?: { allowSharing?: boolean; reason?: string },
   ) => Promise<void>;
-  votingTargetId?: string | null;
+  votingЦельId?: string | null;
   highlightCommentId?: string | null;
 }) {
   if (timeline.length === 0) {
-    return <p className="text-sm text-muted-foreground">No timeline entries yet.</p>;
+    return <p classИмя="text-sm text-muted-foreground">Нет timeline entries yet.</p>;
   }
 
   return (
-    <div className="space-y-3">
+    <div classИмя="space-y-3">
       {timeline.map((item) => {
         if (item.kind === "event") {
           return (
@@ -613,17 +613,17 @@ const TimelineList = memo(function TimelineList({
 
         if (item.kind === "approval") {
           const approval = item.approval;
-          const isPending = pendingApprovalAction?.approvalId === approval.id;
+          const isОжидание = pendingСогласованиеAction?.approvalId === approval.id;
           return (
-            <div id={`approval-${approval.id}`} key={`approval:${approval.id}`} className="py-1.5">
-              <ApprovalCard
+            <div id={`approval-${approval.id}`} key={`approval:${approval.id}`} classИмя="py-1.5">
+              <СогласованиеCard
                 approval={approval}
-                requesterAgent={approval.requestedByAgentId ? agentMap?.get(approval.requestedByAgentId) ?? null : null}
-                onApprove={onApproveApproval ? () => void onApproveApproval(approval.id) : undefined}
-                onReject={onRejectApproval ? () => void onRejectApproval(approval.id) : undefined}
+                requesterАгент={approval.requestedByАгентId ? agentMap?.get(approval.requestedByАгентId) ?? null : null}
+                onОдобрить={onОдобритьСогласование ? () => void onОдобритьСогласование(approval.id) : undefined}
+                onОтклонить={onОтклонитьСогласование ? () => void onОтклонитьСогласование(approval.id) : undefined}
                 detailLink={`/approvals/${approval.id}`}
-                isPending={isPending}
-                pendingAction={isPending ? pendingApprovalAction?.action ?? null : null}
+                isОжидание={isОжидание}
+                pendingAction={isОжидание ? pendingСогласованиеAction?.action ?? null : null}
               />
             </div>
           );
@@ -631,65 +631,65 @@ const TimelineList = memo(function TimelineList({
 
         if (item.kind === "run") {
           const run = item.run;
-          const actorName = agentMap?.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
+          const actorИмя = agentMap?.get(run.agentId)?.name ?? run.agentId.slice(0, 8);
           return (
-            <div id={`run-${run.runId}`} key={`run:${run.runId}`} className="flex items-center gap-2.5 py-1.5">
+            <div id={`run-${run.runId}`} key={`run:${run.runId}`} classИмя="flex items-center gap-2.5 py-1.5">
               <Avatar size="sm">
-                <AvatarFallback>{initialsForName(actorName)}</AvatarFallback>
+                <AvatarFallback>{initialsForИмя(actorИмя)}</AvatarFallback>
               </Avatar>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-                  <Link to={`/agents/${run.agentId}`} className="font-medium text-foreground transition-colors hover:underline">
-                    {actorName}
+              <div classИмя="min-w-0 flex-1">
+                <div classИмя="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
+                  <Link to={`/agents/${run.agentId}`} classИмя="font-medium text-foreground transition-colors hover:underline">
+                    {actorИмя}
                   </Link>
-                  <span className="text-muted-foreground">run</span>
+                  <span classИмя="text-muted-foreground">run</span>
                   <Link
                     to={`/agents/${run.agentId}/runs/${run.runId}`}
-                    className="inline-flex items-center rounded-md border border-border bg-accent/40 px-2 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+                    classИмя="inline-flex items-center rounded-md border border-border bg-accent/40 px-2 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
                   >
                     {run.runId.slice(0, 8)}
                   </Link>
-                  <span className={cn("font-medium", runStatusClass(run.status))}>
-                    {formatRunStatusLabel(run.status)}
+                  <span classИмя={cn("font-medium", runСтатусClass(run.status))}>
+                    {formatЗапуститьСтатусLabel(run.status)}
                   </span>
                   <a
                     href={`#run-${run.runId}`}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
+                    classИмя="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
                   >
                     {timeAgo(runTimestamp(run))}
                   </a>
                 </div>
               </div>
               {run.environment || run.environmentLease ? (
-                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                <div classИмя="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                   {run.environment ? (
                     <span>
-                      Environment <span className="text-foreground">{run.environment.name}</span>
+                      Окружение <span classИмя="text-foreground">{run.environment.name}</span>
                       <span> · {run.environment.driver}</span>
                     </span>
                   ) : null}
                   {run.environmentLease?.provider ? (
                     <span>
-                      Provider <span className="text-foreground">{run.environmentLease.provider}</span>
+                      Провайдер <span classИмя="text-foreground">{run.environmentLease.provider}</span>
                     </span>
                   ) : null}
                   {run.environmentLease ? (
                     <span>
                       Lease{" "}
-                      <span className="font-mono text-foreground">
+                      <span classИмя="font-mono text-foreground">
                         {run.environmentLease.id.slice(0, 8)}
                       </span>
                       <span> · {run.environmentLease.status}</span>
                     </span>
                   ) : null}
-                  {run.environmentLease?.workspacePath ? (
-                    <span className="min-w-0 font-mono" style={{ overflowWrap: "anywhere" }}>
-                      <BreakablePath text={run.environmentLease.workspacePath} />
+                  {run.environmentLease?.workspaceПуть ? (
+                    <span classИмя="min-w-0 font-mono" style={{ overflowWrap: "anywhere" }}>
+                      <BreakableПуть text={run.environmentLease.workspaceПуть} />
                     </span>
                   ) : null}
                   {run.environmentLease?.failureReason ? (
-                    <span className="text-destructive">
+                    <span classИмя="text-destructive">
                       Failure: {run.environmentLease.failureReason}
                     </span>
                   ) : null}
@@ -707,11 +707,11 @@ const TimelineList = memo(function TimelineList({
             agentMap={agentMap}
             companyId={companyId}
             projectId={projectId}
-            feedbackVote={feedbackVoteByTargetId?.get(comment.id) ?? null}
+            feedbackVote={feedbackVoteByЦельId?.get(comment.id) ?? null}
             feedbackDataSharingPreference={feedbackDataSharingPreference}
             feedbackTermsUrl={feedbackTermsUrl}
             onVote={onVote ? (vote, options) => onVote(comment.id, vote, options) : undefined}
-            voting={votingTargetId === comment.id}
+            voting={votingЦельId === comment.id}
             highlightCommentId={highlightCommentId}
           />
         );
@@ -722,46 +722,46 @@ const TimelineList = memo(function TimelineList({
 
 export function CommentThread({
   comments,
-  queuedComments = [],
-  linkedApprovals = [],
+  queuedКомментарии = [],
+  linkedСогласования = [],
   feedbackVotes = [],
   feedbackDataSharingPreference = "prompt",
   feedbackTermsUrl = null,
-  linkedRuns = [],
+  linkedЗапуститьs = [],
   timelineEvents = [],
   companyId,
   projectId,
-  onApproveApproval,
-  onRejectApproval,
-  pendingApprovalAction = null,
+  onОдобритьСогласование,
+  onОтклонитьСогласование,
+  pendingСогласованиеAction = null,
   onVote,
-  onAdd,
-  issueStatus,
+  onДобавить,
+  issueСтатус,
   agentMap,
   currentUserId,
-  imageUploadHandler,
+  imageЗагрузитьHandler,
   onAttachImage,
-  draftKey,
-  liveRunSlot,
+  draftКлюч,
+  liveЗапуститьSlot,
   enableReassign = false,
   reassignOptions = [],
-  currentAssigneeValue = "",
-  suggestedAssigneeValue,
+  currentИсполнительЗначение = "",
+  suggestedИсполнительЗначение,
   mentions: providedMentions,
   onInterruptQueued,
-  interruptingQueuedRunId = null,
-  composerDisabledReason = null,
+  interruptingQueuedЗапуститьId = null,
+  composerОтключитьdReason = null,
 }: CommentThreadProps) {
   const [body, setBody] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setОтправитьting] = useState(false);
   const [attaching, setAttaching] = useState(false);
-  const effectiveSuggestedAssigneeValue = suggestedAssigneeValue ?? currentAssigneeValue;
-  const [reassignTarget, setReassignTarget] = useState(effectiveSuggestedAssigneeValue);
-  const [highlightCommentId, setHighlightCommentId] = useState<string | null>(null);
-  const [votingTargetId, setVotingTargetId] = useState<string | null>(null);
-  const editorRef = useRef<MarkdownEditorRef>(null);
+  const effectiveSuggestedИсполнительЗначение = suggestedИсполнительЗначение ?? currentИсполнительЗначение;
+  const [reassignЦель, setReassignЦель] = useState(effectiveSuggestedИсполнительЗначение);
+  const [highlightCommentId, setВысокийlightCommentId] = useState<string | null>(null);
+  const [votingЦельId, setVotingЦельId] = useState<string | null>(null);
+  const editorRef = useRef<MarkdownИзменитьorRef>(null);
   const attachInputRef = useRef<HTMLInputElement | null>(null);
-  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftTimer = useRef<ReturnТип<typeof setTimeout> | null>(null);
   const location = useLocation();
   const hasScrolledRef = useRef(false);
 
@@ -780,7 +780,7 @@ export function CommentThread({
         comment: followUpRequested ? { ...comment, followUpRequested } : comment,
       };
     });
-    const approvalItems: TimelineItem[] = linkedApprovals.map((approval) => ({
+    const approvalItems: TimelineItem[] = linkedСогласования.map((approval) => ({
       kind: "approval",
       id: approval.id,
       createdAtMs: new Date(approval.createdAt).getTime(),
@@ -792,7 +792,7 @@ export function CommentThread({
       createdAtMs: new Date(event.createdAt).getTime(),
       event,
     }));
-    const runItems: TimelineItem[] = linkedRuns.map((run) => ({
+    const runItems: TimelineItem[] = linkedЗапуститьs.map((run) => ({
       kind: "run",
       id: run.runId,
       createdAtMs: new Date(runTimestamp(run)).getTime(),
@@ -809,12 +809,12 @@ export function CommentThread({
       } as const;
       return kindOrder[a.kind] - kindOrder[b.kind];
     });
-  }, [comments, linkedApprovals, timelineEvents, linkedRuns]);
+  }, [comments, linkedСогласования, timelineEvents, linkedЗапуститьs]);
 
-  const feedbackVoteByTargetId = useMemo(() => {
-    const map = new Map<string, FeedbackVoteValue>();
+  const feedbackVoteByЦельId = useMemo(() => {
+    const map = new Map<string, FeedbackVoteЗначение>();
     for (const feedbackVote of feedbackVotes) {
-      if (feedbackVote.targetType !== "issue_comment") continue;
+      if (feedbackVote.targetТип !== "issue_comment") continue;
       map.set(feedbackVote.targetId, feedbackVote.vote);
     }
     return map;
@@ -836,17 +836,17 @@ export function CommentThread({
   }, [agentMap, providedMentions]);
 
   useEffect(() => {
-    if (!draftKey) return;
-    setBody(loadDraft(draftKey));
-  }, [draftKey]);
+    if (!draftКлюч) return;
+    setBody(loadЧерновик(draftКлюч));
+  }, [draftКлюч]);
 
   useEffect(() => {
-    if (!draftKey) return;
+    if (!draftКлюч) return;
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
-      saveDraft(draftKey, body);
+      saveЧерновик(draftКлюч, body);
     }, DRAFT_DEBOUNCE_MS);
-  }, [body, draftKey]);
+  }, [body, draftКлюч]);
 
   useEffect(() => {
     return () => {
@@ -855,54 +855,54 @@ export function CommentThread({
   }, []);
 
   useEffect(() => {
-    setReassignTarget(effectiveSuggestedAssigneeValue);
-  }, [effectiveSuggestedAssigneeValue]);
+    setReassignЦель(effectiveSuggestedИсполнительЗначение);
+  }, [effectiveSuggestedИсполнительЗначение]);
 
   // Scroll to comment when URL hash matches #comment-{id}
   useEffect(() => {
     const hash = location.hash;
-    if (!hash.startsWith("#comment-") || comments.length + queuedComments.length === 0) return;
+    if (!hash.startsWith("#comment-") || comments.length + queuedКомментарии.length === 0) return;
     const commentId = hash.slice("#comment-".length);
     // Only scroll once per hash
     if (hasScrolledRef.current) return;
     const el = document.getElementById(`comment-${commentId}`);
     if (el) {
       hasScrolledRef.current = true;
-      setHighlightCommentId(commentId);
+      setВысокийlightCommentId(commentId);
       el.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Clear highlight after animation
-      const timer = setTimeout(() => setHighlightCommentId(null), 3000);
+      // Очистить highlight after animation
+      const timer = setTimeout(() => setВысокийlightCommentId(null), 3000);
       return () => clearTimeout(timer);
     }
-  }, [location.hash, comments, queuedComments]);
+  }, [location.hash, comments, queuedКомментарии]);
 
-  async function handleSubmit() {
+  async function handleОтправить() {
     const trimmed = body.trim();
     if (!trimmed) return;
-    const hasReassignment = enableReassign && reassignTarget !== currentAssigneeValue;
-    const reassignment = hasReassignment ? parseReassignment(reassignTarget) : null;
+    const hasReassignment = enableReassign && reassignЦель !== currentИсполнительЗначение;
+    const reassignment = hasReassignment ? parseReassignment(reassignЦель) : null;
     const reopen = shouldImplicitlyReopenComment(
-      issueStatus,
-      hasReassignment ? reassignTarget : currentAssigneeValue,
+      issueСтатус,
+      hasReassignment ? reassignЦель : currentИсполнительЗначение,
     ) ? true : undefined;
     const submittedBody = trimmed;
 
-    setSubmitting(true);
+    setОтправитьting(true);
     setBody("");
     try {
-      await onAdd(submittedBody, reopen, reassignment ?? undefined);
-      if (draftKey) clearDraft(draftKey);
-      setReassignTarget(effectiveSuggestedAssigneeValue);
+      await onДобавить(submittedBody, reopen, reassignment ?? undefined);
+      if (draftКлюч) clearЧерновик(draftКлюч);
+      setReassignЦель(effectiveSuggestedИсполнительЗначение);
     } catch {
       setBody((current) =>
-        restoreSubmittedCommentDraft({
+        restoreОтправитьtedCommentЧерновик({
           currentBody: current,
           submittedBody,
         }),
       );
-      // Parent mutation handlers surface the failure and the draft is restored for retry.
+      // Родитель mutation handlers surface the failure and the draft is restored for retry.
     } finally {
-      setSubmitting(false);
+      setОтправитьting(false);
     }
   }
 
@@ -911,10 +911,10 @@ export function CommentThread({
     if (!file) return;
     setAttaching(true);
     try {
-      if (imageUploadHandler) {
-        const url = await imageUploadHandler(file);
-        const safeName = file.name.replace(/[[\]]/g, "\\$&");
-        const markdown = `![${safeName}](${url})`;
+      if (imageЗагрузитьHandler) {
+        const url = await imageЗагрузитьHandler(file);
+        const safeИмя = file.name.replace(/[[\]]/g, "\\$&");
+        const markdown = `![${safeИмя}](${url})`;
         setBody((prev) => prev ? `${prev}\n\n${markdown}` : markdown);
       } else if (onAttachImage) {
         await onAttachImage(file);
@@ -927,23 +927,23 @@ export function CommentThread({
 
   async function handleFeedbackVote(
     commentId: string,
-    vote: FeedbackVoteValue,
+    vote: FeedbackVoteЗначение,
     options?: { allowSharing?: boolean; reason?: string },
   ) {
     if (!onVote) return;
-    setVotingTargetId(commentId);
+    setVotingЦельId(commentId);
     try {
       await onVote(commentId, vote, options);
     } finally {
-      setVotingTargetId(null);
+      setVotingЦельId(null);
     }
   }
 
-  const canSubmit = !submitting && !!body.trim();
+  const canОтправить = !submitting && !!body.trim();
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold">Timeline ({timeline.length + queuedComments.length})</h3>
+    <div classИмя="space-y-4">
+      <h3 classИмя="text-sm font-semibold">Timeline ({timeline.length + queuedКомментарии.length})</h3>
 
       <TimelineList
         timeline={timeline}
@@ -951,39 +951,39 @@ export function CommentThread({
         currentUserId={currentUserId}
         companyId={companyId}
         projectId={projectId}
-        onApproveApproval={onApproveApproval}
-        onRejectApproval={onRejectApproval}
-        pendingApprovalAction={pendingApprovalAction}
-        feedbackVoteByTargetId={feedbackVoteByTargetId}
+        onОдобритьСогласование={onОдобритьСогласование}
+        onОтклонитьСогласование={onОтклонитьСогласование}
+        pendingСогласованиеAction={pendingСогласованиеAction}
+        feedbackVoteByЦельId={feedbackVoteByЦельId}
         feedbackDataSharingPreference={feedbackDataSharingPreference}
         onVote={onVote ? handleFeedbackVote : undefined}
-        votingTargetId={votingTargetId}
+        votingЦельId={votingЦельId}
         highlightCommentId={highlightCommentId}
         feedbackTermsUrl={feedbackTermsUrl}
       />
 
-      {liveRunSlot}
+      {liveЗапуститьSlot}
 
-      {queuedComments.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">
-              Queued Comments ({queuedComments.length})
+      {queuedКомментарии.length > 0 && (
+        <div classИмя="space-y-3">
+          <div classИмя="flex items-center justify-between gap-2">
+            <h4 classИмя="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">
+              Queued Комментарии ({queuedКомментарии.length})
             </h4>
-            {onInterruptQueued && queuedComments[0]?.queueTargetRunId ? (
+            {onInterruptQueued && queuedКомментарии[0]?.queueЦельЗапуститьId ? (
               <Button
                 size="sm"
                 variant="outline"
-                className="border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
-                disabled={interruptingQueuedRunId === queuedComments[0].queueTargetRunId}
-                onClick={() => void onInterruptQueued(queuedComments[0]!.queueTargetRunId!)}
+                classИмя="border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
+                disabled={interruptingQueuedЗапуститьId === queuedКомментарии[0].queueЦельЗапуститьId}
+                onClick={() => void onInterruptQueued(queuedКомментарии[0]!.queueЦельЗапуститьId!)}
               >
-                {interruptingQueuedRunId === queuedComments[0].queueTargetRunId ? "Interrupting..." : "Interrupt"}
+                {interruptingQueuedЗапуститьId === queuedКомментарии[0].queueЦельЗапуститьId ? "Interrupting..." : "Interrupt"}
               </Button>
             ) : null}
           </div>
-          <div className="space-y-3">
-            {queuedComments.map((comment) => (
+          <div classИмя="space-y-3">
+            {queuedКомментарии.map((comment) => (
               <CommentCard
                 key={comment.id}
                 comment={comment}
@@ -998,30 +998,30 @@ export function CommentThread({
         </div>
       )}
 
-      {composerDisabledReason ? (
-        <div className="rounded-md border border-amber-300/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
-          {composerDisabledReason}
+      {composerОтключитьdReason ? (
+        <div classИмя="rounded-md border border-amber-300/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+          {composerОтключитьdReason}
         </div>
       ) : (
-        <div className="space-y-2">
-          <MarkdownEditor
+        <div classИмя="space-y-2">
+          <MarkdownИзменитьor
             ref={editorRef}
             value={body}
             onChange={setBody}
             placeholder="Leave a comment..."
             mentions={mentions}
-            onSubmit={handleSubmit}
-            imageUploadHandler={imageUploadHandler}
-            contentClassName="min-h-[60px] text-sm"
+            onОтправить={handleОтправить}
+            imageЗагрузитьHandler={imageЗагрузитьHandler}
+            contentClassИмя="min-h-[60px] text-sm"
           />
-          <div className="flex items-center justify-end gap-3">
-            {(imageUploadHandler || onAttachImage) && (
-              <div className="mr-auto flex items-center gap-3">
+          <div classИмя="flex items-center justify-end gap-3">
+            {(imageЗагрузитьHandler || onAttachImage) && (
+              <div classИмя="mr-auto flex items-center gap-3">
                 <input
                   ref={attachInputRef}
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/gif"
-                  className="hidden"
+                  classИмя="hidden"
                   onChange={handleAttachFile}
                 />
                 <Button
@@ -1031,49 +1031,49 @@ export function CommentThread({
                   disabled={attaching}
                   title="Attach image"
                 >
-                  <Paperclip className="h-4 w-4" />
+                  <Paperclip classИмя="h-4 w-4" />
                 </Button>
               </div>
             )}
             {enableReassign && reassignOptions.length > 0 && (
               <InlineEntitySelector
-                value={reassignTarget}
+                value={reassignЦель}
                 options={reassignOptions}
-                placeholder="Assignee"
-                noneLabel="No assignee"
-                searchPlaceholder="Search assignees..."
-                emptyMessage="No assignees found."
-                onChange={setReassignTarget}
-                className="text-xs h-8"
-                renderTriggerValue={(option) => {
-                  if (!option) return <span className="text-muted-foreground">Assignee</span>;
+                placeholder="Исполнитель"
+                noneLabel="Нет assignee"
+                searchPlaceholder="Поиск assignees..."
+                emptyMessage="Нет assignees found."
+                onChange={setReassignЦель}
+                classИмя="text-xs h-8"
+                renderTriggerЗначение={(option) => {
+                  if (!option) return <span classИмя="text-muted-foreground">Исполнитель</span>;
                   const agentId = option.id.startsWith("agent:") ? option.id.slice("agent:".length) : null;
                   const agent = agentId ? agentMap?.get(agentId) : null;
                   return (
                     <>
                       {agent ? (
-                        <AgentIcon icon={agent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <АгентIcon icon={agent.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       ) : null}
-                      <span className="truncate">{option.label}</span>
+                      <span classИмя="truncate">{option.label}</span>
                     </>
                   );
                 }}
                 renderOption={(option) => {
-                  if (!option.id) return <span className="truncate">{option.label}</span>;
+                  if (!option.id) return <span classИмя="truncate">{option.label}</span>;
                   const agentId = option.id.startsWith("agent:") ? option.id.slice("agent:".length) : null;
                   const agent = agentId ? agentMap?.get(agentId) : null;
                   return (
                     <>
                       {agent ? (
-                        <AgentIcon icon={agent.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <АгентIcon icon={agent.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       ) : null}
-                      <span className="truncate">{option.label}</span>
+                      <span classИмя="truncate">{option.label}</span>
                     </>
                   );
                 }}
               />
             )}
-            <Button size="sm" disabled={!canSubmit} onClick={handleSubmit}>
+            <Button size="sm" disabled={!canОтправить} onClick={handleОтправить}>
               {submitting ? "Posting..." : "Comment"}
             </Button>
           </div>

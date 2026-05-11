@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { GOAL_STATUSES, GOAL_LEVELS } from "@paperclipai/shared";
 import { useDialog } from "../context/DialogContext";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { goalsApi } from "../api/goals";
 import { assetsApi } from "../api/assets";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import {
   Dialog,
   DialogContent,
@@ -19,188 +19,188 @@ import {
 import {
   Maximize2,
   Minimize2,
-  Target,
+  Цель,
   Layers,
 } from "lucide-react";
 import { cn } from "../lib/utils";
-import { MarkdownEditor, type MarkdownEditorRef } from "./MarkdownEditor";
-import { StatusBadge } from "./StatusBadge";
+import { MarkdownИзменитьor, type MarkdownИзменитьorRef } from "./MarkdownИзменитьor";
+import { СтатусBadge } from "./СтатусBadge";
 
-const levelLabels: Record<string, string> = {
-  company: "Company",
+const levelЯрлыки: Record<string, string> = {
+  company: "Компания",
   team: "Team",
-  agent: "Agent",
-  task: "Task",
+  agent: "Агент",
+  task: "Задача",
 };
 
-export function NewGoalDialog() {
-  const { newGoalOpen, newGoalDefaults, closeNewGoal } = useDialog();
-  const { selectedCompanyId, selectedCompany } = useCompany();
+export function NewЦельDialog() {
+  const { newЦельOpen, newЦельПо умолчаниюs, closeNewЦель } = useDialog();
+  const { selectedКомпанияId, selectedКомпания } = useКомпания();
   const queryClient = useQueryClient();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState("planned");
+  const [title, setНазвание] = useState("");
+  const [description, setОписание] = useState("");
+  const [status, setСтатус] = useState("planned");
   const [level, setLevel] = useState("task");
-  const [parentId, setParentId] = useState("");
+  const [parentId, setРодительId] = useState("");
   const [expanded, setExpanded] = useState(false);
 
-  const [statusOpen, setStatusOpen] = useState(false);
+  const [statusOpen, setСтатусOpen] = useState(false);
   const [levelOpen, setLevelOpen] = useState(false);
-  const [parentOpen, setParentOpen] = useState(false);
-  const descriptionEditorRef = useRef<MarkdownEditorRef>(null);
+  const [parentOpen, setРодительOpen] = useState(false);
+  const descriptionИзменитьorRef = useRef<MarkdownИзменитьorRef>(null);
 
   // Apply defaults when dialog opens
-  const appliedParentId = parentId || newGoalDefaults.parentId || "";
+  const appliedРодительId = parentId || newЦельПо умолчаниюs.parentId || "";
 
   const { data: goals } = useQuery({
-    queryKey: queryKeys.goals.list(selectedCompanyId!),
-    queryFn: () => goalsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId && newGoalOpen,
+    queryКлюч: queryКлючs.goals.list(selectedКомпанияId!),
+    queryFn: () => goalsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId && newЦельOpen,
   });
 
-  const createGoal = useMutation({
+  const createЦель = useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      goalsApi.create(selectedCompanyId!, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.goals.list(selectedCompanyId!) });
+      goalsApi.create(selectedКомпанияId!, data),
+    onУспешно: () => {
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.goals.list(selectedКомпанияId!) });
       reset();
-      closeNewGoal();
+      closeNewЦель();
     },
   });
 
-  const uploadDescriptionImage = useMutation({
+  const uploadОписаниеImage = useMutation({
     mutationFn: async (file: File) => {
-      if (!selectedCompanyId) throw new Error("No company selected");
-      return assetsApi.uploadImage(selectedCompanyId, file, "goals/drafts");
+      if (!selectedКомпанияId) throw new Ошибка("Нет company selected");
+      return assetsApi.uploadImage(selectedКомпанияId, file, "goals/drafts");
     },
   });
 
   function reset() {
-    setTitle("");
-    setDescription("");
-    setStatus("planned");
+    setНазвание("");
+    setОписание("");
+    setСтатус("planned");
     setLevel("task");
-    setParentId("");
+    setРодительId("");
     setExpanded(false);
   }
 
-  function handleSubmit() {
-    if (!selectedCompanyId || !title.trim()) return;
-    createGoal.mutate({
+  function handleОтправить() {
+    if (!selectedКомпанияId || !title.trim()) return;
+    createЦель.mutate({
       title: title.trim(),
       description: description.trim() || undefined,
       status,
       level,
-      ...(appliedParentId ? { parentId: appliedParentId } : {}),
+      ...(appliedРодительId ? { parentId: appliedРодительId } : {}),
     });
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      handleSubmit();
+  function handleКлючDown(e: React.КлючboardEvent) {
+    if (e.key === "Enter" && (e.metaКлюч || e.ctrlКлюч)) {
+      e.preventПо умолчанию();
+      handleОтправить();
     }
   }
 
-  const currentParent = (goals ?? []).find((g) => g.id === appliedParentId);
+  const currentРодитель = (goals ?? []).find((g) => g.id === appliedРодительId);
 
   return (
     <Dialog
-      open={newGoalOpen}
+      open={newЦельOpen}
       onOpenChange={(open) => {
         if (!open) {
           reset();
-          closeNewGoal();
+          closeNewЦель();
         }
       }}
     >
       <DialogContent
-        showCloseButton={false}
-        className={cn("p-0 gap-0", expanded ? "sm:max-w-2xl" : "sm:max-w-lg")}
-        onKeyDown={handleKeyDown}
+        showЗакрытьButton={false}
+        classИмя={cn("p-0 gap-0", expanded ? "sm:max-w-2xl" : "sm:max-w-lg")}
+        onКлючDown={handleКлючDown}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {selectedCompany && (
-              <span className="bg-muted px-1.5 py-0.5 rounded text-xs font-medium">
-                {selectedCompany.name.slice(0, 3).toUpperCase()}
+        <div classИмя="flex items-center justify-between px-4 py-2.5 border-b border-border">
+          <div classИмя="flex items-center gap-2 text-sm text-muted-foreground">
+            {selectedКомпания && (
+              <span classИмя="bg-muted px-1.5 py-0.5 rounded text-xs font-medium">
+                {selectedКомпания.name.slice(0, 3).toUpperCase()}
               </span>
             )}
-            <span className="text-muted-foreground/60">&rsaquo;</span>
-            <span>{newGoalDefaults.parentId ? "New sub-goal" : "New goal"}</span>
+            <span classИмя="text-muted-foreground/60">&rsaquo;</span>
+            <span>{newЦельПо умолчаниюs.parentId ? "New sub-goal" : "Новая цель"}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div classИмя="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon-xs"
-              className="text-muted-foreground"
+              classИмя="text-muted-foreground"
               onClick={() => setExpanded(!expanded)}
             >
-              {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              {expanded ? <Minimize2 classИмя="h-3.5 w-3.5" /> : <Maximize2 classИмя="h-3.5 w-3.5" />}
             </Button>
             <Button
               variant="ghost"
               size="icon-xs"
-              className="text-muted-foreground"
-              onClick={() => { reset(); closeNewGoal(); }}
+              classИмя="text-muted-foreground"
+              onClick={() => { reset(); closeNewЦель(); }}
             >
-              <span className="text-lg leading-none">&times;</span>
+              <span classИмя="text-lg leading-none">&times;</span>
             </Button>
           </div>
         </div>
 
-        {/* Title */}
-        <div className="px-4 pt-4 pb-2 shrink-0">
+        {/* Название */}
+        <div classИмя="px-4 pt-4 pb-2 shrink-0">
           <input
-            className="w-full text-lg font-semibold bg-transparent outline-none placeholder:text-muted-foreground/50"
-            placeholder="Goal title"
+            classИмя="w-full text-lg font-semibold bg-transparent outline-none placeholder:text-muted-foreground/50"
+            placeholder="Цель title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Tab" && !e.shiftKey) {
-                e.preventDefault();
-                descriptionEditorRef.current?.focus();
+            onChange={(e) => setНазвание(e.target.value)}
+            onКлючDown={(e) => {
+              if (e.key === "Tab" && !e.shiftКлюч) {
+                e.preventПо умолчанию();
+                descriptionИзменитьorRef.current?.focus();
               }
             }}
             autoFocus
           />
         </div>
 
-        {/* Description */}
-        <div className="px-4 pb-2 overflow-y-auto max-h-[50vh]">
-          <MarkdownEditor
-            ref={descriptionEditorRef}
+        {/* Описание */}
+        <div classИмя="px-4 pb-2 overflow-y-auto max-h-[50vh]">
+          <MarkdownИзменитьor
+            ref={descriptionИзменитьorRef}
             value={description}
-            onChange={setDescription}
-            placeholder="Add description..."
+            onChange={setОписание}
+            placeholder="Добавить description..."
             bordered={false}
-            contentClassName={cn("text-sm text-muted-foreground", expanded ? "min-h-[220px]" : "min-h-[120px]")}
-            imageUploadHandler={async (file) => {
-              const asset = await uploadDescriptionImage.mutateAsync(file);
-              return asset.contentPath;
+            contentClassИмя={cn("text-sm text-muted-foreground", expanded ? "min-h-[220px]" : "min-h-[120px]")}
+            imageЗагрузитьHandler={async (file) => {
+              const asset = await uploadОписаниеImage.mutateAsync(file);
+              return asset.contentПуть;
             }}
           />
         </div>
 
         {/* Property chips */}
-        <div className="flex items-center gap-1.5 px-4 py-2 border-t border-border flex-wrap">
-          {/* Status */}
-          <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+        <div classИмя="flex items-center gap-1.5 px-4 py-2 border-t border-border flex-wrap">
+          {/* Статус */}
+          <Popover open={statusOpen} onOpenChange={setСтатусOpen}>
             <PopoverTrigger asChild>
-              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
-                <StatusBadge status={status} />
+              <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
+                <СтатусBadge status={status} />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-40 p-1" align="start">
+            <PopoverContent classИмя="w-40 p-1" align="start">
               {GOAL_STATUSES.map((s) => (
                 <button
                   key={s}
-                  className={cn(
+                  classИмя={cn(
                     "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 capitalize",
                     s === status && "bg-accent"
                   )}
-                  onClick={() => { setStatus(s); setStatusOpen(false); }}
+                  onClick={() => { setСтатус(s); setСтатусOpen(false); }}
                 >
                   {s}
                 </button>
@@ -211,53 +211,53 @@ export function NewGoalDialog() {
           {/* Level */}
           <Popover open={levelOpen} onOpenChange={setLevelOpen}>
             <PopoverTrigger asChild>
-              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
-                <Layers className="h-3 w-3 text-muted-foreground" />
-                {levelLabels[level] ?? level}
+              <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
+                <Layers classИмя="h-3 w-3 text-muted-foreground" />
+                {levelЯрлыки[level] ?? level}
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-40 p-1" align="start">
+            <PopoverContent classИмя="w-40 p-1" align="start">
               {GOAL_LEVELS.map((l) => (
                 <button
                   key={l}
-                  className={cn(
+                  classИмя={cn(
                     "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
                     l === level && "bg-accent"
                   )}
                   onClick={() => { setLevel(l); setLevelOpen(false); }}
                 >
-                  {levelLabels[l] ?? l}
+                  {levelЯрлыки[l] ?? l}
                 </button>
               ))}
             </PopoverContent>
           </Popover>
 
-          {/* Parent goal */}
-          <Popover open={parentOpen} onOpenChange={setParentOpen}>
+          {/* Родитель goal */}
+          <Popover open={parentOpen} onOpenChange={setРодительOpen}>
             <PopoverTrigger asChild>
-              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
-                <Target className="h-3 w-3 text-muted-foreground" />
-                {currentParent ? currentParent.title : "Parent goal"}
+              <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
+                <Цель classИмя="h-3 w-3 text-muted-foreground" />
+                {currentРодитель ? currentРодитель.title : "Родитель goal"}
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-48 p-1" align="start">
+            <PopoverContent classИмя="w-48 p-1" align="start">
               <button
-                className={cn(
+                classИмя={cn(
                   "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
-                  !appliedParentId && "bg-accent"
+                  !appliedРодительId && "bg-accent"
                 )}
-                onClick={() => { setParentId(""); setParentOpen(false); }}
+                onClick={() => { setРодительId(""); setРодительOpen(false); }}
               >
-                No parent
+                Нет parent
               </button>
               {(goals ?? []).map((g) => (
                 <button
                   key={g.id}
-                  className={cn(
+                  classИмя={cn(
                     "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 truncate",
-                    g.id === appliedParentId && "bg-accent"
+                    g.id === appliedРодительId && "bg-accent"
                   )}
-                  onClick={() => { setParentId(g.id); setParentOpen(false); }}
+                  onClick={() => { setРодительId(g.id); setРодительOpen(false); }}
                 >
                   {g.title}
                 </button>
@@ -267,13 +267,13 @@ export function NewGoalDialog() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end px-4 py-2.5 border-t border-border">
+        <div classИмя="flex items-center justify-end px-4 py-2.5 border-t border-border">
           <Button
             size="sm"
-            disabled={!title.trim() || createGoal.isPending}
-            onClick={handleSubmit}
+            disabled={!title.trim() || createЦель.isОжидание}
+            onClick={handleОтправить}
           >
-            {createGoal.isPending ? "Creating…" : newGoalDefaults.parentId ? "Create sub-goal" : "Create goal"}
+            {createЦель.isОжидание ? "Creating…" : newЦельПо умолчаниюs.parentId ? "Создать sub-goal" : "Создать цель"}
           </Button>
         </div>
       </DialogContent>

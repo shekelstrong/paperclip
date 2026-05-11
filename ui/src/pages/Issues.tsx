@@ -1,24 +1,24 @@
 import { useEffect, useMemo, useCallback, useRef, useState } from "react";
-import { useLocation, useSearchParams } from "@/lib/router";
+import { useLocation, useПоискParams } from "@/lib/router";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { issuesApi } from "../api/issues";
 import { agentsApi } from "../api/agents";
 import { projectsApi } from "../api/projects";
 import { heartbeatsApi } from "../api/heartbeats";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { collectLiveIssueIds } from "../lib/liveIssueIds";
-import { queryKeys } from "../lib/queryKeys";
-import { createIssueDetailLocationState } from "../lib/issueDetailBreadcrumb";
+import { collectLiveЗадачаIds } from "../lib/liveЗадачаIds";
+import { queryКлючs } from "../lib/queryКлючs";
+import { createЗадачаDetailLocationState } from "../lib/issueDetailBreadcrumb";
 import { EmptyState } from "../components/EmptyState";
-import { IssuesList } from "../components/IssuesList";
+import { ЗадачиList } from "../components/ЗадачиList";
 import { CircleDot } from "lucide-react";
-import type { Issue } from "@paperclipai/shared";
+import type { Задача } from "@paperclipai/shared";
 
 const WORKSPACE_FILTER_ISSUE_LIMIT = 1000;
 const ISSUES_PAGE_SIZE = 500;
 
-export function getNextIssuesPageOffset(
+export function getДалееЗадачиPageOffset(
   loadedPageSize: number,
   currentOffset: number,
   pageSize: number = ISSUES_PAGE_SIZE,
@@ -26,14 +26,14 @@ export function getNextIssuesPageOffset(
   return loadedPageSize >= pageSize ? currentOffset + pageSize : undefined;
 }
 
-export function mergeIssuePagesStable(pages: Issue[][]): Issue[] {
-  const seenIssueIds = new Set<string>();
-  const merged: Issue[] = [];
+export function mergeЗадачаPagesStable(pages: Задача[][]): Задача[] {
+  const seenЗадачаIds = new Set<string>();
+  const merged: Задача[] = [];
 
   for (const page of pages) {
     for (const issue of page) {
-      if (seenIssueIds.has(issue.id)) continue;
-      seenIssueIds.add(issue.id);
+      if (seenЗадачаIds.has(issue.id)) continue;
+      seenЗадачаIds.add(issue.id);
       merged.push(issue);
     }
   }
@@ -41,10 +41,10 @@ export function mergeIssuePagesStable(pages: Issue[][]): Issue[] {
   return merged;
 }
 
-export function buildIssuesSearchUrl(currentHref: string, search: string): string | null {
+export function buildЗадачиПоискUrl(currentHref: string, search: string): string | null {
   const url = new URL(currentHref);
-  const currentSearch = url.searchParams.get("q") ?? "";
-  if (currentSearch === search) return null;
+  const currentПоиск = url.searchParams.get("q") ?? "";
+  if (currentПоиск === search) return null;
 
   if (search.length > 0) {
     url.searchParams.set("q", search);
@@ -55,60 +55,60 @@ export function buildIssuesSearchUrl(currentHref: string, search: string): strin
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
-export function Issues() {
-  const { selectedCompanyId } = useCompany();
+export function Задачи() {
+  const { selectedКомпанияId } = useКомпания();
   const { setBreadcrumbs } = useBreadcrumbs();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams] = useПоискParams();
   const queryClient = useQueryClient();
-  const fetchNextPageInFlightRef = useRef(false);
+  const fetchДалееPageInFlightRef = useRef(false);
 
-  const urlSearch = searchParams.get("q") ?? "";
-  const [searchOverride, setSearchOverride] = useState<{ search: string; locationSearch: string } | null>(null);
-  const syncedSearch = useMemo(() => {
-    if (typeof window !== "undefined" && searchOverride?.locationSearch === window.location.search) {
+  const urlПоиск = searchParams.get("q") ?? "";
+  const [searchOverride, setПоискOverride] = useState<{ search: string; locationПоиск: string } | null>(null);
+  const syncedПоиск = useMemo(() => {
+    if (typeof window !== "undefined" && searchOverride?.locationПоиск === window.location.search) {
       return searchOverride.search;
     }
-    return urlSearch;
-  }, [searchOverride, urlSearch, location.search]);
-  const participantAgentId = searchParams.get("participantAgentId") ?? undefined;
-  const initialWorkspaces = searchParams.getAll("workspace").filter((workspaceId) => workspaceId.length > 0);
-  const workspaceIdFilter = initialWorkspaces.length === 1 ? initialWorkspaces[0] : undefined;
-  const handleSearchChange = useCallback((search: string) => {
-    const nextUrl = buildIssuesSearchUrl(window.location.href, search);
+    return urlПоиск;
+  }, [searchOverride, urlПоиск, location.search]);
+  const participantАгентId = searchParams.get("participantАгентId") ?? undefined;
+  const initialРабочие области = searchParams.getВсе("workspace").filter((workspaceId) => workspaceId.length > 0);
+  const workspaceIdФильтр = initialРабочие области.length === 1 ? initialРабочие области[0] : undefined;
+  const handleПоискChange = useCallback((search: string) => {
+    const nextUrl = buildЗадачиПоискUrl(window.location.href, search);
     if (!nextUrl) {
-      setSearchOverride(null);
+      setПоискOverride(null);
       return;
     }
     window.history.replaceState(window.history.state, "", nextUrl);
-    setSearchOverride({ search, locationSearch: window.location.search });
+    setПоискOverride({ search, locationПоиск: window.location.search });
   }, []);
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(selectedCompanyId!),
-    queryFn: () => agentsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
+    queryFn: () => agentsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
   const { data: projects } = useQuery({
-    queryKey: queryKeys.projects.list(selectedCompanyId!),
-    queryFn: () => projectsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.projects.list(selectedКомпанияId!),
+    queryFn: () => projectsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
-  const { data: liveRuns } = useQuery({
-    queryKey: queryKeys.liveRuns(selectedCompanyId!),
-    queryFn: () => heartbeatsApi.liveRunsForCompany(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+  const { data: liveЗапуститьs } = useQuery({
+    queryКлюч: queryКлючs.liveЗапуститьs(selectedКомпанияId!),
+    queryFn: () => heartbeatsApi.liveЗапуститьsForКомпания(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
     refetchInterval: 5000,
   });
 
-  const liveIssueIds = useMemo(() => collectLiveIssueIds(liveRuns), [liveRuns]);
+  const liveЗадачаIds = useMemo(() => collectLiveЗадачаIds(liveЗапуститьs), [liveЗапуститьs]);
 
   const issueLinkState = useMemo(
     () =>
-      createIssueDetailLocationState(
-        "Issues",
+      createЗадачаDetailLocationState(
+        "Задачи",
         `${location.pathname}${location.search}${location.hash}`,
         "issues",
       ),
@@ -116,86 +116,86 @@ export function Issues() {
   );
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Issues" }]);
+    setBreadcrumbs([{ label: "Задачи" }]);
   }, [setBreadcrumbs]);
 
-  const issuePageSize = workspaceIdFilter ? WORKSPACE_FILTER_ISSUE_LIMIT : ISSUES_PAGE_SIZE;
+  const issuePageSize = workspaceIdФильтр ? WORKSPACE_FILTER_ISSUE_LIMIT : ISSUES_PAGE_SIZE;
 
   const {
     data: issuePages,
-    isLoading,
-    isFetchingNextPage,
+    isЗагрузка,
+    isFetchingДалееPage,
     error,
-    hasNextPage,
-    fetchNextPage,
+    hasДалееPage,
+    fetchДалееPage,
   } = useInfiniteQuery({
-    queryKey: [
-      ...queryKeys.issues.list(selectedCompanyId!),
+    queryКлюч: [
+      ...queryКлючs.issues.list(selectedКомпанияId!),
       "participant-agent",
-      participantAgentId ?? "__all__",
+      participantАгентId ?? "__all__",
       "workspace",
-      workspaceIdFilter ?? "__all__",
+      workspaceIdФильтр ?? "__all__",
       "with-routine-executions",
       "infinite",
       issuePageSize,
     ],
-    queryFn: ({ pageParam }) => issuesApi.list(selectedCompanyId!, {
-      participantAgentId,
-      workspaceId: workspaceIdFilter,
-      includeRoutineExecutions: true,
+    queryFn: ({ pageParam }) => issuesApi.list(selectedКомпанияId!, {
+      participantАгентId,
+      workspaceId: workspaceIdФильтр,
+      includeПроцедураExecutions: true,
       limit: issuePageSize,
       offset: pageParam,
     }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
-      getNextIssuesPageOffset(lastPage.length, lastPageParam, issuePageSize),
-    enabled: !!selectedCompanyId,
+    getДалееPageParam: (lastPage, _allPages, lastPageParam) =>
+      getДалееЗадачиPageOffset(lastPage.length, lastPageParam, issuePageSize),
+    enabled: !!selectedКомпанияId,
     placeholderData: (previousData) => previousData,
   });
 
-  const issues = useMemo(() => mergeIssuePagesStable(issuePages?.pages ?? []), [issuePages]);
-  const hasMoreServerIssues = syncedSearch.trim().length === 0
-    && hasNextPage === true;
-  const loadMoreServerIssues = useCallback(() => {
-    if (!hasNextPage || isFetchingNextPage || fetchNextPageInFlightRef.current) return;
-    fetchNextPageInFlightRef.current = true;
-    void fetchNextPage({ cancelRefetch: false }).finally(() => {
-      fetchNextPageInFlightRef.current = false;
+  const issues = useMemo(() => mergeЗадачаPagesStable(issuePages?.pages ?? []), [issuePages]);
+  const hasMoreServerЗадачи = syncedПоиск.trim().length === 0
+    && hasДалееPage === true;
+  const loadMoreServerЗадачи = useCallback(() => {
+    if (!hasДалееPage || isFetchingДалееPage || fetchДалееPageInFlightRef.current) return;
+    fetchДалееPageInFlightRef.current = true;
+    void fetchДалееPage({ cancelRefetch: false }).finally(() => {
+      fetchДалееPageInFlightRef.current = false;
     });
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchДалееPage, hasДалееPage, isFetchingДалееPage]);
 
-  const updateIssue = useMutation({
+  const updateЗадача = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       issuesApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(selectedCompanyId!) });
+    onУспешно: () => {
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(selectedКомпанияId!) });
     },
   });
 
-  if (!selectedCompanyId) {
+  if (!selectedКомпанияId) {
     return <EmptyState icon={CircleDot} message="Select a company to view issues." />;
   }
 
   return (
-    <IssuesList
+    <ЗадачиList
       issues={issues ?? []}
-      isLoading={isLoading}
-      isLoadingMoreIssues={isFetchingNextPage}
-      error={error as Error | null}
+      isЗагрузка={isЗагрузка}
+      isЗагрузкаMoreЗадачи={isFetchingДалееPage}
+      error={error as Ошибка | null}
       agents={agents}
       projects={projects}
-      liveIssueIds={liveIssueIds}
-      viewStateKey="paperclip:issues-view"
+      liveЗадачаIds={liveЗадачаIds}
+      viewStateКлюч="paperclip:issues-view"
       issueLinkState={issueLinkState}
-      initialAssignees={searchParams.get("assignee") ? [searchParams.get("assignee")!] : undefined}
-      initialWorkspaces={initialWorkspaces.length > 0 ? initialWorkspaces : undefined}
-      initialSearch={syncedSearch}
-      onSearchChange={handleSearchChange}
-      enableRoutineVisibilityFilter
-      hasMoreIssues={hasMoreServerIssues}
-      onLoadMoreIssues={loadMoreServerIssues}
-      onUpdateIssue={(id, data) => updateIssue.mutate({ id, data })}
-      searchFilters={participantAgentId || workspaceIdFilter ? { participantAgentId, workspaceId: workspaceIdFilter } : undefined}
+      initialИсполнители={searchParams.get("assignee") ? [searchParams.get("assignee")!] : undefined}
+      initialРабочие области={initialРабочие области.length > 0 ? initialРабочие области : undefined}
+      initialПоиск={syncedПоиск}
+      onПоискChange={handleПоискChange}
+      enableПроцедураVisibilityФильтр
+      hasMoreЗадачи={hasMoreServerЗадачи}
+      onLoadMoreЗадачи={loadMoreServerЗадачи}
+      onОбновитьЗадача={(id, data) => updateЗадача.mutate({ id, data })}
+      searchФильтрs={participantАгентId || workspaceIdФильтр ? { participantАгентId, workspaceId: workspaceIdФильтр } : undefined}
     />
   );
 }

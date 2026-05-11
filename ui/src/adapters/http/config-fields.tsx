@@ -1,7 +1,7 @@
-import type { AdapterConfigFieldsProps } from "../types";
+import type { АдаптерConfigFieldsProps } from "../types";
 import {
   Field,
-  DraftInput,
+  ЧерновикInput,
   help,
 } from "../../components/agent-config-primitives";
 
@@ -9,28 +9,28 @@ const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
 
 export function HttpConfigFields({
-  isCreate,
+  isСоздать,
   values,
   set,
   config,
   eff,
   mark,
-}: AdapterConfigFieldsProps) {
+}: АдаптерConfigFieldsProps) {
   return (
     <Field label="Webhook URL" hint={help.webhookUrl}>
-      <DraftInput
+      <ЧерновикInput
         value={
-          isCreate
+          isСоздать
             ? values!.url
             : eff("adapterConfig", "url", String(config.url ?? ""))
         }
         onCommit={(v) =>
-          isCreate
+          isСоздать
             ? set!({ url: v })
             : mark("adapterConfig", "url", v || undefined)
         }
         immediate
-        className={inputClass}
+        classИмя={inputClass}
         placeholder="https://..."
       />
     </Field>

@@ -1,16 +1,16 @@
-import type { AdapterModel } from "../api/agents";
+import type { АдаптерМодель } from "../api/agents";
 import { models as CLAUDE_LOCAL_MODELS } from "@paperclipai/adapter-claude-local";
 import { models as CODEX_LOCAL_MODELS } from "@paperclipai/adapter-codex-local";
 
-const claudeModelIds = new Set(CLAUDE_LOCAL_MODELS.map((model) => model.id));
-const codexModelIds = new Set(CODEX_LOCAL_MODELS.map((model) => model.id));
+const claudeМодельIds = new Set(CLAUDE_LOCAL_MODELS.map((model) => model.id));
+const codexМодельIds = new Set(CODEX_LOCAL_MODELS.map((model) => model.id));
 
-export function filterAcpxModelsByAgent(models: AdapterModel[], acpxAgent: string): AdapterModel[] {
-  if (acpxAgent === "claude") {
-    return models.filter((model) => claudeModelIds.has(model.id) || model.label.startsWith("Claude: "));
+export function filterAcpxМодельsByАгент(models: АдаптерМодель[], acpxАгент: string): АдаптерМодель[] {
+  if (acpxАгент === "claude") {
+    return models.filter((model) => claudeМодельIds.has(model.id) || model.label.startsWith("Claude: "));
   }
-  if (acpxAgent === "codex") {
-    return models.filter((model) => codexModelIds.has(model.id) || model.label.startsWith("Codex: "));
+  if (acpxАгент === "codex") {
+    return models.filter((model) => codexМодельIds.has(model.id) || model.label.startsWith("Codex: "));
   }
   return [];
 }

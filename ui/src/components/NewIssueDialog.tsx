@@ -1,30 +1,30 @@
 import { memo, useState, useEffect, useRef, useCallback, useMemo, type ChangeEvent, type DragEvent, type RefObject } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { IssueWorkMode } from "@paperclipai/shared";
+import type { ЗадачаРаботаMode } from "@paperclipai/shared";
 import { pickTextColorForSolidBg } from "@/lib/color-contrast";
 import { useDialog } from "../context/DialogContext";
-import { useCompany } from "../context/CompanyContext";
-import { useAdapterCapabilities } from "../adapters/use-adapter-capabilities";
-import { executionWorkspacesApi } from "../api/execution-workspaces";
+import { useКомпания } from "../context/КомпанияContext";
+import { useАдаптерCapabilities } from "../adapters/use-adapter-capabilities";
+import { executionРабочие областиApi } from "../api/execution-workspaces";
 import { issuesApi } from "../api/issues";
-import { instanceSettingsApi } from "../api/instanceSettings";
+import { instanceНастройкиApi } from "../api/instanceНастройки";
 import { projectsApi } from "../api/projects";
 import { agentsApi } from "../api/agents";
 import { accessApi } from "../api/access";
 import { authApi } from "../api/auth";
 import { assetsApi } from "../api/assets";
-import { buildCompanyUserInlineOptions, buildMarkdownMentionOptions } from "../lib/company-members";
-import { queryKeys } from "../lib/queryKeys";
-import { orderReusableExecutionWorkspaces } from "../lib/reusable-execution-workspaces";
+import { buildКомпанияUserInlineOptions, buildMarkdownMentionOptions } from "../lib/company-members";
+import { queryКлючs } from "../lib/queryКлючs";
+import { orderReusableExecutionРабочие области } from "../lib/reusable-execution-workspaces";
 import { useProjectOrder } from "../hooks/useProjectOrder";
-import { getRecentAssigneeIds, sortAgentsByRecency, trackRecentAssignee } from "../lib/recent-assignees";
+import { getRecentИсполнительIds, sortАгентыByRecency, trackRecentИсполнитель } from "../lib/recent-assignees";
 import { getRecentProjectIds, trackRecentProject } from "../lib/recent-projects";
 import { buildExecutionPolicy } from "../lib/issue-execution-policy";
 import { useToastActions } from "../context/ToastContext";
 import {
-  assigneeValueFromSelection,
-  currentUserAssigneeOption,
-  parseAssigneeValue,
+  assigneeЗначениеFromSelection,
+  currentUserИсполнительOption,
+  parseИсполнительЗначение,
 } from "../lib/assignees";
 import {
   Dialog,
@@ -62,85 +62,85 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { cn } from "../lib/utils";
-import { extractProviderIdWithFallback } from "../lib/model-utils";
-import { issueStatusText, issueStatusTextDefault, priorityColor, priorityColorDefault } from "../lib/status-colors";
-import { MarkdownEditor, type MarkdownEditorRef, type MentionOption } from "./MarkdownEditor";
-import { AgentIcon } from "./AgentIconPicker";
+import { extractПровайдерIdWithFallback } from "../lib/model-utils";
+import { issueСтатусText, issueСтатусTextПо умолчанию, priorityColor, priorityColorПо умолчанию } from "../lib/status-colors";
+import { MarkdownИзменитьor, type MarkdownИзменитьorRef, type MentionOption } from "./MarkdownИзменитьor";
+import { АгентIcon } from "./АгентIconPicker";
 import { InlineEntitySelector, type InlineEntityOption } from "./InlineEntitySelector";
 
 const DRAFT_KEY = "paperclip:issue-draft";
 const DEBOUNCE_MS = 800;
 
 
-interface IssueDraft {
+interface ЗадачаЧерновик {
   title: string;
   description: string;
   status: string;
   priority: string;
-  assigneeValue: string;
-  reviewerValue: string;
-  approverValue: string;
+  assigneeЗначение: string;
+  reviewerЗначение: string;
+  approverЗначение: string;
   assigneeId?: string;
   projectId: string;
-  projectWorkspaceId?: string;
-  assigneeModelLane?: IssueModelLane;
-  assigneeModelOverride: string;
+  projectРабочая областьId?: string;
+  assigneeМодельLane?: ЗадачаМодельLane;
+  assigneeМодельOverride: string;
   assigneeThinkingEffort: string;
   assigneeChrome: boolean;
-  executionWorkspaceMode?: string;
-  selectedExecutionWorkspaceId?: string;
-  useIsolatedExecutionWorkspace?: boolean;
-  workMode?: IssueWorkMode;
+  executionРабочая областьMode?: string;
+  selectedExecutionРабочая областьId?: string;
+  useIsolatedExecutionРабочая область?: boolean;
+  workMode?: ЗадачаРаботаMode;
 }
 
-type StagedIssueFile = {
+type StagedЗадачаFile = {
   id: string;
   file: File;
   kind: "document" | "attachment";
-  documentKey?: string;
+  documentКлюч?: string;
   title?: string | null;
 };
 
 import {
-  buildAssigneeAdapterOverrides,
+  buildИсполнительАдаптерOverrides,
   ISSUE_OVERRIDE_ADAPTER_TYPES,
-  type IssueModelLane,
+  type ЗадачаМодельLane,
 } from "../lib/issue-assignee-overrides";
 
 const STAGED_FILE_ACCEPT = "image/*,application/pdf,text/plain,text/markdown,application/json,text/csv,text/html,.md,.markdown";
 
 const ISSUE_THINKING_EFFORT_OPTIONS = {
   claude_local: [
-    { value: "", label: "Default" },
-    { value: "low", label: "Low" },
-    { value: "medium", label: "Medium" },
-    { value: "high", label: "High" },
+    { value: "", label: "По умолчанию" },
+    { value: "low", label: "Низкий" },
+    { value: "medium", label: "Средний" },
+    { value: "high", label: "Высокий" },
   ],
   codex_local: [
-    { value: "", label: "Default" },
+    { value: "", label: "По умолчанию" },
     { value: "minimal", label: "Minimal" },
-    { value: "low", label: "Low" },
-    { value: "medium", label: "Medium" },
-    { value: "high", label: "High" },
-    { value: "xhigh", label: "X-High" },
+    { value: "low", label: "Низкий" },
+    { value: "medium", label: "Средний" },
+    { value: "high", label: "Высокий" },
+    { value: "xhigh", label: "X-Высокий" },
   ],
   opencode_local: [
-    { value: "", label: "Default" },
+    { value: "", label: "По умолчанию" },
     { value: "minimal", label: "Minimal" },
-    { value: "low", label: "Low" },
-    { value: "medium", label: "Medium" },
-    { value: "high", label: "High" },
-    { value: "xhigh", label: "X-High" },
+    { value: "low", label: "Низкий" },
+    { value: "medium", label: "Средний" },
+    { value: "high", label: "Высокий" },
+    { value: "xhigh", label: "X-Высокий" },
     { value: "max", label: "Max" },
   ],
 } as const;
 
-function isIssueWorkMode(value: unknown): value is IssueWorkMode {
+function isЗадачаРаботаMode(value: unknown): value is ЗадачаРаботаMode {
   return value === "standard" || value === "planning";
 }
 
 const ISSUE_WORK_MODE_OPTIONS: ReadonlyArray<{
-  value: IssueWorkMode;
+  value: ЗадачаРаботаMode;
   label: string;
   icon: typeof Hammer;
 }> = [
@@ -148,26 +148,26 @@ const ISSUE_WORK_MODE_OPTIONS: ReadonlyArray<{
   { value: "planning", label: "Planning", icon: ClipboardList },
 ];
 
-function loadDraft(): IssueDraft | null {
+function loadЧерновик(): ЗадачаЧерновик | null {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as IssueDraft;
+    return JSON.parse(raw) as ЗадачаЧерновик;
   } catch {
     return null;
   }
 }
 
-function saveDraft(draft: IssueDraft) {
+function saveЧерновик(draft: ЗадачаЧерновик) {
   localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
 }
 
-function clearDraft() {
+function clearЧерновик() {
   localStorage.removeItem(DRAFT_KEY);
 }
 
 function isTextDocumentFile(file: File) {
-  const name = file.name.toLowerCase();
+  const name = file.name.toНизкийerCase();
   return (
     name.endsWith(".md") ||
     name.endsWith(".markdown") ||
@@ -177,14 +177,14 @@ function isTextDocumentFile(file: File) {
   );
 }
 
-function fileBaseName(filename: string) {
+function fileBaseИмя(filename: string) {
   return filename.replace(/\.[^.]+$/, "");
 }
 
-function slugifyDocumentKey(input: string) {
+function slugifyDocumentКлюч(input: string) {
   const slug = input
     .trim()
-    .toLowerCase()
+    .toНизкийerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return slug || "document";
@@ -198,19 +198,19 @@ function titleizeFilename(input: string) {
     .join(" ");
 }
 
-function createUniqueDocumentKey(baseKey: string, stagedFiles: StagedIssueFile[]) {
-  const existingKeys = new Set(
-    stagedFiles
+function createUniqueDocumentКлюч(baseКлюч: string, stagedФайлы: StagedЗадачаFile[]) {
+  const existingКлючs = new Set(
+    stagedФайлы
       .filter((file) => file.kind === "document")
-      .map((file) => file.documentKey)
+      .map((file) => file.documentКлюч)
       .filter((key): key is string => Boolean(key)),
   );
-  if (!existingKeys.has(baseKey)) return baseKey;
+  if (!existingКлючs.has(baseКлюч)) return baseКлюч;
   let suffix = 2;
-  while (existingKeys.has(`${baseKey}-${suffix}`)) {
+  while (existingКлючs.has(`${baseКлюч}-${suffix}`)) {
     suffix += 1;
   }
-  return `${baseKey}-${suffix}`;
+  return `${baseКлюч}-${suffix}`;
 }
 
 function formatFileSize(file: File) {
@@ -222,44 +222,44 @@ function formatFileSize(file: File) {
 const statuses: ReadonlyArray<{ value: string; label: string; color: string; description?: string }> = [
   {
     value: "backlog",
-    label: "Backlog",
-    color: issueStatusText.backlog ?? issueStatusTextDefault,
+    label: "Назадlog",
+    color: issueСтатусText.backlog ?? issueСтатусTextПо умолчанию,
     description: "Parked — assignee will not be woken",
   },
   {
     value: "todo",
     label: "Todo",
-    color: issueStatusText.todo ?? issueStatusTextDefault,
+    color: issueСтатусText.todo ?? issueСтатусTextПо умолчанию,
     description: "Executable — assignee will be woken",
   },
-  { value: "in_progress", label: "In Progress", color: issueStatusText.in_progress ?? issueStatusTextDefault },
-  { value: "in_review", label: "In Review", color: issueStatusText.in_review ?? issueStatusTextDefault },
-  { value: "done", label: "Done", color: issueStatusText.done ?? issueStatusTextDefault },
+  { value: "in_progress", label: "In Progress", color: issueСтатусText.in_progress ?? issueСтатусTextПо умолчанию },
+  { value: "in_review", label: "In Review", color: issueСтатусText.in_review ?? issueСтатусTextПо умолчанию },
+  { value: "done", label: "Готово", color: issueСтатусText.done ?? issueСтатусTextПо умолчанию },
 ];
 
 const priorities = [
-  { value: "critical", label: "Critical", icon: AlertTriangle, color: priorityColor.critical ?? priorityColorDefault },
-  { value: "high", label: "High", icon: ArrowUp, color: priorityColor.high ?? priorityColorDefault },
-  { value: "medium", label: "Medium", icon: Minus, color: priorityColor.medium ?? priorityColorDefault },
-  { value: "low", label: "Low", icon: ArrowDown, color: priorityColor.low ?? priorityColorDefault },
+  { value: "critical", label: "Критично", icon: AlertTriangle, color: priorityColor.critical ?? priorityColorПо умолчанию },
+  { value: "high", label: "Высокий", icon: ArrowUp, color: priorityColor.high ?? priorityColorПо умолчанию },
+  { value: "medium", label: "Средний", icon: Minus, color: priorityColor.medium ?? priorityColorПо умолчанию },
+  { value: "low", label: "Низкий", icon: ArrowDown, color: priorityColor.low ?? priorityColorПо умолчанию },
 ];
 
 const EXECUTION_WORKSPACE_MODES = [
-  { value: "shared_workspace", label: "Project default" },
+  { value: "shared_workspace", label: "По умолчанию проекта" },
   { value: "isolated_workspace", label: "New isolated workspace" },
   { value: "reuse_existing", label: "Reuse existing workspace" },
 ] as const;
 
-function defaultProjectWorkspaceIdForProject(project: { workspaces?: Array<{ id: string; isPrimary: boolean }>; executionWorkspacePolicy?: { defaultProjectWorkspaceId?: string | null } | null } | null | undefined) {
+function defaultProjectРабочая областьIdForProject(project: { workspaces?: Array<{ id: string; isPrimary: boolean }>; executionРабочая областьPolicy?: { defaultProjectРабочая областьId?: string | null } | null } | null | undefined) {
   if (!project) return "";
-  return project.executionWorkspacePolicy?.defaultProjectWorkspaceId
+  return project.executionРабочая областьPolicy?.defaultProjectРабочая областьId
     ?? project.workspaces?.find((workspace) => workspace.isPrimary)?.id
     ?? project.workspaces?.[0]?.id
     ?? "";
 }
 
-function defaultExecutionWorkspaceModeForProject(project: { executionWorkspacePolicy?: { enabled?: boolean; defaultMode?: string | null } | null } | null | undefined) {
-  const defaultMode = project?.executionWorkspacePolicy?.enabled ? project.executionWorkspacePolicy.defaultMode : null;
+function defaultExecutionРабочая областьModeForProject(project: { executionРабочая областьPolicy?: { enabled?: boolean; defaultMode?: string | null } | null } | null | undefined) {
+  const defaultMode = project?.executionРабочая областьPolicy?.enabled ? project.executionРабочая областьPolicy.defaultMode : null;
   if (
     defaultMode === "isolated_workspace" ||
     defaultMode === "operator_branch" ||
@@ -270,75 +270,75 @@ function defaultExecutionWorkspaceModeForProject(project: { executionWorkspacePo
   return "shared_workspace";
 }
 
-function defaultExecutionWorkspaceModeForIssueDefaults(
+function defaultExecutionРабочая областьModeForЗадачаПо умолчаниюs(
   defaults: {
-    executionWorkspaceId?: unknown;
-    executionWorkspaceMode?: unknown;
+    executionРабочая областьId?: unknown;
+    executionРабочая областьMode?: unknown;
   },
-  project: { executionWorkspacePolicy?: { enabled?: boolean; defaultMode?: string | null } | null } | null | undefined,
+  project: { executionРабочая областьPolicy?: { enabled?: boolean; defaultMode?: string | null } | null } | null | undefined,
 ) {
-  if (typeof defaults.executionWorkspaceId === "string" && defaults.executionWorkspaceId.length > 0) {
+  if (typeof defaults.executionРабочая областьId === "string" && defaults.executionРабочая областьId.length > 0) {
     return "reuse_existing";
   }
-  return typeof defaults.executionWorkspaceMode === "string" && defaults.executionWorkspaceMode.length > 0
-    ? defaults.executionWorkspaceMode
-    : defaultExecutionWorkspaceModeForProject(project);
+  return typeof defaults.executionРабочая областьMode === "string" && defaults.executionРабочая областьMode.length > 0
+    ? defaults.executionРабочая областьMode
+    : defaultExecutionРабочая областьModeForProject(project);
 }
 
-const IssueTitleTextarea = memo(function IssueTitleTextarea({
+const ЗадачаНазваниеTextarea = memo(function ЗадачаНазваниеTextarea({
   value,
   pending,
-  assigneeValue,
+  assigneeЗначение,
   projectId,
-  descriptionEditorRef,
+  descriptionИзменитьorRef,
   assigneeSelectorRef,
   projectSelectorRef,
   onChange,
 }: {
   value: string;
   pending: boolean;
-  assigneeValue: string;
+  assigneeЗначение: string;
   projectId: string;
-  descriptionEditorRef: RefObject<MarkdownEditorRef | null>;
+  descriptionИзменитьorRef: RefObject<MarkdownИзменитьorRef | null>;
   assigneeSelectorRef: RefObject<HTMLButtonElement | null>;
   projectSelectorRef: RefObject<HTMLButtonElement | null>;
   onChange: (value: string) => void;
 }) {
-  const [draftValue, setDraftValue] = useState(value);
+  const [draftЗначение, setЧерновикЗначение] = useState(value);
 
   useEffect(() => {
-    setDraftValue(value);
+    setЧерновикЗначение(value);
   }, [value]);
 
   return (
     <textarea
-      className="w-full text-lg font-semibold bg-transparent outline-none resize-none overflow-hidden placeholder:text-muted-foreground/50"
-      placeholder="Issue title"
+      classИмя="w-full text-lg font-semibold bg-transparent outline-none resize-none overflow-hidden placeholder:text-muted-foreground/50"
+      placeholder="Задача title"
       rows={1}
-      value={draftValue}
+      value={draftЗначение}
       onChange={(e) => {
-        const nextValue = e.target.value;
-        setDraftValue(nextValue);
-        onChange(nextValue);
+        const nextЗначение = e.target.value;
+        setЧерновикЗначение(nextЗначение);
+        onChange(nextЗначение);
         e.target.style.height = "auto";
         e.target.style.height = `${e.target.scrollHeight}px`;
       }}
       readOnly={pending}
-      onKeyDown={(e) => {
+      onКлючDown={(e) => {
         if (
           e.key === "Enter" &&
-          !e.metaKey &&
-          !e.ctrlKey &&
+          !e.metaКлюч &&
+          !e.ctrlКлюч &&
           !e.nativeEvent.isComposing
         ) {
-          e.preventDefault();
-          descriptionEditorRef.current?.focus();
+          e.preventПо умолчанию();
+          descriptionИзменитьorRef.current?.focus();
         }
-        if (e.key === "Tab" && !e.shiftKey) {
-          e.preventDefault();
-          if (assigneeValue) {
+        if (e.key === "Tab" && !e.shiftКлюч) {
+          e.preventПо умолчанию();
+          if (assigneeЗначение) {
             if (projectId) {
-              descriptionEditorRef.current?.focus();
+              descriptionИзменитьorRef.current?.focus();
             } else {
               projectSelectorRef.current?.focus();
             }
@@ -352,45 +352,45 @@ const IssueTitleTextarea = memo(function IssueTitleTextarea({
   );
 });
 
-const IssueDescriptionEditor = memo(function IssueDescriptionEditor({
+const ЗадачаОписаниеИзменитьor = memo(function ЗадачаОписаниеИзменитьor({
   value,
   expanded,
   mentions,
-  descriptionEditorRef,
-  imageUploadHandler,
+  descriptionИзменитьorRef,
+  imageЗагрузитьHandler,
   onChange,
 }: {
   value: string;
   expanded: boolean;
   mentions: MentionOption[];
-  descriptionEditorRef: RefObject<MarkdownEditorRef | null>;
-  imageUploadHandler: (file: File) => Promise<string>;
+  descriptionИзменитьorRef: RefObject<MarkdownИзменитьorRef | null>;
+  imageЗагрузитьHandler: (file: File) => Promise<string>;
   onChange: (value: string) => void;
 }) {
-  const [draftValue, setDraftValue] = useState(value);
+  const [draftЗначение, setЧерновикЗначение] = useState(value);
 
   useEffect(() => {
-    setDraftValue(value);
+    setЧерновикЗначение(value);
   }, [value]);
 
   return (
-    <MarkdownEditor
-      ref={descriptionEditorRef}
-      value={draftValue}
-      onChange={(nextValue) => {
-        setDraftValue(nextValue);
-        onChange(nextValue);
+    <MarkdownИзменитьor
+      ref={descriptionИзменитьorRef}
+      value={draftЗначение}
+      onChange={(nextЗначение) => {
+        setЧерновикЗначение(nextЗначение);
+        onChange(nextЗначение);
       }}
-      placeholder="Add description..."
+      placeholder="Добавить description..."
       bordered={false}
       mentions={mentions}
-      contentClassName={cn("text-sm text-muted-foreground pb-12", expanded ? "min-h-[220px]" : "min-h-[120px]")}
-      imageUploadHandler={imageUploadHandler}
+      contentClassИмя={cn("text-sm text-muted-foreground pb-12", expanded ? "min-h-[220px]" : "min-h-[120px]")}
+      imageЗагрузитьHandler={imageЗагрузитьHandler}
     />
   );
 });
 
-function issueExecutionWorkspaceModeForExistingWorkspace(mode: string | null | undefined) {
+function issueExecutionРабочая областьModeForExistingРабочая область(mode: string | null | undefined) {
   if (mode === "isolated_workspace" || mode === "operator_branch" || mode === "shared_workspace") {
     return mode;
   }
@@ -400,172 +400,172 @@ function issueExecutionWorkspaceModeForExistingWorkspace(mode: string | null | u
   return "shared_workspace";
 }
 
-export function NewIssueDialog() {
-  const { newIssueOpen, newIssueDefaults, closeNewIssue } = useDialog();
-  const { companies, selectedCompanyId, selectedCompany } = useCompany();
+export function NewЗадачаDialog() {
+  const { newЗадачаOpen, newЗадачаПо умолчаниюs, closeNewЗадача } = useDialog();
+  const { companies, selectedКомпанияId, selectedКомпания } = useКомпания();
   const queryClient = useQueryClient();
   const { pushToast } = useToastActions();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setНазвание] = useState("");
+  const [description, setОписание] = useState("");
   const titleRef = useRef("");
   const descriptionRef = useRef("");
-  const [titleHasText, setTitleHasText] = useState(false);
-  const [draftHasText, setDraftHasText] = useState(false);
-  const [status, setStatus] = useState("todo");
-  const [priority, setPriority] = useState("");
-  const [assigneeValue, setAssigneeValue] = useState("");
-  const [reviewerValue, setReviewerValue] = useState("");
-  const [approverValue, setApproverValue] = useState("");
-  const [showReviewerRow, setShowReviewerRow] = useState(false);
-  const [showApproverRow, setShowApproverRow] = useState(false);
+  const [titleHasText, setНазваниеHasText] = useState(false);
+  const [draftHasText, setЧерновикHasText] = useState(false);
+  const [status, setСтатус] = useState("todo");
+  const [priority, setПриоритет] = useState("");
+  const [assigneeЗначение, setИсполнительЗначение] = useState("");
+  const [reviewerЗначение, setРецензентЗначение] = useState("");
+  const [approverЗначение, setУтверждающийЗначение] = useState("");
+  const [showРецензентRow, setShowРецензентRow] = useState(false);
+  const [showУтверждающийRow, setShowУтверждающийRow] = useState(false);
   const [participantMenuOpen, setParticipantMenuOpen] = useState(false);
   const [projectId, setProjectId] = useState("");
-  const [projectWorkspaceId, setProjectWorkspaceId] = useState("");
-  const [assigneeOptionsOpen, setAssigneeOptionsOpen] = useState(false);
-  const [assigneeModelLane, setAssigneeModelLane] = useState<IssueModelLane>("primary");
-  const [assigneeModelOverride, setAssigneeModelOverride] = useState("");
-  const [assigneeThinkingEffort, setAssigneeThinkingEffort] = useState("");
-  const [assigneeChrome, setAssigneeChrome] = useState(false);
-  const [executionWorkspaceMode, setExecutionWorkspaceMode] = useState<string>("shared_workspace");
-  const [selectedExecutionWorkspaceId, setSelectedExecutionWorkspaceId] = useState("");
-  const [workMode, setWorkMode] = useState<IssueWorkMode>("standard");
+  const [projectРабочая областьId, setProjectРабочая областьId] = useState("");
+  const [assigneeOptionsOpen, setИсполнительOptionsOpen] = useState(false);
+  const [assigneeМодельLane, setИсполнительМодельLane] = useState<ЗадачаМодельLane>("primary");
+  const [assigneeМодельOverride, setИсполнительМодельOverride] = useState("");
+  const [assigneeThinkingEffort, setИсполнительThinkingEffort] = useState("");
+  const [assigneeChrome, setИсполнительChrome] = useState(false);
+  const [executionРабочая областьMode, setExecutionРабочая областьMode] = useState<string>("shared_workspace");
+  const [selectedExecutionРабочая областьId, setSelectedExecutionРабочая областьId] = useState("");
+  const [workMode, setРаботаMode] = useState<ЗадачаРаботаMode>("standard");
   const [expanded, setExpanded] = useState(false);
-  const [dialogCompanyId, setDialogCompanyId] = useState<string | null>(null);
-  const [stagedFiles, setStagedFiles] = useState<StagedIssueFile[]>([]);
+  const [dialogКомпанияId, setDialogКомпанияId] = useState<string | null>(null);
+  const [stagedФайлы, setStagedФайлы] = useState<StagedЗадачаFile[]>([]);
   const [isFileDragOver, setIsFileDragOver] = useState(false);
-  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const executionWorkspaceDefaultProjectId = useRef<string | null>(null);
-  const initializationKeyRef = useRef<string | null>(null);
+  const draftTimer = useRef<ReturnТип<typeof setTimeout> | null>(null);
+  const executionРабочая областьПо умолчаниюProjectId = useRef<string | null>(null);
+  const initializationКлючRef = useRef<string | null>(null);
 
-  const effectiveCompanyId = dialogCompanyId ?? selectedCompanyId;
-  const dialogCompany = companies.find((c) => c.id === effectiveCompanyId) ?? selectedCompany;
-  const isSubIssueMode = Boolean(newIssueDefaults.parentId);
-  const parentIssueLabel = newIssueDefaults.parentIdentifier
-    ?? (newIssueDefaults.parentId ? newIssueDefaults.parentId.slice(0, 8) : "");
-  const parentExecutionWorkspaceId = newIssueDefaults.executionWorkspaceId ?? "";
-  const parentExecutionWorkspaceLabel = newIssueDefaults.parentExecutionWorkspaceLabel ?? parentExecutionWorkspaceId;
+  const effectiveКомпанияId = dialogКомпанияId ?? selectedКомпанияId;
+  const dialogКомпания = companies.find((c) => c.id === effectiveКомпанияId) ?? selectedКомпания;
+  const isSubЗадачаMode = Boolean(newЗадачаПо умолчаниюs.parentId);
+  const parentЗадачаLabel = newЗадачаПо умолчаниюs.parentIdentifier
+    ?? (newЗадачаПо умолчаниюs.parentId ? newЗадачаПо умолчаниюs.parentId.slice(0, 8) : "");
+  const parentExecutionРабочая областьId = newЗадачаПо умолчаниюs.executionРабочая областьId ?? "";
+  const parentExecutionРабочая областьLabel = newЗадачаПо умолчаниюs.parentExecutionРабочая областьLabel ?? parentExecutionРабочая областьId;
 
   // Popover states
-  const [statusOpen, setStatusOpen] = useState(false);
-  const [priorityOpen, setPriorityOpen] = useState(false);
-  const [workModeOpen, setWorkModeOpen] = useState(false);
+  const [statusOpen, setСтатусOpen] = useState(false);
+  const [priorityOpen, setПриоритетOpen] = useState(false);
+  const [workModeOpen, setРаботаModeOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [companyOpen, setCompanyOpen] = useState(false);
-  const descriptionEditorRef = useRef<MarkdownEditorRef>(null);
+  const [companyOpen, setКомпанияOpen] = useState(false);
+  const descriptionИзменитьorRef = useRef<MarkdownИзменитьorRef>(null);
   const stageFileInputRef = useRef<HTMLInputElement | null>(null);
   const assigneeSelectorRef = useRef<HTMLButtonElement | null>(null);
   const projectSelectorRef = useRef<HTMLButtonElement | null>(null);
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(effectiveCompanyId!),
-    queryFn: () => agentsApi.list(effectiveCompanyId!),
-    enabled: !!effectiveCompanyId && newIssueOpen,
+    queryКлюч: queryКлючs.agents.list(effectiveКомпанияId!),
+    queryFn: () => agentsApi.list(effectiveКомпанияId!),
+    enabled: !!effectiveКомпанияId && newЗадачаOpen,
   });
 
   const { data: projects } = useQuery({
-    queryKey: queryKeys.projects.list(effectiveCompanyId!),
-    queryFn: () => projectsApi.list(effectiveCompanyId!),
-    enabled: !!effectiveCompanyId && newIssueOpen,
+    queryКлюч: queryКлючs.projects.list(effectiveКомпанияId!),
+    queryFn: () => projectsApi.list(effectiveКомпанияId!),
+    enabled: !!effectiveКомпанияId && newЗадачаOpen,
   });
-  const { data: reusableExecutionWorkspaces } = useQuery({
-    queryKey: queryKeys.executionWorkspaces.list(effectiveCompanyId!, {
+  const { data: reusableExecutionРабочие области } = useQuery({
+    queryКлюч: queryКлючs.executionРабочие области.list(effectiveКомпанияId!, {
       projectId,
-      projectWorkspaceId: projectWorkspaceId || undefined,
+      projectРабочая областьId: projectРабочая областьId || undefined,
       reuseEligible: true,
     }),
     queryFn: () =>
-      executionWorkspacesApi.list(effectiveCompanyId!, {
+      executionРабочие областиApi.list(effectiveКомпанияId!, {
         projectId,
-        projectWorkspaceId: projectWorkspaceId || undefined,
+        projectРабочая областьId: projectРабочая областьId || undefined,
         reuseEligible: true,
       }),
-    enabled: Boolean(effectiveCompanyId) && newIssueOpen && Boolean(projectId),
+    enabled: Boolean(effectiveКомпанияId) && newЗадачаOpen && Boolean(projectId),
   });
   const { data: session } = useQuery({
-    queryKey: queryKeys.auth.session,
+    queryКлюч: queryКлючs.auth.session,
     queryFn: () => authApi.getSession(),
   });
   const { data: companyMembers } = useQuery({
-    queryKey: queryKeys.access.companyUserDirectory(effectiveCompanyId!),
-    queryFn: () => accessApi.listUserDirectory(effectiveCompanyId!),
-    enabled: Boolean(effectiveCompanyId) && newIssueOpen,
+    queryКлюч: queryКлючs.access.companyUserDirectory(effectiveКомпанияId!),
+    queryFn: () => accessApi.listUserDirectory(effectiveКомпанияId!),
+    enabled: Boolean(effectiveКомпанияId) && newЗадачаOpen,
   });
-  const { data: experimentalSettings } = useQuery({
-    queryKey: queryKeys.instance.experimentalSettings,
-    queryFn: () => instanceSettingsApi.getExperimental(),
-    enabled: newIssueOpen,
+  const { data: experimentalНастройки } = useQuery({
+    queryКлюч: queryКлючs.instance.experimentalНастройки,
+    queryFn: () => instanceНастройкиApi.getExperimental(),
+    enabled: newЗадачаOpen,
     retry: false,
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
-  const activeProjects = useMemo(
+  const activeПроекты = useMemo(
     () => (projects ?? []).filter((p) => !p.archivedAt),
     [projects],
   );
-  const { orderedProjects } = useProjectOrder({
-    projects: activeProjects,
-    companyId: effectiveCompanyId,
+  const { orderedПроекты } = useProjectOrder({
+    projects: activeПроекты,
+    companyId: effectiveКомпанияId,
     userId: currentUserId,
   });
 
-  const selectedAssignee = useMemo(() => parseAssigneeValue(assigneeValue), [assigneeValue]);
-  const selectedAssigneeAgentId = selectedAssignee.assigneeAgentId;
-  const selectedAssigneeUserId = selectedAssignee.assigneeUserId;
+  const selectedИсполнитель = useMemo(() => parseИсполнительЗначение(assigneeЗначение), [assigneeЗначение]);
+  const selectedИсполнительАгентId = selectedИсполнитель.assigneeАгентId;
+  const selectedИсполнительUserId = selectedИсполнитель.assigneeUserId;
 
-  const assigneeAdapterType = (agents ?? []).find((agent) => agent.id === selectedAssigneeAgentId)?.adapterType ?? null;
-  const supportsAssigneeOverrides = Boolean(
-    assigneeAdapterType && ISSUE_OVERRIDE_ADAPTER_TYPES.has(assigneeAdapterType),
+  const assigneeАдаптерТип = (agents ?? []).find((agent) => agent.id === selectedИсполнительАгентId)?.adapterТип ?? null;
+  const supportsИсполнительOverrides = Boolean(
+    assigneeАдаптерТип && ISSUE_OVERRIDE_ADAPTER_TYPES.has(assigneeАдаптерТип),
   );
-  const getAdapterCapabilities = useAdapterCapabilities();
-  const assigneeAdapterCapabilities = assigneeAdapterType
-    ? getAdapterCapabilities(assigneeAdapterType)
+  const getАдаптерCapabilities = useАдаптерCapabilities();
+  const assigneeАдаптерCapabilities = assigneeАдаптерТип
+    ? getАдаптерCapabilities(assigneeАдаптерТип)
     : null;
   const assigneeSupportsCheapLane = Boolean(
-    supportsAssigneeOverrides && assigneeAdapterCapabilities?.supportsModelProfiles,
+    supportsИсполнительOverrides && assigneeАдаптерCapabilities?.supportsМодельПрофильs,
   );
 
-  const { data: assigneeCheapProfiles } = useQuery({
-    queryKey: effectiveCompanyId && assigneeAdapterType
-      ? queryKeys.agents.adapterModelProfiles(effectiveCompanyId, assigneeAdapterType)
-      : ["agents", "none", "adapter-model-profiles", assigneeAdapterType ?? "none"],
-    queryFn: () => agentsApi.adapterModelProfiles(effectiveCompanyId!, assigneeAdapterType!),
-    enabled: Boolean(effectiveCompanyId) && newIssueOpen && assigneeSupportsCheapLane,
+  const { data: assigneeCheapПрофильs } = useQuery({
+    queryКлюч: effectiveКомпанияId && assigneeАдаптерТип
+      ? queryКлючs.agents.adapterМодельПрофильs(effectiveКомпанияId, assigneeАдаптерТип)
+      : ["agents", "none", "adapter-model-profiles", assigneeАдаптерТип ?? "none"],
+    queryFn: () => agentsApi.adapterМодельПрофильs(effectiveКомпанияId!, assigneeАдаптерТип!),
+    enabled: Boolean(effectiveКомпанияId) && newЗадачаOpen && assigneeSupportsCheapLane,
   });
-  const assigneeCheapProfile = useMemo(
-    () => (assigneeCheapProfiles ?? []).find((profile) => profile.key === "cheap") ?? null,
-    [assigneeCheapProfiles],
+  const assigneeCheapПрофиль = useMemo(
+    () => (assigneeCheapПрофильs ?? []).find((profile) => profile.key === "cheap") ?? null,
+    [assigneeCheapПрофильs],
   );
   const mentionOptions = useMemo<MentionOption[]>(() => {
     return buildMarkdownMentionOptions({
       agents,
-      projects: orderedProjects,
+      projects: orderedПроекты,
       members: companyMembers?.users,
     });
-  }, [agents, companyMembers?.users, orderedProjects]);
+  }, [agents, companyMembers?.users, orderedПроекты]);
 
-  const { data: assigneeAdapterModels } = useQuery({
-    queryKey:
-      effectiveCompanyId && assigneeAdapterType
-        ? queryKeys.agents.adapterModels(effectiveCompanyId, assigneeAdapterType)
-        : ["agents", "none", "adapter-models", assigneeAdapterType ?? "none"],
-    queryFn: () => agentsApi.adapterModels(effectiveCompanyId!, assigneeAdapterType!),
-    enabled: Boolean(effectiveCompanyId) && newIssueOpen && supportsAssigneeOverrides,
+  const { data: assigneeАдаптерМодельs } = useQuery({
+    queryКлюч:
+      effectiveКомпанияId && assigneeАдаптерТип
+        ? queryКлючs.agents.adapterМодельs(effectiveКомпанияId, assigneeАдаптерТип)
+        : ["agents", "none", "adapter-models", assigneeАдаптерТип ?? "none"],
+    queryFn: () => agentsApi.adapterМодельs(effectiveКомпанияId!, assigneeАдаптерТип!),
+    enabled: Boolean(effectiveКомпанияId) && newЗадачаOpen && supportsИсполнительOverrides,
   });
 
-  const createIssue = useMutation({
+  const createЗадача = useMutation({
     mutationFn: async ({
       companyId,
-      stagedFiles: pendingStagedFiles,
+      stagedФайлы: pendingStagedФайлы,
       ...data
-    }: { companyId: string; stagedFiles: StagedIssueFile[] } & Record<string, unknown>) => {
+    }: { companyId: string; stagedФайлы: StagedЗадачаFile[] } & Record<string, unknown>) => {
       const issue = await issuesApi.create(companyId, data);
       const failures: string[] = [];
 
-      for (const stagedFile of pendingStagedFiles) {
+      for (const stagedFile of pendingStagedФайлы) {
         try {
           if (stagedFile.kind === "document") {
             const body = await stagedFile.file.text();
-            await issuesApi.upsertDocument(issue.id, stagedFile.documentKey ?? "document", {
-              title: stagedFile.documentKey === "plan" ? null : stagedFile.title ?? null,
+            await issuesApi.upsertDocument(issue.id, stagedFile.documentКлюч ?? "document", {
+              title: stagedFile.documentКлюч === "plan" ? null : stagedFile.title ?? null,
               format: "markdown",
               body,
               baseRevisionId: null,
@@ -580,18 +580,18 @@ export function NewIssueDialog() {
 
       return { issue, companyId, failures };
     },
-    onSuccess: ({ issue, companyId, failures }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listMineByMe(companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listUnreadTouchedByMe(companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(companyId) });
+    onУспешно: ({ issue, companyId, failures }) => {
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.list(companyId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listMineByMe(companyId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listTouchedByMe(companyId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.issues.listUnreadTouchedByMe(companyId) });
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.sidebarBadges(companyId) });
       if (draftTimer.current) clearTimeout(draftTimer.current);
       if (failures.length > 0) {
         const prefix = (companies.find((company) => company.id === companyId)?.issuePrefix ?? "").trim();
         const issueRef = issue.identifier ?? issue.id;
         pushToast({
-          title: `Created ${issueRef} with upload warnings`,
+          title: `Создано ${issueRef} with upload warnings`,
           body: `${failures.length} staged ${failures.length === 1 ? "file" : "files"} could not be added.`,
           tone: "warn",
           action: prefix
@@ -599,283 +599,283 @@ export function NewIssueDialog() {
             : undefined,
         });
       }
-      clearDraft();
+      clearЧерновик();
       reset();
-      closeNewIssue();
+      closeNewЗадача();
     },
   });
 
-  const uploadDescriptionImage = useMutation({
+  const uploadОписаниеImage = useMutation({
     mutationFn: async (file: File) => {
-      if (!effectiveCompanyId) throw new Error("No company selected");
-      return assetsApi.uploadImage(effectiveCompanyId, file, "issues/drafts");
+      if (!effectiveКомпанияId) throw new Ошибка("Нет company selected");
+      return assetsApi.uploadImage(effectiveКомпанияId, file, "issues/drafts");
     },
   });
-  const uploadDescriptionImageHandler = useCallback(async (file: File) => {
-    const asset = await uploadDescriptionImage.mutateAsync(file);
-    return asset.contentPath;
-  }, [uploadDescriptionImage.mutateAsync]);
+  const uploadОписаниеImageHandler = useCallback(async (file: File) => {
+    const asset = await uploadОписаниеImage.mutateAsync(file);
+    return asset.contentПуть;
+  }, [uploadОписаниеImage.mutateAsync]);
 
   // Debounced draft saving
-  const scheduleSave = useCallback(
-    (draft: IssueDraft) => {
+  const scheduleСохранить = useCallback(
+    (draft: ЗадачаЧерновик) => {
       if (draftTimer.current) clearTimeout(draftTimer.current);
       draftTimer.current = setTimeout(() => {
-        if (draft.title.trim()) saveDraft(draft);
+        if (draft.title.trim()) saveЧерновик(draft);
       }, DEBOUNCE_MS);
     },
     [],
   );
 
-  const setIssueText = useCallback((nextTitle: string, nextDescription: string) => {
-    titleRef.current = nextTitle;
-    descriptionRef.current = nextDescription;
-    setTitle(nextTitle);
-    setDescription(nextDescription);
-    setTitleHasText(nextTitle.trim().length > 0);
-    setDraftHasText(nextTitle.trim().length > 0 || nextDescription.trim().length > 0);
+  const setЗадачаText = useCallback((nextНазвание: string, nextОписание: string) => {
+    titleRef.current = nextНазвание;
+    descriptionRef.current = nextОписание;
+    setНазвание(nextНазвание);
+    setОписание(nextОписание);
+    setНазваниеHasText(nextНазвание.trim().length > 0);
+    setЧерновикHasText(nextНазвание.trim().length > 0 || nextОписание.trim().length > 0);
   }, []);
 
-  const queueDraftSave = useCallback((overrides: { title?: string; description?: string } = {}) => {
-    if (!newIssueOpen) return;
-    const nextTitle = overrides.title ?? titleRef.current;
-    const nextDescription = overrides.description ?? descriptionRef.current;
-    scheduleSave({
-      title: nextTitle,
-      description: nextDescription,
+  const queueЧерновикСохранить = useCallback((overrides: { title?: string; description?: string } = {}) => {
+    if (!newЗадачаOpen) return;
+    const nextНазвание = overrides.title ?? titleRef.current;
+    const nextОписание = overrides.description ?? descriptionRef.current;
+    scheduleСохранить({
+      title: nextНазвание,
+      description: nextОписание,
       status,
       priority,
-      assigneeValue,
-      reviewerValue,
-      approverValue,
+      assigneeЗначение,
+      reviewerЗначение,
+      approverЗначение,
       projectId,
-      projectWorkspaceId,
-      assigneeModelLane,
-      assigneeModelOverride,
+      projectРабочая областьId,
+      assigneeМодельLane,
+      assigneeМодельOverride,
       assigneeThinkingEffort,
       assigneeChrome,
-      executionWorkspaceMode,
-      selectedExecutionWorkspaceId,
+      executionРабочая областьMode,
+      selectedExecutionРабочая областьId,
       workMode,
     });
   }, [
-    newIssueOpen,
-    scheduleSave,
+    newЗадачаOpen,
+    scheduleСохранить,
     status,
     priority,
-    assigneeValue,
-    reviewerValue,
-    approverValue,
+    assigneeЗначение,
+    reviewerЗначение,
+    approverЗначение,
     projectId,
-    projectWorkspaceId,
-    assigneeModelOverride,
+    projectРабочая областьId,
+    assigneeМодельOverride,
     assigneeThinkingEffort,
     assigneeChrome,
-    executionWorkspaceMode,
-    selectedExecutionWorkspaceId,
+    executionРабочая областьMode,
+    selectedExecutionРабочая областьId,
     workMode,
   ]);
 
-  const handleTitleChange = useCallback((nextTitle: string) => {
-    titleRef.current = nextTitle;
-    const nextTitleHasText = nextTitle.trim().length > 0;
-    const nextDraftHasText = nextTitleHasText || descriptionRef.current.trim().length > 0;
-    setTitleHasText((current) => current === nextTitleHasText ? current : nextTitleHasText);
-    setDraftHasText((current) => current === nextDraftHasText ? current : nextDraftHasText);
-    queueDraftSave({ title: nextTitle });
-  }, [queueDraftSave]);
+  const handleНазваниеChange = useCallback((nextНазвание: string) => {
+    titleRef.current = nextНазвание;
+    const nextНазваниеHasText = nextНазвание.trim().length > 0;
+    const nextЧерновикHasText = nextНазваниеHasText || descriptionRef.current.trim().length > 0;
+    setНазваниеHasText((current) => current === nextНазваниеHasText ? current : nextНазваниеHasText);
+    setЧерновикHasText((current) => current === nextЧерновикHasText ? current : nextЧерновикHasText);
+    queueЧерновикСохранить({ title: nextНазвание });
+  }, [queueЧерновикСохранить]);
 
-  const handleDescriptionChange = useCallback((nextDescription: string) => {
-    descriptionRef.current = nextDescription;
-    const nextDraftHasText = titleRef.current.trim().length > 0 || nextDescription.trim().length > 0;
-    setDraftHasText((current) => current === nextDraftHasText ? current : nextDraftHasText);
-    queueDraftSave({ description: nextDescription });
-  }, [queueDraftSave]);
+  const handleОписаниеChange = useCallback((nextОписание: string) => {
+    descriptionRef.current = nextОписание;
+    const nextЧерновикHasText = titleRef.current.trim().length > 0 || nextОписание.trim().length > 0;
+    setЧерновикHasText((current) => current === nextЧерновикHasText ? current : nextЧерновикHasText);
+    queueЧерновикСохранить({ description: nextОписание });
+  }, [queueЧерновикСохранить]);
 
-  // Save draft on meaningful changes
+  // Сохранить draft on meaningful changes
   useEffect(() => {
-    if (!newIssueOpen) return;
-    queueDraftSave();
+    if (!newЗадачаOpen) return;
+    queueЧерновикСохранить();
   }, [
     status,
     priority,
-    assigneeValue,
-    reviewerValue,
-    approverValue,
+    assigneeЗначение,
+    reviewerЗначение,
+    approverЗначение,
     projectId,
-    projectWorkspaceId,
-    assigneeModelLane,
-    assigneeModelOverride,
+    projectРабочая областьId,
+    assigneeМодельLane,
+    assigneeМодельOverride,
     assigneeThinkingEffort,
     assigneeChrome,
-    executionWorkspaceMode,
-    selectedExecutionWorkspaceId,
+    executionРабочая областьMode,
+    selectedExecutionРабочая областьId,
     workMode,
-    newIssueOpen,
-    queueDraftSave,
+    newЗадачаOpen,
+    queueЧерновикСохранить,
   ]);
 
   // Restore draft or apply defaults when dialog opens
   useEffect(() => {
-    if (!newIssueOpen) {
-      initializationKeyRef.current = null;
+    if (!newЗадачаOpen) {
+      initializationКлючRef.current = null;
       return;
     }
-    const initializationKey = `${selectedCompanyId ?? ""}:${JSON.stringify(newIssueDefaults)}`;
-    if (initializationKeyRef.current === initializationKey) return;
-    initializationKeyRef.current = initializationKey;
-    setDialogCompanyId(selectedCompanyId);
-    executionWorkspaceDefaultProjectId.current = null;
+    const initializationКлюч = `${selectedКомпанияId ?? ""}:${JSON.stringify(newЗадачаПо умолчаниюs)}`;
+    if (initializationКлючRef.current === initializationКлюч) return;
+    initializationКлючRef.current = initializationКлюч;
+    setDialogКомпанияId(selectedКомпанияId);
+    executionРабочая областьПо умолчаниюProjectId.current = null;
 
-    const draft = loadDraft();
-    if (newIssueDefaults.parentId) {
-      const nextWorkMode = isIssueWorkMode(newIssueDefaults.workMode) ? newIssueDefaults.workMode : "standard";
-      const defaultProjectId = newIssueDefaults.projectId ?? "";
-      const defaultProject = orderedProjects.find((project) => project.id === defaultProjectId);
-      const hasExplicitProjectWorkspaceId = newIssueDefaults.projectWorkspaceId !== undefined;
-      const defaultProjectWorkspaceId = newIssueDefaults.projectWorkspaceId
-        ?? defaultProjectWorkspaceIdForProject(defaultProject);
-      const defaultExecutionWorkspaceMode = defaultExecutionWorkspaceModeForIssueDefaults(newIssueDefaults, defaultProject);
-      setIssueText(newIssueDefaults.title ?? "", newIssueDefaults.description ?? "");
-      setStatus(newIssueDefaults.status ?? "todo");
-      setPriority(newIssueDefaults.priority ?? "");
+    const draft = loadЧерновик();
+    if (newЗадачаПо умолчаниюs.parentId) {
+      const nextРаботаMode = isЗадачаРаботаMode(newЗадачаПо умолчаниюs.workMode) ? newЗадачаПо умолчаниюs.workMode : "standard";
+      const defaultProjectId = newЗадачаПо умолчаниюs.projectId ?? "";
+      const defaultProject = orderedПроекты.find((project) => project.id === defaultProjectId);
+      const hasExplicitProjectРабочая областьId = newЗадачаПо умолчаниюs.projectРабочая областьId !== undefined;
+      const defaultProjectРабочая областьId = newЗадачаПо умолчаниюs.projectРабочая областьId
+        ?? defaultProjectРабочая областьIdForProject(defaultProject);
+      const defaultExecutionРабочая областьMode = defaultExecutionРабочая областьModeForЗадачаПо умолчаниюs(newЗадачаПо умолчаниюs, defaultProject);
+      setЗадачаText(newЗадачаПо умолчаниюs.title ?? "", newЗадачаПо умолчаниюs.description ?? "");
+      setСтатус(newЗадачаПо умолчаниюs.status ?? "todo");
+      setПриоритет(newЗадачаПо умолчаниюs.priority ?? "");
       setProjectId(defaultProjectId);
-      setProjectWorkspaceId(defaultProjectWorkspaceId);
-      setAssigneeValue(assigneeValueFromSelection(newIssueDefaults));
-      setAssigneeModelLane("primary");
-      setAssigneeModelOverride("");
-      setAssigneeThinkingEffort("");
-      setAssigneeChrome(false);
-      setExecutionWorkspaceMode(defaultExecutionWorkspaceMode);
-      setWorkMode(nextWorkMode);
-      setSelectedExecutionWorkspaceId(newIssueDefaults.executionWorkspaceId ?? "");
-      executionWorkspaceDefaultProjectId.current = hasExplicitProjectWorkspaceId || defaultProject
+      setProjectРабочая областьId(defaultProjectРабочая областьId);
+      setИсполнительЗначение(assigneeЗначениеFromSelection(newЗадачаПо умолчаниюs));
+      setИсполнительМодельLane("primary");
+      setИсполнительМодельOverride("");
+      setИсполнительThinkingEffort("");
+      setИсполнительChrome(false);
+      setExecutionРабочая областьMode(defaultExecutionРабочая областьMode);
+      setРаботаMode(nextРаботаMode);
+      setSelectedExecutionРабочая областьId(newЗадачаПо умолчаниюs.executionРабочая областьId ?? "");
+      executionРабочая областьПо умолчаниюProjectId.current = hasExplicitProjectРабочая областьId || defaultProject
         ? defaultProjectId || null
         : null;
-    } else if (newIssueDefaults.title) {
-      const nextWorkMode = isIssueWorkMode(newIssueDefaults.workMode) ? newIssueDefaults.workMode : "standard";
-      setIssueText(newIssueDefaults.title, newIssueDefaults.description ?? "");
-      setStatus(newIssueDefaults.status ?? "todo");
-      setPriority(newIssueDefaults.priority ?? "");
-      const defaultProjectId = newIssueDefaults.projectId ?? "";
-      const defaultProject = orderedProjects.find((project) => project.id === defaultProjectId);
-      const hasExplicitProjectWorkspaceId = newIssueDefaults.projectWorkspaceId !== undefined;
+    } else if (newЗадачаПо умолчаниюs.title) {
+      const nextРаботаMode = isЗадачаРаботаMode(newЗадачаПо умолчаниюs.workMode) ? newЗадачаПо умолчаниюs.workMode : "standard";
+      setЗадачаText(newЗадачаПо умолчаниюs.title, newЗадачаПо умолчаниюs.description ?? "");
+      setСтатус(newЗадачаПо умолчаниюs.status ?? "todo");
+      setПриоритет(newЗадачаПо умолчаниюs.priority ?? "");
+      const defaultProjectId = newЗадачаПо умолчаниюs.projectId ?? "";
+      const defaultProject = orderedПроекты.find((project) => project.id === defaultProjectId);
+      const hasExplicitProjectРабочая областьId = newЗадачаПо умолчаниюs.projectРабочая областьId !== undefined;
       setProjectId(defaultProjectId);
-      setProjectWorkspaceId(newIssueDefaults.projectWorkspaceId ?? defaultProjectWorkspaceIdForProject(defaultProject));
-      setAssigneeValue(assigneeValueFromSelection(newIssueDefaults));
-      setReviewerValue("");
-      setApproverValue("");
-      setShowReviewerRow(false);
-      setShowApproverRow(false);
-      setAssigneeModelOverride("");
-      setAssigneeThinkingEffort("");
-      setAssigneeChrome(false);
-      setExecutionWorkspaceMode(defaultExecutionWorkspaceModeForIssueDefaults(newIssueDefaults, defaultProject));
-      setWorkMode(nextWorkMode);
-      setSelectedExecutionWorkspaceId(newIssueDefaults.executionWorkspaceId ?? "");
-      executionWorkspaceDefaultProjectId.current = hasExplicitProjectWorkspaceId || newIssueDefaults.executionWorkspaceId || defaultProject
+      setProjectРабочая областьId(newЗадачаПо умолчаниюs.projectРабочая областьId ?? defaultProjectРабочая областьIdForProject(defaultProject));
+      setИсполнительЗначение(assigneeЗначениеFromSelection(newЗадачаПо умолчаниюs));
+      setРецензентЗначение("");
+      setУтверждающийЗначение("");
+      setShowРецензентRow(false);
+      setShowУтверждающийRow(false);
+      setИсполнительМодельOverride("");
+      setИсполнительThinkingEffort("");
+      setИсполнительChrome(false);
+      setExecutionРабочая областьMode(defaultExecutionРабочая областьModeForЗадачаПо умолчаниюs(newЗадачаПо умолчаниюs, defaultProject));
+      setРаботаMode(nextРаботаMode);
+      setSelectedExecutionРабочая областьId(newЗадачаПо умолчаниюs.executionРабочая областьId ?? "");
+      executionРабочая областьПо умолчаниюProjectId.current = hasExplicitProjectРабочая областьId || newЗадачаПо умолчаниюs.executionРабочая областьId || defaultProject
         ? defaultProjectId || null
         : null;
     } else if (draft && draft.title.trim()) {
-      const nextWorkMode = isIssueWorkMode(draft.workMode) ? draft.workMode : "standard";
-      const restoredProjectId = newIssueDefaults.projectId ?? draft.projectId;
-      const restoredProject = orderedProjects.find((project) => project.id === restoredProjectId);
-      const hasExplicitProjectWorkspaceId = newIssueDefaults.projectWorkspaceId !== undefined;
-      const hasExplicitExecutionWorkspaceId = newIssueDefaults.executionWorkspaceId !== undefined;
-      const hasExplicitExecutionWorkspaceMode = newIssueDefaults.executionWorkspaceMode !== undefined;
-      setIssueText(draft.title, draft.description);
-      setStatus(draft.status || "todo");
-      setPriority(draft.priority);
-      setAssigneeValue(
-        newIssueDefaults.assigneeAgentId || newIssueDefaults.assigneeUserId
-          ? assigneeValueFromSelection(newIssueDefaults)
-          : (draft.assigneeValue ?? draft.assigneeId ?? ""),
+      const nextРаботаMode = isЗадачаРаботаMode(draft.workMode) ? draft.workMode : "standard";
+      const restoredProjectId = newЗадачаПо умолчаниюs.projectId ?? draft.projectId;
+      const restoredProject = orderedПроекты.find((project) => project.id === restoredProjectId);
+      const hasExplicitProjectРабочая областьId = newЗадачаПо умолчаниюs.projectРабочая областьId !== undefined;
+      const hasExplicitExecutionРабочая областьId = newЗадачаПо умолчаниюs.executionРабочая областьId !== undefined;
+      const hasExplicitExecutionРабочая областьMode = newЗадачаПо умолчаниюs.executionРабочая областьMode !== undefined;
+      setЗадачаText(draft.title, draft.description);
+      setСтатус(draft.status || "todo");
+      setПриоритет(draft.priority);
+      setИсполнительЗначение(
+        newЗадачаПо умолчаниюs.assigneeАгентId || newЗадачаПо умолчаниюs.assigneeUserId
+          ? assigneeЗначениеFromSelection(newЗадачаПо умолчаниюs)
+          : (draft.assigneeЗначение ?? draft.assigneeId ?? ""),
       );
-      setReviewerValue(draft.reviewerValue ?? "");
-      setApproverValue(draft.approverValue ?? "");
-      setShowReviewerRow(!!(draft.reviewerValue));
-      setShowApproverRow(!!(draft.approverValue));
+      setРецензентЗначение(draft.reviewerЗначение ?? "");
+      setУтверждающийЗначение(draft.approverЗначение ?? "");
+      setShowРецензентRow(!!(draft.reviewerЗначение));
+      setShowУтверждающийRow(!!(draft.approverЗначение));
       setProjectId(restoredProjectId);
-      setProjectWorkspaceId(
-        hasExplicitProjectWorkspaceId
-          ? (newIssueDefaults.projectWorkspaceId ?? "")
-          : (draft.projectWorkspaceId ?? defaultProjectWorkspaceIdForProject(restoredProject)),
+      setProjectРабочая областьId(
+        hasExplicitProjectРабочая областьId
+          ? (newЗадачаПо умолчаниюs.projectРабочая областьId ?? "")
+          : (draft.projectРабочая областьId ?? defaultProjectРабочая областьIdForProject(restoredProject)),
       );
-      setAssigneeModelLane(draft.assigneeModelLane ?? "primary");
-      setAssigneeModelOverride(draft.assigneeModelOverride ?? "");
-      setAssigneeThinkingEffort(draft.assigneeThinkingEffort ?? "");
-      setAssigneeChrome(draft.assigneeChrome ?? false);
-      setExecutionWorkspaceMode(
-        hasExplicitExecutionWorkspaceId || hasExplicitExecutionWorkspaceMode
-          ? defaultExecutionWorkspaceModeForIssueDefaults(newIssueDefaults, restoredProject)
+      setИсполнительМодельLane(draft.assigneeМодельLane ?? "primary");
+      setИсполнительМодельOverride(draft.assigneeМодельOverride ?? "");
+      setИсполнительThinkingEffort(draft.assigneeThinkingEffort ?? "");
+      setИсполнительChrome(draft.assigneeChrome ?? false);
+      setExecutionРабочая областьMode(
+        hasExplicitExecutionРабочая областьId || hasExplicitExecutionРабочая областьMode
+          ? defaultExecutionРабочая областьModeForЗадачаПо умолчаниюs(newЗадачаПо умолчаниюs, restoredProject)
           : (
-              draft.executionWorkspaceMode
-              ?? (draft.useIsolatedExecutionWorkspace ? "isolated_workspace" : defaultExecutionWorkspaceModeForProject(restoredProject))
+              draft.executionРабочая областьMode
+              ?? (draft.useIsolatedExecutionРабочая область ? "isolated_workspace" : defaultExecutionРабочая областьModeForProject(restoredProject))
             ),
       );
-      setWorkMode(nextWorkMode);
-      setSelectedExecutionWorkspaceId(
-        hasExplicitExecutionWorkspaceId
-          ? (newIssueDefaults.executionWorkspaceId ?? "")
-          : (draft.selectedExecutionWorkspaceId ?? ""),
+      setРаботаMode(nextРаботаMode);
+      setSelectedExecutionРабочая областьId(
+        hasExplicitExecutionРабочая областьId
+          ? (newЗадачаПо умолчаниюs.executionРабочая областьId ?? "")
+          : (draft.selectedExecutionРабочая областьId ?? ""),
       );
-      executionWorkspaceDefaultProjectId.current = hasExplicitProjectWorkspaceId || hasExplicitExecutionWorkspaceId || draft.projectWorkspaceId || restoredProject
+      executionРабочая областьПо умолчаниюProjectId.current = hasExplicitProjectРабочая областьId || hasExplicitExecutionРабочая областьId || draft.projectРабочая областьId || restoredProject
         ? restoredProjectId || null
         : null;
     } else {
-      setWorkMode("standard");
-      const defaultProjectId = newIssueDefaults.projectId ?? "";
-      const defaultProject = orderedProjects.find((project) => project.id === defaultProjectId);
-      const hasExplicitProjectWorkspaceId = newIssueDefaults.projectWorkspaceId !== undefined;
-      setIssueText("", "");
-      setStatus(newIssueDefaults.status ?? "todo");
-      setPriority(newIssueDefaults.priority ?? "");
+      setРаботаMode("standard");
+      const defaultProjectId = newЗадачаПо умолчаниюs.projectId ?? "";
+      const defaultProject = orderedПроекты.find((project) => project.id === defaultProjectId);
+      const hasExplicitProjectРабочая областьId = newЗадачаПо умолчаниюs.projectРабочая областьId !== undefined;
+      setЗадачаText("", "");
+      setСтатус(newЗадачаПо умолчаниюs.status ?? "todo");
+      setПриоритет(newЗадачаПо умолчаниюs.priority ?? "");
       setProjectId(defaultProjectId);
-      setProjectWorkspaceId(newIssueDefaults.projectWorkspaceId ?? defaultProjectWorkspaceIdForProject(defaultProject));
-      setAssigneeValue(assigneeValueFromSelection(newIssueDefaults));
-      setReviewerValue("");
-      setApproverValue("");
-      setShowReviewerRow(false);
-      setShowApproverRow(false);
-      setAssigneeModelOverride("");
-      setAssigneeThinkingEffort("");
-      setAssigneeChrome(false);
-      setExecutionWorkspaceMode(defaultExecutionWorkspaceModeForIssueDefaults(newIssueDefaults, defaultProject));
-      setSelectedExecutionWorkspaceId(newIssueDefaults.executionWorkspaceId ?? "");
-      executionWorkspaceDefaultProjectId.current = hasExplicitProjectWorkspaceId || newIssueDefaults.executionWorkspaceId || defaultProject
+      setProjectРабочая областьId(newЗадачаПо умолчаниюs.projectРабочая областьId ?? defaultProjectРабочая областьIdForProject(defaultProject));
+      setИсполнительЗначение(assigneeЗначениеFromSelection(newЗадачаПо умолчаниюs));
+      setРецензентЗначение("");
+      setУтверждающийЗначение("");
+      setShowРецензентRow(false);
+      setShowУтверждающийRow(false);
+      setИсполнительМодельOverride("");
+      setИсполнительThinkingEffort("");
+      setИсполнительChrome(false);
+      setExecutionРабочая областьMode(defaultExecutionРабочая областьModeForЗадачаПо умолчаниюs(newЗадачаПо умолчаниюs, defaultProject));
+      setSelectedExecutionРабочая областьId(newЗадачаПо умолчаниюs.executionРабочая областьId ?? "");
+      executionРабочая областьПо умолчаниюProjectId.current = hasExplicitProjectРабочая областьId || newЗадачаПо умолчаниюs.executionРабочая областьId || defaultProject
         ? defaultProjectId || null
         : null;
     }
-  }, [newIssueOpen, newIssueDefaults, orderedProjects, selectedCompanyId, setIssueText]);
+  }, [newЗадачаOpen, newЗадачаПо умолчаниюs, orderedПроекты, selectedКомпанияId, setЗадачаText]);
 
   useEffect(() => {
-    if (!supportsAssigneeOverrides) {
-      setAssigneeOptionsOpen(false);
-      setAssigneeModelLane("primary");
-      setAssigneeModelOverride("");
-      setAssigneeThinkingEffort("");
-      setAssigneeChrome(false);
+    if (!supportsИсполнительOverrides) {
+      setИсполнительOptionsOpen(false);
+      setИсполнительМодельLane("primary");
+      setИсполнительМодельOverride("");
+      setИсполнительThinkingEffort("");
+      setИсполнительChrome(false);
       return;
     }
-    if (!assigneeSupportsCheapLane && assigneeModelLane === "cheap") {
-      setAssigneeModelLane("primary");
+    if (!assigneeSupportsCheapLane && assigneeМодельLane === "cheap") {
+      setИсполнительМодельLane("primary");
     }
 
-    const validThinkingValues =
-      assigneeAdapterType === "codex_local"
+    const validThinkingЗначениеs =
+      assigneeАдаптерТип === "codex_local"
         ? ISSUE_THINKING_EFFORT_OPTIONS.codex_local
-        : assigneeAdapterType === "opencode_local"
+        : assigneeАдаптерТип === "opencode_local"
           ? ISSUE_THINKING_EFFORT_OPTIONS.opencode_local
           : ISSUE_THINKING_EFFORT_OPTIONS.claude_local;
-    if (!validThinkingValues.some((option) => option.value === assigneeThinkingEffort)) {
-      setAssigneeThinkingEffort("");
+    if (!validThinkingЗначениеs.some((option) => option.value === assigneeThinkingEffort)) {
+      setИсполнительThinkingEffort("");
     }
   }, [
-    supportsAssigneeOverrides,
-    assigneeAdapterType,
+    supportsИсполнительOverrides,
+    assigneeАдаптерТип,
     assigneeThinkingEffort,
     assigneeSupportsCheapLane,
-    assigneeModelLane,
+    assigneeМодельLane,
   ]);
 
   // Cleanup timer on unmount
@@ -886,139 +886,139 @@ export function NewIssueDialog() {
   }, []);
 
   function reset() {
-    setIssueText("", "");
-    setStatus("todo");
-    setPriority("");
-    setAssigneeValue("");
-    setReviewerValue("");
-    setApproverValue("");
-    setShowReviewerRow(false);
-    setShowApproverRow(false);
+    setЗадачаText("", "");
+    setСтатус("todo");
+    setПриоритет("");
+    setИсполнительЗначение("");
+    setРецензентЗначение("");
+    setУтверждающийЗначение("");
+    setShowРецензентRow(false);
+    setShowУтверждающийRow(false);
     setProjectId("");
-    setProjectWorkspaceId("");
-    setAssigneeOptionsOpen(false);
-    setAssigneeModelLane("primary");
-    setAssigneeModelOverride("");
-    setAssigneeThinkingEffort("");
-    setAssigneeChrome(false);
-    setExecutionWorkspaceMode("shared_workspace");
-    setSelectedExecutionWorkspaceId("");
-    setWorkMode("standard");
+    setProjectРабочая областьId("");
+    setИсполнительOptionsOpen(false);
+    setИсполнительМодельLane("primary");
+    setИсполнительМодельOverride("");
+    setИсполнительThinkingEffort("");
+    setИсполнительChrome(false);
+    setExecutionРабочая областьMode("shared_workspace");
+    setSelectedExecutionРабочая областьId("");
+    setРаботаMode("standard");
     setExpanded(false);
-    setDialogCompanyId(null);
-    setStagedFiles([]);
+    setDialogКомпанияId(null);
+    setStagedФайлы([]);
     setIsFileDragOver(false);
-    setCompanyOpen(false);
-    executionWorkspaceDefaultProjectId.current = null;
-    initializationKeyRef.current = null;
+    setКомпанияOpen(false);
+    executionРабочая областьПо умолчаниюProjectId.current = null;
+    initializationКлючRef.current = null;
   }
 
-  function handleCompanyChange(companyId: string) {
-    if (isSubIssueMode) return;
-    if (companyId === effectiveCompanyId) return;
-    setDialogCompanyId(companyId);
-    setAssigneeValue("");
-    setReviewerValue("");
-    setApproverValue("");
-    setShowReviewerRow(false);
-    setShowApproverRow(false);
+  function handleКомпанияChange(companyId: string) {
+    if (isSubЗадачаMode) return;
+    if (companyId === effectiveКомпанияId) return;
+    setDialogКомпанияId(companyId);
+    setИсполнительЗначение("");
+    setРецензентЗначение("");
+    setУтверждающийЗначение("");
+    setShowРецензентRow(false);
+    setShowУтверждающийRow(false);
     setProjectId("");
-    setProjectWorkspaceId("");
-    setAssigneeModelLane("primary");
-    setAssigneeModelOverride("");
-    setAssigneeThinkingEffort("");
-    setAssigneeChrome(false);
-    setExecutionWorkspaceMode("shared_workspace");
-    setSelectedExecutionWorkspaceId("");
-    setWorkMode("standard");
+    setProjectРабочая областьId("");
+    setИсполнительМодельLane("primary");
+    setИсполнительМодельOverride("");
+    setИсполнительThinkingEffort("");
+    setИсполнительChrome(false);
+    setExecutionРабочая областьMode("shared_workspace");
+    setSelectedExecutionРабочая областьId("");
+    setРаботаMode("standard");
   }
 
-  function discardDraft() {
-    clearDraft();
+  function discardЧерновик() {
+    clearЧерновик();
     reset();
-    closeNewIssue();
+    closeNewЗадача();
   }
 
-  function handleSubmit() {
-    const currentTitle = titleRef.current.trim();
-    const currentDescription = descriptionRef.current.trim();
-    if (!effectiveCompanyId || !currentTitle || createIssue.isPending) return;
+  function handleОтправить() {
+    const currentНазвание = titleRef.current.trim();
+    const currentОписание = descriptionRef.current.trim();
+    if (!effectiveКомпанияId || !currentНазвание || createЗадача.isОжидание) return;
     const effectiveLane = assigneeSupportsCheapLane
-      ? assigneeModelLane
-      : assigneeModelLane === "cheap"
+      ? assigneeМодельLane
+      : assigneeМодельLane === "cheap"
         ? "primary"
-        : assigneeModelLane;
-    const assigneeAdapterOverrides = buildAssigneeAdapterOverrides({
-      adapterType: assigneeAdapterType,
+        : assigneeМодельLane;
+    const assigneeАдаптерOverrides = buildИсполнительАдаптерOverrides({
+      adapterТип: assigneeАдаптерТип,
       lane: effectiveLane,
-      modelOverride: assigneeModelOverride,
+      modelOverride: assigneeМодельOverride,
       thinkingEffortOverride: assigneeThinkingEffort,
       chrome: assigneeChrome,
     });
-    const selectedProject = orderedProjects.find((project) => project.id === projectId);
-    const executionWorkspacePolicy =
-      experimentalSettings?.enableIsolatedWorkspaces === true
-        ? selectedProject?.executionWorkspacePolicy ?? null
+    const selectedProject = orderedПроекты.find((project) => project.id === projectId);
+    const executionРабочая областьPolicy =
+      experimentalНастройки?.enableIsolatedРабочие области === true
+        ? selectedProject?.executionРабочая областьPolicy ?? null
         : null;
-    const selectedReusableExecutionWorkspace = deduplicatedReusableWorkspaces.find(
-      (workspace) => workspace.id === selectedExecutionWorkspaceId,
+    const selectedReusableExecutionРабочая область = deduplicatedReusableРабочие области.find(
+      (workspace) => workspace.id === selectedExecutionРабочая областьId,
     );
-    const requestedExecutionWorkspaceMode =
-      executionWorkspaceMode === "reuse_existing"
-        ? issueExecutionWorkspaceModeForExistingWorkspace(selectedReusableExecutionWorkspace?.mode)
-        : executionWorkspaceMode;
-    const executionWorkspaceSettings = executionWorkspacePolicy?.enabled
-      ? { mode: requestedExecutionWorkspaceMode }
+    const requestedExecutionРабочая областьMode =
+      executionРабочая областьMode === "reuse_existing"
+        ? issueExecutionРабочая областьModeForExistingРабочая область(selectedReusableExecutionРабочая область?.mode)
+        : executionРабочая областьMode;
+    const executionРабочая областьНастройки = executionРабочая областьPolicy?.enabled
+      ? { mode: requestedExecutionРабочая областьMode }
       : null;
     const executionPolicy = buildExecutionPolicy({
-      reviewerValues: reviewerValue ? [reviewerValue] : [],
-      approverValues: approverValue ? [approverValue] : [],
+      reviewerЗначениеs: reviewerЗначение ? [reviewerЗначение] : [],
+      approverЗначениеs: approverЗначение ? [approverЗначение] : [],
     });
-    createIssue.mutate({
-      companyId: effectiveCompanyId,
-      stagedFiles,
-      title: currentTitle,
-      description: currentDescription || undefined,
+    createЗадача.mutate({
+      companyId: effectiveКомпанияId,
+      stagedФайлы,
+      title: currentНазвание,
+      description: currentОписание || undefined,
       status,
       priority: priority || "medium",
       workMode,
-      ...(selectedAssigneeAgentId ? { assigneeAgentId: selectedAssigneeAgentId } : {}),
-      ...(selectedAssigneeUserId ? { assigneeUserId: selectedAssigneeUserId } : {}),
-      ...(newIssueDefaults.parentId ? { parentId: newIssueDefaults.parentId } : {}),
-      ...(newIssueDefaults.goalId ? { goalId: newIssueDefaults.goalId } : {}),
+      ...(selectedИсполнительАгентId ? { assigneeАгентId: selectedИсполнительАгентId } : {}),
+      ...(selectedИсполнительUserId ? { assigneeUserId: selectedИсполнительUserId } : {}),
+      ...(newЗадачаПо умолчаниюs.parentId ? { parentId: newЗадачаПо умолчаниюs.parentId } : {}),
+      ...(newЗадачаПо умолчаниюs.goalId ? { goalId: newЗадачаПо умолчаниюs.goalId } : {}),
       ...(projectId ? { projectId } : {}),
-      ...(projectWorkspaceId ? { projectWorkspaceId } : {}),
-      ...(assigneeAdapterOverrides ? { assigneeAdapterOverrides } : {}),
-      ...(executionWorkspacePolicy?.enabled ? { executionWorkspacePreference: executionWorkspaceMode } : {}),
-      ...(executionWorkspaceMode === "reuse_existing" && selectedExecutionWorkspaceId
-        ? { executionWorkspaceId: selectedExecutionWorkspaceId }
+      ...(projectРабочая областьId ? { projectРабочая областьId } : {}),
+      ...(assigneeАдаптерOverrides ? { assigneeАдаптерOverrides } : {}),
+      ...(executionРабочая областьPolicy?.enabled ? { executionРабочая областьPreference: executionРабочая областьMode } : {}),
+      ...(executionРабочая областьMode === "reuse_existing" && selectedExecutionРабочая областьId
+        ? { executionРабочая областьId: selectedExecutionРабочая областьId }
         : {}),
-      ...(executionWorkspaceSettings ? { executionWorkspaceSettings } : {}),
+      ...(executionРабочая областьНастройки ? { executionРабочая областьНастройки } : {}),
       ...(executionPolicy ? { executionPolicy } : {}),
     });
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      handleSubmit();
+  function handleКлючDown(e: React.КлючboardEvent) {
+    if (e.key === "Enter" && (e.metaКлюч || e.ctrlКлюч)) {
+      e.preventПо умолчанию();
+      handleОтправить();
     }
   }
 
-  function stageFiles(files: File[]) {
+  function stageФайлы(files: File[]) {
     if (files.length === 0) return;
-    setStagedFiles((current) => {
+    setStagedФайлы((current) => {
       const next = [...current];
       for (const file of files) {
         if (isTextDocumentFile(file)) {
-          const baseName = fileBaseName(file.name);
-          const documentKey = createUniqueDocumentKey(slugifyDocumentKey(baseName), next);
+          const baseИмя = fileBaseИмя(file.name);
+          const documentКлюч = createUniqueDocumentКлюч(slugifyDocumentКлюч(baseИмя), next);
           next.push({
-            id: `${file.name}:${file.size}:${file.lastModified}:${documentKey}`,
+            id: `${file.name}:${file.size}:${file.lastModified}:${documentКлюч}`,
             file,
             kind: "document",
-            documentKey,
-            title: titleizeFilename(baseName),
+            documentКлюч,
+            title: titleizeFilename(baseИмя),
           });
           continue;
         }
@@ -1032,243 +1032,243 @@ export function NewIssueDialog() {
     });
   }
 
-  function handleStageFilesPicked(evt: ChangeEvent<HTMLInputElement>) {
-    stageFiles(Array.from(evt.target.files ?? []));
+  function handleStageФайлыPicked(evt: ChangeEvent<HTMLInputElement>) {
+    stageФайлы(Array.from(evt.target.files ?? []));
     if (stageFileInputRef.current) {
       stageFileInputRef.current.value = "";
     }
   }
 
   function handleFileDragEnter(evt: DragEvent<HTMLDivElement>) {
-    if (!evt.dataTransfer.types.includes("Files")) return;
-    evt.preventDefault();
+    if (!evt.dataTransfer.types.includes("Файлы")) return;
+    evt.preventПо умолчанию();
     setIsFileDragOver(true);
   }
 
   function handleFileDragOver(evt: DragEvent<HTMLDivElement>) {
-    if (!evt.dataTransfer.types.includes("Files")) return;
-    evt.preventDefault();
+    if (!evt.dataTransfer.types.includes("Файлы")) return;
+    evt.preventПо умолчанию();
     evt.dataTransfer.dropEffect = "copy";
     setIsFileDragOver(true);
   }
 
   function handleFileDragLeave(evt: DragEvent<HTMLDivElement>) {
-    if (evt.currentTarget.contains(evt.relatedTarget as Node | null)) return;
+    if (evt.currentЦель.contains(evt.relatedЦель as Нетde | null)) return;
     setIsFileDragOver(false);
   }
 
   function handleFileDrop(evt: DragEvent<HTMLDivElement>) {
     if (!evt.dataTransfer.files.length) return;
-    evt.preventDefault();
+    evt.preventПо умолчанию();
     setIsFileDragOver(false);
-    stageFiles(Array.from(evt.dataTransfer.files));
+    stageФайлы(Array.from(evt.dataTransfer.files));
   }
 
   function removeStagedFile(id: string) {
-    setStagedFiles((current) => current.filter((file) => file.id !== id));
+    setStagedФайлы((current) => current.filter((file) => file.id !== id));
   }
 
-  const hasDraft = draftHasText || stagedFiles.length > 0;
-  const currentStatus = statuses.find((s) => s.value === status) ?? statuses[1]!;
-  const currentPriority = priorities.find((p) => p.value === priority);
-  const currentAssignee = selectedAssigneeAgentId
-    ? (agents ?? []).find((a) => a.id === selectedAssigneeAgentId)
+  const hasЧерновик = draftHasText || stagedФайлы.length > 0;
+  const currentСтатус = statuses.find((s) => s.value === status) ?? statuses[1]!;
+  const currentПриоритет = priorities.find((p) => p.value === priority);
+  const currentИсполнитель = selectedИсполнительАгентId
+    ? (agents ?? []).find((a) => a.id === selectedИсполнительАгентId)
     : null;
-  const currentProject = orderedProjects.find((project) => project.id === projectId);
-  const currentProjectExecutionWorkspacePolicy =
-    experimentalSettings?.enableIsolatedWorkspaces === true
-      ? currentProject?.executionWorkspacePolicy ?? null
+  const currentProject = orderedПроекты.find((project) => project.id === projectId);
+  const currentProjectExecutionРабочая областьPolicy =
+    experimentalНастройки?.enableIsolatedРабочие области === true
+      ? currentProject?.executionРабочая областьPolicy ?? null
       : null;
-  const currentProjectSupportsExecutionWorkspace = Boolean(currentProjectExecutionWorkspacePolicy?.enabled);
-  const deduplicatedReusableWorkspaces = useMemo(() => {
-    return orderReusableExecutionWorkspaces(reusableExecutionWorkspaces ?? []);
-  }, [reusableExecutionWorkspaces]);
-  const selectedReusableExecutionWorkspace = deduplicatedReusableWorkspaces.find(
-    (workspace) => workspace.id === selectedExecutionWorkspaceId,
+  const currentProjectSupportsExecutionРабочая область = Boolean(currentProjectExecutionРабочая областьPolicy?.enabled);
+  const deduplicatedReusableРабочие области = useMemo(() => {
+    return orderReusableExecutionРабочие области(reusableExecutionРабочие области ?? []);
+  }, [reusableExecutionРабочие области]);
+  const selectedReusableExecutionРабочая область = deduplicatedReusableРабочие области.find(
+    (workspace) => workspace.id === selectedExecutionРабочая областьId,
   );
-  const isUsingParentExecutionWorkspace = isSubIssueMode && parentExecutionWorkspaceId
-    ? executionWorkspaceMode === "reuse_existing" && selectedExecutionWorkspaceId === parentExecutionWorkspaceId
+  const isUsingРодительExecutionРабочая область = isSubЗадачаMode && parentExecutionРабочая областьId
+    ? executionРабочая областьMode === "reuse_existing" && selectedExecutionРабочая областьId === parentExecutionРабочая областьId
     : false;
-  const showParentWorkspaceWarning = isSubIssueMode
-    && currentProjectSupportsExecutionWorkspace
-    && Boolean(parentExecutionWorkspaceId)
-    && !isUsingParentExecutionWorkspace;
-  const assigneeOptionsTitle =
-    assigneeAdapterType === "claude_local"
+  const showРодительРабочая областьПредупреждение = isSubЗадачаMode
+    && currentProjectSupportsExecutionРабочая область
+    && Boolean(parentExecutionРабочая областьId)
+    && !isUsingРодительExecutionРабочая область;
+  const assigneeOptionsНазвание =
+    assigneeАдаптерТип === "claude_local"
       ? "Claude options"
-      : assigneeAdapterType === "codex_local"
+      : assigneeАдаптерТип === "codex_local"
         ? "Codex options"
-        : assigneeAdapterType === "opencode_local"
+        : assigneeАдаптерТип === "opencode_local"
           ? "OpenCode options"
-        : "Agent options";
+        : "Параметры агента";
   const thinkingEffortOptions =
-    assigneeAdapterType === "codex_local"
+    assigneeАдаптерТип === "codex_local"
       ? ISSUE_THINKING_EFFORT_OPTIONS.codex_local
-      : assigneeAdapterType === "opencode_local"
+      : assigneeАдаптерТип === "opencode_local"
         ? ISSUE_THINKING_EFFORT_OPTIONS.opencode_local
       : ISSUE_THINKING_EFFORT_OPTIONS.claude_local;
-  const recentAssigneeIds = useMemo(() => getRecentAssigneeIds(), [newIssueOpen]);
-  const recentAssigneeOptionIds = useMemo(
-    () => recentAssigneeIds.map((id) => assigneeValueFromSelection({ assigneeAgentId: id })),
-    [recentAssigneeIds],
+  const recentИсполнительIds = useMemo(() => getRecentИсполнительIds(), [newЗадачаOpen]);
+  const recentИсполнительOptionIds = useMemo(
+    () => recentИсполнительIds.map((id) => assigneeЗначениеFromSelection({ assigneeАгентId: id })),
+    [recentИсполнительIds],
   );
-  const recentProjectIds = useMemo(() => getRecentProjectIds(), [newIssueOpen]);
+  const recentProjectIds = useMemo(() => getRecentProjectIds(), [newЗадачаOpen]);
   const assigneeOptions = useMemo<InlineEntityOption[]>(
     () => [
-      ...currentUserAssigneeOption(currentUserId),
-      ...buildCompanyUserInlineOptions(companyMembers?.users, { excludeUserIds: [currentUserId] }),
-      ...sortAgentsByRecency(
+      ...currentUserИсполнительOption(currentUserId),
+      ...buildКомпанияUserInlineOptions(companyMembers?.users, { excludeUserIds: [currentUserId] }),
+      ...sortАгентыByRecency(
         (agents ?? []).filter((agent) => agent.status !== "terminated"),
-        recentAssigneeIds,
+        recentИсполнительIds,
       ).map((agent) => ({
-        id: assigneeValueFromSelection({ assigneeAgentId: agent.id }),
+        id: assigneeЗначениеFromSelection({ assigneeАгентId: agent.id }),
         label: agent.name,
         searchText: `${agent.name} ${agent.role} ${agent.title ?? ""}`,
       })),
     ],
-    [agents, companyMembers?.users, currentUserId, recentAssigneeIds],
+    [agents, companyMembers?.users, currentUserId, recentИсполнительIds],
   );
   const projectOptions = useMemo<InlineEntityOption[]>(
     () =>
-      orderedProjects.map((project) => ({
+      orderedПроекты.map((project) => ({
         id: project.id,
         label: project.name,
         searchText: project.description ?? "",
       })),
-    [orderedProjects],
+    [orderedПроекты],
   );
-  const savedDraft = useMemo(() => newIssueOpen ? loadDraft() : null, [newIssueOpen]);
-  const hasSavedDraft = Boolean(savedDraft?.title.trim() || savedDraft?.description.trim());
-  const canDiscardDraft = hasDraft || hasSavedDraft;
-  const createIssueErrorMessage =
-    createIssue.error instanceof Error ? createIssue.error.message : "Failed to create issue. Try again.";
-  const stagedDocuments = stagedFiles.filter((file) => file.kind === "document");
-  const stagedAttachments = stagedFiles.filter((file) => file.kind === "attachment");
+  const savedЧерновик = useMemo(() => newЗадачаOpen ? loadЧерновик() : null, [newЗадачаOpen]);
+  const hasСохранитьdЧерновик = Boolean(savedЧерновик?.title.trim() || savedЧерновик?.description.trim());
+  const canDiscardЧерновик = hasЧерновик || hasСохранитьdЧерновик;
+  const createЗадачаОшибкаMessage =
+    createЗадача.error instanceof Ошибка ? createЗадача.error.message : "Ошибка to create issue. Попробовать снова.";
+  const stagedДокументы = stagedФайлы.filter((file) => file.kind === "document");
+  const stagedAttachments = stagedФайлы.filter((file) => file.kind === "attachment");
 
   const handleProjectChange = useCallback((nextProjectId: string) => {
     if (nextProjectId) trackRecentProject(nextProjectId);
     setProjectId(nextProjectId);
-    const nextProject = orderedProjects.find((project) => project.id === nextProjectId);
-    executionWorkspaceDefaultProjectId.current = nextProjectId || null;
-    setProjectWorkspaceId(defaultProjectWorkspaceIdForProject(nextProject));
-    setExecutionWorkspaceMode(defaultExecutionWorkspaceModeForProject(nextProject));
-    setSelectedExecutionWorkspaceId("");
-  }, [orderedProjects]);
+    const nextProject = orderedПроекты.find((project) => project.id === nextProjectId);
+    executionРабочая областьПо умолчаниюProjectId.current = nextProjectId || null;
+    setProjectРабочая областьId(defaultProjectРабочая областьIdForProject(nextProject));
+    setExecutionРабочая областьMode(defaultExecutionРабочая областьModeForProject(nextProject));
+    setSelectedExecutionРабочая областьId("");
+  }, [orderedПроекты]);
 
   useEffect(() => {
     if (
-      !newIssueOpen ||
+      !newЗадачаOpen ||
       !projectId ||
-      selectedExecutionWorkspaceId ||
-      executionWorkspaceDefaultProjectId.current === projectId
+      selectedExecutionРабочая областьId ||
+      executionРабочая областьПо умолчаниюProjectId.current === projectId
     ) {
       return;
     }
-    const project = orderedProjects.find((entry) => entry.id === projectId);
+    const project = orderedПроекты.find((entry) => entry.id === projectId);
     if (!project) return;
-    executionWorkspaceDefaultProjectId.current = projectId;
-    setProjectWorkspaceId(defaultProjectWorkspaceIdForProject(project));
-    setExecutionWorkspaceMode(defaultExecutionWorkspaceModeForProject(project));
-    setSelectedExecutionWorkspaceId("");
-  }, [newIssueOpen, orderedProjects, projectId, selectedExecutionWorkspaceId]);
+    executionРабочая областьПо умолчаниюProjectId.current = projectId;
+    setProjectРабочая областьId(defaultProjectРабочая областьIdForProject(project));
+    setExecutionРабочая областьMode(defaultExecutionРабочая областьModeForProject(project));
+    setSelectedExecutionРабочая областьId("");
+  }, [newЗадачаOpen, orderedПроекты, projectId, selectedExecutionРабочая областьId]);
   const modelOverrideOptions = useMemo<InlineEntityOption[]>(
     () => {
-      return [...(assigneeAdapterModels ?? [])]
+      return [...(assigneeАдаптерМодельs ?? [])]
         .sort((a, b) => {
-          const providerA = extractProviderIdWithFallback(a.id);
-          const providerB = extractProviderIdWithFallback(b.id);
-          const byProvider = providerA.localeCompare(providerB);
-          if (byProvider !== 0) return byProvider;
+          const providerA = extractПровайдерIdWithFallback(a.id);
+          const providerB = extractПровайдерIdWithFallback(b.id);
+          const byПровайдер = providerA.localeCompare(providerB);
+          if (byПровайдер !== 0) return byПровайдер;
           return a.id.localeCompare(b.id);
         })
         .map((model) => ({
           id: model.id,
           label: model.label,
-          searchText: `${model.id} ${extractProviderIdWithFallback(model.id)}`,
+          searchText: `${model.id} ${extractПровайдерIdWithFallback(model.id)}`,
         }));
     },
-    [assigneeAdapterModels],
+    [assigneeАдаптерМодельs],
   );
-  const currentWorkMode = ISSUE_WORK_MODE_OPTIONS[workMode === "planning" ? 1 : 0]!;
-  const CurrentWorkModeIcon = currentWorkMode.icon;
+  const currentРаботаMode = ISSUE_WORK_MODE_OPTIONS[workMode === "planning" ? 1 : 0]!;
+  const CurrentРаботаModeIcon = currentРаботаMode.icon;
 
   return (
     <Dialog
-      open={newIssueOpen}
+      open={newЗадачаOpen}
       onOpenChange={(open) => {
-        if (!open && !createIssue.isPending) closeNewIssue();
+        if (!open && !createЗадача.isОжидание) closeNewЗадача();
       }}
     >
       <DialogContent
-        showCloseButton={false}
+        showЗакрытьButton={false}
         aria-describedby={undefined}
-        className={cn(
+        classИмя={cn(
           "flex h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:h-auto",
           expanded
             ? "sm:max-w-2xl sm:h-[calc(100dvh-2rem)]"
             : "sm:max-w-lg"
         )}
-        onKeyDown={handleKeyDown}
-        onEscapeKeyDown={(event) => {
-          if (createIssue.isPending) {
-            event.preventDefault();
+        onКлючDown={handleКлючDown}
+        onEscapeКлючDown={(event) => {
+          if (createЗадача.isОжидание) {
+            event.preventПо умолчанию();
           }
         }}
         onPointerDownOutside={(event) => {
-          if (createIssue.isPending) {
-            event.preventDefault();
+          if (createЗадача.isОжидание) {
+            event.preventПо умолчанию();
             return;
           }
-          // Radix Dialog's modal DismissableLayer calls preventDefault() on
+          // Radix Dialog's modal ЗакрытьableLayer calls preventПо умолчанию() on
           // pointerdown events that originate outside the Dialog DOM tree.
           // Popover portals render at the body level (outside the Dialog), so
           // touch events on popover content get their default prevented — which
           // kills scroll gesture recognition on mobile.  Telling Radix "this
-          // event is handled" skips that preventDefault, restoring touch scroll.
+          // event is handled" skips that preventПо умолчанию, restoring touch scroll.
           const target = event.detail.originalEvent.target as HTMLElement | null;
           if (target?.closest("[data-radix-popper-content-wrapper]")) {
-            event.preventDefault();
+            event.preventПо умолчанию();
           }
         }}
       >
         {/* Header bar */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Popover open={companyOpen} onOpenChange={setCompanyOpen}>
+        <div classИмя="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">
+          <div classИмя="flex items-center gap-2 text-sm text-muted-foreground">
+            <Popover open={companyOpen} onOpenChange={setКомпанияOpen}>
               <PopoverTrigger asChild>
                 <button
-                  className={cn(
+                  classИмя={cn(
                     "px-1.5 py-0.5 rounded text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity",
-                    !dialogCompany?.brandColor && "bg-muted",
+                    !dialogКомпания?.brandColor && "bg-muted",
                   )}
-                  disabled={isSubIssueMode}
+                  disabled={isSubЗадачаMode}
                   style={
-                    dialogCompany?.brandColor
+                    dialogКомпания?.brandColor
                       ? {
-                          backgroundColor: dialogCompany.brandColor,
-                          color: pickTextColorForSolidBg(dialogCompany.brandColor),
+                          backgroundColor: dialogКомпания.brandColor,
+                          color: pickTextColorForSolidBg(dialogКомпания.brandColor),
                         }
                       : undefined
                   }
                 >
-                  {(dialogCompany?.name ?? "").slice(0, 3).toUpperCase()}
+                  {(dialogКомпания?.name ?? "").slice(0, 3).toUpperCase()}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-48 p-1" align="start">
+              <PopoverContent classИмя="w-48 p-1" align="start">
                 {companies.filter((c) => c.status !== "archived").map((c) => (
                   <button
                     key={c.id}
-                    className={cn(
+                    classИмя={cn(
                       "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
-                      c.id === effectiveCompanyId && "bg-accent",
+                      c.id === effectiveКомпанияId && "bg-accent",
                     )}
                     onClick={() => {
-                      handleCompanyChange(c.id);
-                      setCompanyOpen(false);
+                      handleКомпанияChange(c.id);
+                      setКомпанияOpen(false);
                     }}
                   >
                     <span
-                      className={cn(
+                      classИмя={cn(
                         "px-1 py-0.5 rounded text-[10px] font-semibold leading-none",
                         !c.brandColor && "bg-muted",
                       )}
@@ -1283,106 +1283,106 @@ export function NewIssueDialog() {
                     >
                       {c.name.slice(0, 3).toUpperCase()}
                     </span>
-                    <span className="truncate">{c.name}</span>
+                    <span classИмя="truncate">{c.name}</span>
                   </button>
                 ))}
               </PopoverContent>
             </Popover>
-            <span className="text-muted-foreground/60">&rsaquo;</span>
-            <span>{isSubIssueMode ? "New sub-issue" : "New issue"}</span>
+            <span classИмя="text-muted-foreground/60">&rsaquo;</span>
+            <span>{isSubЗадачаMode ? "New sub-issue" : "Новая задача"}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div classИмя="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon-xs"
-              className="text-muted-foreground"
+              classИмя="text-muted-foreground"
               onClick={() => setExpanded(!expanded)}
-              disabled={createIssue.isPending}
+              disabled={createЗадача.isОжидание}
             >
-              {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              {expanded ? <Minimize2 classИмя="h-3.5 w-3.5" /> : <Maximize2 classИмя="h-3.5 w-3.5" />}
             </Button>
             <Button
               variant="ghost"
               size="icon-xs"
-              className="text-muted-foreground"
-              onClick={() => closeNewIssue()}
-              disabled={createIssue.isPending}
+              classИмя="text-muted-foreground"
+              onClick={() => closeNewЗадача()}
+              disabled={createЗадача.isОжидание}
             >
-              <span className="text-lg leading-none">&times;</span>
+              <span classИмя="text-lg leading-none">&times;</span>
             </Button>
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {/* Title */}
-          <div className="px-4 pt-4 pb-2">
-            <IssueTitleTextarea
+        <div classИмя="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {/* Название */}
+          <div classИмя="px-4 pt-4 pb-2">
+            <ЗадачаНазваниеTextarea
               value={title}
-              pending={createIssue.isPending}
-              assigneeValue={assigneeValue}
+              pending={createЗадача.isОжидание}
+              assigneeЗначение={assigneeЗначение}
               projectId={projectId}
-              descriptionEditorRef={descriptionEditorRef}
+              descriptionИзменитьorRef={descriptionИзменитьorRef}
               assigneeSelectorRef={assigneeSelectorRef}
               projectSelectorRef={projectSelectorRef}
-              onChange={handleTitleChange}
+              onChange={handleНазваниеChange}
             />
           </div>
 
-          <div className="px-4 pb-2">
-            <div className="overflow-x-auto overscroll-x-contain">
-              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground flex-wrap sm:flex-nowrap sm:min-w-max">
-              <span className="w-6 shrink-0 text-center">For</span>
+          <div classИмя="px-4 pb-2">
+            <div classИмя="overflow-x-auto overscroll-x-contain">
+              <div classИмя="inline-flex items-center gap-2 text-sm text-muted-foreground flex-wrap sm:flex-nowrap sm:min-w-max">
+              <span classИмя="w-6 shrink-0 text-center">For</span>
               <InlineEntitySelector
                 ref={assigneeSelectorRef}
-                value={assigneeValue}
+                value={assigneeЗначение}
                 options={assigneeOptions}
-                recentOptionIds={recentAssigneeOptionIds}
-                placeholder="Assignee"
-                disablePortal
-                noneLabel="No assignee"
-                searchPlaceholder="Search assignees..."
-                emptyMessage="No assignees found."
+                recentOptionIds={recentИсполнительOptionIds}
+                placeholder="Исполнитель"
+                disableПортal
+                noneLabel="Нет assignee"
+                searchPlaceholder="Поиск assignees..."
+                emptyMessage="Нет assignees found."
                 onChange={(value) => {
-                  const nextAssignee = parseAssigneeValue(value);
-                  if (nextAssignee.assigneeAgentId) {
-                    trackRecentAssignee(nextAssignee.assigneeAgentId);
+                  const nextИсполнитель = parseИсполнительЗначение(value);
+                  if (nextИсполнитель.assigneeАгентId) {
+                    trackRecentИсполнитель(nextИсполнитель.assigneeАгентId);
                   }
-                  setAssigneeValue(value);
-                  const hasAssignee = Boolean(nextAssignee.assigneeAgentId || nextAssignee.assigneeUserId);
-                  if (hasAssignee && status === "backlog") {
-                    setStatus("todo");
+                  setИсполнительЗначение(value);
+                  const hasИсполнитель = Boolean(nextИсполнитель.assigneeАгентId || nextИсполнитель.assigneeUserId);
+                  if (hasИсполнитель && status === "backlog") {
+                    setСтатус("todo");
                   }
                 }}
-                onConfirm={() => {
+                onПодтвердить={() => {
                   if (projectId) {
-                    descriptionEditorRef.current?.focus();
+                    descriptionИзменитьorRef.current?.focus();
                   } else {
                     projectSelectorRef.current?.focus();
                   }
                 }}
-                renderTriggerValue={(option) =>
+                renderTriggerЗначение={(option) =>
                   option ? (
-                    currentAssignee ? (
+                    currentИсполнитель ? (
                       <>
-                        <AgentIcon icon={currentAssignee.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{option.label}</span>
+                        <АгентIcon icon={currentИсполнитель.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span classИмя="truncate">{option.label}</span>
                       </>
                     ) : (
-                      <span className="truncate">{option.label}</span>
+                      <span classИмя="truncate">{option.label}</span>
                     )
                   ) : (
-                    <span className="text-muted-foreground">Assignee</span>
+                    <span classИмя="text-muted-foreground">Исполнитель</span>
                   )
                 }
                 renderOption={(option) => {
-                  if (!option.id) return <span className="truncate">{option.label}</span>;
-                  const assignee = parseAssigneeValue(option.id).assigneeAgentId
-                    ? (agents ?? []).find((agent) => agent.id === parseAssigneeValue(option.id).assigneeAgentId)
+                  if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+                  const assignee = parseИсполнительЗначение(option.id).assigneeАгентId
+                    ? (agents ?? []).find((agent) => agent.id === parseИсполнительЗначение(option.id).assigneeАгентId)
                     : null;
                   return (
                     <>
-                      {assignee ? <AgentIcon icon={assignee.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
-                      <span className="truncate">{option.label}</span>
+                      {assignee ? <АгентIcon icon={assignee.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                      <span classИмя="truncate">{option.label}</span>
                     </>
                   );
                 }}
@@ -1394,125 +1394,125 @@ export function NewIssueDialog() {
                 options={projectOptions}
                 recentOptionIds={recentProjectIds}
                 placeholder="Project"
-                disablePortal
-                noneLabel="No project"
-                searchPlaceholder="Search projects..."
-                emptyMessage="No projects found."
+                disableПортal
+                noneLabel="Нет project"
+                searchPlaceholder="Поиск projects..."
+                emptyMessage="Проекты не найдены."
                 onChange={handleProjectChange}
-                onConfirm={() => {
-                  descriptionEditorRef.current?.focus();
+                onПодтвердить={() => {
+                  descriptionИзменитьorRef.current?.focus();
                 }}
-                renderTriggerValue={(option) =>
+                renderTriggerЗначение={(option) =>
                   option && currentProject ? (
                     <>
                       <span
-                        className="h-3.5 w-3.5 shrink-0 rounded-sm"
+                        classИмя="h-3.5 w-3.5 shrink-0 rounded-sm"
                         style={{ backgroundColor: currentProject.color ?? "#6366f1" }}
                       />
-                      <span className="truncate">{option.label}</span>
+                      <span classИмя="truncate">{option.label}</span>
                     </>
                   ) : (
-                    <span className="text-muted-foreground">Project</span>
+                    <span classИмя="text-muted-foreground">Project</span>
                   )
                 }
                 renderOption={(option) => {
-                  if (!option.id) return <span className="truncate">{option.label}</span>;
-                  const project = orderedProjects.find((item) => item.id === option.id);
+                  if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+                  const project = orderedПроекты.find((item) => item.id === option.id);
                   return (
                     <>
                       <span
-                        className="h-3.5 w-3.5 shrink-0 rounded-sm"
+                        classИмя="h-3.5 w-3.5 shrink-0 rounded-sm"
                         style={{ backgroundColor: project?.color ?? "#6366f1" }}
                       />
-                      <span className="truncate">{option.label}</span>
+                      <span classИмя="truncate">{option.label}</span>
                     </>
                   );
                 }}
               />
 
-              {/* Three-dot menu to add Reviewer / Approver rows */}
+              {/* Three-dot menu to add Рецензент / Утверждающий rows */}
               <Popover open={participantMenuOpen} onOpenChange={setParticipantMenuOpen}>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:bg-accent/50 transition-colors"
-                    title="Add reviewer or approver"
+                    classИмя="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:bg-accent/50 transition-colors"
+                    title="Добавить reviewer or approver"
                   >
-                    <MoreHorizontal className="h-4 w-4" />
+                    <MoreHorizontal classИмя="h-4 w-4" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-44 p-1" align="start">
+                <PopoverContent classИмя="w-44 p-1" align="start">
                   <button
-                    className={cn(
+                    classИмя={cn(
                       "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
-                      showReviewerRow && "bg-accent",
+                      showРецензентRow && "bg-accent",
                     )}
                     onClick={() => {
-                      setShowReviewerRow((v) => !v);
-                      if (showReviewerRow) setReviewerValue("");
+                      setShowРецензентRow((v) => !v);
+                      if (showРецензентRow) setРецензентЗначение("");
                       setParticipantMenuOpen(false);
                     }}
                   >
-                    <Eye className="h-3 w-3" />
-                    Reviewer
+                    <Eye classИмя="h-3 w-3" />
+                    Рецензент
                   </button>
                   <button
-                    className={cn(
+                    classИмя={cn(
                       "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
-                      showApproverRow && "bg-accent",
+                      showУтверждающийRow && "bg-accent",
                     )}
                     onClick={() => {
-                      setShowApproverRow((v) => !v);
-                      if (showApproverRow) setApproverValue("");
+                      setShowУтверждающийRow((v) => !v);
+                      if (showУтверждающийRow) setУтверждающийЗначение("");
                       setParticipantMenuOpen(false);
                     }}
                   >
-                    <ShieldCheck className="h-3 w-3" />
-                    Approver
+                    <ShieldCheck classИмя="h-3 w-3" />
+                    Утверждающий
                   </button>
                 </PopoverContent>
               </Popover>
               </div>
             </div>
 
-            {/* Reviewer row */}
-            {showReviewerRow && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                <span className="w-6 shrink-0 flex items-center justify-center"><Eye className="h-3.5 w-3.5" /></span>
+            {/* Рецензент row */}
+            {showРецензентRow && (
+              <div classИмя="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                <span classИмя="w-6 shrink-0 flex items-center justify-center"><Eye classИмя="h-3.5 w-3.5" /></span>
                 <InlineEntitySelector
-                value={reviewerValue}
+                value={reviewerЗначение}
                 options={assigneeOptions}
-                recentOptionIds={recentAssigneeOptionIds}
-                placeholder="Reviewer"
-                disablePortal
-                noneLabel="No reviewer"
-                searchPlaceholder="Search reviewers..."
-                emptyMessage="No reviewers found."
-                onChange={setReviewerValue}
-                renderTriggerValue={(option) =>
+                recentOptionIds={recentИсполнительOptionIds}
+                placeholder="Рецензент"
+                disableПортal
+                noneLabel="Нет reviewer"
+                searchPlaceholder="Поиск reviewers..."
+                emptyMessage="Нет reviewers found."
+                onChange={setРецензентЗначение}
+                renderTriggerЗначение={(option) =>
                   option ? (
                     <>
                       {(() => {
-                        const reviewer = parseAssigneeValue(option.id).assigneeAgentId
-                          ? (agents ?? []).find((a) => a.id === parseAssigneeValue(option.id).assigneeAgentId)
+                        const reviewer = parseИсполнительЗначение(option.id).assigneeАгентId
+                          ? (agents ?? []).find((a) => a.id === parseИсполнительЗначение(option.id).assigneeАгентId)
                           : null;
-                        return reviewer ? <AgentIcon icon={reviewer.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null;
+                        return reviewer ? <АгентIcon icon={reviewer.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null;
                       })()}
-                      <span className="truncate">{option.label}</span>
+                      <span classИмя="truncate">{option.label}</span>
                     </>
                   ) : (
-                    <span className="text-muted-foreground">Reviewer</span>
+                    <span classИмя="text-muted-foreground">Рецензент</span>
                   )
                 }
                 renderOption={(option) => {
-                  if (!option.id) return <span className="truncate">{option.label}</span>;
-                  const reviewer = parseAssigneeValue(option.id).assigneeAgentId
-                    ? (agents ?? []).find((agent) => agent.id === parseAssigneeValue(option.id).assigneeAgentId)
+                  if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+                  const reviewer = parseИсполнительЗначение(option.id).assigneeАгентId
+                    ? (agents ?? []).find((agent) => agent.id === parseИсполнительЗначение(option.id).assigneeАгентId)
                     : null;
                   return (
                     <>
-                      {reviewer ? <AgentIcon icon={reviewer.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
-                      <span className="truncate">{option.label}</span>
+                      {reviewer ? <АгентIcon icon={reviewer.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                      <span classИмя="truncate">{option.label}</span>
                     </>
                   );
                 }}
@@ -1520,44 +1520,44 @@ export function NewIssueDialog() {
               </div>
             )}
 
-            {/* Approver row */}
-            {showApproverRow && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                <span className="w-6 shrink-0 flex items-center justify-center"><ShieldCheck className="h-3.5 w-3.5" /></span>
+            {/* Утверждающий row */}
+            {showУтверждающийRow && (
+              <div classИмя="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                <span classИмя="w-6 shrink-0 flex items-center justify-center"><ShieldCheck classИмя="h-3.5 w-3.5" /></span>
                 <InlineEntitySelector
-                value={approverValue}
+                value={approverЗначение}
                 options={assigneeOptions}
-                recentOptionIds={recentAssigneeOptionIds}
-                placeholder="Approver"
-                disablePortal
-                noneLabel="No approver"
-                searchPlaceholder="Search approvers..."
-                emptyMessage="No approvers found."
-                onChange={setApproverValue}
-                renderTriggerValue={(option) =>
+                recentOptionIds={recentИсполнительOptionIds}
+                placeholder="Утверждающий"
+                disableПортal
+                noneLabel="Нет approver"
+                searchPlaceholder="Поиск approvers..."
+                emptyMessage="Нет approvers found."
+                onChange={setУтверждающийЗначение}
+                renderTriggerЗначение={(option) =>
                   option ? (
                     <>
                       {(() => {
-                        const approver = parseAssigneeValue(option.id).assigneeAgentId
-                          ? (agents ?? []).find((a) => a.id === parseAssigneeValue(option.id).assigneeAgentId)
+                        const approver = parseИсполнительЗначение(option.id).assigneeАгентId
+                          ? (agents ?? []).find((a) => a.id === parseИсполнительЗначение(option.id).assigneeАгентId)
                           : null;
-                        return approver ? <AgentIcon icon={approver.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null;
+                        return approver ? <АгентIcon icon={approver.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null;
                       })()}
-                      <span className="truncate">{option.label}</span>
+                      <span classИмя="truncate">{option.label}</span>
                     </>
                   ) : (
-                    <span className="text-muted-foreground">Approver</span>
+                    <span classИмя="text-muted-foreground">Утверждающий</span>
                   )
                 }
                 renderOption={(option) => {
-                  if (!option.id) return <span className="truncate">{option.label}</span>;
-                  const approver = parseAssigneeValue(option.id).assigneeAgentId
-                    ? (agents ?? []).find((agent) => agent.id === parseAssigneeValue(option.id).assigneeAgentId)
+                  if (!option.id) return <span classИмя="truncate">{option.label}</span>;
+                  const approver = parseИсполнительЗначение(option.id).assigneeАгентId
+                    ? (agents ?? []).find((agent) => agent.id === parseИсполнительЗначение(option.id).assigneeАгентId)
                     : null;
                   return (
                     <>
-                      {approver ? <AgentIcon icon={approver.icon} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
-                      <span className="truncate">{option.label}</span>
+                      {approver ? <АгентIcon icon={approver.icon} classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                      <span classИмя="truncate">{option.label}</span>
                     </>
                   );
                 }}
@@ -1566,37 +1566,37 @@ export function NewIssueDialog() {
             )}
           </div>
 
-          {isSubIssueMode ? (
-            <div className="px-4 pb-2">
-            <div className="max-w-full rounded-md border border-border bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <ListTree className="h-3.5 w-3.5 shrink-0" />
-                <span className="shrink-0">Sub-issue of</span>
-                <span className="font-medium text-foreground">{parentIssueLabel}</span>
+          {isSubЗадачаMode ? (
+            <div classИмя="px-4 pb-2">
+            <div classИмя="max-w-full rounded-md border border-border bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground">
+              <div classИмя="flex items-center gap-1.5">
+                <ListTree classИмя="h-3.5 w-3.5 shrink-0" />
+                <span classИмя="shrink-0">Подзадача of</span>
+                <span classИмя="font-medium text-foreground">{parentЗадачаLabel}</span>
               </div>
-              {newIssueDefaults.parentTitle ? (
-                <div className="pl-5 text-foreground/80 truncate">
-                  {newIssueDefaults.parentTitle}
+              {newЗадачаПо умолчаниюs.parentНазвание ? (
+                <div classИмя="pl-5 text-foreground/80 truncate">
+                  {newЗадачаПо умолчаниюs.parentНазвание}
                 </div>
               ) : null}
             </div>
             </div>
           ) : null}
 
-          {currentProject && currentProjectSupportsExecutionWorkspace && (
-            <div className="px-4 py-3 space-y-2">
-            <div className="space-y-1.5">
-              <div className="text-xs font-medium">Execution workspace</div>
-              <div className="text-[11px] text-muted-foreground">
+          {currentProject && currentProjectSupportsExecutionРабочая область && (
+            <div classИмя="px-4 py-3 space-y-2">
+            <div classИмя="space-y-1.5">
+              <div classИмя="text-xs font-medium">Execution workspace</div>
+              <div classИмя="text-[11px] text-muted-foreground">
                 Control whether this issue runs in the shared workspace, a new isolated workspace, or an existing one.
               </div>
               <select
-                className="w-full rounded border border-border bg-transparent px-2 py-1.5 text-xs outline-none"
-                value={executionWorkspaceMode}
+                classИмя="w-full rounded border border-border bg-transparent px-2 py-1.5 text-xs outline-none"
+                value={executionРабочая областьMode}
                 onChange={(e) => {
-                  setExecutionWorkspaceMode(e.target.value);
+                  setExecutionРабочая областьMode(e.target.value);
                   if (e.target.value !== "reuse_existing") {
-                    setSelectedExecutionWorkspaceId("");
+                    setSelectedExecutionРабочая областьId("");
                   }
                 }}
               >
@@ -1606,116 +1606,116 @@ export function NewIssueDialog() {
                   </option>
                 ))}
               </select>
-              {executionWorkspaceMode === "reuse_existing" && (
+              {executionРабочая областьMode === "reuse_existing" && (
                 <select
-                  className="w-full rounded border border-border bg-transparent px-2 py-1.5 text-xs outline-none"
-                  value={selectedExecutionWorkspaceId}
-                  onChange={(e) => setSelectedExecutionWorkspaceId(e.target.value)}
+                  classИмя="w-full rounded border border-border bg-transparent px-2 py-1.5 text-xs outline-none"
+                  value={selectedExecutionРабочая областьId}
+                  onChange={(e) => setSelectedExecutionРабочая областьId(e.target.value)}
                 >
                   <option value="">Choose an existing workspace</option>
-                  {deduplicatedReusableWorkspaces.map((workspace) => (
+                  {deduplicatedReusableРабочие области.map((workspace) => (
                     <option key={workspace.id} value={workspace.id}>
-                      {workspace.name} · {workspace.status} · {workspace.branchName ?? workspace.cwd ?? workspace.id.slice(0, 8)}
+                      {workspace.name} · {workspace.status} · {workspace.branchИмя ?? workspace.cwd ?? workspace.id.slice(0, 8)}
                     </option>
                   ))}
                 </select>
               )}
-              {executionWorkspaceMode === "reuse_existing" && selectedReusableExecutionWorkspace && (
-                <div className="text-[11px] text-muted-foreground">
-                  Reusing {selectedReusableExecutionWorkspace.name} from {selectedReusableExecutionWorkspace.branchName ?? selectedReusableExecutionWorkspace.cwd ?? "existing execution workspace"}.
+              {executionРабочая областьMode === "reuse_existing" && selectedReusableExecutionРабочая область && (
+                <div classИмя="text-[11px] text-muted-foreground">
+                  Reusing {selectedReusableExecutionРабочая область.name} from {selectedReusableExecutionРабочая область.branchИмя ?? selectedReusableExecutionРабочая область.cwd ?? "existing execution workspace"}.
                 </div>
               )}
-              {showParentWorkspaceWarning ? (
-                <div className="rounded-md border border-amber-300/60 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/30 dark:text-amber-100">
-                  Warning: this sub-issue will no longer use the parent issue workspace{parentExecutionWorkspaceLabel ? ` (${parentExecutionWorkspaceLabel})` : ""}.
+              {showРодительРабочая областьПредупреждение ? (
+                <div classИмя="rounded-md border border-amber-300/60 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/30 dark:text-amber-100">
+                  Предупреждение: this sub-issue will no longer use the parent issue workspace{parentExecutionРабочая областьLabel ? ` (${parentExecutionРабочая областьLabel})` : ""}.
                 </div>
               ) : null}
             </div>
             </div>
           )}
 
-          {supportsAssigneeOverrides && (
-            <div className="px-4 pb-2">
+          {supportsИсполнительOverrides && (
+            <div classИмя="px-4 pb-2">
             <button
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setAssigneeOptionsOpen((open) => !open)}
+              classИмя="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setИсполнительOptionsOpen((open) => !open)}
             >
-              {assigneeOptionsOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-              {assigneeOptionsTitle}
+              {assigneeOptionsOpen ? <ChevronDown classИмя="h-3 w-3" /> : <ChevronRight classИмя="h-3 w-3" />}
+              {assigneeOptionsНазвание}
             </button>
             {assigneeOptionsOpen && (
-              <div className="mt-2 rounded-md border border-border p-3 bg-muted/20 space-y-3">
-                <div className="space-y-1.5">
-                  <div className="text-xs text-muted-foreground">Model lane</div>
+              <div classИмя="mt-2 rounded-md border border-border p-3 bg-muted/20 space-y-3">
+                <div classИмя="space-y-1.5">
+                  <div classИмя="text-xs text-muted-foreground">Модель lane</div>
                   <div
-                    className="flex w-full overflow-hidden rounded-md border border-border"
+                    classИмя="flex w-full overflow-hidden rounded-md border border-border"
                     role="radiogroup"
-                    aria-label="Model lane"
+                    aria-label="Модель lane"
                   >
                     {(["primary", ...(assigneeSupportsCheapLane ? (["cheap"] as const) : ([] as const)), "custom"] as const).map((lane) => (
                       <button
                         key={lane}
                         type="button"
                         role="radio"
-                        aria-checked={assigneeModelLane === lane}
-                        className={cn(
+                        aria-checked={assigneeМодельLane === lane}
+                        classИмя={cn(
                           "flex-1 px-2 py-1 text-xs capitalize transition-colors hover:bg-accent/40",
-                          assigneeModelLane === lane && "bg-accent text-foreground",
+                          assigneeМодельLane === lane && "bg-accent text-foreground",
                         )}
-                        onClick={() => setAssigneeModelLane(lane)}
+                        onClick={() => setИсполнительМодельLane(lane)}
                       >
                         {lane === "primary"
                           ? "Primary"
                           : lane === "cheap"
                             ? "Cheap"
-                            : "Custom"}
+                            : "Свой"}
                       </button>
                     ))}
                   </div>
-                  {assigneeModelLane === "cheap" && (
-                    <p className="text-[11px] text-muted-foreground">
-                      Sends <code>modelProfile: "cheap"</code>{" "}
-                      {assigneeCheapProfile?.adapterConfig && typeof (assigneeCheapProfile.adapterConfig as Record<string, unknown>).model === "string"
-                        ? <>· adapter default <code>{String((assigneeCheapProfile.adapterConfig as Record<string, unknown>).model)}</code></>
-                        : assigneeCheapProfile
+                  {assigneeМодельLane === "cheap" && (
+                    <p classИмя="text-[11px] text-muted-foreground">
+                      Отправитьs <code>modelПрофиль: "cheap"</code>{" "}
+                      {assigneeCheapПрофиль?.adapterConfig && typeof (assigneeCheapПрофиль.adapterConfig as Record<string, unknown>).model === "string"
+                        ? <>· adapter default <code>{String((assigneeCheapПрофиль.adapterConfig as Record<string, unknown>).model)}</code></>
+                        : assigneeCheapПрофиль
                           ? <>· uses the agent's configured cheap profile</>
                           : <>· falls back to the primary model if no cheap profile is configured</>}
                     </p>
                   )}
-                  {assigneeModelLane === "primary" && (
-                    <p className="text-[11px] text-muted-foreground">Runs on the agent's primary model.</p>
+                  {assigneeМодельLane === "primary" && (
+                    <p classИмя="text-[11px] text-muted-foreground">Запуститьs on the agent's primary model.</p>
                   )}
-                  {assigneeModelLane === "custom" && (
-                    <p className="text-[11px] text-muted-foreground">Override the model and effort for this issue only.</p>
+                  {assigneeМодельLane === "custom" && (
+                    <p classИмя="text-[11px] text-muted-foreground">Override the model and effort for this issue only.</p>
                   )}
                 </div>
-                {assigneeModelLane === "custom" && (
-                  <div className="space-y-1.5">
-                    <div className="text-xs text-muted-foreground">Model</div>
+                {assigneeМодельLane === "custom" && (
+                  <div classИмя="space-y-1.5">
+                    <div classИмя="text-xs text-muted-foreground">Модель</div>
                     <InlineEntitySelector
-                      value={assigneeModelOverride}
+                      value={assigneeМодельOverride}
                       options={modelOverrideOptions}
-                      placeholder="Default model"
-                      disablePortal
-                      noneLabel="Default model"
-                      searchPlaceholder="Search models..."
-                      emptyMessage="No models found."
-                      onChange={setAssigneeModelOverride}
+                      placeholder="По умолчанию model"
+                      disableПортal
+                      noneLabel="По умолчанию model"
+                      searchPlaceholder="Поиск models..."
+                      emptyMessage="Нет models found."
+                      onChange={setИсполнительМодельOverride}
                     />
                   </div>
                 )}
-                {assigneeModelLane === "custom" && (
-                  <div className="space-y-1.5">
-                    <div className="text-xs text-muted-foreground">Thinking effort</div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                {assigneeМодельLane === "custom" && (
+                  <div classИмя="space-y-1.5">
+                    <div classИмя="text-xs text-muted-foreground">Thinking effort</div>
+                    <div classИмя="flex items-center gap-1.5 flex-wrap">
                       {thinkingEffortOptions.map((option) => (
                         <button
                           key={option.value || "default"}
-                          className={cn(
+                          classИмя={cn(
                             "px-2 py-1 rounded-md text-xs border border-border hover:bg-accent/50 transition-colors",
                             assigneeThinkingEffort === option.value && "bg-accent"
                           )}
-                          onClick={() => setAssigneeThinkingEffort(option.value)}
+                          onClick={() => setИсполнительThinkingEffort(option.value)}
                         >
                           {option.label}
                         </button>
@@ -1723,12 +1723,12 @@ export function NewIssueDialog() {
                     </div>
                   </div>
                 )}
-                {assigneeAdapterType === "claude_local" && assigneeModelLane === "custom" && (
-                  <div className="flex items-center justify-between rounded-md border border-border px-2 py-1.5">
-                    <div className="text-xs text-muted-foreground">Enable Chrome (--chrome)</div>
+                {assigneeАдаптерТип === "claude_local" && assigneeМодельLane === "custom" && (
+                  <div classИмя="flex items-center justify-between rounded-md border border-border px-2 py-1.5">
+                    <div classИмя="text-xs text-muted-foreground">Включить Chrome (--chrome)</div>
                     <ToggleSwitch
                       checked={assigneeChrome}
-                      onCheckedChange={() => setAssigneeChrome((value) => !value)}
+                      onCheckedChange={() => setИсполнительChrome((value) => !value)}
                     />
                   </div>
                 )}
@@ -1737,46 +1737,46 @@ export function NewIssueDialog() {
             </div>
           )}
 
-          {/* Description */}
+          {/* Описание */}
           <div
-            className="border-t border-border/60 px-4 pb-2 pt-3"
+            classИмя="border-t border-border/60 px-4 pb-2 pt-3"
             onDragEnter={handleFileDragEnter}
             onDragOver={handleFileDragOver}
             onDragLeave={handleFileDragLeave}
             onDrop={handleFileDrop}
           >
             <div
-              className={cn(
+              classИмя={cn(
                 "rounded-md transition-colors",
                 isFileDragOver && "bg-accent/20",
               )}
             >
-              <IssueDescriptionEditor
+              <ЗадачаОписаниеИзменитьor
                 value={description}
                 expanded={expanded}
                 mentions={mentionOptions}
-                descriptionEditorRef={descriptionEditorRef}
-                imageUploadHandler={uploadDescriptionImageHandler}
-                onChange={handleDescriptionChange}
+                descriptionИзменитьorRef={descriptionИзменитьorRef}
+                imageЗагрузитьHandler={uploadОписаниеImageHandler}
+                onChange={handleОписаниеChange}
               />
             </div>
-            {stagedFiles.length > 0 ? (
-              <div className="mt-4 space-y-3 rounded-lg border border-border/70 p-3">
-              {stagedDocuments.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground">Documents</div>
-                  <div className="space-y-2">
-                    {stagedDocuments.map((file) => (
-                      <div key={file.id} className="flex items-start justify-between gap-3 rounded-md border border-border/70 px-3 py-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                              {file.documentKey}
+            {stagedФайлы.length > 0 ? (
+              <div classИмя="mt-4 space-y-3 rounded-lg border border-border/70 p-3">
+              {stagedДокументы.length > 0 ? (
+                <div classИмя="space-y-2">
+                  <div classИмя="text-xs font-medium text-muted-foreground">Документы</div>
+                  <div classИмя="space-y-2">
+                    {stagedДокументы.map((file) => (
+                      <div key={file.id} classИмя="flex items-start justify-between gap-3 rounded-md border border-border/70 px-3 py-2">
+                        <div classИмя="min-w-0">
+                          <div classИмя="flex items-center gap-2">
+                            <span classИмя="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                              {file.documentКлюч}
                             </span>
-                            <span className="truncate text-sm">{file.file.name}</span>
+                            <span classИмя="truncate text-sm">{file.file.name}</span>
                           </div>
-                          <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
-                            <FileText className="h-3.5 w-3.5" />
+                          <div classИмя="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+                            <FileText classИмя="h-3.5 w-3.5" />
                             <span>{file.title || file.file.name}</span>
                             <span>•</span>
                             <span>{formatFileSize(file.file)}</span>
@@ -1785,12 +1785,12 @@ export function NewIssueDialog() {
                         <Button
                           variant="ghost"
                           size="icon-xs"
-                          className="shrink-0 text-muted-foreground"
+                          classИмя="shrink-0 text-muted-foreground"
                           onClick={() => removeStagedFile(file.id)}
-                          disabled={createIssue.isPending}
-                          title="Remove document"
+                          disabled={createЗадача.isОжидание}
+                          title="Удалить document"
                         >
-                          <X className="h-3.5 w-3.5" />
+                          <X classИмя="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     ))}
@@ -1799,29 +1799,29 @@ export function NewIssueDialog() {
               ) : null}
 
               {stagedAttachments.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-muted-foreground">Attachments</div>
-                  <div className="space-y-2">
+                <div classИмя="space-y-2">
+                  <div classИмя="text-xs font-medium text-muted-foreground">Attachments</div>
+                  <div classИмя="space-y-2">
                     {stagedAttachments.map((file) => (
-                      <div key={file.id} className="flex items-start justify-between gap-3 rounded-md border border-border/70 px-3 py-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                            <span className="truncate text-sm">{file.file.name}</span>
+                      <div key={file.id} classИмя="flex items-start justify-between gap-3 rounded-md border border-border/70 px-3 py-2">
+                        <div classИмя="min-w-0">
+                          <div classИмя="flex items-center gap-2">
+                            <Paperclip classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <span classИмя="truncate text-sm">{file.file.name}</span>
                           </div>
-                          <div className="mt-1 text-[11px] text-muted-foreground">
+                          <div classИмя="mt-1 text-[11px] text-muted-foreground">
                             {file.file.type || "application/octet-stream"} • {formatFileSize(file.file)}
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon-xs"
-                          className="shrink-0 text-muted-foreground"
+                          classИмя="shrink-0 text-muted-foreground"
                           onClick={() => removeStagedFile(file.id)}
-                          disabled={createIssue.isPending}
-                          title="Remove attachment"
+                          disabled={createЗадача.isОжидание}
+                          title="Удалить attachment"
                         >
-                          <X className="h-3.5 w-3.5" />
+                          <X classИмя="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     ))}
@@ -1834,30 +1834,30 @@ export function NewIssueDialog() {
         </div>
 
         {/* Property chips bar */}
-        <div className="flex items-center gap-1.5 px-4 py-2 border-t border-border flex-wrap shrink-0">
-          {/* Status chip */}
-          <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+        <div classИмя="flex items-center gap-1.5 px-4 py-2 border-t border-border flex-wrap shrink-0">
+          {/* Статус chip */}
+          <Popover open={statusOpen} onOpenChange={setСтатусOpen}>
             <PopoverTrigger asChild>
-              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
-                <CircleDot className={cn("h-3 w-3", currentStatus.color)} />
-                {currentStatus.label}
+              <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
+                <CircleDot classИмя={cn("h-3 w-3", currentСтатус.color)} />
+                {currentСтатус.label}
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-56 p-1" align="start">
+            <PopoverContent classИмя="w-56 p-1" align="start">
               {statuses.map((s) => (
                 <button
                   key={s.value}
-                  className={cn(
+                  classИмя={cn(
                     "flex w-full items-start gap-2 px-2 py-1.5 text-xs rounded hover:bg-accent/50",
                     s.value === status && "bg-accent"
                   )}
-                  onClick={() => { setStatus(s.value); setStatusOpen(false); }}
+                  onClick={() => { setСтатус(s.value); setСтатусOpen(false); }}
                 >
-                  <CircleDot className={cn("h-3 w-3 mt-0.5 shrink-0", s.color)} />
-                  <span className="flex flex-col text-left leading-tight">
+                  <CircleDot classИмя={cn("h-3 w-3 mt-0.5 shrink-0", s.color)} />
+                  <span classИмя="flex flex-col text-left leading-tight">
                     <span>{s.label}</span>
                     {s.description ? (
-                      <span className="text-[10px] text-muted-foreground">{s.description}</span>
+                      <span classИмя="text-[10px] text-muted-foreground">{s.description}</span>
                     ) : null}
                   </span>
                 </button>
@@ -1865,98 +1865,98 @@ export function NewIssueDialog() {
             </PopoverContent>
           </Popover>
 
-          {/* Priority chip */}
-          <Popover open={priorityOpen} onOpenChange={setPriorityOpen}>
+          {/* Приоритет chip */}
+          <Popover open={priorityOpen} onOpenChange={setПриоритетOpen}>
             <PopoverTrigger asChild>
-              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
-                {currentPriority ? (
+              <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors">
+                {currentПриоритет ? (
                   <>
-                    <currentPriority.icon className={cn("h-3 w-3", currentPriority.color)} />
-                    {currentPriority.label}
+                    <currentПриоритет.icon classИмя={cn("h-3 w-3", currentПриоритет.color)} />
+                    {currentПриоритет.label}
                   </>
                 ) : (
                   <>
-                    <Minus className="h-3 w-3 text-muted-foreground" />
-                    Priority
+                    <Minus classИмя="h-3 w-3 text-muted-foreground" />
+                    Приоритет
                   </>
                 )}
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-36 p-1" align="start">
+            <PopoverContent classИмя="w-36 p-1" align="start">
               {priorities.map((p) => (
                 <button
                   key={p.value}
-                  className={cn(
+                  classИмя={cn(
                     "flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50",
                     p.value === priority && "bg-accent"
                   )}
-                  onClick={() => { setPriority(p.value); setPriorityOpen(false); }}
+                  onClick={() => { setПриоритет(p.value); setПриоритетOpen(false); }}
                 >
-                  <p.icon className={cn("h-3 w-3", p.color)} />
+                  <p.icon classИмя={cn("h-3 w-3", p.color)} />
                   {p.label}
                 </button>
               ))}
             </PopoverContent>
           </Popover>
 
-          {/* Labels chip — disabled, not wired up yet */}
-          {/* <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors text-muted-foreground">
-            <Tag className="h-3 w-3" />
-            Labels
+          {/* Ярлыки chip — disabled, not wired up yet */}
+          {/* <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors text-muted-foreground">
+            <Tag classИмя="h-3 w-3" />
+            Ярлыки
           </button> */}
 
           <input
             ref={stageFileInputRef}
             type="file"
             accept={STAGED_FILE_ACCEPT}
-            className="hidden"
-            onChange={handleStageFilesPicked}
+            classИмя="hidden"
+            onChange={handleStageФайлыPicked}
             multiple
           />
           <button
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors text-muted-foreground"
+            classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/50 transition-colors text-muted-foreground"
             onClick={() => stageFileInputRef.current?.click()}
-            disabled={createIssue.isPending}
+            disabled={createЗадача.isОжидание}
           >
-            <Paperclip className="h-3 w-3" />
-            Upload
+            <Paperclip classИмя="h-3 w-3" />
+            Загрузить
           </button>
 
-          {/* Work mode chip */}
-          <Popover open={workModeOpen} onOpenChange={setWorkModeOpen}>
+          {/* Работа mode chip */}
+          <Popover open={workModeOpen} onOpenChange={setРаботаModeOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 data-issue-work-mode-chip={workMode}
-                className={cn(
+                classИмя={cn(
                   "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors",
                   workMode === "planning"
                     ? "border-amber-500/60 bg-amber-500/15 text-amber-800 hover:bg-amber-500/25 dark:border-amber-500/50 dark:bg-amber-500/15 dark:text-amber-200 dark:hover:bg-amber-500/25"
                     : "border-border text-muted-foreground hover:bg-accent/50",
                 )}
               >
-                <CurrentWorkModeIcon className="h-3 w-3" />
-                {currentWorkMode.label}
+                <CurrentРаботаModeIcon classИмя="h-3 w-3" />
+                {currentРаботаMode.label}
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-36 p-1" align="start">
+            <PopoverContent classИмя="w-36 p-1" align="start">
               {ISSUE_WORK_MODE_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 return (
                   <button
                     key={option.value}
                     data-issue-work-mode={option.value}
-                    className={cn(
+                    classИмя={cn(
                       "flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent/50",
                       option.value === workMode && "bg-accent",
                       option.value === "planning" && "text-amber-700 dark:text-amber-300",
                     )}
                     onClick={() => {
-                      setWorkMode(option.value);
-                      setWorkModeOpen(false);
+                      setРаботаMode(option.value);
+                      setРаботаModeOpen(false);
                     }}
                   >
-                    <Icon className="h-3 w-3" />
+                    <Icon classИмя="h-3 w-3" />
                     {option.label}
                   </button>
                 );
@@ -1967,67 +1967,67 @@ export function NewIssueDialog() {
           {/* More (dates) */}
           <Popover open={moreOpen} onOpenChange={setMoreOpen}>
             <PopoverTrigger asChild>
-              <button className="inline-flex items-center justify-center rounded-md border border-border p-1 text-xs hover:bg-accent/50 transition-colors text-muted-foreground">
-                <MoreHorizontal className="h-3 w-3" />
+              <button classИмя="inline-flex items-center justify-center rounded-md border border-border p-1 text-xs hover:bg-accent/50 transition-colors text-muted-foreground">
+                <MoreHorizontal classИмя="h-3 w-3" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-44 p-1" align="start">
-              <button className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                Start date
+            <PopoverContent classИмя="w-44 p-1" align="start">
+              <button classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground">
+                <Calendar classИмя="h-3 w-3" />
+                Начать date
               </button>
-              <button className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground">
-                <Calendar className="h-3 w-3" />
+              <button classИмя="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-muted-foreground">
+                <Calendar classИмя="h-3 w-3" />
                 Due date
               </button>
             </PopoverContent>
           </Popover>
         </div>
 
-        {assigneeValue && status === "backlog" ? (
+        {assigneeЗначение && status === "backlog" ? (
           <div
             data-testid="new-issue-assigned-backlog-note"
-            className="mx-4 mb-2 flex items-start gap-2 rounded-md border border-amber-300/70 bg-amber-50/90 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100"
+            classИмя="mx-4 mb-2 flex items-start gap-2 rounded-md border border-amber-300/70 bg-amber-50/90 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100"
           >
-            <Flag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
-            <span className="leading-snug">
-              Assigning implies executable intent — leave status as <span className="font-medium">Backlog</span> only to deliberately park this. The assignee will not be woken until status moves to <span className="font-medium">Todo</span> or <span className="font-medium">In Progress</span>.
+            <Flag classИмя="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
+            <span classИмя="leading-snug">
+              Assigning implies executable intent — leave status as <span classИмя="font-medium">Назадlog</span> only to deliberately park this. The assignee will not be woken until status moves to <span classИмя="font-medium">Todo</span> or <span classИмя="font-medium">In Progress</span>.
             </span>
           </div>
         ) : null}
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border shrink-0">
+        <div classИмя="flex items-center justify-between px-4 py-2.5 border-t border-border shrink-0">
           <Button
             variant="ghost"
             size="sm"
-            className="text-muted-foreground"
-            onClick={discardDraft}
-            disabled={createIssue.isPending || !canDiscardDraft}
+            classИмя="text-muted-foreground"
+            onClick={discardЧерновик}
+            disabled={createЗадача.isОжидание || !canDiscardЧерновик}
           >
-            Discard Draft
+            Discard Черновик
           </Button>
-          <div className="flex items-center gap-3">
-            <div className="min-h-5 text-right">
-              {createIssue.isPending ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" />
+          <div classИмя="flex items-center gap-3">
+            <div classИмя="min-h-5 text-right">
+              {createЗадача.isОжидание ? (
+                <span classИмя="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Loader2 classИмя="h-3 w-3 animate-spin" />
                   Creating issue...
                 </span>
-              ) : createIssue.isError ? (
-                <span className="text-xs text-destructive">{createIssueErrorMessage}</span>
+              ) : createЗадача.isОшибка ? (
+                <span classИмя="text-xs text-destructive">{createЗадачаОшибкаMessage}</span>
               ) : null}
             </div>
             <Button
               size="sm"
-              className="min-w-[8.5rem] disabled:opacity-100"
-              disabled={!titleHasText || createIssue.isPending}
-              onClick={handleSubmit}
-              aria-busy={createIssue.isPending}
+              classИмя="min-w-[8.5rem] disabled:opacity-100"
+              disabled={!titleHasText || createЗадача.isОжидание}
+              onClick={handleОтправить}
+              aria-busy={createЗадача.isОжидание}
             >
-              <span className="inline-flex items-center justify-center gap-1.5">
-                {createIssue.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                <span>{createIssue.isPending ? "Creating..." : isSubIssueMode ? "Create Sub-Issue" : "Create Issue"}</span>
+              <span classИмя="inline-flex items-center justify-center gap-1.5">
+                {createЗадача.isОжидание ? <Loader2 classИмя="h-3.5 w-3.5 animate-spin" /> : null}
+                <span>{createЗадача.isОжидание ? "Creating..." : isSubЗадачаMode ? "Создать подзадачу" : "Создать задачу"}</span>
               </span>
             </Button>
           </div>

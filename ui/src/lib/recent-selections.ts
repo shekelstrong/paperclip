@@ -1,9 +1,9 @@
 export const RECENT_SELECTION_DISPLAY_LIMIT = 3;
 const MAX_STORED_RECENT_SELECTIONS = 10;
 
-export function readRecentSelectionIds(storageKey: string): string[] {
+export function readRecentSelectionIds(storageКлюч: string): string[] {
   try {
-    const raw = localStorage.getItem(storageKey);
+    const raw = localStorage.getItem(storageКлюч);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
@@ -12,12 +12,12 @@ export function readRecentSelectionIds(storageKey: string): string[] {
   }
 }
 
-export function trackRecentSelectionId(storageKey: string, id: string): void {
+export function trackRecentSelectionId(storageКлюч: string, id: string): void {
   if (!id) return;
-  const recent = readRecentSelectionIds(storageKey).filter((candidate) => candidate !== id);
+  const recent = readRecentSelectionIds(storageКлюч).filter((candidate) => candidate !== id);
   recent.unshift(id);
   if (recent.length > MAX_STORED_RECENT_SELECTIONS) recent.length = MAX_STORED_RECENT_SELECTIONS;
-  localStorage.setItem(storageKey, JSON.stringify(recent));
+  localStorage.setItem(storageКлюч, JSON.stringify(recent));
 }
 
 export function orderItemsBySelectedAndRecent<T extends { id: string }>(

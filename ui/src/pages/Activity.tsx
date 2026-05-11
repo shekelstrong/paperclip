@@ -1,28 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { ActivityEvent, Agent } from "@paperclipai/shared";
+import type { АктивностьEvent, Агент } from "@paperclipai/shared";
 import { activityApi } from "../api/activity";
 import { accessApi } from "../api/access";
 import { agentsApi } from "../api/agents";
-import { buildCompanyUserProfileMap } from "../lib/company-members";
-import { useCompany } from "../context/CompanyContext";
+import { buildКомпанияUserПрофильMap } from "../lib/company-members";
+import { useКомпания } from "../context/КомпанияContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { queryKeys } from "../lib/queryKeys";
+import { queryКлючs } from "../lib/queryКлючs";
 import { EmptyState } from "../components/EmptyState";
-import { ActivityRow } from "../components/ActivityRow";
+import { АктивностьRow } from "../components/АктивностьRow";
 import { PageSkeleton } from "../components/PageSkeleton";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectЗначение,
 } from "@/components/ui/select";
-import { History } from "lucide-react";
+import { История } from "lucide-react";
 
 const ACTIVITY_PAGE_LIMIT = 200;
 
-function detailString(event: ActivityEvent, ...keys: string[]) {
+function detailString(event: АктивностьEvent, ...keys: string[]) {
   const details = event.details;
   for (const key of keys) {
     const value = details?.[key];
@@ -31,102 +31,102 @@ function detailString(event: ActivityEvent, ...keys: string[]) {
   return null;
 }
 
-function activityEntityName(event: ActivityEvent) {
-  if (event.entityType === "issue") return detailString(event, "identifier", "issueIdentifier");
-  if (event.entityType === "project") return detailString(event, "projectName", "name", "title");
-  if (event.entityType === "goal") return detailString(event, "goalTitle", "title", "name");
+function activityEntityИмя(event: АктивностьEvent) {
+  if (event.entityТип === "issue") return detailString(event, "identifier", "issueIdentifier");
+  if (event.entityТип === "project") return detailString(event, "projectИмя", "name", "title");
+  if (event.entityТип === "goal") return detailString(event, "goalНазвание", "title", "name");
   return detailString(event, "name", "title");
 }
 
-function activityEntityTitle(event: ActivityEvent) {
-  if (event.entityType === "issue") return detailString(event, "issueTitle", "title");
+function activityEntityНазвание(event: АктивностьEvent) {
+  if (event.entityТип === "issue") return detailString(event, "issueНазвание", "title");
   return null;
 }
 
-export function Activity() {
-  const { selectedCompanyId } = useCompany();
+export function Активность() {
+  const { selectedКомпанияId } = useКомпания();
   const { setBreadcrumbs } = useBreadcrumbs();
-  const [filter, setFilter] = useState("all");
+  const [filter, setФильтр] = useState("all");
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Activity" }]);
+    setBreadcrumbs([{ label: "Активность" }]);
   }, [setBreadcrumbs]);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: [...queryKeys.activity(selectedCompanyId!), { limit: ACTIVITY_PAGE_LIMIT }],
-    queryFn: () => activityApi.list(selectedCompanyId!, { limit: ACTIVITY_PAGE_LIMIT }),
-    enabled: !!selectedCompanyId,
+  const { data, isЗагрузка, error } = useQuery({
+    queryКлюч: [...queryКлючs.activity(selectedКомпанияId!), { limit: ACTIVITY_PAGE_LIMIT }],
+    queryFn: () => activityApi.list(selectedКомпанияId!, { limit: ACTIVITY_PAGE_LIMIT }),
+    enabled: !!selectedКомпанияId,
   });
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(selectedCompanyId!),
-    queryFn: () => agentsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.agents.list(selectedКомпанияId!),
+    queryFn: () => agentsApi.list(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
   const { data: companyMembers } = useQuery({
-    queryKey: queryKeys.access.companyUserDirectory(selectedCompanyId!),
-    queryFn: () => accessApi.listUserDirectory(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    queryКлюч: queryКлючs.access.companyUserDirectory(selectedКомпанияId!),
+    queryFn: () => accessApi.listUserDirectory(selectedКомпанияId!),
+    enabled: !!selectedКомпанияId,
   });
 
-  const userProfileMap = useMemo(
-    () => buildCompanyUserProfileMap(companyMembers?.users),
+  const userПрофильMap = useMemo(
+    () => buildКомпанияUserПрофильMap(companyMembers?.users),
     [companyMembers?.users],
   );
 
   const agentMap = useMemo(() => {
-    const map = new Map<string, Agent>();
+    const map = new Map<string, Агент>();
     for (const a of agents ?? []) map.set(a.id, a);
     return map;
   }, [agents]);
 
-  const entityNameMap = useMemo(() => {
+  const entityИмяMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const a of agents ?? []) map.set(`agent:${a.id}`, a.name);
     for (const event of data ?? []) {
-      const name = activityEntityName(event);
-      if (name) map.set(`${event.entityType}:${event.entityId}`, name);
+      const name = activityEntityИмя(event);
+      if (name) map.set(`${event.entityТип}:${event.entityId}`, name);
     }
     return map;
   }, [data, agents]);
 
-  const entityTitleMap = useMemo(() => {
+  const entityНазваниеMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const event of data ?? []) {
-      const title = activityEntityTitle(event);
-      if (title) map.set(`${event.entityType}:${event.entityId}`, title);
+      const title = activityEntityНазвание(event);
+      if (title) map.set(`${event.entityТип}:${event.entityId}`, title);
     }
     return map;
   }, [data]);
 
-  if (!selectedCompanyId) {
-    return <EmptyState icon={History} message="Select a company to view activity." />;
+  if (!selectedКомпанияId) {
+    return <EmptyState icon={История} message="Select a company to view activity." />;
   }
 
-  if (isLoading) {
+  if (isЗагрузка) {
     return <PageSkeleton variant="list" />;
   }
 
   const filtered =
     data && filter !== "all"
-      ? data.filter((e) => e.entityType === filter)
+      ? data.filter((e) => e.entityТип === filter)
       : data;
 
-  const entityTypes = data
-    ? [...new Set(data.map((e) => e.entityType))].sort()
+  const entityТипs = data
+    ? [...new Set(data.map((e) => e.entityТип))].sort()
     : [];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-[140px] h-8 text-xs">
-            <SelectValue placeholder="Filter by type" />
+    <div classИмя="space-y-4">
+      <div classИмя="flex items-center justify-end">
+        <Select value={filter} onЗначениеChange={setФильтр}>
+          <SelectTrigger classИмя="w-[140px] h-8 text-xs">
+            <SelectЗначение placeholder="Фильтр by type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            {entityTypes.map((type) => (
+            <SelectItem value="all">Все types</SelectItem>
+            {entityТипs.map((type) => (
               <SelectItem key={type} value={type}>
                 {type.charAt(0).toUpperCase() + type.slice(1)}
               </SelectItem>
@@ -135,22 +135,22 @@ export function Activity() {
         </Select>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error.message}</p>}
+      {error && <p classИмя="text-sm text-destructive">{error.message}</p>}
 
       {filtered && filtered.length === 0 && (
-        <EmptyState icon={History} message="No activity yet." />
+        <EmptyState icon={История} message="Нет activity yet." />
       )}
 
       {filtered && filtered.length > 0 && (
-        <div className="border border-border divide-y divide-border">
+        <div classИмя="border border-border divide-y divide-border">
           {filtered.map((event) => (
-            <ActivityRow
+            <АктивностьRow
               key={event.id}
               event={event}
               agentMap={agentMap}
-              userProfileMap={userProfileMap}
-              entityNameMap={entityNameMap}
-              entityTitleMap={entityTitleMap}
+              userПрофильMap={userПрофильMap}
+              entityИмяMap={entityИмяMap}
+              entityНазваниеMap={entityНазваниеMap}
             />
           ))}
         </div>

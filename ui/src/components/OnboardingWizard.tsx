@@ -1,17 +1,17 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AdapterEnvironmentTestResult } from "@paperclipai/shared";
+import type { АдаптерОкружениеПроверитьResult } from "@paperclipai/shared";
 import { useLocation, useNavigate, useParams } from "@/lib/router";
 import { useDialog } from "../context/DialogContext";
-import { useCompany } from "../context/CompanyContext";
+import { useКомпания } from "../context/КомпанияContext";
 import { companiesApi } from "../api/companies";
 import { goalsApi } from "../api/goals";
 import { agentsApi } from "../api/agents";
 import { approvalsApi } from "../api/approvals";
 import { issuesApi } from "../api/issues";
 import { projectsApi } from "../api/projects";
-import { queryKeys } from "../lib/queryKeys";
-import { Dialog, DialogPortal } from "@/components/ui/dialog";
+import { queryКлючs } from "../lib/queryКлючs";
+import { Dialog, DialogПортal } from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -20,35 +20,35 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "../lib/utils";
 import {
-  extractModelName,
-  extractProviderIdWithFallback
+  extractМодельИмя,
+  extractПровайдерIdWithFallback
 } from "../lib/model-utils";
-import { getUIAdapter } from "../adapters";
-import { listUIAdapters } from "../adapters";
-import { isVisualAdapterChoice } from "../adapters/metadata";
-import { useDisabledAdaptersSync } from "../adapters/use-disabled-adapters";
-import { useAdapterCapabilities } from "../adapters/use-adapter-capabilities";
-import { getAdapterDisplay } from "../adapters/adapter-display-registry";
-import { defaultCreateValues } from "./agent-config-defaults";
-import { parseOnboardingGoalInput } from "../lib/onboarding-goal";
+import { getUIАдаптер } from "../adapters";
+import { listUIАдаптеры } from "../adapters";
+import { isVisualАдаптерChoice } from "../adapters/metadata";
+import { useОтключитьdАдаптерыSync } from "../adapters/use-disabled-adapters";
+import { useАдаптерCapabilities } from "../adapters/use-adapter-capabilities";
+import { getАдаптерDisplay } from "../adapters/adapter-display-registry";
+import { defaultСоздатьЗначениеs } from "./agent-config-defaults";
+import { parseOnboardingЦельInput } from "../lib/onboarding-goal";
 import {
-  buildOnboardingIssuePayload,
+  buildOnboardingЗадачаPayload,
   buildOnboardingProjectPayload,
-  selectDefaultCompanyGoalId
+  selectПо умолчаниюКомпанияЦельId
 } from "../lib/onboarding-launch";
-import { buildNewAgentRuntimeConfig } from "../lib/new-agent-runtime-config";
+import { buildNewАгентЗапуститьtimeConfig } from "../lib/new-agent-runtime-config";
 import {
   DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX,
   DEFAULT_CODEX_LOCAL_MODEL
 } from "@paperclipai/adapter-codex-local";
 import { DEFAULT_CURSOR_LOCAL_MODEL } from "@paperclipai/adapter-cursor-local";
 import { DEFAULT_GEMINI_LOCAL_MODEL } from "@paperclipai/adapter-gemini-local";
-import { DEFAULT_OPENCODE_LOCAL_MODEL, isValidOpenCodeModelId } from "@paperclipai/adapter-opencode-local";
+import { DEFAULT_OPENCODE_LOCAL_MODEL, isValidOpenCodeМодельId } from "@paperclipai/adapter-opencode-local";
 import { resolveRouteOnboardingOptions } from "../lib/onboarding-route";
 import { AsciiArtAnimation } from "./AsciiArtAnimation";
 import {
   Building2,
-  Bot,
+  Бот,
   ListTodo,
   Rocket,
   ArrowLeft,
@@ -61,7 +61,7 @@ import {
 
 
 type Step = 1 | 2 | 3 | 4;
-type AdapterType = string;
+type АдаптерТип = string;
 
 const DEFAULT_TASK_DESCRIPTION = `You are the CEO. You set the direction for the company.
 
@@ -71,18 +71,18 @@ const DEFAULT_TASK_DESCRIPTION = `You are the CEO. You set the direction for the
 
 export function OnboardingWizard() {
   const { onboardingOpen, onboardingOptions, closeOnboarding } = useDialog();
-  const { companies, setSelectedCompanyId, loading: companiesLoading } = useCompany();
+  const { companies, setSelectedКомпанияId, loading: companiesЗагрузка } = useКомпания();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const { companyPrefix } = useParams<{ companyPrefix?: string }>();
-  const [routeDismissed, setRouteDismissed] = useState(false);
+  const [routeЗакрытьed, setRouteЗакрытьed] = useState(false);
 
   // Sync disabled adapter types from server so adapter grid filters them out
-  const disabledTypes = useDisabledAdaptersSync();
+  const disabledТипs = useОтключитьdАдаптерыSync();
 
   const routeOnboardingOptions =
-    companyPrefix && companiesLoading
+    companyPrefix && companiesЗагрузка
       ? null
       : resolveRouteOnboardingOptions({
           pathname: location.pathname,
@@ -90,49 +90,49 @@ export function OnboardingWizard() {
           companies,
         });
   const effectiveOnboardingOpen =
-    onboardingOpen || (routeOnboardingOptions !== null && !routeDismissed);
+    onboardingOpen || (routeOnboardingOptions !== null && !routeЗакрытьed);
   const effectiveOnboardingOptions = onboardingOpen
     ? onboardingOptions
     : routeOnboardingOptions ?? {};
 
   const initialStep = effectiveOnboardingOptions.initialStep ?? 1;
-  const existingCompanyId = effectiveOnboardingOptions.companyId;
+  const existingКомпанияId = effectiveOnboardingOptions.companyId;
 
   const [step, setStep] = useState<Step>(initialStep);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [modelOpen, setModelOpen] = useState(false);
-  const [modelSearch, setModelSearch] = useState("");
+  const [loading, setЗагрузка] = useState(false);
+  const [error, setОшибка] = useState<string | null>(null);
+  const [modelOpen, setМодельOpen] = useState(false);
+  const [modelПоиск, setМодельПоиск] = useState("");
 
   // Step 1
-  const [companyName, setCompanyName] = useState("");
-  const [companyGoal, setCompanyGoal] = useState("");
+  const [companyИмя, setКомпанияИмя] = useState("");
+  const [companyЦель, setКомпанияЦель] = useState("");
 
   // Step 2
-  const [agentName, setAgentName] = useState("CEO");
-  const [adapterType, setAdapterType] = useState<AdapterType>("claude_local");
-  const [model, setModel] = useState("");
-  const [command, setCommand] = useState("");
+  const [agentИмя, setАгентИмя] = useState("CEO");
+  const [adapterТип, setАдаптерТип] = useState<АдаптерТип>("claude_local");
+  const [model, setМодель] = useState("");
+  const [command, setКоманда] = useState("");
   const [args, setArgs] = useState("");
   const [url, setUrl] = useState("");
-  const [adapterEnvResult, setAdapterEnvResult] =
-    useState<AdapterEnvironmentTestResult | null>(null);
-  const [adapterEnvError, setAdapterEnvError] = useState<string | null>(null);
-  const [adapterEnvLoading, setAdapterEnvLoading] = useState(false);
-  const [forceUnsetAnthropicApiKey, setForceUnsetAnthropicApiKey] =
+  const [adapterEnvResult, setАдаптерEnvResult] =
+    useState<АдаптерОкружениеПроверитьResult | null>(null);
+  const [adapterEnvОшибка, setАдаптерEnvОшибка] = useState<string | null>(null);
+  const [adapterEnvЗагрузка, setАдаптерEnvЗагрузка] = useState(false);
+  const [forceНе заданAnthropicApiКлюч, setForceНе заданAnthropicApiКлюч] =
     useState(false);
-  const [unsetAnthropicLoading, setUnsetAnthropicLoading] = useState(false);
-  const [showMoreAdapters, setShowMoreAdapters] = useState(false);
+  const [unsetAnthropicЗагрузка, setНе заданAnthropicЗагрузка] = useState(false);
+  const [showMoreАдаптеры, setShowMoreАдаптеры] = useState(false);
 
   // Step 3
-  const [taskTitle, setTaskTitle] = useState(
+  const [taskНазвание, setЗадачаНазвание] = useState(
     "Hire your first engineer and create a hiring plan"
   );
-  const [taskDescription, setTaskDescription] = useState(
+  const [taskОписание, setЗадачаОписание] = useState(
     DEFAULT_TASK_DESCRIPTION
   );
 
-  // Auto-grow textarea for task description
+  // Авто-grow textarea for task description
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autoResizeTextarea = useCallback(() => {
     const el = textareaRef.current;
@@ -141,22 +141,22 @@ export function OnboardingWizard() {
     el.style.height = el.scrollHeight + "px";
   }, []);
 
-  // Created entity IDs — pre-populate from existing company when skipping step 1
-  const [createdCompanyId, setCreatedCompanyId] = useState<string | null>(
-    existingCompanyId ?? null
+  // Создано entity IDs — pre-populate from existing company when skipping step 1
+  const [createdКомпанияId, setСозданоКомпанияId] = useState<string | null>(
+    existingКомпанияId ?? null
   );
-  const [createdCompanyPrefix, setCreatedCompanyPrefix] = useState<
+  const [createdКомпанияPrefix, setСозданоКомпанияPrefix] = useState<
     string | null
   >(null);
-  const [createdCompanyGoalId, setCreatedCompanyGoalId] = useState<string | null>(
+  const [createdКомпанияЦельId, setСозданоКомпанияЦельId] = useState<string | null>(
     null
   );
-  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null);
-  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
-  const [createdIssueRef, setCreatedIssueRef] = useState<string | null>(null);
+  const [createdАгентId, setСозданоАгентId] = useState<string | null>(null);
+  const [createdProjectId, setСозданоProjectId] = useState<string | null>(null);
+  const [createdЗадачаRef, setСозданоЗадачаRef] = useState<string | null>(null);
 
   useEffect(() => {
-    setRouteDismissed(false);
+    setRouteЗакрытьed(false);
   }, [location.pathname]);
 
   // Sync step and company when onboarding opens with options.
@@ -166,60 +166,60 @@ export function OnboardingWizard() {
     if (!effectiveOnboardingOpen) return;
     const cId = effectiveOnboardingOptions.companyId ?? null;
     setStep(effectiveOnboardingOptions.initialStep ?? 1);
-    setCreatedCompanyId(cId);
-    setCreatedCompanyPrefix(null);
-    setCreatedCompanyGoalId(null);
-    setCreatedProjectId(null);
-    setCreatedAgentId(null);
-    setCreatedIssueRef(null);
+    setСозданоКомпанияId(cId);
+    setСозданоКомпанияPrefix(null);
+    setСозданоКомпанияЦельId(null);
+    setСозданоProjectId(null);
+    setСозданоАгентId(null);
+    setСозданоЗадачаRef(null);
   }, [
     effectiveOnboardingOpen,
     effectiveOnboardingOptions.companyId,
     effectiveOnboardingOptions.initialStep
   ]);
 
-  // Backfill issue prefix for an existing company once companies are loaded.
+  // Назадfill issue prefix for an existing company once companies are loaded.
   useEffect(() => {
-    if (!effectiveOnboardingOpen || !createdCompanyId || createdCompanyPrefix) return;
-    const company = companies.find((c) => c.id === createdCompanyId);
-    if (company) setCreatedCompanyPrefix(company.issuePrefix);
-  }, [effectiveOnboardingOpen, createdCompanyId, createdCompanyPrefix, companies]);
+    if (!effectiveOnboardingOpen || !createdКомпанияId || createdКомпанияPrefix) return;
+    const company = companies.find((c) => c.id === createdКомпанияId);
+    if (company) setСозданоКомпанияPrefix(company.issuePrefix);
+  }, [effectiveOnboardingOpen, createdКомпанияId, createdКомпанияPrefix, companies]);
 
   // Resize textarea when step 3 is shown or description changes
   useEffect(() => {
     if (step === 3) autoResizeTextarea();
-  }, [step, taskDescription, autoResizeTextarea]);
+  }, [step, taskОписание, autoResizeTextarea]);
 
-  const { data: adapterModels } = useQuery({
+  const { data: adapterМодельs } = useQuery({
     // The wizard doesn't expose an environment selector, so models always
     // resolve against the local Paperclip host (environmentId = null).
-    queryKey: createdCompanyId
-      ? queryKeys.agents.adapterModels(createdCompanyId, adapterType, null)
-      : ["agents", "none", "adapter-models", adapterType, null],
-    queryFn: () => agentsApi.adapterModels(createdCompanyId!, adapterType, { environmentId: null }),
-    enabled: Boolean(createdCompanyId) && effectiveOnboardingOpen && step === 2
+    queryКлюч: createdКомпанияId
+      ? queryКлючs.agents.adapterМодельs(createdКомпанияId, adapterТип, null)
+      : ["agents", "none", "adapter-models", adapterТип, null],
+    queryFn: () => agentsApi.adapterМодельs(createdКомпанияId!, adapterТип, { environmentId: null }),
+    enabled: Boolean(createdКомпанияId) && effectiveOnboardingOpen && step === 2
   });
-  const getCapabilities = useAdapterCapabilities();
-  const adapterCaps = getCapabilities(adapterType);
-  const isLocalAdapter = adapterCaps.supportsInstructionsBundle || adapterCaps.supportsSkills || adapterCaps.supportsLocalAgentJwt;
+  const getCapabilities = useАдаптерCapabilities();
+  const adapterCaps = getCapabilities(adapterТип);
+  const isLocalАдаптер = adapterCaps.supportsInstructionsBundle || adapterCaps.supportsНавыки || adapterCaps.supportsLocalАгентJwt;
 
   // Build adapter grids dynamically from the UI registry + display metadata.
   // External/plugin adapters automatically appear with generic defaults.
-  const { recommendedAdapters, moreAdapters } = useMemo(() => {
+  const { recommendedАдаптеры, moreАдаптеры } = useMemo(() => {
     const SYSTEM_ADAPTER_TYPES = new Set(["process", "http"]);
-    const all = listUIAdapters()
+    const all = listUIАдаптеры()
       .filter((a) =>
         !SYSTEM_ADAPTER_TYPES.has(a.type) &&
-        !disabledTypes.has(a.type) &&
-        isVisualAdapterChoice(a.type)
+        !disabledТипs.has(a.type) &&
+        isVisualАдаптерChoice(a.type)
       )
-      .map((a) => ({ ...getAdapterDisplay(a.type), type: a.type }));
+      .map((a) => ({ ...getАдаптерDisplay(a.type), type: a.type }));
 
     return {
-      recommendedAdapters: all.filter((a) => a.recommended),
-      moreAdapters: all.filter((a) => !a.recommended),
+      recommendedАдаптеры: all.filter((a) => a.recommended),
+      moreАдаптеры: all.filter((a) => !a.recommended),
     };
-  }, [disabledTypes]);
+  }, [disabledТипs]);
   const COMMAND_PLACEHOLDERS: Record<string, string> = {
     claude_local: "claude",
     codex_local: "codex",
@@ -228,50 +228,50 @@ export function OnboardingWizard() {
     cursor: "agent",
     opencode_local: "opencode",
   };
-  const effectiveAdapterCommand =
+  const effectiveАдаптерКоманда =
     command.trim() ||
-    (COMMAND_PLACEHOLDERS[adapterType] ?? adapterType.replace(/_local$/, ""));
+    (COMMAND_PLACEHOLDERS[adapterТип] ?? adapterТип.replace(/_local$/, ""));
 
   useEffect(() => {
     if (step !== 2) return;
-    setAdapterEnvResult(null);
-    setAdapterEnvError(null);
-  }, [step, adapterType, model, command, args, url]);
+    setАдаптерEnvResult(null);
+    setАдаптерEnvОшибка(null);
+  }, [step, adapterТип, model, command, args, url]);
 
-  const selectedModel = (adapterModels ?? []).find((m) => m.id === model);
-  const hasAnthropicApiKeyOverrideCheck =
+  const selectedМодель = (adapterМодельs ?? []).find((m) => m.id === model);
+  const hasAnthropicApiКлючOverrideCheck =
     adapterEnvResult?.checks.some(
       (check) =>
         check.code === "claude_anthropic_api_key_overrides_subscription"
     ) ?? false;
-  const shouldSuggestUnsetAnthropicApiKey =
-    adapterType === "claude_local" &&
+  const shouldSuggestНе заданAnthropicApiКлюч =
+    adapterТип === "claude_local" &&
     adapterEnvResult?.status === "fail" &&
-    hasAnthropicApiKeyOverrideCheck;
-  const filteredModels = useMemo(() => {
-    const query = modelSearch.trim().toLowerCase();
-    return (adapterModels ?? []).filter((entry) => {
+    hasAnthropicApiКлючOverrideCheck;
+  const filteredМодельs = useMemo(() => {
+    const query = modelПоиск.trim().toНизкийerCase();
+    return (adapterМодельs ?? []).filter((entry) => {
       if (!query) return true;
-      const provider = extractProviderIdWithFallback(entry.id, "");
+      const provider = extractПровайдерIdWithFallback(entry.id, "");
       return (
-        entry.id.toLowerCase().includes(query) ||
-        entry.label.toLowerCase().includes(query) ||
-        provider.toLowerCase().includes(query)
+        entry.id.toНизкийerCase().includes(query) ||
+        entry.label.toНизкийerCase().includes(query) ||
+        provider.toНизкийerCase().includes(query)
       );
     });
-  }, [adapterModels, modelSearch]);
-  const groupedModels = useMemo(() => {
-    if (adapterType !== "opencode_local") {
+  }, [adapterМодельs, modelПоиск]);
+  const groupedМодельs = useMemo(() => {
+    if (adapterТип !== "opencode_local") {
       return [
         {
           provider: "models",
-          entries: [...filteredModels].sort((a, b) => a.id.localeCompare(b.id))
+          entries: [...filteredМодельs].sort((a, b) => a.id.localeCompare(b.id))
         }
       ];
     }
     const groups = new Map<string, Array<{ id: string; label: string }>>();
-    for (const entry of filteredModels) {
-      const provider = extractProviderIdWithFallback(entry.id);
+    for (const entry of filteredМодельs) {
+      const provider = extractПровайдерIdWithFallback(entry.id);
       const bucket = groups.get(provider) ?? [];
       bucket.push(entry);
       groups.set(provider, bucket);
@@ -282,66 +282,66 @@ export function OnboardingWizard() {
         provider,
         entries: [...entries].sort((a, b) => a.id.localeCompare(b.id))
       }));
-  }, [filteredModels, adapterType]);
+  }, [filteredМодельs, adapterТип]);
 
   function reset() {
     setStep(1);
-    setLoading(false);
-    setError(null);
-    setCompanyName("");
-    setCompanyGoal("");
-    setAgentName("CEO");
-    setAdapterType("claude_local");
-    setModel("");
-    setCommand("");
+    setЗагрузка(false);
+    setОшибка(null);
+    setКомпанияИмя("");
+    setКомпанияЦель("");
+    setАгентИмя("CEO");
+    setАдаптерТип("claude_local");
+    setМодель("");
+    setКоманда("");
     setArgs("");
     setUrl("");
-    setAdapterEnvResult(null);
-    setAdapterEnvError(null);
-    setAdapterEnvLoading(false);
-    setForceUnsetAnthropicApiKey(false);
-    setUnsetAnthropicLoading(false);
-    setTaskTitle("Hire your first engineer and create a hiring plan");
-    setTaskDescription(DEFAULT_TASK_DESCRIPTION);
-    setCreatedCompanyId(null);
-    setCreatedCompanyPrefix(null);
-    setCreatedCompanyGoalId(null);
-    setCreatedAgentId(null);
-    setCreatedProjectId(null);
-    setCreatedIssueRef(null);
+    setАдаптерEnvResult(null);
+    setАдаптерEnvОшибка(null);
+    setАдаптерEnvЗагрузка(false);
+    setForceНе заданAnthropicApiКлюч(false);
+    setНе заданAnthropicЗагрузка(false);
+    setЗадачаНазвание("Hire your first engineer and create a hiring plan");
+    setЗадачаОписание(DEFAULT_TASK_DESCRIPTION);
+    setСозданоКомпанияId(null);
+    setСозданоКомпанияPrefix(null);
+    setСозданоКомпанияЦельId(null);
+    setСозданоАгентId(null);
+    setСозданоProjectId(null);
+    setСозданоЗадачаRef(null);
   }
 
-  function handleClose() {
+  function handleЗакрыть() {
     reset();
     closeOnboarding();
   }
 
-  function buildAdapterConfig(): Record<string, unknown> {
-    const adapter = getUIAdapter(adapterType);
-    const config = adapter.buildAdapterConfig({
-      ...defaultCreateValues,
-      adapterType,
+  function buildАдаптерConfig(): Record<string, unknown> {
+    const adapter = getUIАдаптер(adapterТип);
+    const config = adapter.buildАдаптерConfig({
+      ...defaultСоздатьЗначениеs,
+      adapterТип,
       model:
-        adapterType === "codex_local"
+        adapterТип === "codex_local"
           ? model || DEFAULT_CODEX_LOCAL_MODEL
-          : adapterType === "gemini_local"
+          : adapterТип === "gemini_local"
             ? model || DEFAULT_GEMINI_LOCAL_MODEL
-          : adapterType === "cursor"
+          : adapterТип === "cursor"
             ? model || DEFAULT_CURSOR_LOCAL_MODEL
-            : adapterType === "opencode_local"
+            : adapterТип === "opencode_local"
               ? model || DEFAULT_OPENCODE_LOCAL_MODEL
               : model,
       command,
       args,
       url,
       dangerouslySkipPermissions:
-        adapterType === "claude_local" || adapterType === "opencode_local",
+        adapterТип === "claude_local" || adapterТип === "opencode_local",
       dangerouslyBypassSandbox:
-        adapterType === "codex_local"
+        adapterТип === "codex_local"
           ? DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX
-          : defaultCreateValues.dangerouslyBypassSandbox
+          : defaultСоздатьЗначениеs.dangerouslyBypassSandbox
     });
-    if (adapterType === "claude_local" && forceUnsetAnthropicApiKey) {
+    if (adapterТип === "claude_local" && forceНе заданAnthropicApiКлюч) {
       const env =
         typeof config.env === "object" &&
         config.env !== null &&
@@ -354,130 +354,130 @@ export function OnboardingWizard() {
     return config;
   }
 
-  async function runAdapterEnvironmentTest(
+  async function runАдаптерОкружениеПроверить(
     adapterConfigOverride?: Record<string, unknown>
-  ): Promise<AdapterEnvironmentTestResult | null> {
-    if (!createdCompanyId) {
-      setAdapterEnvError(
-        "Create or select a company before testing adapter environment."
+  ): Promise<АдаптерОкружениеПроверитьResult | null> {
+    if (!createdКомпанияId) {
+      setАдаптерEnvОшибка(
+        "Создать or select a company before testing adapter environment."
       );
       return null;
     }
-    setAdapterEnvLoading(true);
-    setAdapterEnvError(null);
+    setАдаптерEnvЗагрузка(true);
+    setАдаптерEnvОшибка(null);
     try {
-      const result = await agentsApi.testEnvironment(
-        createdCompanyId,
-        adapterType,
+      const result = await agentsApi.testОкружение(
+        createdКомпанияId,
+        adapterТип,
         {
-          adapterConfig: adapterConfigOverride ?? buildAdapterConfig()
+          adapterConfig: adapterConfigOverride ?? buildАдаптерConfig()
         }
       );
-      setAdapterEnvResult(result);
+      setАдаптерEnvResult(result);
       return result;
     } catch (err) {
-      setAdapterEnvError(
-        err instanceof Error ? err.message : "Adapter environment test failed"
+      setАдаптерEnvОшибка(
+        err instanceof Ошибка ? err.message : "Адаптер environment test failed"
       );
       return null;
     } finally {
-      setAdapterEnvLoading(false);
+      setАдаптерEnvЗагрузка(false);
     }
   }
 
-  async function handleStep1Next() {
-    setLoading(true);
-    setError(null);
+  async function handleStep1Далее() {
+    setЗагрузка(true);
+    setОшибка(null);
     try {
-      const company = await companiesApi.create({ name: companyName.trim() });
-      setCreatedCompanyId(company.id);
-      setCreatedCompanyPrefix(company.issuePrefix);
-      setSelectedCompanyId(company.id);
-      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      const company = await companiesApi.create({ name: companyИмя.trim() });
+      setСозданоКомпанияId(company.id);
+      setСозданоКомпанияPrefix(company.issuePrefix);
+      setSelectedКомпанияId(company.id);
+      queryClient.invalidateQueries({ queryКлюч: queryКлючs.companies.all });
 
-      if (companyGoal.trim()) {
-        const parsedGoal = parseOnboardingGoalInput(companyGoal);
+      if (companyЦель.trim()) {
+        const parsedЦель = parseOnboardingЦельInput(companyЦель);
         const goal = await goalsApi.create(company.id, {
-          title: parsedGoal.title,
-          ...(parsedGoal.description
-            ? { description: parsedGoal.description }
+          title: parsedЦель.title,
+          ...(parsedЦель.description
+            ? { description: parsedЦель.description }
             : {}),
           level: "company",
           status: "active"
         });
-        setCreatedCompanyGoalId(goal.id);
+        setСозданоКомпанияЦельId(goal.id);
         queryClient.invalidateQueries({
-          queryKey: queryKeys.goals.list(company.id)
+          queryКлюч: queryКлючs.goals.list(company.id)
         });
       } else {
-        setCreatedCompanyGoalId(null);
+        setСозданоКомпанияЦельId(null);
       }
 
       setStep(2);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create company");
+      setОшибка(err instanceof Ошибка ? err.message : "Ошибка to create company");
     } finally {
-      setLoading(false);
+      setЗагрузка(false);
     }
   }
 
-  async function handleStep2Next() {
-    if (!createdCompanyId) return;
-    setLoading(true);
-    setError(null);
+  async function handleStep2Далее() {
+    if (!createdКомпанияId) return;
+    setЗагрузка(true);
+    setОшибка(null);
     try {
-      if (adapterType === "opencode_local") {
-        if (!isValidOpenCodeModelId(model)) {
-          setError(
+      if (adapterТип === "opencode_local") {
+        if (!isValidOpenCodeМодельId(model)) {
+          setОшибка(
             "OpenCode requires an explicit model in provider/model format."
           );
           return;
         }
       }
 
-      if (isLocalAdapter) {
-        const result = adapterEnvResult ?? (await runAdapterEnvironmentTest());
+      if (isLocalАдаптер) {
+        const result = adapterEnvResult ?? (await runАдаптерОкружениеПроверить());
         if (!result) return;
       }
 
-      const hire = await agentsApi.hire(createdCompanyId, {
-        name: agentName.trim(),
+      const hire = await agentsApi.hire(createdКомпанияId, {
+        name: agentИмя.trim(),
         role: "ceo",
-        adapterType,
-        adapterConfig: buildAdapterConfig(),
-        runtimeConfig: buildNewAgentRuntimeConfig()
+        adapterТип,
+        adapterConfig: buildАдаптерConfig(),
+        runtimeConfig: buildNewАгентЗапуститьtimeConfig()
       });
       if (hire.approval) {
         await approvalsApi.approve(
           hire.approval.id,
-          "Approved during onboarding first-agent setup."
+          "Одобритьd during onboarding first-agent setup."
         );
         queryClient.invalidateQueries({
-          queryKey: queryKeys.approvals.list(createdCompanyId)
+          queryКлюч: queryКлючs.approvals.list(createdКомпанияId)
         });
       }
       const agent = hire.agent;
-      setCreatedAgentId(agent.id);
+      setСозданоАгентId(agent.id);
       queryClient.invalidateQueries({
-        queryKey: queryKeys.agents.list(createdCompanyId)
+        queryКлюч: queryКлючs.agents.list(createdКомпанияId)
       });
       setStep(3);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create agent");
+      setОшибка(err instanceof Ошибка ? err.message : "Ошибка to create agent");
     } finally {
-      setLoading(false);
+      setЗагрузка(false);
     }
   }
 
-  async function handleUnsetAnthropicApiKey() {
-    if (!createdCompanyId || unsetAnthropicLoading) return;
-    setUnsetAnthropicLoading(true);
-    setError(null);
-    setAdapterEnvError(null);
-    setForceUnsetAnthropicApiKey(true);
+  async function handleНе заданAnthropicApiКлюч() {
+    if (!createdКомпанияId || unsetAnthropicЗагрузка) return;
+    setНе заданAnthropicЗагрузка(true);
+    setОшибка(null);
+    setАдаптерEnvОшибка(null);
+    setForceНе заданAnthropicApiКлюч(true);
 
-    const configWithUnset = (() => {
-      const config = buildAdapterConfig();
+    const configWithНе задан = (() => {
+      const config = buildАдаптерConfig();
       const env =
         typeof config.env === "object" &&
         config.env !== null &&
@@ -490,105 +490,105 @@ export function OnboardingWizard() {
     })();
 
     try {
-      if (createdAgentId) {
+      if (createdАгентId) {
         await agentsApi.update(
-          createdAgentId,
-          { adapterConfig: configWithUnset },
-          createdCompanyId
+          createdАгентId,
+          { adapterConfig: configWithНе задан },
+          createdКомпанияId
         );
         queryClient.invalidateQueries({
-          queryKey: queryKeys.agents.list(createdCompanyId)
+          queryКлюч: queryКлючs.agents.list(createdКомпанияId)
         });
       }
 
-      const result = await runAdapterEnvironmentTest(configWithUnset);
+      const result = await runАдаптерОкружениеПроверить(configWithНе задан);
       if (result?.status === "fail") {
-        setError(
+        setОшибка(
           "Retried with ANTHROPIC_API_KEY unset in adapter config, but the environment test is still failing."
         );
       }
     } catch (err) {
-      setError(
-        err instanceof Error
+      setОшибка(
+        err instanceof Ошибка
           ? err.message
-          : "Failed to unset ANTHROPIC_API_KEY and retry."
+          : "Ошибка to unset ANTHROPIC_API_KEY and retry."
       );
     } finally {
-      setUnsetAnthropicLoading(false);
+      setНе заданAnthropicЗагрузка(false);
     }
   }
 
-  async function handleStep3Next() {
-    if (!createdCompanyId || !createdAgentId) return;
-    setError(null);
+  async function handleStep3Далее() {
+    if (!createdКомпанияId || !createdАгентId) return;
+    setОшибка(null);
     setStep(4);
   }
 
   async function handleLaunch() {
-    if (!createdCompanyId || !createdAgentId) return;
-    setLoading(true);
-    setError(null);
+    if (!createdКомпанияId || !createdАгентId) return;
+    setЗагрузка(true);
+    setОшибка(null);
     try {
-      let goalId = createdCompanyGoalId;
+      let goalId = createdКомпанияЦельId;
       if (!goalId) {
-        const goals = await goalsApi.list(createdCompanyId);
-        goalId = selectDefaultCompanyGoalId(goals);
-        setCreatedCompanyGoalId(goalId);
+        const goals = await goalsApi.list(createdКомпанияId);
+        goalId = selectПо умолчаниюКомпанияЦельId(goals);
+        setСозданоКомпанияЦельId(goalId);
       }
 
       let projectId = createdProjectId;
       if (!projectId) {
         const project = await projectsApi.create(
-          createdCompanyId,
+          createdКомпанияId,
           buildOnboardingProjectPayload(goalId)
         );
         projectId = project.id;
-        setCreatedProjectId(projectId);
+        setСозданоProjectId(projectId);
         queryClient.invalidateQueries({
-          queryKey: queryKeys.projects.list(createdCompanyId)
+          queryКлюч: queryКлючs.projects.list(createdКомпанияId)
         });
       }
 
-      let issueRef = createdIssueRef;
+      let issueRef = createdЗадачаRef;
       if (!issueRef) {
         const issue = await issuesApi.create(
-          createdCompanyId,
-          buildOnboardingIssuePayload({
-            title: taskTitle,
-            description: taskDescription,
-            assigneeAgentId: createdAgentId,
+          createdКомпанияId,
+          buildOnboardingЗадачаPayload({
+            title: taskНазвание,
+            description: taskОписание,
+            assigneeАгентId: createdАгентId,
             projectId,
             goalId
           })
         );
         issueRef = issue.identifier ?? issue.id;
-        setCreatedIssueRef(issueRef);
+        setСозданоЗадачаRef(issueRef);
         queryClient.invalidateQueries({
-          queryKey: queryKeys.issues.list(createdCompanyId)
+          queryКлюч: queryКлючs.issues.list(createdКомпанияId)
         });
       }
 
-      setSelectedCompanyId(createdCompanyId);
+      setSelectedКомпанияId(createdКомпанияId);
       reset();
       closeOnboarding();
       navigate(
-        createdCompanyPrefix
-          ? `/${createdCompanyPrefix}/issues/${issueRef}`
+        createdКомпанияPrefix
+          ? `/${createdКомпанияPrefix}/issues/${issueRef}`
           : `/issues/${issueRef}`
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create task");
+      setОшибка(err instanceof Ошибка ? err.message : "Ошибка to create task");
     } finally {
-      setLoading(false);
+      setЗагрузка(false);
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      if (step === 1 && companyName.trim()) handleStep1Next();
-      else if (step === 2 && agentName.trim()) handleStep2Next();
-      else if (step === 3 && taskTitle.trim()) handleStep3Next();
+  function handleКлючDown(e: React.КлючboardEvent) {
+    if (e.key === "Enter" && (e.metaКлюч || e.ctrlКлюч)) {
+      e.preventПо умолчанию();
+      if (step === 1 && companyИмя.trim()) handleStep1Далее();
+      else if (step === 2 && agentИмя.trim()) handleStep2Далее();
+      else if (step === 3 && taskНазвание.trim()) handleStep3Далее();
       else if (step === 4) handleLaunch();
     }
   }
@@ -600,41 +600,41 @@ export function OnboardingWizard() {
       open={effectiveOnboardingOpen}
       onOpenChange={(open) => {
         if (!open) {
-          setRouteDismissed(true);
-          handleClose();
+          setRouteЗакрытьed(true);
+          handleЗакрыть();
         }
       }}
     >
-      <DialogPortal>
+      <DialogПортal>
         {/* Plain div instead of DialogOverlay — Radix's overlay wraps in
-            RemoveScroll which blocks wheel events on our custom (non-DialogContent)
+            УдалитьScroll which blocks wheel events on our custom (non-DialogContent)
             scroll container. A plain div preserves the background without scroll-locking. */}
-        <div className="fixed inset-0 z-50 bg-background" />
-        <div className="fixed inset-0 z-50 flex" onKeyDown={handleKeyDown}>
-          {/* Close button */}
+        <div classИмя="fixed inset-0 z-50 bg-background" />
+        <div classИмя="fixed inset-0 z-50 flex" onКлючDown={handleКлючDown}>
+          {/* Закрыть button */}
           <button
-            onClick={handleClose}
-            className="absolute top-4 left-4 z-10 rounded-sm p-1.5 text-muted-foreground/60 hover:text-foreground transition-colors"
+            onClick={handleЗакрыть}
+            classИмя="absolute top-4 left-4 z-10 rounded-sm p-1.5 text-muted-foreground/60 hover:text-foreground transition-colors"
           >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Close</span>
+            <X classИмя="h-5 w-5" />
+            <span classИмя="sr-only">Закрыть</span>
           </button>
 
           {/* Left half — form */}
           <div
-            className={cn(
+            classИмя={cn(
               "w-full flex flex-col overflow-y-auto transition-[width] duration-500 ease-in-out",
               step === 1 ? "md:w-1/2" : "md:w-full"
             )}
           >
-            <div className="w-full max-w-md mx-auto my-auto px-8 py-12 shrink-0">
+            <div classИмя="w-full max-w-md mx-auto my-auto px-8 py-12 shrink-0">
               {/* Progress tabs */}
-              <div className="flex items-center gap-0 mb-8 border-b border-border">
+              <div classИмя="flex items-center gap-0 mb-8 border-b border-border">
                 {(
                   [
-                    { step: 1 as Step, label: "Company", icon: Building2 },
-                    { step: 2 as Step, label: "Agent", icon: Bot },
-                    { step: 3 as Step, label: "Task", icon: ListTodo },
+                    { step: 1 as Step, label: "Компания", icon: Building2 },
+                    { step: 2 as Step, label: "Агент", icon: Бот },
+                    { step: 3 as Step, label: "Задача", icon: ListTodo },
                     { step: 4 as Step, label: "Launch", icon: Rocket }
                   ] as const
                 ).map(({ step: s, label, icon: Icon }) => (
@@ -642,14 +642,14 @@ export function OnboardingWizard() {
                     key={s}
                     type="button"
                     onClick={() => setStep(s)}
-                    className={cn(
+                    classИмя={cn(
                       "flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 -mb-px transition-colors cursor-pointer",
                       s === step
                         ? "border-foreground text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground/70 hover:border-border"
                     )}
                   >
-                    <Icon className="h-3.5 w-3.5" />
+                    <Icon classИмя="h-3.5 w-3.5" />
                     {label}
                   </button>
                 ))}
@@ -657,42 +657,42 @@ export function OnboardingWizard() {
 
               {/* Step content */}
               {step === 1 && (
-                <div className="space-y-5">
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="bg-muted/50 p-2">
-                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                <div classИмя="space-y-5">
+                  <div classИмя="flex items-center gap-3 mb-1">
+                    <div classИмя="bg-muted/50 p-2">
+                      <Building2 classИмя="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-medium">Name your company</h3>
-                      <p className="text-xs text-muted-foreground">
+                      <h3 classИмя="font-medium">Имя your company</h3>
+                      <p classИмя="text-xs text-muted-foreground">
                         This is the organization your agents will work for.
                       </p>
                     </div>
                   </div>
-                  <div className="mt-3 group">
+                  <div classИмя="mt-3 group">
                     <label
-                      className={cn(
+                      classИмя={cn(
                         "text-xs mb-1 block transition-colors",
-                        companyName.trim()
+                        companyИмя.trim()
                           ? "text-foreground"
                           : "text-muted-foreground group-focus-within:text-foreground"
                       )}
                     >
-                      Company name
+                      Компания name
                     </label>
                     <input
-                      className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
+                      classИмя="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
                       placeholder="Acme Corp"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
+                      value={companyИмя}
+                      onChange={(e) => setКомпанияИмя(e.target.value)}
                       autoFocus
                     />
                   </div>
-                  <div className="group">
+                  <div classИмя="group">
                     <label
-                      className={cn(
+                      classИмя={cn(
                         "text-xs mb-1 block transition-colors",
-                        companyGoal.trim()
+                        companyЦель.trim()
                           ? "text-foreground"
                           : "text-muted-foreground group-focus-within:text-foreground"
                       )}
@@ -700,80 +700,80 @@ export function OnboardingWizard() {
                       Mission / goal (optional)
                     </label>
                     <textarea
-                      className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50 resize-none min-h-[60px]"
+                      classИмя="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50 resize-none min-h-[60px]"
                       placeholder="What is this company trying to achieve?"
-                      value={companyGoal}
-                      onChange={(e) => setCompanyGoal(e.target.value)}
+                      value={companyЦель}
+                      onChange={(e) => setКомпанияЦель(e.target.value)}
                     />
                   </div>
                 </div>
               )}
 
               {step === 2 && (
-                <div className="space-y-5">
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="bg-muted/50 p-2">
-                      <Bot className="h-5 w-5 text-muted-foreground" />
+                <div classИмя="space-y-5">
+                  <div classИмя="flex items-center gap-3 mb-1">
+                    <div classИмя="bg-muted/50 p-2">
+                      <Бот classИмя="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-medium">Create your first agent</h3>
-                      <p className="text-xs text-muted-foreground">
+                      <h3 classИмя="font-medium">Создать your first agent</h3>
+                      <p classИмя="text-xs text-muted-foreground">
                         Choose how this agent will run tasks.
                       </p>
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">
-                      Agent name
+                    <label classИмя="text-xs text-muted-foreground mb-1 block">
+                      Агент name
                     </label>
                     <input
-                      className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
+                      classИмя="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
                       placeholder="CEO"
-                      value={agentName}
-                      onChange={(e) => setAgentName(e.target.value)}
+                      value={agentИмя}
+                      onChange={(e) => setАгентИмя(e.target.value)}
                       autoFocus
                     />
                   </div>
 
-                  {/* Adapter type radio cards */}
+                  {/* Адаптер type radio cards */}
                   <div>
-                    <label className="text-xs text-muted-foreground mb-2 block">
-                      Adapter type
+                    <label classИмя="text-xs text-muted-foreground mb-2 block">
+                      Адаптер type
                     </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {recommendedAdapters.map((opt) => (
+                    <div classИмя="grid grid-cols-2 gap-2">
+                      {recommendedАдаптеры.map((opt) => (
                         <button
                           key={opt.type}
-                          className={cn(
+                          classИмя={cn(
                             "flex flex-col items-center gap-1.5 rounded-md border p-3 text-xs transition-colors relative",
-                            adapterType === opt.type
+                            adapterТип === opt.type
                               ? "border-foreground bg-accent"
                               : "border-border hover:bg-accent/50"
                           )}
                           onClick={() => {
-                            const nextType = opt.type;
-                            setAdapterType(nextType);
-                            if (nextType === "codex_local") {
+                            const nextТип = opt.type;
+                            setАдаптерТип(nextТип);
+                            if (nextТип === "codex_local") {
                               if (!model) {
-                                setModel(DEFAULT_CODEX_LOCAL_MODEL);
+                                setМодель(DEFAULT_CODEX_LOCAL_MODEL);
                               }
                               return;
                             }
-                            if (nextType === "opencode_local") {
-                              setModel(DEFAULT_OPENCODE_LOCAL_MODEL);
+                            if (nextТип === "opencode_local") {
+                              setМодель(DEFAULT_OPENCODE_LOCAL_MODEL);
                               return;
                             }
-                            setModel("");
+                            setМодель("");
                           }}
                         >
                           {opt.recommended && (
-                            <span className="absolute -top-1.5 right-1.5 bg-green-500 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
+                            <span classИмя="absolute -top-1.5 right-1.5 bg-green-500 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
                               Recommended
                             </span>
                           )}
-                          <opt.icon className="h-4 w-4" />
-                          <span className="font-medium">{opt.label}</span>
-                          <span className="text-muted-foreground text-[10px]">
+                          <opt.icon classИмя="h-4 w-4" />
+                          <span classИмя="font-medium">{opt.label}</span>
+                          <span classИмя="text-muted-foreground text-[10px]">
                             {opt.description}
                           </span>
                         </button>
@@ -781,56 +781,56 @@ export function OnboardingWizard() {
                     </div>
 
                     <button
-                      className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      onClick={() => setShowMoreAdapters((v) => !v)}
+                      classИмя="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => setShowMoreАдаптеры((v) => !v)}
                     >
                       <ChevronDown
-                        className={cn(
+                        classИмя={cn(
                           "h-3 w-3 transition-transform",
-                          showMoreAdapters ? "rotate-0" : "-rotate-90"
+                          showMoreАдаптеры ? "rotate-0" : "-rotate-90"
                         )}
                       />
-                      More Agent Adapter Types
+                      More Агент Адаптер Типs
                     </button>
 
-                    {showMoreAdapters && (
-                      <div className="grid grid-cols-2 gap-2 mt-2">
-                        {moreAdapters.map((opt) => (
+                    {showMoreАдаптеры && (
+                      <div classИмя="grid grid-cols-2 gap-2 mt-2">
+                        {moreАдаптеры.map((opt) => (
                            <button
                              key={opt.type}
                              disabled={!!opt.comingSoon}
-                             className={cn(
+                             classИмя={cn(
                                "flex flex-col items-center gap-1.5 rounded-md border p-3 text-xs transition-colors relative",
                                opt.comingSoon
                                  ? "border-border opacity-40 cursor-not-allowed"
-                                 : adapterType === opt.type
+                                 : adapterТип === opt.type
                                  ? "border-foreground bg-accent"
                                  : "border-border hover:bg-accent/50"
                              )}
                              onClick={() => {
                                if (opt.comingSoon) return;
-                               const nextType = opt.type;
-                              setAdapterType(nextType);
-                              if (nextType === "gemini_local" && !model) {
-                                setModel(DEFAULT_GEMINI_LOCAL_MODEL);
+                               const nextТип = opt.type;
+                              setАдаптерТип(nextТип);
+                              if (nextТип === "gemini_local" && !model) {
+                                setМодель(DEFAULT_GEMINI_LOCAL_MODEL);
                                 return;
                               }
-                              if (nextType === "cursor" && !model) {
-                                setModel(DEFAULT_CURSOR_LOCAL_MODEL);
+                              if (nextТип === "cursor" && !model) {
+                                setМодель(DEFAULT_CURSOR_LOCAL_MODEL);
                                 return;
                               }
-                              if (nextType === "opencode_local") {
-                                setModel(DEFAULT_OPENCODE_LOCAL_MODEL);
+                              if (nextТип === "opencode_local") {
+                                setМодель(DEFAULT_OPENCODE_LOCAL_MODEL);
                                 return;
                               }
-                              setModel("");
+                              setМодель("");
                             }}
                           >
-                            <opt.icon className="h-4 w-4" />
-                            <span className="font-medium">{opt.label}</span>
-                            <span className="text-muted-foreground text-[10px]">
+                            <opt.icon classИмя="h-4 w-4" />
+                            <span classИмя="font-medium">{opt.label}</span>
+                            <span classИмя="text-muted-foreground text-[10px]">
                               {opt.comingSoon
-                                ? opt.disabledLabel ?? "Coming soon"
+                                ? opt.disabledLabel ?? "Скоро"
                                 : opt.description}
                             </span>
                           </button>
@@ -840,90 +840,90 @@ export function OnboardingWizard() {
                   </div>
 
                   {/* Conditional adapter fields */}
-                  {isLocalAdapter && (
-                    <div className="space-y-3">
+                  {isLocalАдаптер && (
+                    <div classИмя="space-y-3">
                       <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">
-                          Model
+                        <label classИмя="text-xs text-muted-foreground mb-1 block">
+                          Модель
                         </label>
                         <Popover
                           open={modelOpen}
                           onOpenChange={(next) => {
-                            setModelOpen(next);
-                            if (!next) setModelSearch("");
+                            setМодельOpen(next);
+                            if (!next) setМодельПоиск("");
                           }}
                         >
                           <PopoverTrigger asChild>
-                            <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
+                            <button classИмя="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
                               <span
-                                className={cn(
+                                classИмя={cn(
                                   !model && "text-muted-foreground"
                                 )}
                               >
-                                {selectedModel
-                                  ? selectedModel.label
+                                {selectedМодель
+                                  ? selectedМодель.label
                                   : model ||
-                                    (adapterType === "opencode_local"
+                                    (adapterТип === "opencode_local"
                                       ? "Select model (required)"
-                                      : "Default")}
+                                      : "По умолчанию")}
                               </span>
-                              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                              <ChevronDown classИмя="h-3 w-3 text-muted-foreground" />
                             </button>
                           </PopoverTrigger>
                           <PopoverContent
-                            className="w-[var(--radix-popover-trigger-width)] p-1"
+                            classИмя="w-[var(--radix-popover-trigger-width)] p-1"
                             align="start"
                           >
                             <input
-                              className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
-                              placeholder="Search models..."
-                              value={modelSearch}
-                              onChange={(e) => setModelSearch(e.target.value)}
+                              classИмя="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
+                              placeholder="Поиск models..."
+                              value={modelПоиск}
+                              onChange={(e) => setМодельПоиск(e.target.value)}
                               autoFocus
                             />
-                            {adapterType !== "opencode_local" && (
+                            {adapterТип !== "opencode_local" && (
                               <button
-                                className={cn(
+                                classИмя={cn(
                                   "flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50",
                                   !model && "bg-accent"
                                 )}
                                 onClick={() => {
-                                  setModel("");
-                                  setModelOpen(false);
+                                  setМодель("");
+                                  setМодельOpen(false);
                                 }}
                               >
-                                Default
+                                По умолчанию
                               </button>
                             )}
-                            <div className="max-h-[240px] overflow-y-auto">
-                              {groupedModels.map((group) => (
+                            <div classИмя="max-h-[240px] overflow-y-auto">
+                              {groupedМодельs.map((group) => (
                                 <div
                                   key={group.provider}
-                                  className="mb-1 last:mb-0"
+                                  classИмя="mb-1 last:mb-0"
                                 >
-                                  {adapterType === "opencode_local" && (
-                                    <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                                  {adapterТип === "opencode_local" && (
+                                    <div classИмя="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                                       {group.provider} ({group.entries.length})
                                     </div>
                                   )}
                                   {group.entries.map((m) => (
                                     <button
                                       key={m.id}
-                                      className={cn(
+                                      classИмя={cn(
                                         "flex items-center w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50",
                                         m.id === model && "bg-accent"
                                       )}
                                       onClick={() => {
-                                        setModel(m.id);
-                                        setModelOpen(false);
+                                        setМодель(m.id);
+                                        setМодельOpen(false);
                                       }}
                                     >
                                       <span
-                                        className="block w-full text-left truncate"
+                                        classИмя="block w-full text-left truncate"
                                         title={m.id}
                                       >
-                                        {adapterType === "opencode_local"
-                                          ? extractModelName(m.id)
+                                        {adapterТип === "opencode_local"
+                                          ? extractМодельИмя(m.id)
                                           : m.label}
                                       </span>
                                     </button>
@@ -931,9 +931,9 @@ export function OnboardingWizard() {
                                 </div>
                               ))}
                             </div>
-                            {filteredModels.length === 0 && (
-                              <p className="px-2 py-1.5 text-xs text-muted-foreground">
-                                No models discovered.
+                            {filteredМодельs.length === 0 && (
+                              <p classИмя="px-2 py-1.5 text-xs text-muted-foreground">
+                                Нет models discovered.
                               </p>
                             )}
                           </PopoverContent>
@@ -942,116 +942,116 @@ export function OnboardingWizard() {
                     </div>
                   )}
 
-                  {isLocalAdapter && (
-                    <div className="space-y-2 rounded-md border border-border p-3">
-                      <div className="flex items-center justify-between gap-2">
+                  {isLocalАдаптер && (
+                    <div classИмя="space-y-2 rounded-md border border-border p-3">
+                      <div classИмя="flex items-center justify-between gap-2">
                         <div>
-                          <p className="text-xs font-medium">
-                            Adapter environment check
+                          <p classИмя="text-xs font-medium">
+                            Адаптер environment check
                           </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            Runs a live probe that asks the adapter CLI to
+                          <p classИмя="text-[11px] text-muted-foreground">
+                            Запуститьs a live probe that asks the adapter CLI to
                             respond with hello.
                           </p>
                         </div>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-7 px-2.5 text-xs"
-                          disabled={adapterEnvLoading}
-                          onClick={() => void runAdapterEnvironmentTest()}
+                          classИмя="h-7 px-2.5 text-xs"
+                          disabled={adapterEnvЗагрузка}
+                          onClick={() => void runАдаптерОкружениеПроверить()}
                         >
-                          {adapterEnvLoading ? "Testing..." : "Test now"}
+                          {adapterEnvЗагрузка ? "Проверитьing..." : "Проверить now"}
                         </Button>
                       </div>
 
-                      {adapterEnvError && (
-                        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-[11px] text-destructive">
-                          {adapterEnvError}
+                      {adapterEnvОшибка && (
+                        <div classИмя="rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-[11px] text-destructive">
+                          {adapterEnvОшибка}
                         </div>
                       )}
 
                       {adapterEnvResult &&
                       adapterEnvResult.status === "pass" ? (
-                        <div className="flex items-center gap-2 rounded-md border border-green-300 dark:border-green-500/40 bg-green-50 dark:bg-green-500/10 px-3 py-2 text-xs text-green-700 dark:text-green-300 animate-in fade-in slide-in-from-bottom-1 duration-300">
-                          <Check className="h-3.5 w-3.5 shrink-0" />
-                          <span className="font-medium">Passed</span>
+                        <div classИмя="flex items-center gap-2 rounded-md border border-green-300 dark:border-green-500/40 bg-green-50 dark:bg-green-500/10 px-3 py-2 text-xs text-green-700 dark:text-green-300 animate-in fade-in slide-in-from-bottom-1 duration-300">
+                          <Check classИмя="h-3.5 w-3.5 shrink-0" />
+                          <span classИмя="font-medium">Passed</span>
                         </div>
                       ) : adapterEnvResult ? (
-                        <AdapterEnvironmentResult result={adapterEnvResult} />
+                        <АдаптерОкружениеResult result={adapterEnvResult} />
                       ) : null}
 
-                      {shouldSuggestUnsetAnthropicApiKey && (
-                        <div className="rounded-md border border-amber-300/60 bg-amber-50/40 px-2.5 py-2 space-y-2">
-                          <p className="text-[11px] text-amber-900/90 leading-relaxed">
+                      {shouldSuggestНе заданAnthropicApiКлюч && (
+                        <div classИмя="rounded-md border border-amber-300/60 bg-amber-50/40 px-2.5 py-2 space-y-2">
+                          <p classИмя="text-[11px] text-amber-900/90 leading-relaxed">
                             Claude failed while{" "}
-                            <span className="font-mono">ANTHROPIC_API_KEY</span>{" "}
+                            <span classИмя="font-mono">ANTHROPIC_API_KEY</span>{" "}
                             is set. You can clear it in this CEO adapter config
                             and retry the probe.
                           </p>
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 px-2.5 text-xs"
+                            classИмя="h-7 px-2.5 text-xs"
                             disabled={
-                              adapterEnvLoading || unsetAnthropicLoading
+                              adapterEnvЗагрузка || unsetAnthropicЗагрузка
                             }
-                            onClick={() => void handleUnsetAnthropicApiKey()}
+                            onClick={() => void handleНе заданAnthropicApiКлюч()}
                           >
-                            {unsetAnthropicLoading
-                              ? "Retrying..."
-                              : "Unset ANTHROPIC_API_KEY"}
+                            {unsetAnthropicЗагрузка
+                              ? "Повторитьing..."
+                              : "Не задан ANTHROPIC_API_KEY"}
                           </Button>
                         </div>
                       )}
 
                       {adapterEnvResult && adapterEnvResult.status === "fail" && (
-                        <div className="rounded-md border border-border/70 bg-muted/20 px-2.5 py-2 text-[11px] space-y-1.5">
-                          <p className="font-medium">Manual debug</p>
-                          <p className="text-muted-foreground font-mono break-all">
-                            {adapterType === "cursor"
-                              ? `${effectiveAdapterCommand} -p --mode ask --output-format json \"Respond with hello.\"`
-                              : adapterType === "codex_local"
-                              ? `${effectiveAdapterCommand} exec --json -`
-                              : adapterType === "gemini_local"
-                                ? `${effectiveAdapterCommand} --output-format json "Respond with hello."`
-                              : adapterType === "opencode_local"
-                                ? `${effectiveAdapterCommand} run --format json "Respond with hello."`
-                              : `${effectiveAdapterCommand} --print - --output-format stream-json --verbose`}
+                        <div classИмя="rounded-md border border-border/70 bg-muted/20 px-2.5 py-2 text-[11px] space-y-1.5">
+                          <p classИмя="font-medium">Manual debug</p>
+                          <p classИмя="text-muted-foreground font-mono break-all">
+                            {adapterТип === "cursor"
+                              ? `${effectiveАдаптерКоманда} -p --mode ask --output-format json \"Respond with hello.\"`
+                              : adapterТип === "codex_local"
+                              ? `${effectiveАдаптерКоманда} exec --json -`
+                              : adapterТип === "gemini_local"
+                                ? `${effectiveАдаптерКоманда} --output-format json "Respond with hello."`
+                              : adapterТип === "opencode_local"
+                                ? `${effectiveАдаптерКоманда} run --format json "Respond with hello."`
+                              : `${effectiveАдаптерКоманда} --print - --output-format stream-json --verbose`}
                           </p>
-                          <p className="text-muted-foreground">
+                          <p classИмя="text-muted-foreground">
                             Prompt:{" "}
-                            <span className="font-mono">Respond with hello.</span>
+                            <span classИмя="font-mono">Respond with hello.</span>
                           </p>
-                          {adapterType === "cursor" ||
-                          adapterType === "codex_local" ||
-                          adapterType === "gemini_local" ||
-                          adapterType === "opencode_local" ? (
-                            <p className="text-muted-foreground">
+                          {adapterТип === "cursor" ||
+                          adapterТип === "codex_local" ||
+                          adapterТип === "gemini_local" ||
+                          adapterТип === "opencode_local" ? (
+                            <p classИмя="text-muted-foreground">
                               If auth fails, set{" "}
-                              <span className="font-mono">
-                                {adapterType === "cursor"
+                              <span classИмя="font-mono">
+                                {adapterТип === "cursor"
                                   ? "CURSOR_API_KEY"
-                                  : adapterType === "gemini_local"
+                                  : adapterТип === "gemini_local"
                                     ? "GEMINI_API_KEY"
                                     : "OPENAI_API_KEY"}
                               </span>{" "}
                               in env or run{" "}
-                              <span className="font-mono">
-                                {adapterType === "cursor"
+                              <span classИмя="font-mono">
+                                {adapterТип === "cursor"
                                   ? "agent login"
-                                  : adapterType === "codex_local"
+                                  : adapterТип === "codex_local"
                                     ? "codex login"
-                                    : adapterType === "gemini_local"
+                                    : adapterТип === "gemini_local"
                                       ? "gemini auth"
                                       : "opencode auth login"}
                               </span>
                               .
                             </p>
                           ) : (
-                            <p className="text-muted-foreground">
+                            <p classИмя="text-muted-foreground">
                               If login is required, run{" "}
-                              <span className="font-mono">claude login</span>{" "}
+                              <span classИмя="font-mono">claude login</span>{" "}
                               and retry.
                             </p>
                           )}
@@ -1060,18 +1060,18 @@ export function OnboardingWizard() {
                     </div>
                   )}
 
-                  {(adapterType === "http" ||
-                    adapterType === "openclaw_gateway") && (
+                  {(adapterТип === "http" ||
+                    adapterТип === "openclaw_gateway") && (
                     <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">
-                        {adapterType === "openclaw_gateway"
+                      <label classИмя="text-xs text-muted-foreground mb-1 block">
+                        {adapterТип === "openclaw_gateway"
                           ? "Gateway URL"
                           : "Webhook URL"}
                       </label>
                       <input
-                        className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
+                        classИмя="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
                         placeholder={
-                          adapterType === "openclaw_gateway"
+                          adapterТип === "openclaw_gateway"
                             ? "ws://127.0.0.1:18789"
                             : "https://..."
                         }
@@ -1084,106 +1084,106 @@ export function OnboardingWizard() {
               )}
 
               {step === 3 && (
-                <div className="space-y-5">
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="bg-muted/50 p-2">
-                      <ListTodo className="h-5 w-5 text-muted-foreground" />
+                <div classИмя="space-y-5">
+                  <div classИмя="flex items-center gap-3 mb-1">
+                    <div classИмя="bg-muted/50 p-2">
+                      <ListTodo classИмя="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-medium">Give it something to do</h3>
-                      <p className="text-xs text-muted-foreground">
+                      <h3 classИмя="font-medium">Give it something to do</h3>
+                      <p classИмя="text-xs text-muted-foreground">
                         Give your agent a small task to start with — a bug fix,
                         a research question, writing a script.
                       </p>
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">
-                      Task title
+                    <label classИмя="text-xs text-muted-foreground mb-1 block">
+                      Задача title
                     </label>
                     <input
-                      className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
+                      classИмя="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
                       placeholder="e.g. Research competitor pricing"
-                      value={taskTitle}
-                      onChange={(e) => setTaskTitle(e.target.value)}
+                      value={taskНазвание}
+                      onChange={(e) => setЗадачаНазвание(e.target.value)}
                       autoFocus
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">
-                      Description (optional)
+                    <label classИмя="text-xs text-muted-foreground mb-1 block">
+                      Описание (optional)
                     </label>
                     <textarea
                       ref={textareaRef}
-                      className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50 resize-none min-h-[120px] max-h-[300px] overflow-y-auto"
-                      placeholder="Add more detail about what the agent should do..."
-                      value={taskDescription}
-                      onChange={(e) => setTaskDescription(e.target.value)}
+                      classИмя="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50 resize-none min-h-[120px] max-h-[300px] overflow-y-auto"
+                      placeholder="Добавить more detail about what the agent should do..."
+                      value={taskОписание}
+                      onChange={(e) => setЗадачаОписание(e.target.value)}
                     />
                   </div>
                 </div>
               )}
 
               {step === 4 && (
-                <div className="space-y-5">
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="bg-muted/50 p-2">
-                      <Rocket className="h-5 w-5 text-muted-foreground" />
+                <div classИмя="space-y-5">
+                  <div classИмя="flex items-center gap-3 mb-1">
+                    <div classИмя="bg-muted/50 p-2">
+                      <Rocket classИмя="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-medium">Ready to launch</h3>
-                      <p className="text-xs text-muted-foreground">
+                      <h3 classИмя="font-medium">Готово to launch</h3>
+                      <p classИмя="text-xs text-muted-foreground">
                         Everything is set up. Launching now will create the
                         starter task, wake the agent, and open the issue.
                       </p>
                     </div>
                   </div>
-                  <div className="border border-border divide-y divide-border">
-                    <div className="flex items-center gap-3 px-3 py-2.5">
-                      <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {companyName}
+                  <div classИмя="border border-border divide-y divide-border">
+                    <div classИмя="flex items-center gap-3 px-3 py-2.5">
+                      <Building2 classИмя="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div classИмя="flex-1 min-w-0">
+                        <p classИмя="text-sm font-medium truncate">
+                          {companyИмя}
                         </p>
-                        <p className="text-xs text-muted-foreground">Company</p>
+                        <p classИмя="text-xs text-muted-foreground">Компания</p>
                       </div>
-                      <Check className="h-4 w-4 text-green-500 shrink-0" />
+                      <Check classИмя="h-4 w-4 text-green-500 shrink-0" />
                     </div>
-                    <div className="flex items-center gap-3 px-3 py-2.5">
-                      <Bot className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {agentName}
+                    <div classИмя="flex items-center gap-3 px-3 py-2.5">
+                      <Бот classИмя="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div classИмя="flex-1 min-w-0">
+                        <p classИмя="text-sm font-medium truncate">
+                          {agentИмя}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {getUIAdapter(adapterType).label}
+                        <p classИмя="text-xs text-muted-foreground">
+                          {getUIАдаптер(adapterТип).label}
                         </p>
                       </div>
-                      <Check className="h-4 w-4 text-green-500 shrink-0" />
+                      <Check classИмя="h-4 w-4 text-green-500 shrink-0" />
                     </div>
-                    <div className="flex items-center gap-3 px-3 py-2.5">
-                      <ListTodo className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {taskTitle}
+                    <div classИмя="flex items-center gap-3 px-3 py-2.5">
+                      <ListTodo classИмя="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div classИмя="flex-1 min-w-0">
+                        <p classИмя="text-sm font-medium truncate">
+                          {taskНазвание}
                         </p>
-                        <p className="text-xs text-muted-foreground">Task</p>
+                        <p classИмя="text-xs text-muted-foreground">Задача</p>
                       </div>
-                      <Check className="h-4 w-4 text-green-500 shrink-0" />
+                      <Check classИмя="h-4 w-4 text-green-500 shrink-0" />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Error */}
+              {/* Ошибка */}
               {error && (
-                <div className="mt-3">
-                  <p className="text-xs text-destructive">{error}</p>
+                <div classИмя="mt-3">
+                  <p classИмя="text-xs text-destructive">{error}</p>
                 </div>
               )}
 
               {/* Footer navigation */}
-              <div className="flex items-center justify-between mt-8">
+              <div classИмя="flex items-center justify-between mt-8">
                 <div>
                   {step > 1 && step > (onboardingOptions.initialStep ?? 1) && (
                     <Button
@@ -1192,64 +1192,64 @@ export function OnboardingWizard() {
                       onClick={() => setStep((step - 1) as Step)}
                       disabled={loading}
                     >
-                      <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-                      Back
+                      <ArrowLeft classИмя="h-3.5 w-3.5 mr-1" />
+                      Назад
                     </Button>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div classИмя="flex items-center gap-2">
                   {step === 1 && (
                     <Button
                       size="sm"
-                      disabled={!companyName.trim() || loading}
-                      onClick={handleStep1Next}
+                      disabled={!companyИмя.trim() || loading}
+                      onClick={handleStep1Далее}
                     >
                       {loading ? (
-                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                        <Loader2 classИмя="h-3.5 w-3.5 mr-1 animate-spin" />
                       ) : (
-                        <ArrowRight className="h-3.5 w-3.5 mr-1" />
+                        <ArrowRight classИмя="h-3.5 w-3.5 mr-1" />
                       )}
-                      {loading ? "Creating..." : "Next"}
+                      {loading ? "Creating..." : "Далее"}
                     </Button>
                   )}
                   {step === 2 && (
                     <Button
                       size="sm"
                       disabled={
-                        !agentName.trim() || loading || adapterEnvLoading
+                        !agentИмя.trim() || loading || adapterEnvЗагрузка
                       }
-                      onClick={handleStep2Next}
+                      onClick={handleStep2Далее}
                     >
                       {loading ? (
-                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                        <Loader2 classИмя="h-3.5 w-3.5 mr-1 animate-spin" />
                       ) : (
-                        <ArrowRight className="h-3.5 w-3.5 mr-1" />
+                        <ArrowRight classИмя="h-3.5 w-3.5 mr-1" />
                       )}
-                      {loading ? "Creating..." : "Next"}
+                      {loading ? "Creating..." : "Далее"}
                     </Button>
                   )}
                   {step === 3 && (
                     <Button
                       size="sm"
-                      disabled={!taskTitle.trim() || loading}
-                      onClick={handleStep3Next}
+                      disabled={!taskНазвание.trim() || loading}
+                      onClick={handleStep3Далее}
                     >
                       {loading ? (
-                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                        <Loader2 classИмя="h-3.5 w-3.5 mr-1 animate-spin" />
                       ) : (
-                        <ArrowRight className="h-3.5 w-3.5 mr-1" />
+                        <ArrowRight classИмя="h-3.5 w-3.5 mr-1" />
                       )}
-                      {loading ? "Creating..." : "Next"}
+                      {loading ? "Creating..." : "Далее"}
                     </Button>
                   )}
                   {step === 4 && (
                     <Button size="sm" disabled={loading} onClick={handleLaunch}>
                       {loading ? (
-                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                        <Loader2 classИмя="h-3.5 w-3.5 mr-1 animate-spin" />
                       ) : (
-                        <ArrowRight className="h-3.5 w-3.5 mr-1" />
+                        <ArrowRight classИмя="h-3.5 w-3.5 mr-1" />
                       )}
-                      {loading ? "Creating..." : "Create & Open Issue"}
+                      {loading ? "Creating..." : "Создать & Open Задача"}
                     </Button>
                   )}
                 </div>
@@ -1259,7 +1259,7 @@ export function OnboardingWizard() {
 
           {/* Right half — ASCII art (hidden on mobile) */}
           <div
-            className={cn(
+            classИмя={cn(
               "hidden md:block overflow-hidden bg-[#1d1d1d] transition-[width,opacity] duration-500 ease-in-out",
               step === 1 ? "w-1/2 opacity-100" : "w-0 opacity-0"
             )}
@@ -1267,22 +1267,22 @@ export function OnboardingWizard() {
             <AsciiArtAnimation />
           </div>
         </div>
-      </DialogPortal>
+      </DialogПортal>
     </Dialog>
   );
 }
 
-function AdapterEnvironmentResult({
+function АдаптерОкружениеResult({
   result
 }: {
-  result: AdapterEnvironmentTestResult;
+  result: АдаптерОкружениеПроверитьResult;
 }) {
   const statusLabel =
     result.status === "pass"
       ? "Passed"
       : result.status === "warn"
-      ? "Warnings"
-      : "Failed";
+      ? "Предупреждениеs"
+      : "Ошибка";
   const statusClass =
     result.status === "pass"
       ? "text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/40 bg-green-50 dark:bg-green-500/10"
@@ -1291,31 +1291,31 @@ function AdapterEnvironmentResult({
       : "text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10";
 
   return (
-    <div className={`rounded-md border px-2.5 py-2 text-[11px] ${statusClass}`}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium">{statusLabel}</span>
-        <span className="opacity-80">
+    <div classИмя={`rounded-md border px-2.5 py-2 text-[11px] ${statusClass}`}>
+      <div classИмя="flex items-center justify-between gap-2">
+        <span classИмя="font-medium">{statusLabel}</span>
+        <span classИмя="opacity-80">
           {new Date(result.testedAt).toLocaleTimeString()}
         </span>
       </div>
-      <div className="mt-1.5 space-y-1">
+      <div classИмя="mt-1.5 space-y-1">
         {result.checks.map((check, idx) => (
           <div
             key={`${check.code}-${idx}`}
-            className="leading-relaxed break-words"
+            classИмя="leading-relaxed break-words"
           >
-            <span className="font-medium uppercase tracking-wide opacity-80">
+            <span classИмя="font-medium uppercase tracking-wide opacity-80">
               {check.level}
             </span>
-            <span className="mx-1 opacity-60">·</span>
+            <span classИмя="mx-1 opacity-60">·</span>
             <span>{check.message}</span>
             {check.detail && (
-              <span className="block opacity-75 break-all">
+              <span classИмя="block opacity-75 break-all">
                 ({check.detail})
               </span>
             )}
             {check.hint && (
-              <span className="block opacity-90 break-words">
+              <span classИмя="block opacity-90 break-words">
                 Hint: {check.hint}
               </span>
             )}

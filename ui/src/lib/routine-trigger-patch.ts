@@ -1,15 +1,15 @@
-import type { RoutineTrigger } from "@paperclipai/shared";
+import type { ПроцедураTrigger } from "@paperclipai/shared";
 
-export type RoutineTriggerEditorDraft = {
+export type ПроцедураTriggerИзменитьorЧерновик = {
   label: string;
   cronExpression: string;
   signingMode: string;
   replayWindowSec: string;
 };
 
-export function buildRoutineTriggerPatch(
-  trigger: RoutineTrigger,
-  draft: RoutineTriggerEditorDraft,
+export function buildПроцедураTriggerPatch(
+  trigger: ПроцедураTrigger,
+  draft: ПроцедураTriggerИзменитьorЧерновик,
   fallbackTimezone: string,
 ) {
   const patch: Record<string, unknown> = {

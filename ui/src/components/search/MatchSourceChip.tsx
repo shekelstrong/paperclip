@@ -13,8 +13,8 @@ const chipStyles: Record<MatchSourceChipKind, string> = {
     "bg-[var(--chip-match-document-bg)] text-[var(--chip-match-document-fg)] border-[var(--chip-match-document-border)]",
 };
 
-const chipLabels: Record<MatchSourceChipKind, string> = {
-  title: "Title",
+const chipЯрлыки: Record<MatchSourceChipKind, string> = {
+  title: "Название",
   identifier: "Identifier",
   comment: "Comment",
   document: "Doc",
@@ -24,23 +24,23 @@ export interface MatchSourceChipProps {
   kind: MatchSourceChipKind;
   count?: number;
   label?: string;
-  className?: string;
+  classИмя?: string;
 }
 
-export function MatchSourceChip({ kind, count, label, className }: MatchSourceChipProps) {
-  const text = label ?? chipLabels[kind];
+export function MatchSourceChip({ kind, count, label, classИмя }: MatchSourceChipProps) {
+  const text = label ?? chipЯрлыки[kind];
   const showCount = typeof count === "number" && count > 1;
   return (
     <span
-      className={cn(
+      classИмя={cn(
         "inline-flex items-center gap-1 rounded-full border px-2 py-px text-[11px] font-medium leading-none whitespace-nowrap",
         chipStyles[kind],
-        className,
+        classИмя,
       )}
       data-kind={kind}
     >
       {text}
-      {showCount ? <span className="opacity-80">×{count}</span> : null}
+      {showCount ? <span classИмя="opacity-80">×{count}</span> : null}
     </span>
   );
 }

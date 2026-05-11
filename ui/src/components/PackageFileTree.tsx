@@ -1,23 +1,23 @@
 import { FileTree } from "./FileTree";
 import type { FileTreeProps } from "./FileTree";
 
-export function PackageFileTree({ wrapLabels = false, ...props }: FileTreeProps) {
-  return <FileTree {...props} wrapLabels={wrapLabels} />;
+export function PackageFileTree({ wrapЯрлыки = false, ...props }: FileTreeProps) {
+  return <FileTree {...props} wrapЯрлыки={wrapЯрлыки} />;
 }
 
 export {
   FRONTMATTER_FIELD_LABELS,
   buildFileTree,
-  collectAllPaths,
-  countFiles,
+  collectВсеПутьs,
+  countФайлы,
   parseFrontmatter,
 } from "./FileTree";
 export type {
   FileTreeBadge,
   FileTreeBadgeVariant,
   FileTreeEmptyState,
-  FileTreeErrorState,
-  FileTreeNode,
+  FileTreeОшибкаState,
+  FileTreeНетde,
   FileTreeProps,
   FileTreeTone,
   FrontmatterData,

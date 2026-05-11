@@ -7,8 +7,8 @@ export const PRESET_LABELS: Record<DatePreset, string> = {
   "7d": "Last 7 Days",
   "30d": "Last 30 Days",
   ytd: "Year to Date",
-  all: "All Time",
-  custom: "Custom",
+  all: "Все Time",
+  custom: "Свой",
 };
 
 export const PRESET_KEYS: DatePreset[] = ["mtd", "7d", "30d", "ytd", "all", "custom"];
@@ -54,36 +54,36 @@ export interface UseDateRangeResult {
   preset: DatePreset;
   setPreset: (p: DatePreset) => void;
   customFrom: string;
-  setCustomFrom: (v: string) => void;
+  setСвойFrom: (v: string) => void;
   customTo: string;
-  setCustomTo: (v: string) => void;
+  setСвойTo: (v: string) => void;
   /** resolved iso strings ready to pass to api calls; empty string means unbounded */
   from: string;
   to: string;
   /** false when preset=custom but both dates are not yet selected */
-  customReady: boolean;
+  customГотово: boolean;
 }
 
 export function useDateRange(): UseDateRangeResult {
   const [preset, setPreset] = useState<DatePreset>("mtd");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
+  const [customFrom, setСвойFrom] = useState("");
+  const [customTo, setСвойTo] = useState("");
 
   // tick at the next calendar minute boundary, then every 60s, so sliding presets
   // (7d, 30d) advance their upper bound in sync with wall clock minutes rather than
   // drifting by the mount offset.
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intervalRef = useRef<ReturnТип<typeof setInterval> | null>(null);
   const [minuteTick, setMinuteTick] = useState(() => floorToMinute(new Date()));
   useEffect(() => {
     const now = new Date();
-    const msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+    const msToДалееMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
     const timeout = setTimeout(() => {
       setMinuteTick(floorToMinute(new Date()));
       intervalRef.current = setInterval(
         () => setMinuteTick(floorToMinute(new Date())),
         60_000,
       );
-    }, msToNextMinute);
+    }, msToДалееMinute);
     return () => {
       clearTimeout(timeout);
       if (intervalRef.current != null) clearInterval(intervalRef.current);
@@ -104,17 +104,17 @@ export function useDateRange(): UseDateRangeResult {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preset, customFrom, customTo, minuteTick]);
 
-  const customReady = preset !== "custom" || (!!customFrom && !!customTo);
+  const customГотово = preset !== "custom" || (!!customFrom && !!customTo);
 
   return {
     preset,
     setPreset,
     customFrom,
-    setCustomFrom,
+    setСвойFrom,
     customTo,
-    setCustomTo,
+    setСвойTo,
     from,
     to,
-    customReady,
+    customГотово,
   };
 }

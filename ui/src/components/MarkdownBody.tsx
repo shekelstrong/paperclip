@@ -1,6 +1,6 @@
-import { isValidElement, useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { isValidElement, useCallback, useEffect, useId, useRef, useState, type ReactНетde } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, ExternalLink, Github } from "lucide-react";
+import { Check, Копировать, ExternalLink, Github } from "lucide-react";
 import Markdown, { defaultUrlTransform, type Components, type Options } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "../lib/utils";
@@ -8,24 +8,24 @@ import { Link } from "@/lib/router";
 import { useTheme } from "../context/ThemeContext";
 import { mentionChipInlineStyle, parseMentionChipHref } from "../lib/mention-chips";
 import { issuesApi } from "../api/issues";
-import { queryKeys } from "../lib/queryKeys";
-import { parseIssueReferenceFromHref, remarkLinkIssueReferences } from "../lib/issue-reference";
+import { queryКлючs } from "../lib/queryКлючs";
+import { parseЗадачаReferenceFromHref, remarkLinkЗадачаСсылки } from "../lib/issue-reference";
 import { remarkSoftBreaks } from "../lib/remark-soft-breaks";
-import { StatusIcon } from "./StatusIcon";
+import { СтатусIcon } from "./СтатусIcon";
 
 interface MarkdownBodyProps {
   children: string;
-  className?: string;
+  classИмя?: string;
   style?: React.CSSProperties;
   softBreaks?: boolean;
-  linkIssueReferences?: boolean;
+  linkЗадачаСсылки?: boolean;
   /** Opt into Obsidian-style [[target]] / [[target|label]] wikilinks. */
   enableWikiLinks?: boolean;
   /** Base href used for wikilinks when no resolver is supplied. */
   wikiLinkRoot?: string;
-  /** Optional href resolver for wikilinks. Return null to leave a token as plain text. */
+  /** Опционально href resolver for wikilinks. Return null to leave a token as plain text. */
   resolveWikiLinkHref?: (target: string, label: string) => string | null | undefined;
-  /** Optional resolver for relative image paths (e.g. within export packages) */
+  /** Опционально resolver for relative image paths (e.g. within export packages) */
   resolveImageSrc?: (src: string) => string | null;
   /** Called when a user clicks an inline image */
   onImageClick?: (src: string) => void;
@@ -33,34 +33,34 @@ interface MarkdownBodyProps {
 
 let mermaidLoaderPromise: Promise<typeof import("mermaid").default> | null = null;
 
-function MarkdownIssueLink({
-  issuePathId,
+function MarkdownЗадачаLink({
+  issueПутьId,
   children,
 }: {
-  issuePathId: string;
-  children: ReactNode;
+  issueПутьId: string;
+  children: ReactНетde;
 }) {
   const { data } = useQuery({
-    queryKey: queryKeys.issues.detail(issuePathId),
-    queryFn: () => issuesApi.get(issuePathId),
+    queryКлюч: queryКлючs.issues.detail(issueПутьId),
+    queryFn: () => issuesApi.get(issueПутьId),
     staleTime: 60_000,
   });
 
-  const identifier = data?.identifier ?? issuePathId;
+  const identifier = data?.identifier ?? issueПутьId;
   const title = data?.title ?? identifier;
   const status = data?.status;
-  const issueLabel = title !== identifier ? `Issue ${identifier}: ${title}` : `Issue ${identifier}`;
+  const issueLabel = title !== identifier ? `Задача ${identifier}: ${title}` : `Задача ${identifier}`;
 
   return (
     <Link
       to={`/issues/${identifier}`}
       data-mention-kind="issue"
-      className="paperclip-markdown-issue-ref"
+      classИмя="paperclip-markdown-issue-ref"
       title={title}
       aria-label={issueLabel}
     >
       {status ? (
-        <StatusIcon status={status} className="mr-1 h-3 w-3 align-[-0.125em]" />
+        <СтатусIcon status={status} classИмя="mr-1 h-3 w-3 align-[-0.125em]" />
       ) : null}
       {children}
     </Link>
@@ -110,18 +110,18 @@ function mergeScrollableBlockStyle(style?: React.CSSProperties): React.CSSProper
   };
 }
 
-function flattenText(value: ReactNode): string {
+function flattenText(value: ReactНетde): string {
   if (value == null) return "";
   if (typeof value === "string" || typeof value === "number") return String(value);
   if (Array.isArray(value)) return value.map((item) => flattenText(item)).join("");
   return "";
 }
 
-function extractMermaidSource(children: ReactNode): string | null {
+function extractMermaidSource(children: ReactНетde): string | null {
   if (!isValidElement(children)) return null;
-  const childProps = children.props as { className?: unknown; children?: ReactNode };
-  if (typeof childProps.className !== "string") return null;
-  if (!/\blanguage-mermaid\b/i.test(childProps.className)) return null;
+  const childProps = children.props as { classИмя?: unknown; children?: ReactНетde };
+  if (typeof childProps.classИмя !== "string") return null;
+  if (!/\blanguage-mermaid\b/i.test(childProps.classИмя)) return null;
   return flattenText(childProps.children).replace(/\n$/, "");
 }
 
@@ -129,10 +129,10 @@ function safeMarkdownUrlTransform(url: string): string {
   return parseMentionChipHref(url) ? url : defaultUrlTransform(url);
 }
 
-type MarkdownAstNode = {
+type MarkdownAstНетde = {
   type?: string;
   value?: string;
-  children?: MarkdownAstNode[];
+  children?: MarkdownAstНетde[];
   url?: string;
   title?: string | null;
   data?: {
@@ -155,8 +155,8 @@ const WIKI_LINK_SKIP_PARENT_TYPES = new Set([
 ]);
 
 function parseWikiLinkBody(body: string): ParsedWikiLink | null {
-  const [rawTarget, ...rawLabelParts] = body.split("|");
-  const target = rawTarget?.trim() ?? "";
+  const [rawЦель, ...rawLabelParts] = body.split("|");
+  const target = rawЦель?.trim() ?? "";
   const label = rawLabelParts.length > 0 ? rawLabelParts.join("|").trim() : target;
   if (!target || target.includes("[") || target.includes("]")) return null;
   return {
@@ -165,35 +165,35 @@ function parseWikiLinkBody(body: string): ParsedWikiLink | null {
   };
 }
 
-function encodeWikiLinkTarget(target: string): string | null {
+function encodeWikiLinkЦель(target: string): string | null {
   const trimmed = target.trim();
   if (!trimmed || /^[a-z][a-z\d+.-]*:/i.test(trimmed) || trimmed.startsWith("//")) return null;
 
   const hashIndex = trimmed.indexOf("#");
-  const rawPath = (hashIndex >= 0 ? trimmed.slice(0, hashIndex) : trimmed)
+  const rawПуть = (hashIndex >= 0 ? trimmed.slice(0, hashIndex) : trimmed)
     .trim()
     .replace(/^\/+/, "");
   if (
-    !rawPath ||
-    rawPath.includes("\\") ||
-    rawPath.split("/").some((segment) => !segment || segment === "." || segment === "..")
+    !rawПуть ||
+    rawПуть.includes("\\") ||
+    rawПуть.split("/").some((segment) => !segment || segment === "." || segment === "..")
   ) {
     return null;
   }
 
-  const encodedPath = rawPath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+  const encodedПуть = rawПуть.split("/").map((segment) => encodeURIComponent(segment)).join("/");
   const rawHash = hashIndex >= 0 ? trimmed.slice(hashIndex + 1).trim() : "";
-  return rawHash ? `${encodedPath}#${encodeURIComponent(rawHash)}` : encodedPath;
+  return rawHash ? `${encodedПуть}#${encodeURIComponent(rawHash)}` : encodedПуть;
 }
 
 function defaultWikiLinkHref(target: string, wikiLinkRoot?: string): string | null {
-  const encodedTarget = encodeWikiLinkTarget(target);
-  if (!encodedTarget) return null;
+  const encodedЦель = encodeWikiLinkЦель(target);
+  if (!encodedЦель) return null;
   const root = wikiLinkRoot?.trim().replace(/\/+$/, "") ?? "";
-  return root ? `${root}/${encodedTarget}` : encodedTarget;
+  return root ? `${root}/${encodedЦель}` : encodedЦель;
 }
 
-function createWikiLinkNode(href: string, wikiLink: ParsedWikiLink): MarkdownAstNode {
+function createWikiLinkНетde(href: string, wikiLink: ParsedWikiLink): MarkdownAstНетde {
   return {
     type: "link",
     url: href,
@@ -214,11 +214,11 @@ function splitTextByWikiLinks(
     wikiLinkRoot?: string;
     resolveWikiLinkHref?: (target: string, label: string) => string | null | undefined;
   },
-): MarkdownAstNode[] {
-  const nodes: MarkdownAstNode[] = [];
+): MarkdownAstНетde[] {
+  const nodes: MarkdownAstНетde[] = [];
   let lastIndex = 0;
 
-  for (const match of value.matchAll(WIKI_LINK_PATTERN)) {
+  for (const match of value.matchВсе(WIKI_LINK_PATTERN)) {
     const raw = match[0] ?? "";
     const body = match[1] ?? "";
     const start = match.index ?? 0;
@@ -240,7 +240,7 @@ function splitTextByWikiLinks(
     }
 
     if (wikiLink && resolvedHref) {
-      nodes.push(createWikiLinkNode(resolvedHref, wikiLink));
+      nodes.push(createWikiLinkНетde(resolvedHref, wikiLink));
     } else {
       nodes.push({ type: "text", value: raw });
     }
@@ -255,7 +255,7 @@ function splitTextByWikiLinks(
 }
 
 function transformWikiLinkChildren(
-  node: MarkdownAstNode,
+  node: MarkdownAstНетde,
   options: {
     wikiLinkRoot?: string;
     resolveWikiLinkHref?: (target: string, label: string) => string | null | undefined;
@@ -277,7 +277,7 @@ function createRemarkWikiLinks(options: {
   resolveWikiLinkHref?: (target: string, label: string) => string | null | undefined;
 }) {
   return function remarkWikiLinks() {
-    return (tree: MarkdownAstNode) => {
+    return (tree: MarkdownAstНетde) => {
       transformWikiLinkChildren(tree, options);
     };
   };
@@ -306,10 +306,10 @@ function isExternalHttpUrl(href: string | null | undefined): boolean {
 }
 
 function renderLinkBody(
-  children: ReactNode,
-  leadingIcon: ReactNode,
-  trailingIcon: ReactNode,
-): ReactNode {
+  children: ReactНетde,
+  leadingIcon: ReactНетde,
+  trailingIcon: ReactНетde,
+): ReactНетde {
   if (!leadingIcon && !trailingIcon) return children;
 
   // React-markdown can pass arrays/elements for styled link text; the nowrap
@@ -359,17 +359,17 @@ function CodeBlock({
   children,
   preProps,
 }: {
-  children: ReactNode;
+  children: ReactНетde;
   preProps: React.HTMLAttributes<HTMLPreElement>;
 }) {
   const [copied, setCopied] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setОшибка] = useState(false);
   const preRef = useRef<HTMLPreElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const timerRef = useRef<ReturnТип<typeof setTimeout>>(undefined);
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
-  const handleCopy = useCallback(async () => {
+  const handleКопировать = useCallback(async () => {
     const text = preRef.current?.innerText ?? flattenText(children);
     try {
       if (navigator.clipboard && window.isSecureContext) {
@@ -382,29 +382,29 @@ function CodeBlock({
         document.body.appendChild(textarea);
         try {
           textarea.select();
-          const success = document.execCommand("copy");
-          if (!success) throw new Error("execCommand copy failed");
+          const success = document.execКоманда("copy");
+          if (!success) throw new Ошибка("execКоманда copy failed");
         } finally {
           document.body.removeChild(textarea);
         }
       }
-      setFailed(false);
+      setОшибка(false);
       setCopied(true);
     } catch {
-      setFailed(true);
+      setОшибка(true);
       setCopied(true);
     }
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setCopied(false);
-      setFailed(false);
+      setОшибка(false);
     }, 1500);
   }, [children]);
 
-  const label = failed ? "Copy failed" : copied ? "Copied!" : "Copy";
+  const label = failed ? "Копировать failed" : copied ? "Copied!" : "Копировать";
 
   return (
-    <div className="paperclip-markdown-codeblock">
+    <div classИмя="paperclip-markdown-codeblock">
       <pre
         {...preProps}
         ref={preRef}
@@ -414,19 +414,19 @@ function CodeBlock({
       </pre>
       <button
         type="button"
-        onClick={handleCopy}
-        aria-label="Copy code"
+        onClick={handleКопировать}
+        aria-label="Копировать code"
         title={label}
-        className="paperclip-markdown-codeblock-copy"
+        classИмя="paperclip-markdown-codeblock-copy"
         data-copied={copied || undefined}
         data-failed={failed || undefined}
       >
         {copied && !failed ? (
-          <Check aria-hidden="true" className="h-3.5 w-3.5" />
+          <Check aria-hidden="true" classИмя="h-3.5 w-3.5" />
         ) : (
-          <Copy aria-hidden="true" className="h-3.5 w-3.5" />
+          <Копировать aria-hidden="true" classИмя="h-3.5 w-3.5" />
         )}
-        <span className="paperclip-markdown-codeblock-copy-label">{label}</span>
+        <span classИмя="paperclip-markdown-codeblock-copy-label">{label}</span>
       </button>
     </div>
   );
@@ -435,12 +435,12 @@ function CodeBlock({
 function MermaidDiagramBlock({ source, darkMode }: { source: string; darkMode: boolean }) {
   const renderId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const [svg, setSvg] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setОшибка] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     setSvg(null);
-    setError(null);
+    setОшибка(null);
 
     loadMermaid()
       .then(async (mermaid) => {
@@ -449,7 +449,7 @@ function MermaidDiagramBlock({ source, darkMode }: { source: string; darkMode: b
           securityLevel: "strict",
           theme: darkMode ? "dark" : "default",
           fontFamily: "inherit",
-          suppressErrorRendering: true,
+          suppressОшибкаRendering: true,
         });
         const rendered = await mermaid.render(`paperclip-mermaid-${renderId}`, source);
         if (!active) return;
@@ -458,10 +458,10 @@ function MermaidDiagramBlock({ source, darkMode }: { source: string; darkMode: b
       .catch((err) => {
         if (!active) return;
         const message =
-          err instanceof Error && err.message
+          err instanceof Ошибка && err.message
             ? err.message
-            : "Failed to render Mermaid diagram.";
-        setError(message);
+            : "Ошибка to render Mermaid diagram.";
+        setОшибка(message);
       });
 
     return () => {
@@ -470,16 +470,16 @@ function MermaidDiagramBlock({ source, darkMode }: { source: string; darkMode: b
   }, [darkMode, renderId, source]);
 
   return (
-    <div className="paperclip-mermaid">
+    <div classИмя="paperclip-mermaid">
       {svg ? (
         <div dangerouslySetInnerHTML={{ __html: svg }} />
       ) : (
         <>
-          <p className={cn("paperclip-mermaid-status", error && "paperclip-mermaid-status-error")}>
+          <p classИмя={cn("paperclip-mermaid-status", error && "paperclip-mermaid-status-error")}>
             {error ? `Unable to render Mermaid diagram: ${error}` : "Rendering Mermaid diagram..."}
           </p>
-          <pre className="paperclip-mermaid-source">
-            <code className="language-mermaid">{source}</code>
+          <pre classИмя="paperclip-mermaid-source">
+            <code classИмя="language-mermaid">{source}</code>
           </pre>
         </>
       )}
@@ -489,10 +489,10 @@ function MermaidDiagramBlock({ source, darkMode }: { source: string; darkMode: b
 
 export function MarkdownBody({
   children,
-  className,
+  classИмя,
   style,
   softBreaks = true,
-  linkIssueReferences = true,
+  linkЗадачаСсылки = true,
   enableWikiLinks = false,
   wikiLinkRoot,
   resolveWikiLinkHref,
@@ -500,12 +500,12 @@ export function MarkdownBody({
   onImageClick,
 }: MarkdownBodyProps) {
   const { theme } = useTheme();
-  const remarkPlugins: NonNullable<Options["remarkPlugins"]> = [remarkGfm];
+  const remarkPlugins: НетnNullable<Options["remarkPlugins"]> = [remarkGfm];
   if (enableWikiLinks) {
     remarkPlugins.push(createRemarkWikiLinks({ wikiLinkRoot, resolveWikiLinkHref }));
   }
-  if (linkIssueReferences) {
-    remarkPlugins.push(remarkLinkIssueReferences);
+  if (linkЗадачаСсылки) {
+    remarkPlugins.push(remarkLinkЗадачаСсылки);
   }
   if (softBreaks) {
     remarkPlugins.push(remarkSoftBreaks);
@@ -527,7 +527,7 @@ export function MarkdownBody({
       </blockquote>
     ),
     table: ({ node: _node, style: tableStyle, children: tableChildren, ...tableProps }) => (
-      <div className="paperclip-markdown-table-scroll" role="region" aria-label="Scrollable table" tabIndex={0}>
+      <div classИмя="paperclip-markdown-table-scroll" role="region" aria-label="Scrollable table" tabIndex={0}>
         <table {...tableProps} style={tableStyle as React.CSSProperties | undefined}>
           {tableChildren}
         </table>
@@ -571,12 +571,12 @@ export function MarkdownBody({
         );
       }
 
-      const issueRef = linkIssueReferences ? parseIssueReferenceFromHref(href) : null;
+      const issueRef = linkЗадачаСсылки ? parseЗадачаReferenceFromHref(href) : null;
       if (issueRef) {
         return (
-          <MarkdownIssueLink issuePathId={issueRef.issuePathId}>
+          <MarkdownЗадачаLink issueПутьId={issueRef.issueПутьId}>
             {linkChildren}
-          </MarkdownIssueLink>
+          </MarkdownЗадачаLink>
         );
       }
 
@@ -594,7 +594,7 @@ export function MarkdownBody({
         return (
           <a
             href={targetHref}
-            className={cn(
+            classИмя={cn(
               "paperclip-mention-chip",
               `paperclip-mention-chip--${parsed.kind}`,
               parsed.kind === "project" && "paperclip-project-mention-chip",
@@ -609,10 +609,10 @@ export function MarkdownBody({
       const isGitHubLink = isGitHubUrl(href);
       const isExternal = isExternalHttpUrl(href);
       const leadingIcon = isGitHubLink ? (
-        <Github aria-hidden="true" className="mr-1 inline h-3.5 w-3.5 align-[-0.125em]" />
+        <Github aria-hidden="true" classИмя="mr-1 inline h-3.5 w-3.5 align-[-0.125em]" />
       ) : null;
       const trailingIcon = isExternal && !isGitHubLink ? (
-        <ExternalLink aria-hidden="true" className="ml-1 inline h-3 w-3 align-[-0.125em]" />
+        <ExternalLink aria-hidden="true" classИмя="ml-1 inline h-3 w-3 align-[-0.125em]" />
       ) : null;
       return (
         <a
@@ -636,7 +636,7 @@ export function MarkdownBody({
           {...imgProps}
           src={finalSrc}
           alt={alt ?? ""}
-          onClick={onImageClick && finalSrc ? (e) => { e.preventDefault(); onImageClick(finalSrc); } : undefined}
+          onClick={onImageClick && finalSrc ? (e) => { e.preventПо умолчанию(); onImageClick(finalSrc); } : undefined}
           style={onImageClick ? { cursor: "pointer", ...(imgProps.style as React.CSSProperties | undefined) } : imgProps.style as React.CSSProperties | undefined}
         />
       );
@@ -645,10 +645,10 @@ export function MarkdownBody({
 
   return (
     <div
-      className={cn(
+      classИмя={cn(
         "paperclip-markdown prose prose-sm min-w-0 max-w-full break-words overflow-hidden",
         theme === "dark" && "prose-invert",
-        className,
+        classИмя,
       )}
       style={mergeWrapStyle(style)}
     >

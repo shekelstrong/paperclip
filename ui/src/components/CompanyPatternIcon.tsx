@@ -8,11 +8,11 @@ const BAYER_4X4 = [
   [15, 7, 13, 5],
 ] as const;
 
-interface CompanyPatternIconProps {
-  companyName: string;
+interface КомпанияPatternIconProps {
+  companyИмя: string;
   logoUrl?: string | null;
   brandColor?: string | null;
-  className?: string;
+  classИмя?: string;
   logoFit?: "cover" | "contain";
 }
 
@@ -90,7 +90,7 @@ function hexToHue(hex: string): number {
   return ((h * 60) + 360) % 360;
 }
 
-function makeCompanyPatternDataUrl(seed: string, brandColor?: string | null, logicalSize = 22, cellSize = 2): string {
+function makeКомпанияPatternDataUrl(seed: string, brandColor?: string | null, logicalSize = 22, cellSize = 2): string {
   if (typeof document === "undefined") return "";
 
   const canvas = document.createElement("canvas");
@@ -152,7 +152,7 @@ function makeCompanyPatternDataUrl(seed: string, brandColor?: string | null, log
 
       const cx = x * cellSize + cellSize / 2;
       const cy = y * cellSize + cellSize / 2;
-      ctx.beginPath();
+      ctx.beginПуть();
       ctx.arc(cx, cy, dotRadius, 0, Math.PI * 2);
       ctx.fill();
     }
@@ -161,37 +161,37 @@ function makeCompanyPatternDataUrl(seed: string, brandColor?: string | null, log
   return canvas.toDataURL("image/png");
 }
 
-export function CompanyPatternIcon({
-  companyName,
+export function КомпанияPatternIcon({
+  companyИмя,
   logoUrl,
   brandColor,
-  className,
+  classИмя,
   logoFit = "cover",
-}: CompanyPatternIconProps) {
-  const initial = companyName.trim().charAt(0).toUpperCase() || "?";
-  const [imageError, setImageError] = useState(false);
-  const logo = !imageError && typeof logoUrl === "string" && logoUrl.trim().length > 0 ? logoUrl : null;
+}: КомпанияPatternIconProps) {
+  const initial = companyИмя.trim().charAt(0).toUpperCase() || "?";
+  const [imageОшибка, setImageОшибка] = useState(false);
+  const logo = !imageОшибка && typeof logoUrl === "string" && logoUrl.trim().length > 0 ? logoUrl : null;
   useEffect(() => {
-    setImageError(false);
+    setImageОшибка(false);
   }, [logoUrl]);
   const patternDataUrl = useMemo(
-    () => makeCompanyPatternDataUrl(companyName.trim().toLowerCase(), brandColor),
-    [companyName, brandColor],
+    () => makeКомпанияPatternDataUrl(companyИмя.trim().toНизкийerCase(), brandColor),
+    [companyИмя, brandColor],
   );
 
   return (
     <div
-      className={cn(
+      classИмя={cn(
         "relative flex items-center justify-center w-11 h-11 text-base font-semibold text-white overflow-hidden",
-        className,
+        classИмя,
       )}
     >
       {logo ? (
         <img
           src={logo}
-          alt={`${companyName} logo`}
-          onError={() => setImageError(true)}
-          className={cn(
+          alt={`${companyИмя} logo`}
+          onОшибка={() => setImageОшибка(true)}
+          classИмя={cn(
             "absolute inset-0 h-full w-full",
             logoFit === "contain" ? "object-contain" : "object-cover",
           )}
@@ -201,14 +201,14 @@ export function CompanyPatternIcon({
           src={patternDataUrl}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full"
+          classИмя="absolute inset-0 h-full w-full"
           style={{ imageRendering: "pixelated" }}
         />
       ) : (
-        <div className="absolute inset-0 bg-muted" />
+        <div classИмя="absolute inset-0 bg-muted" />
       )}
       {!logo && (
-        <span className="relative z-10 drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]">
+        <span classИмя="relative z-10 drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]">
           {initial}
         </span>
       )}

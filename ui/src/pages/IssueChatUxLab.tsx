@@ -1,32 +1,32 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactНетde } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { IssueChatThread } from "../components/IssueChatThread";
+import { Card, CardContent, CardОписание, CardHeader, CardНазвание } from "@/components/ui/card";
+import { ЗадачаChatThread } from "../components/ЗадачаChatThread";
 import {
-  issueChatUxAgentMap,
+  issueChatUxАгентMap,
   issueChatUxFeedbackVotes,
-  issueChatUxLinkedRuns,
-  issueChatUxLiveComments,
+  issueChatUxLinkedЗапуститьs,
+  issueChatUxLiveКомментарии,
   issueChatUxLiveEvents,
-  issueChatUxLiveRuns,
+  issueChatUxLiveЗапуститьs,
   issueChatUxMentions,
   issueChatUxReassignOptions,
-  issueChatUxReviewComments,
+  issueChatUxReviewКомментарии,
   issueChatUxReviewEvents,
-  issueChatUxSubmittingComments,
-  issueChatUxTranscriptsByRunId,
+  issueChatUxОтправитьtingКомментарии,
+  issueChatUxTranscriptsByЗапуститьId,
 } from "../fixtures/issueChatUxFixtures";
 import { cn } from "../lib/utils";
-import { Bot, Brain, FlaskConical, Loader2, MessagesSquare, Route, Sparkles, WandSparkles } from "lucide-react";
+import { Бот, Brain, FlaskConical, Loader2, MessagesSquare, Route, Sparkles, WandSparkles } from "lucide-react";
 
 const noop = async () => {};
 
 const highlights = [
-  "Running assistant replies with streamed text, reasoning, tool cards, and background status notes",
+  "Выполняется assistant replies with streamed text, reasoning, tool cards, and background status notes",
   "Historical issue events and linked runs rendered inline with the chat timeline",
   "Queued user messages, settled assistant comments, and feedback controls",
-  "Submitting (pending) message bubble with Sending... label and reduced opacity",
+  "Отправитьting (pending) message bubble with Отправитьing... label and reduced opacity",
   "Empty and disabled-composer states without relying on live backend data",
 ];
 
@@ -35,31 +35,31 @@ function LabSection({
   eyebrow,
   title,
   description,
-  accentClassName,
+  accentClassИмя,
   children,
 }: {
   id?: string;
   eyebrow: string;
   title: string;
   description: string;
-  accentClassName?: string;
-  children: ReactNode;
+  accentClassИмя?: string;
+  children: ReactНетde;
 }) {
   return (
     <section
       id={id}
-      className={cn(
+      classИмя={cn(
         "rounded-[28px] border border-border/70 bg-background/80 p-4 shadow-[0_24px_60px_rgba(15,23,42,0.08)] sm:p-5",
-        accentClassName,
+        accentClassИмя,
       )}
     >
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+      <div classИмя="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div classИмя="min-w-0">
+          <div classИмя="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             {eyebrow}
           </div>
-          <h2 className="mt-1 text-xl font-semibold tracking-tight">{title}</h2>
-          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{description}</p>
+          <h2 classИмя="mt-1 text-xl font-semibold tracking-tight">{title}</h2>
+          <p classИмя="mt-2 max-w-3xl text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
       {children}
@@ -73,7 +73,7 @@ const DEMO_REASONING_LINES = [
   "Looking at the CSS keyframes for cot-line-slide-up...",
   "We need a paired exit animation so the old line slides out while the new one slides in...",
   "Implementing a two-span ticker: exiting line goes up and out, entering line comes up from below...",
-  "Testing the 280ms cubic-bezier transition timing...",
+  "Проверитьing the 280ms cubic-bezier transition timing...",
 ];
 
 function RotatingReasoningDemo({ intervalMs = 2200 }: { intervalMs?: number }) {
@@ -103,15 +103,15 @@ function RotatingReasoningDemo({ intervalMs = 2200 }: { intervalMs?: number }) {
   }, [currentLine]);
 
   return (
-    <div className="flex gap-2 px-1">
-      <div className="flex flex-col items-center pt-0.5">
-        <Brain className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+    <div classИмя="flex gap-2 px-1">
+      <div classИмя="flex flex-col items-center pt-0.5">
+        <Brain classИмя="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
       </div>
-      <div className="relative h-5 min-w-0 flex-1 overflow-hidden">
+      <div classИмя="relative h-5 min-w-0 flex-1 overflow-hidden">
         {ticker.exiting !== null && (
           <span
             key={`out-${ticker.key}`}
-            className="cot-line-exit absolute inset-x-0 truncate text-[13px] italic leading-5 text-muted-foreground/70"
+            classИмя="cot-line-exit absolute inset-x-0 truncate text-[13px] italic leading-5 text-muted-foreground/70"
             onAnimationEnd={() => setTicker((t) => ({ ...t, exiting: null }))}
           >
             {ticker.exiting}
@@ -119,7 +119,7 @@ function RotatingReasoningDemo({ intervalMs = 2200 }: { intervalMs?: number }) {
         )}
         <span
           key={`in-${ticker.key}`}
-          className={cn(
+          classИмя={cn(
             "absolute inset-x-0 truncate text-[13px] italic leading-5 text-muted-foreground/70",
             ticker.key > 0 && "cot-line-enter",
           )}
@@ -131,61 +131,61 @@ function RotatingReasoningDemo({ intervalMs = 2200 }: { intervalMs?: number }) {
   );
 }
 
-export function IssueChatUxLab() {
+export function ЗадачаChatUxLab() {
   const [showComposer, setShowComposer] = useState(true);
 
   return (
-    <div className="space-y-6">
-      <div className="overflow-hidden rounded-[32px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.10),transparent_28%),linear-gradient(180deg,rgba(245,158,11,0.10),transparent_44%),var(--background)] shadow-[0_30px_80px_rgba(15,23,42,0.10)]">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_320px]">
-          <div className="p-6 sm:p-7">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/[0.08] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-700 dark:text-cyan-300">
-              <FlaskConical className="h-3.5 w-3.5" />
+    <div classИмя="space-y-6">
+      <div classИмя="overflow-hidden rounded-[32px] border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.10),transparent_28%),linear-gradient(180deg,rgba(245,158,11,0.10),transparent_44%),var(--background)] shadow-[0_30px_80px_rgba(15,23,42,0.10)]">
+        <div classИмя="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_320px]">
+          <div classИмя="p-6 sm:p-7">
+            <div classИмя="inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/[0.08] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-700 dark:text-cyan-300">
+              <FlaskConical classИмя="h-3.5 w-3.5" />
               Chat UX Lab
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight">Issue chat review surface</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
+            <h1 classИмя="mt-4 text-3xl font-semibold tracking-tight">Задача chat review surface</h1>
+            <p classИмя="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
               This page exercises the real assistant-ui issue chat with fixture-backed messages. Use it to review
               spacing, chronology, running states, tool rendering, activity rows, queueing, and composer behavior
               without needing a live issue in progress.
             </p>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em]">
+            <div classИмя="mt-5 flex flex-wrap items-center gap-2">
+              <Badge variant="outline" classИмя="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em]">
                 /tests/ux/chat
               </Badge>
-              <Badge variant="outline" className="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em]">
+              <Badge variant="outline" classИмя="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em]">
                 assistant-ui thread
               </Badge>
-              <Badge variant="outline" className="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em]">
+              <Badge variant="outline" classИмя="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em]">
                 fixture-backed live run
               </Badge>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Button variant="outline" size="sm" className="rounded-full" onClick={() => setShowComposer((value) => !value)}>
+            <div classИмя="mt-6 flex flex-wrap items-center gap-3">
+              <Button variant="outline" size="sm" classИмя="rounded-full" onClick={() => setShowComposer((value) => !value)}>
                 {showComposer ? "Hide composer in primary preview" : "Show composer in primary preview"}
               </Button>
               <a
                 href="#live-execution"
-                className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                classИмя="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                <Route className="h-3.5 w-3.5" />
+                <Route classИмя="h-3.5 w-3.5" />
                 Jump to live execution preview
               </a>
             </div>
           </div>
 
-          <aside className="border-t border-border/60 bg-background/70 p-6 lg:border-l lg:border-t-0">
-            <div className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              <WandSparkles className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
+          <aside classИмя="border-t border-border/60 bg-background/70 p-6 lg:border-l lg:border-t-0">
+            <div classИмя="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              <WandSparkles classИмя="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
               Covered states
             </div>
-            <div className="space-y-3">
+            <div classИмя="space-y-3">
               {highlights.map((highlight) => (
                 <div
                   key={highlight}
-                  className="rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm text-muted-foreground"
+                  classИмя="rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm text-muted-foreground"
                 >
                   {highlight}
                 </div>
@@ -199,18 +199,18 @@ export function IssueChatUxLab() {
         id="rotating-text"
         eyebrow="Animation demo"
         title="Rotating reasoning text"
-        description="Isolated ticker that cycles sample reasoning lines on a timer. The outgoing line slides up and fades out while the incoming line slides up from below. Runs in a loop so you can tune timing and easing without needing a live stream."
-        accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.06),transparent_28%),var(--background)]"
+        description="Isolated ticker that cycles sample reasoning lines on a timer. The outgoing line slides up and fades out while the incoming line slides up from below. Запуститьs in a loop so you can tune timing and easing without needing a live stream."
+        accentClassИмя="bg-[linear-gradient(180deg,rgba(168,85,247,0.06),transparent_28%),var(--background)]"
       >
-        <div className="space-y-4">
-          <div className="rounded-xl border border-border/60 bg-accent/10 p-4">
-            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Default interval (2.2s)
+        <div classИмя="space-y-4">
+          <div classИмя="rounded-xl border border-border/60 bg-accent/10 p-4">
+            <div classИмя="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              По умолчанию interval (2.2s)
             </div>
             <RotatingReasoningDemo />
           </div>
-          <div className="rounded-xl border border-border/60 bg-accent/10 p-4">
-            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <div classИмя="rounded-xl border border-border/60 bg-accent/10 p-4">
+            <div classИмя="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               Fast interval (1s) — stress test
             </div>
             <RotatingReasoningDemo intervalMs={1000} />
@@ -220,36 +220,36 @@ export function IssueChatUxLab() {
 
       <LabSection
         id="working-tokens"
-        eyebrow="Status tokens"
-        title="Working / Worked header verb"
-        description='The "Working" token uses the shimmer-text gradient sweep to signal an active run. Once the run completes it becomes the static "Worked" token.'
-        accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.06),transparent_28%),var(--background)]"
+        eyebrow="Статус tokens"
+        title="Работаing / Работаed header verb"
+        description='The "Работаing" token uses the shimmer-text gradient sweep to signal an active run. Once the run completes it becomes the static "Работаed" token.'
+        accentClassИмя="bg-[linear-gradient(180deg,rgba(16,185,129,0.06),transparent_28%),var(--background)]"
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-border/60 bg-accent/10 p-4">
-            <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Active run — shimmer
+        <div classИмя="grid gap-4 sm:grid-cols-2">
+          <div classИмя="rounded-xl border border-border/60 bg-accent/10 p-4">
+            <div classИмя="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Активен run — shimmer
             </div>
-            <div className="flex items-center gap-2.5 rounded-lg px-1 py-2">
-              <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground/80">
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
-                <span className="shimmer-text">Working</span>
+            <div classИмя="flex items-center gap-2.5 rounded-lg px-1 py-2">
+              <span classИмя="inline-flex items-center gap-2 text-sm font-medium text-foreground/80">
+                <Loader2 classИмя="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+                <span classИмя="shimmer-text">Работаing</span>
               </span>
-              <span className="text-xs text-muted-foreground/60">for 12s</span>
+              <span classИмя="text-xs text-muted-foreground/60">for 12s</span>
             </div>
           </div>
-          <div className="rounded-xl border border-border/60 bg-accent/10 p-4">
-            <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Completed run — static
+          <div classИмя="rounded-xl border border-border/60 bg-accent/10 p-4">
+            <div classИмя="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Завершён run — static
             </div>
-            <div className="flex items-center gap-2.5 rounded-lg px-1 py-2">
-              <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground/80">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/70" />
+            <div classИмя="flex items-center gap-2.5 rounded-lg px-1 py-2">
+              <span classИмя="inline-flex items-center gap-2 text-sm font-medium text-foreground/80">
+                <span classИмя="flex h-4 w-4 shrink-0 items-center justify-center">
+                  <span classИмя="h-1.5 w-1.5 rounded-full bg-emerald-500/70" />
                 </span>
-                Worked
+                Работаed
               </span>
-              <span className="text-xs text-muted-foreground/60">for 1 min 24s</span>
+              <span classИмя="text-xs text-muted-foreground/60">for 1 min 24s</span>
             </div>
           </div>
         </div>
@@ -260,120 +260,120 @@ export function IssueChatUxLab() {
         eyebrow="Primary preview"
         title="Live execution thread"
         description="Shows the fully active state: timeline events, historical run marker, a running assistant reply with reasoning and tools, and a queued follow-up from the user."
-        accentClassName="bg-[linear-gradient(180deg,rgba(6,182,212,0.05),transparent_28%),var(--background)]"
+        accentClassИмя="bg-[linear-gradient(180deg,rgba(6,182,212,0.05),transparent_28%),var(--background)]"
       >
-        <IssueChatThread
-          comments={issueChatUxLiveComments}
-          linkedRuns={issueChatUxLinkedRuns.slice(0, 1)}
+        <ЗадачаChatThread
+          comments={issueChatUxLiveКомментарии}
+          linkedЗапуститьs={issueChatUxLinkedЗапуститьs.slice(0, 1)}
           timelineEvents={issueChatUxLiveEvents}
-          liveRuns={issueChatUxLiveRuns}
-          issueStatus="todo"
-          agentMap={issueChatUxAgentMap}
+          liveЗапуститьs={issueChatUxLiveЗапуститьs}
+          issueСтатус="todo"
+          agentMap={issueChatUxАгентMap}
           currentUserId="user-1"
-          onAdd={noop}
+          onДобавить={noop}
           onVote={noop}
-          onCancelRun={noop}
+          onОтменаЗапустить={noop}
           onInterruptQueued={noop}
-          draftKey="issue-chat-ux-lab-primary"
+          draftКлюч="issue-chat-ux-lab-primary"
           enableReassign
           reassignOptions={issueChatUxReassignOptions}
-          currentAssigneeValue="agent:agent-1"
-          suggestedAssigneeValue="agent:agent-2"
+          currentИсполнительЗначение="agent:agent-1"
+          suggestedИсполнительЗначение="agent:agent-2"
           mentions={issueChatUxMentions}
           showComposer={showComposer}
           enableLiveTranscriptPolling={false}
-          transcriptsByRunId={issueChatUxTranscriptsByRunId}
-          hasOutputForRun={(runId) => issueChatUxTranscriptsByRunId.has(runId)}
+          transcriptsByЗапуститьId={issueChatUxTranscriptsByЗапуститьId}
+          hasOutputForЗапустить={(runId) => issueChatUxTranscriptsByЗапуститьId.has(runId)}
         />
       </LabSection>
 
       <LabSection
-        eyebrow="Submitting state"
-        title="Pending message bubble"
-        description='When a user sends a message, the bubble briefly shows a "Sending..." label at reduced opacity until the server confirms receipt. This preview renders that transient state.'
-        accentClassName="bg-[linear-gradient(180deg,rgba(59,130,246,0.06),transparent_28%),var(--background)]"
+        eyebrow="Отправитьting state"
+        title="Ожидание message bubble"
+        description='When a user sends a message, the bubble briefly shows a "Отправитьing..." label at reduced opacity until the server confirms receipt. This preview renders that transient state.'
+        accentClassИмя="bg-[linear-gradient(180deg,rgba(59,130,246,0.06),transparent_28%),var(--background)]"
       >
-        <IssueChatThread
-          comments={issueChatUxSubmittingComments}
-          linkedRuns={[]}
+        <ЗадачаChatThread
+          comments={issueChatUxОтправитьtingКомментарии}
+          linkedЗапуститьs={[]}
           timelineEvents={[]}
-          issueStatus="in_progress"
-          agentMap={issueChatUxAgentMap}
+          issueСтатус="in_progress"
+          agentMap={issueChatUxАгентMap}
           currentUserId="user-1"
-          onAdd={noop}
-          draftKey="issue-chat-ux-lab-submitting"
+          onДобавить={noop}
+          draftКлюч="issue-chat-ux-lab-submitting"
           showComposer={false}
           enableLiveTranscriptPolling={false}
         />
       </LabSection>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div classИмя="grid gap-6 xl:grid-cols-2">
         <LabSection
           eyebrow="Settled review"
           title="Durable comments and feedback"
           description="Shows the post-run state: assistant comment feedback controls, historical run context, and timeline reassignment without any active stream."
-          accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.05),transparent_26%),var(--background)]"
+          accentClassИмя="bg-[linear-gradient(180deg,rgba(168,85,247,0.05),transparent_26%),var(--background)]"
         >
-          <IssueChatThread
-            comments={issueChatUxReviewComments}
-            linkedRuns={issueChatUxLinkedRuns.slice(1)}
+          <ЗадачаChatThread
+            comments={issueChatUxReviewКомментарии}
+            linkedЗапуститьs={issueChatUxLinkedЗапуститьs.slice(1)}
             timelineEvents={issueChatUxReviewEvents}
             feedbackVotes={issueChatUxFeedbackVotes}
             feedbackTermsUrl="/feedback-terms"
-            issueStatus="in_review"
-            agentMap={issueChatUxAgentMap}
+            issueСтатус="in_review"
+            agentMap={issueChatUxАгентMap}
             currentUserId="user-1"
-            onAdd={noop}
+            onДобавить={noop}
             onVote={noop}
-            draftKey="issue-chat-ux-lab-review"
+            draftКлюч="issue-chat-ux-lab-review"
             showComposer={false}
             enableLiveTranscriptPolling={false}
           />
         </LabSection>
 
-        <div className="space-y-6">
+        <div classИмя="space-y-6">
           <LabSection
             eyebrow="Empty thread"
             title="Empty state and disabled composer"
             description="Keeps the message area visible even when there is no thread yet, and replaces the composer with an explicit warning when replies are blocked."
-            accentClassName="bg-[linear-gradient(180deg,rgba(245,158,11,0.08),transparent_26%),var(--background)]"
+            accentClassИмя="bg-[linear-gradient(180deg,rgba(245,158,11,0.08),transparent_26%),var(--background)]"
           >
-            <IssueChatThread
+            <ЗадачаChatThread
               comments={[]}
-              linkedRuns={[]}
+              linkedЗапуститьs={[]}
               timelineEvents={[]}
-              issueStatus="done"
-              agentMap={issueChatUxAgentMap}
+              issueСтатус="done"
+              agentMap={issueChatUxАгентMap}
               currentUserId="user-1"
-              onAdd={noop}
-              composerDisabledReason="This workspace is closed, so new chat replies are disabled until the issue is reopened."
-              draftKey="issue-chat-ux-lab-empty"
+              onДобавить={noop}
+              composerОтключитьdReason="This workspace is closed, so new chat replies are disabled until the issue is reopened."
+              draftКлюч="issue-chat-ux-lab-empty"
               enableLiveTranscriptPolling={false}
             />
           </LabSection>
 
-          <Card className="gap-4 border-border/70 bg-background/85 py-0">
-            <CardHeader className="px-5 pt-5 pb-0">
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                <MessagesSquare className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
+          <Card classИмя="gap-4 border-border/70 bg-background/85 py-0">
+            <CardHeader classИмя="px-5 pt-5 pb-0">
+              <div classИмя="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                <MessagesSquare classИмя="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
                 Review checklist
               </div>
-              <CardTitle className="text-lg">What to evaluate on this page</CardTitle>
-              <CardDescription>
+              <CardНазвание classИмя="text-lg">What to evaluate on this page</CardНазвание>
+              <CardОписание>
                 This route should be the fastest way to inspect the chat system before or after tweaks.
-              </CardDescription>
+              </CardОписание>
             </CardHeader>
-            <CardContent className="space-y-3 px-5 pb-5 pt-0 text-sm text-muted-foreground">
-              <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
-                <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
-                  <Bot className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
+            <CardContent classИмя="space-y-3 px-5 pb-5 pt-0 text-sm text-muted-foreground">
+              <div classИмя="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                <div classИмя="mb-1 flex items-center gap-2 font-medium text-foreground">
+                  <Бот classИмя="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
                   Message hierarchy
                 </div>
                 Check that user, assistant, and system rows scan differently without feeling like separate products.
               </div>
-              <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
-                <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
-                  <Sparkles className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
+              <div classИмя="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                <div classИмя="mb-1 flex items-center gap-2 font-medium text-foreground">
+                  <Sparkles classИмя="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
                   Stream polish
                 </div>
                 Watch the live preview for reasoning density, tool expansion behavior, and queued follow-up readability.

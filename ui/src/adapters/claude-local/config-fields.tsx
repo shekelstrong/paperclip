@@ -1,13 +1,13 @@
-import type { AdapterConfigFieldsProps } from "../types";
+import type { АдаптерConfigFieldsProps } from "../types";
 import {
   Field,
   ToggleField,
-  DraftInput,
-  DraftNumberInput,
+  ЧерновикInput,
+  ЧерновикNumberInput,
   help,
 } from "../../components/agent-config-primitives";
-import { ChoosePathButton } from "../../components/PathInstructionsModal";
-import { LocalWorkspaceRuntimeFields } from "../local-workspace-runtime-fields";
+import { ChooseПутьButton } from "../../components/ПутьInstructionsModal";
+import { LocalРабочая областьЗапуститьtimeFields } from "../local-workspace-runtime-fields";
 
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
@@ -17,8 +17,8 @@ const instructionsFileHint =
 
 export function ClaudeLocalConfigFields({
   mode,
-  isCreate,
-  adapterType,
+  isСоздать,
+  adapterТип,
   values,
   set,
   config,
@@ -26,70 +26,70 @@ export function ClaudeLocalConfigFields({
   mark,
   models,
   hideInstructionsFile,
-}: AdapterConfigFieldsProps) {
+}: АдаптерConfigFieldsProps) {
   return (
     <>
       {!hideInstructionsFile && (
-        <Field label="Agent instructions file" hint={instructionsFileHint}>
-          <div className="flex items-center gap-2">
-            <DraftInput
+        <Field label="Агент instructions file" hint={instructionsFileHint}>
+          <div classИмя="flex items-center gap-2">
+            <ЧерновикInput
               value={
-                isCreate
-                  ? values!.instructionsFilePath ?? ""
+                isСоздать
+                  ? values!.instructionsFileПуть ?? ""
                   : eff(
                       "adapterConfig",
-                      "instructionsFilePath",
-                      String(config.instructionsFilePath ?? ""),
+                      "instructionsFileПуть",
+                      String(config.instructionsFileПуть ?? ""),
                     )
               }
               onCommit={(v) =>
-                isCreate
-                  ? set!({ instructionsFilePath: v })
-                  : mark("adapterConfig", "instructionsFilePath", v || undefined)
+                isСоздать
+                  ? set!({ instructionsFileПуть: v })
+                  : mark("adapterConfig", "instructionsFileПуть", v || undefined)
               }
               immediate
-              className={inputClass}
+              classИмя={inputClass}
               placeholder="/absolute/path/to/AGENTS.md"
             />
-            <ChoosePathButton />
+            <ChooseПутьButton />
           </div>
         </Field>
       )}
-      <LocalWorkspaceRuntimeFields
-        isCreate={isCreate}
+      <LocalРабочая областьЗапуститьtimeFields
+        isСоздать={isСоздать}
         values={values}
         set={set}
         config={config}
         mark={mark}
         eff={eff}
         mode={mode}
-        adapterType={adapterType}
+        adapterТип={adapterТип}
         models={models}
       />
     </>
   );
 }
 
-export function ClaudeLocalAdvancedFields({
-  isCreate,
+export function ClaudeLocalДополнительноFields({
+  isСоздать,
   values,
   set,
   config,
   eff,
   mark,
-}: AdapterConfigFieldsProps) {
+}: АдаптерConfigFieldsProps) {
   return (
     <>
       <ToggleField
-        label="Enable Chrome"
+        label="Включить Chrome"
         hint={help.chrome}
         checked={
-          isCreate
+          isСоздать
             ? values!.chrome
             : eff("adapterConfig", "chrome", config.chrome === true)
         }
         onChange={(v) =>
-          isCreate
+          isСоздать
             ? set!({ chrome: v })
             : mark("adapterConfig", "chrome", v)
         }
@@ -98,7 +98,7 @@ export function ClaudeLocalAdvancedFields({
         label="Skip permissions"
         hint={help.dangerouslySkipPermissions}
         checked={
-          isCreate
+          isСоздать
             ? values!.dangerouslySkipPermissions
             : eff(
                 "adapterConfig",
@@ -107,29 +107,29 @@ export function ClaudeLocalAdvancedFields({
               )
         }
         onChange={(v) =>
-          isCreate
+          isСоздать
             ? set!({ dangerouslySkipPermissions: v })
             : mark("adapterConfig", "dangerouslySkipPermissions", v)
         }
       />
-      <Field label="Max turns per run" hint={help.maxTurnsPerRun}>
-        {isCreate ? (
+      <Field label="Max turns per run" hint={help.maxTurnsPerЗапустить}>
+        {isСоздать ? (
           <input
             type="number"
-            className={inputClass}
-            value={values!.maxTurnsPerRun}
-            onChange={(e) => set!({ maxTurnsPerRun: Number(e.target.value) })}
+            classИмя={inputClass}
+            value={values!.maxTurnsPerЗапустить}
+            onChange={(e) => set!({ maxTurnsPerЗапустить: Number(e.target.value) })}
           />
         ) : (
-          <DraftNumberInput
+          <ЧерновикNumberInput
             value={eff(
               "adapterConfig",
-              "maxTurnsPerRun",
-              Number(config.maxTurnsPerRun ?? 1000),
+              "maxTurnsPerЗапустить",
+              Number(config.maxTurnsPerЗапустить ?? 1000),
             )}
-            onCommit={(v) => mark("adapterConfig", "maxTurnsPerRun", v || 1000)}
+            onCommit={(v) => mark("adapterConfig", "maxTurnsPerЗапустить", v || 1000)}
             immediate
-            className={inputClass}
+            classИмя={inputClass}
           />
         )}
       </Field>

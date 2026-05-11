@@ -4,8 +4,8 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-  DialogDescription,
+  DialogНазвание,
+  DialogОписание,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
@@ -22,8 +22,8 @@ const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
     steps: [
       "Open Finder and navigate to the folder.",
       "Right-click (or Control-click) the folder.",
-      "Hold the Option (⌥) key — \"Copy\" changes to \"Copy as Pathname\".",
-      "Click \"Copy as Pathname\", then paste here.",
+      "Hold the Option (⌥) key — \"Копировать\" changes to \"Копировать as Путьname\".",
+      "Click \"Копировать as Путьname\", then paste here.",
     ],
     tip: "You can also open Terminal, type cd, drag the folder into the terminal window, and press Enter. Then type pwd to see the full path.",
   },
@@ -31,59 +31,59 @@ const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
     steps: [
       "Open File Explorer and navigate to the folder.",
       "Click in the address bar at the top — the full path will appear.",
-      "Copy the path, then paste here.",
+      "Копировать the path, then paste here.",
     ],
-    tip: "Alternatively, hold Shift and right-click the folder, then select \"Copy as path\".",
+    tip: "Alternatively, hold Shift and right-click the folder, then select \"Копировать as path\".",
   },
   linux: {
     steps: [
       "Open a terminal and navigate to the directory with cd.",
-      "Run pwd to print the full path.",
-      "Copy the output and paste here.",
+      "Запустить pwd to print the full path.",
+      "Копировать the output and paste here.",
     ],
     tip: "In most file managers, Ctrl+L reveals the full path in the address bar.",
   },
 };
 
 function detectPlatform(): Platform {
-  const ua = navigator.userAgent.toLowerCase();
+  const ua = navigator.userАгент.toНизкийerCase();
   if (ua.includes("mac")) return "mac";
   if (ua.includes("win")) return "windows";
   return "linux";
 }
 
-interface PathInstructionsModalProps {
+interface ПутьInstructionsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function PathInstructionsModal({
+export function ПутьInstructionsModal({
   open,
   onOpenChange,
-}: PathInstructionsModalProps) {
+}: ПутьInstructionsModalProps) {
   const [platform, setPlatform] = useState<Platform>(detectPlatform);
 
   const current = instructions[platform];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent classИмя="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-base">How to get a full path</DialogTitle>
-          <DialogDescription>
+          <DialogНазвание classИмя="text-base">How to get a full path</DialogНазвание>
+          <DialogОписание>
             Paste the absolute path (e.g.{" "}
-            <code className="text-xs bg-muted px-1 py-0.5 rounded">/Users/you/project</code>
+            <code classИмя="text-xs bg-muted px-1 py-0.5 rounded">/Users/you/project</code>
             ) into the input field.
-          </DialogDescription>
+          </DialogОписание>
         </DialogHeader>
 
         {/* Platform tabs */}
-        <div className="flex gap-1 rounded-md border border-border p-0.5">
+        <div classИмя="flex gap-1 rounded-md border border-border p-0.5">
           {platforms.map((p) => (
             <button
               key={p.id}
               type="button"
-              className={cn(
+              classИмя={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded px-2 py-1 text-xs transition-colors",
                 platform === p.id
                   ? "bg-accent text-foreground"
@@ -91,17 +91,17 @@ export function PathInstructionsModal({
               )}
               onClick={() => setPlatform(p.id)}
             >
-              <p.icon className="h-3.5 w-3.5" />
+              <p.icon classИмя="h-3.5 w-3.5" />
               {p.label}
             </button>
           ))}
         </div>
 
         {/* Steps */}
-        <ol className="space-y-2 text-sm">
+        <ol classИмя="space-y-2 text-sm">
           {current.steps.map((step, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="text-muted-foreground font-mono text-xs mt-0.5 shrink-0">
+            <li key={i} classИмя="flex gap-2">
+              <span classИмя="text-muted-foreground font-mono text-xs mt-0.5 shrink-0">
                 {i + 1}.
               </span>
               <span>{step}</span>
@@ -110,7 +110,7 @@ export function PathInstructionsModal({
         </ol>
 
         {current.tip && (
-          <p className="text-xs text-muted-foreground border-l-2 border-border pl-3">
+          <p classИмя="text-xs text-muted-foreground border-l-2 border-border pl-3">
             {current.tip}
           </p>
         )}
@@ -120,24 +120,24 @@ export function PathInstructionsModal({
 }
 
 /**
- * Small "Choose" button that opens the PathInstructionsModal.
+ * Small "Choose" button that opens the ПутьInstructionsModal.
  * Drop-in replacement for the old showDirectoryPicker buttons.
  */
-export function ChoosePathButton({ className }: { className?: string }) {
+export function ChooseПутьButton({ classИмя }: { classИмя?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         type="button"
-        className={cn(
+        classИмя={cn(
           "inline-flex items-center rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent/50 transition-colors shrink-0",
-          className,
+          classИмя,
         )}
         onClick={() => setOpen(true)}
       >
         Choose
       </button>
-      <PathInstructionsModal open={open} onOpenChange={setOpen} />
+      <ПутьInstructionsModal open={open} onOpenChange={setOpen} />
     </>
   );
 }

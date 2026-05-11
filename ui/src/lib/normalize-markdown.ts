@@ -1,10 +1,10 @@
 /**
- * Normalize pasted markdown by removing common leading whitespace (dedent)
+ * Нетrmalize pasted markdown by removing common leading whitespace (dedent)
  * and normalizing line endings. This fixes formatting issues when pasting
  * content from terminals/consoles that add uniform indentation.
  */
 export function normalizeMarkdown(text: string): string {
-  // Normalize line endings
+  // Нетrmalize line endings
   let result = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
   const lines = result.split("\n");

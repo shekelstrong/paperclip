@@ -16,26 +16,26 @@ function PopoverTrigger({
 }
 
 function PopoverContent({
-  className,
+  classИмя,
   align = "center",
   sideOffset = 4,
-  disablePortal = false,
+  disableПортal = false,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content> & { disablePortal?: boolean }) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> & { disableПортal?: boolean }) {
   const content = (
     <PopoverPrimitive.Content
       data-slot="popover-content"
       align={align}
       sideOffset={sideOffset}
-      className={cn(
+      classИмя={cn(
         "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
-        className
+        classИмя
       )}
       {...props}
     />
   )
-  if (disablePortal) return content
-  return <PopoverPrimitive.Portal>{content}</PopoverPrimitive.Portal>
+  if (disableПортal) return content
+  return <PopoverPrimitive.Портal>{content}</PopoverPrimitive.Портal>
 }
 
 function PopoverAnchor({
@@ -44,34 +44,34 @@ function PopoverAnchor({
   return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
 }
 
-function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
+function PopoverHeader({ classИмя, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="popover-header"
-      className={cn("flex flex-col gap-1 text-sm", className)}
+      classИмя={cn("flex flex-col gap-1 text-sm", classИмя)}
       {...props}
     />
   )
 }
 
-function PopoverTitle({ className, ...props }: React.ComponentProps<"h2">) {
+function PopoverНазвание({ classИмя, ...props }: React.ComponentProps<"h2">) {
   return (
     <div
       data-slot="popover-title"
-      className={cn("font-medium", className)}
+      classИмя={cn("font-medium", classИмя)}
       {...props}
     />
   )
 }
 
-function PopoverDescription({
-  className,
+function PopoverОписание({
+  classИмя,
   ...props
 }: React.ComponentProps<"p">) {
   return (
     <p
       data-slot="popover-description"
-      className={cn("text-muted-foreground", className)}
+      classИмя={cn("text-muted-foreground", classИмя)}
       {...props}
     />
   )
@@ -83,6 +83,6 @@ export {
   PopoverContent,
   PopoverAnchor,
   PopoverHeader,
-  PopoverTitle,
-  PopoverDescription,
+  PopoverНазвание,
+  PopoverОписание,
 }

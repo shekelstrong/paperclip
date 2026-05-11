@@ -1,27 +1,27 @@
-import type { AdapterConfigFieldsProps } from "../types";
+import type { АдаптерConfigFieldsProps } from "../types";
 import {
   Field,
   ToggleField,
-  DraftInput,
+  ЧерновикInput,
   help,
 } from "../../components/agent-config-primitives";
-import { ChoosePathButton } from "../../components/PathInstructionsModal";
-import { LocalWorkspaceRuntimeFields } from "../local-workspace-runtime-fields";
+import { ChooseПутьButton } from "../../components/ПутьInstructionsModal";
+import { LocalРабочая областьЗапуститьtimeFields } from "../local-workspace-runtime-fields";
 import {
   CODEX_LOCAL_FAST_MODE_SUPPORTED_MODELS,
   isCodexLocalFastModeSupported,
-  isCodexLocalManualModel,
+  isCodexLocalManualМодель,
 } from "@paperclipai/adapter-codex-local";
 
 const inputClass =
   "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
 const instructionsFileHint =
-  "Absolute path to a markdown file (e.g. AGENTS.md) that defines this agent's behavior. Injected into the system prompt at runtime. Note: Codex may still auto-apply repo-scoped AGENTS.md files from the workspace.";
+  "Absolute path to a markdown file (e.g. AGENTS.md) that defines this agent's behavior. Injected into the system prompt at runtime. Нетte: Codex may still auto-apply repo-scoped AGENTS.md files from the workspace.";
 
 export function CodexLocalConfigFields({
   mode,
-  isCreate,
-  adapterType,
+  isСоздать,
+  adapterТип,
   values,
   set,
   config,
@@ -29,49 +29,49 @@ export function CodexLocalConfigFields({
   mark,
   models,
   hideInstructionsFile,
-}: AdapterConfigFieldsProps) {
-  const bypassEnabled =
-    config.dangerouslyBypassApprovalsAndSandbox === true || config.dangerouslyBypassSandbox === true;
-  const fastModeEnabled = isCreate
+}: АдаптерConfigFieldsProps) {
+  const bypassВключитьd =
+    config.dangerouslyBypassСогласованияAndSandbox === true || config.dangerouslyBypassSandbox === true;
+  const fastModeВключитьd = isСоздать
     ? Boolean(values!.fastMode)
     : eff("adapterConfig", "fastMode", Boolean(config.fastMode));
-  const currentModel = isCreate
+  const currentМодель = isСоздать
     ? String(values!.model ?? "")
     : eff("adapterConfig", "model", String(config.model ?? ""));
-  const fastModeManualModel = isCodexLocalManualModel(currentModel);
-  const fastModeSupported = isCodexLocalFastModeSupported(currentModel);
-  const supportedModelsLabel = CODEX_LOCAL_FAST_MODE_SUPPORTED_MODELS.join(", ");
-  const fastModeMessage = fastModeManualModel
+  const fastModeManualМодель = isCodexLocalManualМодель(currentМодель);
+  const fastModeSupported = isCodexLocalFastModeSupported(currentМодель);
+  const supportedМодельsLabel = CODEX_LOCAL_FAST_MODE_SUPPORTED_MODELS.join(", ");
+  const fastModeMessage = fastModeManualМодель
     ? "Fast mode will be passed through for this manual model. If Codex rejects it, turn the toggle off."
     : fastModeSupported
       ? "Fast mode consumes credits/tokens much faster than standard Codex runs."
-      : `Fast mode currently only works on ${supportedModelsLabel} or manual model IDs. Paperclip will ignore this toggle until the model is switched.`;
+      : `Fast mode currently only works on ${supportedМодельsLabel} or manual model IDs. Paperclip will ignore this toggle until the model is switched.`;
 
   return (
     <>
       {!hideInstructionsFile && (
-        <Field label="Agent instructions file" hint={instructionsFileHint}>
-          <div className="flex items-center gap-2">
-            <DraftInput
+        <Field label="Агент instructions file" hint={instructionsFileHint}>
+          <div classИмя="flex items-center gap-2">
+            <ЧерновикInput
               value={
-                isCreate
-                  ? values!.instructionsFilePath ?? ""
+                isСоздать
+                  ? values!.instructionsFileПуть ?? ""
                   : eff(
                       "adapterConfig",
-                      "instructionsFilePath",
-                      String(config.instructionsFilePath ?? ""),
+                      "instructionsFileПуть",
+                      String(config.instructionsFileПуть ?? ""),
                     )
               }
               onCommit={(v) =>
-                isCreate
-                  ? set!({ instructionsFilePath: v })
-                  : mark("adapterConfig", "instructionsFilePath", v || undefined)
+                isСоздать
+                  ? set!({ instructionsFileПуть: v })
+                  : mark("adapterConfig", "instructionsFileПуть", v || undefined)
               }
               immediate
-              className={inputClass}
+              classИмя={inputClass}
               placeholder="/absolute/path/to/AGENTS.md"
             />
-            <ChoosePathButton />
+            <ChooseПутьButton />
           </div>
         </Field>
       )}
@@ -79,30 +79,30 @@ export function CodexLocalConfigFields({
         label="Bypass sandbox"
         hint={help.dangerouslyBypassSandbox}
         checked={
-          isCreate
+          isСоздать
             ? values!.dangerouslyBypassSandbox
             : eff(
                 "adapterConfig",
-                "dangerouslyBypassApprovalsAndSandbox",
-                bypassEnabled,
+                "dangerouslyBypassСогласованияAndSandbox",
+                bypassВключитьd,
               )
         }
         onChange={(v) =>
-          isCreate
+          isСоздать
             ? set!({ dangerouslyBypassSandbox: v })
-            : mark("adapterConfig", "dangerouslyBypassApprovalsAndSandbox", v)
+            : mark("adapterConfig", "dangerouslyBypassСогласованияAndSandbox", v)
         }
       />
       <ToggleField
-        label="Enable search"
+        label="Включить search"
         hint={help.search}
         checked={
-          isCreate
+          isСоздать
             ? values!.search
             : eff("adapterConfig", "search", !!config.search)
         }
         onChange={(v) =>
-          isCreate
+          isСоздать
             ? set!({ search: v })
             : mark("adapterConfig", "search", v)
         }
@@ -110,27 +110,27 @@ export function CodexLocalConfigFields({
       <ToggleField
         label="Fast mode"
         hint={help.fastMode}
-        checked={fastModeEnabled}
+        checked={fastModeВключитьd}
         onChange={(v) =>
-          isCreate
+          isСоздать
             ? set!({ fastMode: v })
             : mark("adapterConfig", "fastMode", v)
         }
       />
-      {fastModeEnabled && (
-        <div className="rounded-md border border-amber-300/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+      {fastModeВключитьd && (
+        <div classИмя="rounded-md border border-amber-300/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
           {fastModeMessage}
         </div>
       )}
-      <LocalWorkspaceRuntimeFields
-        isCreate={isCreate}
+      <LocalРабочая областьЗапуститьtimeFields
+        isСоздать={isСоздать}
         values={values}
         set={set}
         config={config}
         mark={mark}
         eff={eff}
         mode={mode}
-        adapterType={adapterType}
+        adapterТип={adapterТип}
         models={models}
       />
     </>

@@ -3,11 +3,11 @@
  *
  * Built-in adapters have entries in `adapterDisplayMap`. External (plugin)
  * adapters get sensible defaults derived from their type string via
- * `getAdapterDisplay()`.
+ * `getАдаптерDisplay()`.
  */
-import type { ComponentType } from "react";
+import type { ComponentТип } from "react";
 import {
-  Bot,
+  Бот,
   Code,
   Gem,
   MousePointer2,
@@ -19,7 +19,7 @@ import { OpenCodeLogoIcon } from "@/components/OpenCodeLogoIcon";
 import { HermesIcon } from "@/components/HermesIcon";
 
 // ---------------------------------------------------------------------------
-// Type suffix parsing
+// Тип suffix parsing
 // ---------------------------------------------------------------------------
 
 const TYPE_SUFFIXES: Record<string, string> = {
@@ -27,7 +27,7 @@ const TYPE_SUFFIXES: Record<string, string> = {
   _gateway: "gateway",
 };
 
-function getTypeSuffix(type: string): string | null {
+function getТипSuffix(type: string): string | null {
   for (const [suffix, mode] of Object.entries(TYPE_SUFFIXES)) {
     if (type.endsWith(suffix)) return mode;
   }
@@ -42,10 +42,10 @@ function withSuffix(label: string, suffix: string | null): string {
 // Display metadata per adapter type
 // ---------------------------------------------------------------------------
 
-export interface AdapterDisplayInfo {
+export interface АдаптерDisplayInfo {
   label: string;
   description: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: ComponentТип<{ classИмя?: string }>;
   recommended?: boolean;
   comingSoon?: boolean;
   disabledLabel?: string;
@@ -53,11 +53,11 @@ export interface AdapterDisplayInfo {
   hideFromVisualSelection?: boolean;
 }
 
-const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
+const adapterDisplayMap: Record<string, АдаптерDisplayInfo> = {
   acpx_local: {
     label: "ACPX",
     description: "Experimental local ACPX multi-agent adapter",
-    icon: Bot,
+    icon: Бот,
     experimental: true,
     hideFromVisualSelection: true,
   },
@@ -84,7 +84,7 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
     icon: OpenCodeLogoIcon,
   },
   hermes_local: {
-    label: "Hermes Agent",
+    label: "Hermes Агент",
     description: "Local Hermes CLI agent",
     icon: HermesIcon,
   },
@@ -106,7 +106,7 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
   openclaw_gateway: {
     label: "OpenClaw Gateway",
     description: "Invoke OpenClaw via gateway protocol",
-    icon: Bot,
+    icon: Бот,
     comingSoon: true,
     disabledLabel: "Configure OpenClaw within the App",
   },
@@ -128,7 +128,7 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
 // Public API
 // ---------------------------------------------------------------------------
 
-function humanizeType(type: string): string {
+function humanizeТип(type: string): string {
   // Strip known type suffixes so "droid_local" → "Droid", not "Droid Local"
   let base = type;
   for (const suffix of Object.keys(TYPE_SUFFIXES)) {
@@ -140,25 +140,25 @@ function humanizeType(type: string): string {
   return base.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function getAdapterLabel(type: string): string {
-  const base = adapterDisplayMap[type]?.label ?? humanizeType(type);
-  return withSuffix(base, getTypeSuffix(type));
+export function getАдаптерLabel(type: string): string {
+  const base = adapterDisplayMap[type]?.label ?? humanizeТип(type);
+  return withSuffix(base, getТипSuffix(type));
 }
 
-export function getAdapterLabels(): Record<string, string> {
+export function getАдаптерЯрлыки(): Record<string, string> {
   const suffixed: Record<string, string> = {};
   for (const [type, info] of Object.entries(adapterDisplayMap)) {
-    suffixed[type] = withSuffix(info.label, getTypeSuffix(type));
+    suffixed[type] = withSuffix(info.label, getТипSuffix(type));
   }
   return suffixed;
 }
 
-export function getAdapterDisplay(type: string): AdapterDisplayInfo {
+export function getАдаптерDisplay(type: string): АдаптерDisplayInfo {
   const known = adapterDisplayMap[type];
   if (known) return known;
 
-  const suffix = getTypeSuffix(type);
-  const label = withSuffix(humanizeType(type), suffix);
+  const suffix = getТипSuffix(type);
+  const label = withSuffix(humanizeТип(type), suffix);
   return {
     label,
     description: suffix ? `External ${suffix} adapter` : "External adapter",
@@ -166,6 +166,6 @@ export function getAdapterDisplay(type: string): AdapterDisplayInfo {
   };
 }
 
-export function isKnownAdapterType(type: string): boolean {
+export function isKnownАдаптерТип(type: string): boolean {
   return type in adapterDisplayMap;
 }

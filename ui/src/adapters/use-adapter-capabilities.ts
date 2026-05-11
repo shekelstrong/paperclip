@@ -1,29 +1,29 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { adaptersApi, type AdapterCapabilities } from "@/api/adapters";
-import { queryKeys } from "@/lib/queryKeys";
+import { adaptersApi, type АдаптерCapabilities } from "@/api/adapters";
+import { queryКлючs } from "@/lib/queryКлючs";
 
-const ALL_FALSE: AdapterCapabilities = {
+const ALL_FALSE: АдаптерCapabilities = {
   supportsInstructionsBundle: false,
-  supportsSkills: false,
-  supportsLocalAgentJwt: false,
-  requiresMaterializedRuntimeSkills: false,
-  supportsModelProfiles: false,
+  supportsНавыки: false,
+  supportsLocalАгентJwt: false,
+  requiresMaterializedЗапуститьtimeНавыки: false,
+  supportsМодельПрофильs: false,
 };
 
 /**
  * Synchronous fallback for known built-in adapter types so capability checks
  * return correct values on first render before the /api/adapters call resolves.
  */
-const KNOWN_DEFAULTS: Record<string, AdapterCapabilities> = {
-  acpx_local: { supportsInstructionsBundle: true, supportsSkills: true, supportsLocalAgentJwt: true, requiresMaterializedRuntimeSkills: false, supportsModelProfiles: false },
-  claude_local: { supportsInstructionsBundle: true, supportsSkills: true, supportsLocalAgentJwt: true, requiresMaterializedRuntimeSkills: false, supportsModelProfiles: true },
-  codex_local: { supportsInstructionsBundle: true, supportsSkills: true, supportsLocalAgentJwt: true, requiresMaterializedRuntimeSkills: false, supportsModelProfiles: true },
-  cursor: { supportsInstructionsBundle: true, supportsSkills: true, supportsLocalAgentJwt: true, requiresMaterializedRuntimeSkills: true, supportsModelProfiles: true },
-  gemini_local: { supportsInstructionsBundle: true, supportsSkills: true, supportsLocalAgentJwt: true, requiresMaterializedRuntimeSkills: true, supportsModelProfiles: true },
-  opencode_local: { supportsInstructionsBundle: true, supportsSkills: true, supportsLocalAgentJwt: true, requiresMaterializedRuntimeSkills: true, supportsModelProfiles: true },
-  pi_local: { supportsInstructionsBundle: true, supportsSkills: true, supportsLocalAgentJwt: true, requiresMaterializedRuntimeSkills: true, supportsModelProfiles: false },
-  hermes_local: { supportsInstructionsBundle: false, supportsSkills: true, supportsLocalAgentJwt: true, requiresMaterializedRuntimeSkills: false, supportsModelProfiles: false },
+const KNOWN_DEFAULTS: Record<string, АдаптерCapabilities> = {
+  acpx_local: { supportsInstructionsBundle: true, supportsНавыки: true, supportsLocalАгентJwt: true, requiresMaterializedЗапуститьtimeНавыки: false, supportsМодельПрофильs: false },
+  claude_local: { supportsInstructionsBundle: true, supportsНавыки: true, supportsLocalАгентJwt: true, requiresMaterializedЗапуститьtimeНавыки: false, supportsМодельПрофильs: true },
+  codex_local: { supportsInstructionsBundle: true, supportsНавыки: true, supportsLocalАгентJwt: true, requiresMaterializedЗапуститьtimeНавыки: false, supportsМодельПрофильs: true },
+  cursor: { supportsInstructionsBundle: true, supportsНавыки: true, supportsLocalАгентJwt: true, requiresMaterializedЗапуститьtimeНавыки: true, supportsМодельПрофильs: true },
+  gemini_local: { supportsInstructionsBundle: true, supportsНавыки: true, supportsLocalАгентJwt: true, requiresMaterializedЗапуститьtimeНавыки: true, supportsМодельПрофильs: true },
+  opencode_local: { supportsInstructionsBundle: true, supportsНавыки: true, supportsLocalАгентJwt: true, requiresMaterializedЗапуститьtimeНавыки: true, supportsМодельПрофильs: true },
+  pi_local: { supportsInstructionsBundle: true, supportsНавыки: true, supportsLocalАгентJwt: true, requiresMaterializedЗапуститьtimeНавыки: true, supportsМодельПрофильs: false },
+  hermes_local: { supportsInstructionsBundle: false, supportsНавыки: true, supportsLocalАгентJwt: true, requiresMaterializedЗапуститьtimeНавыки: false, supportsМодельПрофильs: false },
   openclaw_gateway: ALL_FALSE,
 };
 
@@ -34,15 +34,15 @@ const KNOWN_DEFAULTS: Record<string, AdapterCapabilities> = {
  * via react-query. Before the data loads, known built-in adapter types
  * return correct synchronous defaults to avoid cold-load regressions.
  */
-export function useAdapterCapabilities(): (type: string) => AdapterCapabilities {
+export function useАдаптерCapabilities(): (type: string) => АдаптерCapabilities {
   const { data: adapters } = useQuery({
-    queryKey: queryKeys.adapters.all,
+    queryКлюч: queryКлючs.adapters.all,
     queryFn: () => adaptersApi.list(),
     staleTime: 5 * 60 * 1000,
   });
 
   const capMap = useMemo(() => {
-    const map = new Map<string, AdapterCapabilities>();
+    const map = new Map<string, АдаптерCapabilities>();
     if (adapters) {
       for (const a of adapters) {
         map.set(a.type, a.capabilities);
@@ -51,6 +51,6 @@ export function useAdapterCapabilities(): (type: string) => AdapterCapabilities 
     return map;
   }, [adapters]);
 
-  return (type: string): AdapterCapabilities =>
+  return (type: string): АдаптерCapabilities =>
     capMap.get(type) ?? KNOWN_DEFAULTS[type] ?? ALL_FALSE;
 }
