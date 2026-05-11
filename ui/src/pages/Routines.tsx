@@ -241,7 +241,7 @@ export function Routines() {
   const [routineViewState, setRoutineViewState] = useState<RoutineViewState>(() => getRoutineViewState(routineViewStateKey));
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Процедуры" }]);
+    setBreadcrumbs([{ label: "Routines" }]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
@@ -509,7 +509,7 @@ export function Routines() {
           value={activeTab}
           onValueChange={handleTabChange}
           items={[
-            { value: "routines", label: "Процедуры" },
+            { value: "routines", label: "Routines" },
             { value: "runs", label: "Недавние запуски" },
           ]}
         />
@@ -521,7 +521,7 @@ export function Routines() {
             <div className="flex items-center gap-1">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-xs" title="Сортировка">
+                  <Button variant="ghost" size="sm" className="text-xs" title="Sort">
                     <ArrowUpDown className="h-3.5 w-3.5 sm:h-3 sm:w-3 sm:mr-1" />
                     <span className="hidden sm:inline">Sort</span>
                   </Button>
@@ -532,7 +532,7 @@ export function Routines() {
                       ["updated", "Updated"],
                       ["created", "Created"],
                       ["lastRun", "Last run"],
-                      ["title", "Название"],
+                      ["title", "Title"],
                     ] as const).map(([field, label]) => (
                       <button
                         key={field}
@@ -571,8 +571,8 @@ export function Routines() {
                   <div className="p-2 space-y-0.5">
                     {([
                       ["project", "Project"],
-                      ["assignee", "Агент"],
-                      ["none", "Нет"],
+                      ["assignee", "Agent"],
+                      ["none", "None"],
                     ] as const).map(([value, label]) => (
                       <button
                         key={value}
@@ -684,7 +684,7 @@ export function Routines() {
                     value={draft.assigneeAgentId}
                     options={assigneeOptions}
                     recentOptionIds={recentAssigneeIds}
-                    placeholder="Исполнитель"
+                    placeholder="Assignee"
                     noneLabel="No assignee"
                     searchPlaceholder="Search assignees..."
                     emptyMessage="No assignees found."

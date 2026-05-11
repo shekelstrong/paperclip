@@ -253,7 +253,7 @@ export function SystemNoticeUxLab() {
                   },
                   {
                     kind: "agent",
-                    label: "Владелец",
+                    label: "Owner",
                     name: "CTO",
                     href: "/PAP/agents/cto",
                   },

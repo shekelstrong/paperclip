@@ -250,7 +250,7 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
             }}
             className="rounded px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            {isEditingOrder ? "Done" : "Изменить"}
+            {isEditingOrder ? "Done" : "Edit"}
           </button>
         </div>
         <div className="max-h-96 overflow-y-auto">

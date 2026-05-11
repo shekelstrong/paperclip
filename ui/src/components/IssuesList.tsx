@@ -94,8 +94,8 @@ const issueStatusLabels: Record<IssueStatus, string> = {
   in_progress: "In progress",
   in_review: "In review",
   done: "Done",
-  blocked: "Заблокировано",
-  cancelled: "Отменено",
+  blocked: "Blocked",
+  cancelled: "Cancelled",
 };
 const progressSegmentClasses: Record<IssueStatus, string> = {
   backlog: "bg-muted-foreground/40",
@@ -824,7 +824,7 @@ export function IssuesList({
     if (currentUserId) {
       options.set(`user:${currentUserId}`, {
         id: `user:${currentUserId}`,
-        label: currentUserId === "local-board" ? "Совет" : "Me",
+        label: currentUserId === "local-board" ? "Board" : "Me",
         kind: "user",
         searchText: currentUserId === "local-board" ? "board me human local-board" : `me board human ${currentUserId}`,
       });
@@ -1351,7 +1351,7 @@ export function IssuesList({
           {viewState.viewMode === "list" && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title="Сортировка">
+                <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" title="Sort">
                   <ArrowUpDown className="h-3.5 w-3.5" />
                 </Button>
               </PopoverTrigger>
@@ -1359,9 +1359,9 @@ export function IssuesList({
                 <div className="p-2 space-y-0.5">
                   {([
                     ["workflow", "Workflow"],
-                    ["status", "Статус"],
-                    ["priority", "Приоритет"],
-                    ["title", "Название"],
+                    ["status", "Status"],
+                    ["priority", "Priority"],
+                    ["title", "Title"],
                     ["created", "Created"],
                     ["updated", "Updated"],
                   ] as const).map(([field, label]) => (
@@ -1402,13 +1402,13 @@ export function IssuesList({
               <PopoverContent align="end" className="w-44 p-0">
                 <div className="p-2 space-y-0.5">
                   {([
-                    ["status", "Статус"],
-                    ["priority", "Приоритет"],
-                    ["assignee", "Исполнитель"],
+                    ["status", "Status"],
+                    ["priority", "Priority"],
+                    ["assignee", "Assignee"],
                     ["project", "Project"],
                     ["workspace", "Workspace"],
                     ["parent", "Parent Issue"],
-                    ["none", "Нет"],
+                    ["none", "None"],
                   ] as const).map(([value, label]) => (
                     <button
                       key={value}
@@ -1615,11 +1615,11 @@ export function IssuesList({
                               </span>
                             ) : null}
                             {issueBadge ? (
-                              issueBadge === "Приостановлено" ? (
+                              issueBadge === "Paused" ? (
                                 <span
                                   className={cn("ml-1.5 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium", statusBadge.paused)}
-                                  aria-label="Приостановлено"
-                                  title="Приостановлено"
+                                  aria-label="Paused"
+                                  title="Paused"
                                 >
                                   <CircleSlash2 className="h-3 w-3" />
                                   Paused

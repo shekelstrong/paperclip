@@ -51,7 +51,7 @@ function mapMetadataRow(
       const name = row.name?.trim() || row.agentId.slice(0, 8);
       return {
         kind: "agent",
-        label: metadataRowText(row, "Агент"),
+        label: metadataRowText(row, "Agent"),
         name,
         href: `/agents/${row.agentId}`,
       };

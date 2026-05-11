@@ -354,7 +354,7 @@ export function RoutineRunVariablesDialog({
                 value={selection.assigneeAgentId}
                 options={assigneeOptions}
                 recentOptionIds={recentAssigneeIds}
-                placeholder="Агент"
+                placeholder="Agent"
                 noneLabel="Select an agent"
                 searchPlaceholder="Search agents..."
                 emptyMessage="Агенты не найдены."
@@ -573,7 +573,7 @@ export function RoutineRunVariablesDialog({
             }}
             disabled={isPending || !canSubmit}
           >
-            {isPending ? "Running..." : "Run routine"}
+            {isPending ? "Running..." : "Запустить процедуру"}
           </Button>
         </DialogFooter>
       </DialogContent>

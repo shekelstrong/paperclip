@@ -96,7 +96,7 @@ export function GoalProperties({ goal, onUpdate }: GoalPropertiesProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <PropertyRow label="Статус">
+        <PropertyRow label="Status">
           {onUpdate ? (
             <PickerButton
               current={goal.status}
@@ -124,7 +124,7 @@ export function GoalProperties({ goal, onUpdate }: GoalPropertiesProps) {
           )}
         </PropertyRow>
 
-        <PropertyRow label="Владелец">
+        <PropertyRow label="Owner">
           {ownerAgent ? (
             <Link
               to={agentUrl(ownerAgent)}

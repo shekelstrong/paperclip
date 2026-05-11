@@ -481,7 +481,7 @@ export function IssueProperties({
   };
 
   const projectName = (id: string | null) => {
-    if (!id) return id?.slice(0, 8) ?? "Нет";
+    if (!id) return id?.slice(0, 8) ?? "None";
     const project = orderedProjects.find((p) => p.id === id);
     return project?.name ?? id.slice(0, 8);
   };
@@ -1729,7 +1729,7 @@ export function IssueProperties({
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <PropertyRow label="Статус">
+        <PropertyRow label="Status">
           <StatusIcon
             status={issue.status}
             blockerAttention={issue.blockerAttention}
@@ -1738,7 +1738,7 @@ export function IssueProperties({
           />
         </PropertyRow>
 
-        <PropertyRow label="Приоритет">
+        <PropertyRow label="Priority">
           <PriorityIcon
             priority={issue.priority}
             onChange={(priority) => onUpdate({ priority })}
@@ -1761,7 +1761,7 @@ export function IssueProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Исполнитель"
+          label="Assignee"
           open={assigneeOpen}
           onOpenChange={(open) => { setAssigneeOpen(open); if (!open) setAssigneeSearch(""); }}
           triggerContent={assigneeTrigger}
@@ -1827,7 +1827,7 @@ export function IssueProperties({
 
         <PropertyPicker
           inline={inline}
-          label="Родитель"
+          label="Parent"
           open={parentOpen}
           onOpenChange={(open) => {
             setParentOpen(open);
@@ -2070,7 +2070,7 @@ export function IssueProperties({
           </PropertyRow>
         )}
         {issue.completedAt && (
-          <PropertyRow label="Завершено">
+          <PropertyRow label="Completed">
             <span className="text-sm">{formatDateTime(issue.completedAt)}</span>
           </PropertyRow>
         )}

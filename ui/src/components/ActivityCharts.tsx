@@ -189,8 +189,8 @@ const statusLabels: Record<string, string> = {
   in_progress: "In Progress",
   in_review: "In Review",
   done: "Done",
-  blocked: "Заблокировано",
-  cancelled: "Отменено",
+  blocked: "Blocked",
+  cancelled: "Cancelled",
   backlog: "Backlog",
 };
 

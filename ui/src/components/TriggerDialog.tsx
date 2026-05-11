@@ -145,7 +145,7 @@ export function TriggerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent classИмя="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogНазвание>{isИзменить ? "Изменить trigger" : "Добавить триггер"}</DialogНазвание>
           <DialogОписание>
@@ -153,22 +153,22 @@ export function TriggerDialog({
           </DialogОписание>
         </DialogHeader>
 
-        <div classИмя="space-y-5 pt-1">
-          <div classИмя="space-y-1.5">
-            <Label htmlFor="trigger-label" classИмя="text-xs">Label</Label>
+        <div className="space-y-5 pt-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="trigger-label" className="text-xs">Label</Label>
             <Input
               id="trigger-label"
               placeholder="e.g. Morning digest"
               value={draft.label}
               onChange={(e) => setЧерновик((d) => ({ ...d, label: e.target.value }))}
             />
-            <p classИмя="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Опционально — shown in the trigger list.
             </p>
           </div>
 
-          <div classИмя="space-y-1.5">
-            <Label classИмя="text-xs">Kind</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Kind</Label>
             <Select
               value={draft.kind}
               onЗначениеChange={(kind) => setЧерновик((d) => ({ ...d, kind: kind as TriggerKind }))}
@@ -191,7 +191,7 @@ export function TriggerDialog({
               </SelectContent>
             </Select>
             {isИзменить && (
-              <p classИмя="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Kind can't be changed after creation.
               </p>
             )}
@@ -205,9 +205,9 @@ export function TriggerDialog({
           )}
 
           {showWebhookFields && (
-            <div classИмя="grid gap-3 md:grid-cols-2">
-              <div classИмя="space-y-1.5">
-                <Label classИмя="text-xs">Signing mode</Label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Signing mode</Label>
                 <Select
                   value={draft.signingMode}
                   onЗначениеChange={(signingMode) => setЧерновик((d) => ({ ...d, signingMode }))}
@@ -223,13 +223,13 @@ export function TriggerDialog({
                     ))}
                   </SelectContent>
                 </Select>
-                <p classИмя="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {signingModeОписаниеs[draft.signingMode]}
                 </p>
               </div>
               {!SIGNING_MODES_WITHOUT_REPLAY_WINDOW.has(draft.signingMode) && (
-                <div classИмя="space-y-1.5">
-                  <Label classИмя="text-xs">Replay window (seconds)</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Replay window (seconds)</Label>
                   <Input
                     type="number"
                     min={1}
@@ -245,9 +245,9 @@ export function TriggerDialog({
           )}
         </div>
 
-        <DialogFooter classИмя="mt-6">
+        <DialogFooter className="mt-6">
           {isИзменить && (
-            <label classИмя="flex items-center gap-2 cursor-pointer text-sm mr-auto">
+            <label className="flex items-center gap-2 cursor-pointer text-sm mr-auto">
               <ToggleSwitch
                 checked={draft.enabled}
                 onCheckedChange={(enabled) => setЧерновик((d) => ({ ...d, enabled }))}

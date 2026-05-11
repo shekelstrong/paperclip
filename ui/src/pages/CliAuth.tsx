@@ -137,7 +137,7 @@ export function CliAuthPage() {
           <div>
             <div className="text-muted-foreground">Requested access</div>
             <div className="text-foreground">
-              {challenge.requestedAccess === "instance_admin_required" ? "Instance admin" : "Совет"}
+              {challenge.requestedAccess === "instance_admin_required" ? "Instance admin" : "Board"}
             </div>
           </div>
           {challenge.requestedCompanyName && (
@@ -175,7 +175,7 @@ export function CliAuthPage() {
             onClick={() => cancelMutation.mutate()}
             disabled={approveMutation.isPending || cancelMutation.isPending}
           >
-            {cancelMutation.isPending ? "Cancelling..." : "Отмена"}
+            {cancelMutation.isPending ? "Cancelling..." : "Cancel"}
           </Button>
         </div>
       </div>

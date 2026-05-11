@@ -12,7 +12,7 @@ interface ShortcutSection {
 
 const sections: ShortcutSection[] = [
   {
-    title: "Входящие",
+    title: "Inbox",
     shortcuts: [
       { keys: ["j"], label: "Move down" },
       { keys: ["↓"], label: "Move down" },

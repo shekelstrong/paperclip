@@ -387,7 +387,7 @@ function WorkspaceRoutineRow({
         onClick={() => onRunNow(routine)}
       >
         {isRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-        {isRunning ? "Running..." : "Run now"}
+        {isRunning ? "Running..." : "Запустить сейчас"}
       </Button>
     </div>
   );
@@ -608,9 +608,9 @@ export function ExecutionWorkspaceDetail() {
   useEffect(() => {
     if (!workspace) return;
     const crumbs = [
-      { label: "Проекты", href: "/projects" },
+      { label: "Projects", href: "/projects" },
       ...(project ? [{ label: project.name, href: `/projects/${projectRef}` }] : []),
-      ...(project ? [{ label: "Области", href: `/projects/${projectRef}/workspaces` }] : []),
+      ...(project ? [{ label: "Workspaces", href: `/projects/${projectRef}/workspaces` }] : []),
       { label: workspace.name },
     ];
     setBreadcrumbs(crumbs);
@@ -734,11 +734,11 @@ export function ExecutionWorkspaceDetail() {
         <Tabs value={activeTab ?? "issues"} onValueChange={(value) => handleTabChange(value as ExecutionWorkspaceTab)}>
           <PageTabBar
             items={[
-              { value: "issues", label: "Задачи" },
+              { value: "issues", label: "Issues" },
               { value: "services", label: "Services" },
               { value: "configuration", label: "Configuration" },
               { value: "runtime_logs", label: "Runtime logs" },
-              { value: "routines", label: "Процедуры" },
+              { value: "routines", label: "Routines" },
             ]}
             align="start"
             value={activeTab ?? "issues"}
@@ -1001,7 +1001,7 @@ export function ExecutionWorkspaceDetail() {
                 ) : workspace.projectWorkspaceId ? (
                   <MonoValue value={workspace.projectWorkspaceId} />
                 ) : (
-                  "Нет"
+                  "None"
                 )}
               </DetailRow>
               <DetailRow label="Source issue">
@@ -1012,7 +1012,7 @@ export function ExecutionWorkspaceDetail() {
                 ) : workspace.sourceIssueId ? (
                   <MonoValue value={workspace.sourceIssueId} />
                 ) : (
-                  "Нет"
+                  "None"
                 )}
               </DetailRow>
               <DetailRow label="Derived from">
@@ -1023,7 +1023,7 @@ export function ExecutionWorkspaceDetail() {
                 ) : workspace.derivedFromExecutionWorkspaceId ? (
                   <MonoValue value={workspace.derivedFromExecutionWorkspaceId} />
                 ) : (
-                  "Нет"
+                  "None"
                 )}
               </DetailRow>
               <DetailRow label="Workspace ID">
@@ -1039,10 +1039,10 @@ export function ExecutionWorkspaceDetail() {
               </CardHeader>
               <CardContent>
               <DetailRow label="Working dir">
-                {workspace.cwd ? <MonoValue value={workspace.cwd} copy /> : "Нет"}
+                {workspace.cwd ? <MonoValue value={workspace.cwd} copy /> : "None"}
               </DetailRow>
               <DetailRow label="Provider ref">
-                {workspace.providerRef ? <MonoValue value={workspace.providerRef} copy /> : "Нет"}
+                {workspace.providerRef ? <MonoValue value={workspace.providerRef} copy /> : "None"}
               </DetailRow>
               <DetailRow label="URL репозитория">
                 {workspace.repoUrl && isSafeExternalUrl(workspace.repoUrl) ? (
@@ -1058,14 +1058,14 @@ export function ExecutionWorkspaceDetail() {
                 ) : workspace.repoUrl ? (
                   <MonoValue value={workspace.repoUrl} copy />
                 ) : (
-                  "Нет"
+                  "None"
                 )}
               </DetailRow>
               <DetailRow label="Base ref">
-                {workspace.baseRef ? <MonoValue value={workspace.baseRef} copy /> : "Нет"}
+                {workspace.baseRef ? <MonoValue value={workspace.baseRef} copy /> : "None"}
               </DetailRow>
               <DetailRow label="Branch">
-                {workspace.branchName ? <MonoValue value={workspace.branchName} copy /> : "Нет"}
+                {workspace.branchName ? <MonoValue value={workspace.branchName} copy /> : "None"}
               </DetailRow>
               <DetailRow label="Opened">{formatDateTime(workspace.openedAt)}</DetailRow>
               <DetailRow label="Last used">{formatDateTime(workspace.lastUsedAt)}</DetailRow>

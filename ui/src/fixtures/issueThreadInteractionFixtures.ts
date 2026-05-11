@@ -329,7 +329,7 @@ export const optionalDeclineRequestConfirmationInteraction = createRequestConfir
   payload: {
     version: 1,
     prompt: "Use the smaller implementation path?",
-    acceptLabel: "Подтвердить",
+    acceptLabel: "Confirm",
     rejectLabel: "Decline",
     rejectRequiresReason: false,
     declineReasonPlaceholder: "Optional: tell the agent what you'd change.",

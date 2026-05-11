@@ -214,8 +214,8 @@ export function CompanySettings() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Компания", href: "/dashboard" },
-      { label: "Настройки" }
+      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
+      { label: "Settings" }
     ]);
   }, [setBreadcrumbs, selectedCompany?.name]);
 
@@ -258,7 +258,7 @@ export function CompanySettings() {
             />
           </Field>
           <Field
-            label="Описание"
+            label="Description"
             hint="Optional description shown in the company profile."
           >
             <input

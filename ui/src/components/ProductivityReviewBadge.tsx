@@ -15,7 +15,7 @@ const REVIEW_STATUS_LABELS: Record<string, string> = {
   todo: "Open",
   in_progress: "In progress",
   in_review: "In review",
-  blocked: "Заблокировано",
+  blocked: "Blocked",
   backlog: "Open",
 };
 

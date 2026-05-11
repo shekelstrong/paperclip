@@ -36,7 +36,7 @@ export function ProfileSettings() {
   useEffect(() => {
     setBreadcrumbs([
       { label: "Instance Settings" },
-      { label: "Профиль" },
+      { label: "Profile" },
     ]);
   }, [setBreadcrumbs]);
 
@@ -67,7 +67,7 @@ export function ProfileSettings() {
   }
 
   function resolveProfileName() {
-    return name.trim() || sessionQuery.data?.user.name || "Совет";
+    return name.trim() || sessionQuery.data?.user.name || "Board";
   }
 
   const updateMutation = useMutation({
@@ -129,7 +129,7 @@ export function ProfileSettings() {
     );
   }
 
-  const currentName = name.trim() || sessionQuery.data.user.name || "Совет";
+  const currentName = name.trim() || sessionQuery.data.user.name || "Board";
   const currentImage = image.trim() || null;
   const initials = deriveInitials(currentName);
   const isSavingProfile = updateMutation.isPending || uploadAvatarMutation.isPending || removeAvatarMutation.isPending;
@@ -240,7 +240,7 @@ export function ProfileSettings() {
               value={name}
               onChange={(event) => setName(event.target.value)}
               maxLength={120}
-              placeholder="Совет"
+              placeholder="Board"
             />
             <p className="text-xs text-muted-foreground">
               Shown in the sidebar account footer and comment author surfaces.

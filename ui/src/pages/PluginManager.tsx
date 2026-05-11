@@ -74,8 +74,8 @@ export function PluginManager() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Компания", href: "/dashboard" },
-      { label: "Настройки", href: "/instance/settings/heartbeats" },
+      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
+      { label: "Settings", href: "/instance/settings/heartbeats" },
       { label: "Plugins" },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs]);

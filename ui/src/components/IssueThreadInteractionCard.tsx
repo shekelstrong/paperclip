@@ -60,7 +60,7 @@ function resolveActorLabel(args: {
     return agentMap?.get(agentId)?.name ?? agentId.slice(0, 8);
   }
   if (userId) {
-    return formatAssigneeUserLabel(userId, currentUserId, userLabelMap) ?? "Совет";
+    return formatAssigneeUserLabel(userId, currentUserId, userLabelMap) ?? "Board";
   }
   return "Unknown";
 }
@@ -68,7 +68,7 @@ function resolveActorLabel(args: {
 function statusLabel(status: IssueThreadInteraction["status"]) {
   switch (status) {
     case "pending":
-      return "Ожидание";
+      return "Pending";
     case "accepted":
       return "Accepted";
     case "rejected":
@@ -76,11 +76,11 @@ function statusLabel(status: IssueThreadInteraction["status"]) {
     case "answered":
       return "Answered";
     case "cancelled":
-      return "Отменено";
+      return "Cancelled";
     case "expired":
       return "Expired";
     case "failed":
-      return "Ошибка";
+      return "Failed";
     default:
       return status;
   }
@@ -284,7 +284,7 @@ function TaskTreeNode({
         {hasMetadata ? (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {hasExplicitAssignee ? (
-              <TaskField label="Исполнитель" value={assigneeLabel} />
+              <TaskField label="Assignee" value={assigneeLabel} />
             ) : null}
             {node.task.billingCode ? (
               <TaskField label="Billing" value={node.task.billingCode} />
@@ -1124,7 +1124,7 @@ function RequestConfirmationCard({
                   Confirming...
                 </>
               ) : (
-                interaction.payload.acceptLabel ?? "Подтвердить"
+                interaction.payload.acceptLabel ?? "Confirm"
               )}
             </Button>
             <Button

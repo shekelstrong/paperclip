@@ -40,14 +40,14 @@ export function AgentProperties({ agent, runtimeState }: AgentPropertiesProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <PropertyRow label="Статус">
+        <PropertyRow label="Status">
           <StatusBadge status={agent.status} />
         </PropertyRow>
         <PropertyRow label="Role">
           <span className="text-sm">{roleLabels[agent.role] ?? agent.role}</span>
         </PropertyRow>
         {agent.title && (
-          <PropertyRow label="Название">
+          <PropertyRow label="Title">
             <span className="text-sm">{agent.title}</span>
           </PropertyRow>
         )}

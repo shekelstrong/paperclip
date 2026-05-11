@@ -103,7 +103,7 @@ export function Workspaces() {
   });
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Области" }]);
+    setBreadcrumbs([{ label: "Workspaces" }]);
   }, [setBreadcrumbs]);
 
   const groups = useMemo(

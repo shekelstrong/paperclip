@@ -439,7 +439,7 @@ function fallbackAuthorLabel(message: ThreadMessage) {
   const custom = message.metadata?.custom as Record<string, unknown> | undefined;
   if (typeof custom?.["authorName"] === "string") return custom["authorName"];
   if (typeof custom?.["runAgentName"] === "string") return custom["runAgentName"];
-  if (message.role === "assistant") return "Агент";
+  if (message.role === "assistant") return "Agent";
   if (message.role === "user") return "You";
   return "System";
 }
@@ -543,7 +543,7 @@ type ComposerAttachmentItem = {
 };
 
 function hasFilePayload(evt: ReactDragEvent<HTMLDivElement>) {
-  return Array.from(evt.dataTransfer?.types ?? []).includes("Файлы");
+  return Array.from(evt.dataTransfer?.types ?? []).includes("Files");
 }
 
 function formatAttachmentSize(bytes: number) {
@@ -672,7 +672,7 @@ export function SuccessfulRunHandoffCommentCallout({
 }
 
 function humanizeValue(value: string | null) {
-  if (!value) return "Нет";
+  if (!value) return "None";
   return value.replace(/_/g, " ");
 }
 
@@ -686,7 +686,7 @@ function formatTimelineAssigneeLabel(
     return agentMap?.get(assignee.agentId)?.name ?? assignee.agentId.slice(0, 8);
   }
   if (assignee.userId) {
-    return formatAssigneeUserLabel(assignee.userId, currentUserId, userLabelMap) ?? "Совет";
+    return formatAssigneeUserLabel(assignee.userId, currentUserId, userLabelMap) ?? "Board";
   }
   return "Unassigned";
 }
@@ -711,7 +711,7 @@ function formatInteractionActorLabel(args: {
   if (userId) {
     return userLabelMap?.get(userId)
       ?? formatAssigneeUserLabel(userId, currentUserId, userLabelMap)
-      ?? "Совет";
+      ?? "Board";
   }
   return "System";
 }
@@ -727,7 +727,7 @@ export function resolveIssueChatHumanAuthor(args: {
   const isCurrentUser = Boolean(authorUserId && currentUserId && authorUserId === currentUserId);
   const resolvedAuthorName = profile?.label?.trim()
     || authorName?.trim()
-    || (authorUserId === "local-board" ? "Совет" : (isCurrentUser ? "You" : "User"));
+    || (authorUserId === "local-board" ? "Board" : (isCurrentUser ? "You" : "User"));
 
   return {
     isCurrentUser,
@@ -1025,8 +1025,8 @@ function CopyablePreBlock({ children, className }: { children: string; className
           "absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-0 backdrop-blur-sm transition-opacity hover:text-foreground group-hover/pre:opacity-100",
           copied && "opacity-100",
         )}
-        title="Копировать"
-        aria-label="Копировать"
+        title="Copy"
+        aria-label="Copy"
         onClick={() => {
           void navigator.clipboard.writeText(children).then(() => {
             setCopied(true);
@@ -1433,7 +1433,7 @@ function IssueChatAssistantMessage({
     ? custom.authorName
     : typeof custom.runAgentName === "string"
       ? custom.runAgentName
-      : "Агент";
+      : "Agent";
   const authorAgentId = typeof custom.authorAgentId === "string" ? custom.authorAgentId : null;
   const runId = typeof custom.runId === "string" ? custom.runId : null;
   const runAgentId = typeof custom.runAgentId === "string" ? custom.runAgentId : null;

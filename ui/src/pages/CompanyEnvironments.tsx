@@ -169,8 +169,8 @@ export function CompanyEnvironments() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Компания", href: "/dashboard" },
-      { label: "Настройки", href: "/company/settings" },
+      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
+      { label: "Settings", href: "/company/settings" },
       { label: "Environments" },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs]);
@@ -544,7 +544,7 @@ export function CompanyEnvironments() {
                         variant="ghost"
                         onClick={() => handleEditEnvironment(environment)}
                       >
-                        {isEditing ? "Editing" : "Изменить"}
+                        {isEditing ? "Editing" : "Edit"}
                       </Button>
                     </div>
                   </div>
@@ -581,7 +581,7 @@ export function CompanyEnvironments() {
                 onChange={(e) => setEnvironmentForm((current) => ({ ...current, name: e.target.value }))}
               />
             </Field>
-            <Field label="Описание" hint="Optional note about what this machine is for.">
+            <Field label="Description" hint="Optional note about what this machine is for.">
               <input
                 className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                 type="text"

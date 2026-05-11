@@ -209,7 +209,7 @@ export const issueChatLongThreadFixtureContext = {
     "Phase 4: Verify production issue profile improvement",
   ],
   sidebarStats: [
-    ["Комментарии", String(LONG_THREAD_COMMENT_COUNT)],
+    ["Comments", String(LONG_THREAD_COMMENT_COUNT)],
     ["Markdown bodies", String(LONG_THREAD_MARKDOWN_COMMENT_COUNT)],
     ["Timeline events", String(LONG_THREAD_EVENT_COUNT)],
     ["Linked runs", String(LONG_THREAD_LINKED_RUN_COUNT)],

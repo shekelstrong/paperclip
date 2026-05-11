@@ -49,7 +49,7 @@ export function Activity() {
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Активность" }]);
+    setBreadcrumbs([{ label: "Activity" }]);
   }, [setBreadcrumbs]);
 
   const { data, isLoading, error } = useQuery({

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export function RunButton({
   onClick,
   disabled,
-  label = "Run now",
+  label = "Запустить сейчас",
   size = "sm",
 }: {
   onClick: () => void;

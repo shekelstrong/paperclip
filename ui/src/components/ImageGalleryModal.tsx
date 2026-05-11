@@ -93,7 +93,7 @@ export function ImageGalleryModal({
                 type="button"
                 onClick={() => onOpenChange(false)}
                 className="text-white/50 hover:text-white transition-colors"
-                title="Закрыть"
+                title="Close"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -134,7 +134,7 @@ export function ImageGalleryModal({
                   type="button"
                   onClick={goNext}
                   className="rounded-full bg-white/10 p-3 text-white/60 hover:text-white hover:bg-white/20 transition-colors"
-                  title="Далее"
+                  title="Next"
                 >
                   <ChevronRight className="h-7 w-7" />
                 </button>

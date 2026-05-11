@@ -168,7 +168,7 @@ function shouldImplicitlyReopenComment(issueStatus: string | undefined, assignee
 }
 
 function humanizeValue(value: string | null): string {
-  if (!value) return "Нет";
+  if (!value) return "None";
   return value.replace(/_/g, " ");
 }
 
@@ -181,7 +181,7 @@ function formatTimelineAssigneeLabel(
     return agentMap?.get(assignee.agentId)?.name ?? assignee.agentId.slice(0, 8);
   }
   if (assignee.userId) {
-    return formatAssigneeUserLabel(assignee.userId, currentUserId) ?? "Совет";
+    return formatAssigneeUserLabel(assignee.userId, currentUserId) ?? "Board";
   }
   return "Unassigned";
 }
@@ -198,7 +198,7 @@ function formatTimelineActorName(
   if (actorType === "system") {
     return "System";
   }
-  return formatAssigneeUserLabel(actorId, currentUserId) ?? "Совет";
+  return formatAssigneeUserLabel(actorId, currentUserId) ?? "Board";
 }
 
 function initialsForName(name: string) {
@@ -274,7 +274,7 @@ function CopyMarkdownButton({ text }: { text: string }) {
     }
   }, []);
 
-  const label = status === "copied" ? "Copied" : status === "failed" ? "Copy failed" : "Копировать";
+  const label = status === "copied" ? "Copied" : status === "failed" ? "Copy failed" : "Copy";
 
   return (
     <button
@@ -1039,7 +1039,7 @@ export function CommentThread({
               <InlineEntitySelector
                 value={reassignTarget}
                 options={reassignOptions}
-                placeholder="Исполнитель"
+                placeholder="Assignee"
                 noneLabel="No assignee"
                 searchPlaceholder="Search assignees..."
                 emptyMessage="No assignees found."

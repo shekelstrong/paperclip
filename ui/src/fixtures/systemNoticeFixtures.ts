@@ -21,7 +21,7 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
       },
       {
         kind: "agent",
-        label: "Владелец",
+        label: "Owner",
         name: "CTO",
         href: "/PAP/agents/cto",
       },
@@ -71,7 +71,7 @@ const REQUIRED_METADATA: SystemNoticeMetadataSection[] = [
       },
       {
         kind: "agent",
-        label: "Исполнитель",
+        label: "Assignee",
         name: "CodexCoder",
         href: "/PAP/agents/codexcoder",
       },

@@ -31,7 +31,7 @@ const inviteRoleOptions = [
   },
   {
     value: "owner",
-    label: "Владелец",
+    label: "Owner",
     description: "Full company access, including membership and permission management.",
     gets: "Everything in Admin, plus managing members and permission grants.",
   },
@@ -81,8 +81,8 @@ export function CompanyInvites() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Компания", href: "/dashboard" },
-      { label: "Настройки", href: "/company/settings" },
+      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
+      { label: "Settings", href: "/company/settings" },
       { label: "Invites" },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs]);

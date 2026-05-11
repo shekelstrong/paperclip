@@ -40,7 +40,7 @@ const inviteRoleOptions = [
   },
   {
     value: "owner",
-    label: "Владелец",
+    label: "Owner",
     description: "Full company access, including membership and permission management.",
     gets: "Everything in Admin, plus managing members and permission grants.",
   },
@@ -207,7 +207,7 @@ function InviteSummaryPanel({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <MetaCard label="Компания" value="Acme Robotics" />
+        <MetaCard label="Company" value="Acme Robotics" />
         <MetaCard label="Invited by" value="Board User" />
         <MetaCard label="Requested access" value={requestedAccess} />
         <MetaCard label="Invite expires" value="Mar 7, 2027" />

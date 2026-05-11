@@ -26,7 +26,7 @@ export function Approvals() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Согласования" }]);
+    setBreadcrumbs([{ label: "Approvals" }]);
   }, [setBreadcrumbs]);
 
   const { data, isLoading, error } = useQuery({
@@ -95,7 +95,7 @@ export function Approvals() {
                 {pendingCount}
               </span>
             )}</> },
-            { value: "all", label: "Все" },
+            { value: "all", label: "All" },
           ]} />
         </Tabs>
       </div>

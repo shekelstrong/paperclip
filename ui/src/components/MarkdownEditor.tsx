@@ -992,7 +992,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
   }, [handleAutocompletePress]);
 
   function hasFilePayload(evt: DragEvent<HTMLDivElement>) {
-    return Array.from(evt.dataTransfer?.types ?? []).includes("Файлы");
+    return Array.from(evt.dataTransfer?.types ?? []).includes("Files");
   }
 
   const canDropFile = fileDropTarget === "editor" && Boolean(imageUploadHandler || onDropFile);
@@ -1000,7 +1000,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
     const clipboard = event.clipboardData;
     if (!clipboard || !ref.current) return;
     const types = new Set(Array.from(clipboard.types));
-    if (types.has("Файлы") || types.has("text/html")) return;
+    if (types.has("Files") || types.has("text/html")) return;
     if (isSelectionInsideCodeLikeElement(containerRef.current)) return;
 
     const rawText = clipboard.getData("text/plain");

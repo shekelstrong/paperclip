@@ -50,7 +50,7 @@ export function Dashboard() {
   });
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Панель" }]);
+    setBreadcrumbs([{ label: "Dashboard" }]);
   }, [setBreadcrumbs]);
 
   const { data, isLoading, error } = useQuery({

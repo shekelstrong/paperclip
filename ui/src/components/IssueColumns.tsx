@@ -23,9 +23,9 @@ import { StatusIcon } from "./StatusIcon";
 export const issueTrailingColumns: InboxIssueColumn[] = ["assignee", "project", "workspace", "parent", "labels", "updated"];
 
 const issueColumnLabels: Record<InboxIssueColumn, string> = {
-  status: "Статус",
+  status: "Status",
   id: "ID",
-  assignee: "Исполнитель",
+  assignee: "Assignee",
   project: "Project",
   workspace: "Workspace",
   parent: "Parent issue",

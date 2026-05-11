@@ -33,7 +33,7 @@ export function ПодтвердитьDialog({
 }: ПодтвердитьDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent classИмя="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogНазвание>{title}</DialogНазвание>
           {description && <DialogОписание>{description}</DialogОписание>}

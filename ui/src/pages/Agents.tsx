@@ -116,7 +116,7 @@ export function Agents() {
   }, [agents]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Агенты" }]);
+    setBreadcrumbs([{ label: "Agents" }]);
   }, [setBreadcrumbs]);
 
   if (!selectedCompanyId) {
@@ -136,10 +136,10 @@ export function Agents() {
         <Tabs value={tab} onValueChange={(v) => navigate(`/agents/${v}`)}>
           <PageTabBar
             items={[
-              { value: "all", label: "Все" },
+              { value: "all", label: "All" },
               { value: "active", label: "Active" },
-              { value: "paused", label: "Приостановлено" },
-              { value: "error", label: "Ошибка" },
+              { value: "paused", label: "Paused" },
+              { value: "error", label: "Error" },
             ]}
             value={tab}
             onValueChange={(v) => navigate(`/agents/${v}`)}

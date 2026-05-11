@@ -43,8 +43,8 @@ const projectStatuses = [
   { value: "backlog", label: "Backlog" },
   { value: "planned", label: "Planned" },
   { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Завершено" },
-  { value: "cancelled", label: "Отменено" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 export function NewProjectDialog() {
@@ -381,7 +381,7 @@ export function NewProjectDialog() {
                 disabled={selectedGoals.length > 0 && availableGoals.length === 0}
               >
                 {selectedGoals.length > 0 ? <Plus className="h-3 w-3 text-muted-foreground" /> : <Target className="h-3 w-3 text-muted-foreground" />}
-                {selectedGoals.length > 0 ? "+ Goal" : "Цель"}
+                {selectedGoals.length > 0 ? "+ Goal" : "Goal"}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-56 p-1" align="start">

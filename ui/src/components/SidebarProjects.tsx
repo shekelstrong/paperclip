@@ -291,7 +291,7 @@ export function SidebarProjects() {
 
   return (
     <SidebarSection
-      label="Проекты"
+      label="Projects"
       collapsible={{ open, onOpenChange: setOpen }}
       headerAction={{
         ariaLabel: "Новый проект",

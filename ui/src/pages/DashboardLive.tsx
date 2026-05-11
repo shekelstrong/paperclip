@@ -14,7 +14,7 @@ export function DashboardLive() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Панель", href: "/dashboard" },
+      { label: "Dashboard", href: "/dashboard" },
       { label: "Live runs" },
     ]);
   }, [setBreadcrumbs]);
@@ -49,7 +49,7 @@ export function DashboardLive() {
 
       <ActiveAgentsPanel
         companyId={selectedCompanyId}
-        title="Active / recent"
+        title="Активные / недавние"
         minRunCount={DASHBOARD_LIVE_RUN_LIMIT}
         fetchLimit={DASHBOARD_LIVE_RUN_LIMIT}
         cardLimit={DASHBOARD_LIVE_RUN_LIMIT}

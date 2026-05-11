@@ -27,8 +27,8 @@ const PROJECT_STATUSES = [
   { value: "backlog", label: "Backlog" },
   { value: "planned", label: "Planned" },
   { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Завершено" },
-  { value: "cancelled", label: "Отменено" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 interface ProjectPropertiesProps {
@@ -167,7 +167,7 @@ function ArchiveDangerZone({
 }) {
   const [confirming, setConfirming] = useState(false);
   const isArchive = !project.archivedAt;
-  const action = isArchive ? "Архивировать" : "Unarchive";
+  const action = isArchive ? "Archive" : "Unarchive";
 
   return (
     <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
@@ -519,7 +519,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
           )}
         </PropertyRow>
         <PropertyRow
-          label={<FieldLabel label="Описание" state={fieldState("description")} />}
+          label={<FieldLabel label="Description" state={fieldState("description")} />}
           alignStart
           valueClassName="space-y-0.5"
         >
@@ -539,7 +539,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
             </p>
           )}
         </PropertyRow>
-        <PropertyRow label={<FieldLabel label="Статус" state={fieldState("status")} />}>
+        <PropertyRow label={<FieldLabel label="Status" state={fieldState("status")} />}>
           {onUpdate || onFieldUpdate ? (
             <ProjectStatusPicker
               status={project.status}
@@ -555,7 +555,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
           </PropertyRow>
         )}
         <PropertyRow
-          label={<FieldLabel label="Цели" state={fieldState("goals")} />}
+          label={<FieldLabel label="Goals" state={fieldState("goals")} />}
           alignStart
           valueClassName="space-y-2"
         >

@@ -689,7 +689,7 @@ export function Inbox() {
   const issueLinkState = useMemo(
     () =>
       createIssueDetailLocationState(
-        "Входящие",
+        "Inbox",
         `${location.pathname}${location.search}${location.hash}`,
         "inbox",
       ),
@@ -727,7 +727,7 @@ export function Inbox() {
   });
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Входящие" }]);
+    setBreadcrumbs([{ label: "Inbox" }]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
@@ -869,7 +869,7 @@ export function Inbox() {
     if (currentUserId) {
       options.set(`user:${currentUserId}`, {
         id: `user:${currentUserId}`,
-        label: currentUserId === "local-board" ? "Совет" : "Me",
+        label: currentUserId === "local-board" ? "Board" : "Me",
         kind: "user",
         searchText: currentUserId === "local-board" ? "board me human local-board" : `me board human ${currentUserId}`,
       });
@@ -1947,7 +1947,7 @@ export function Inbox() {
                 label: "Recent",
               },
               { value: "unread", label: "Unread" },
-              { value: "all", label: "Все" },
+              { value: "all", label: "All" },
             ]}
           />
         </Tabs>
@@ -2020,9 +2020,9 @@ export function Inbox() {
             <PopoverContent align="end" className="w-40 p-2">
               <div className="space-y-0.5">
                 {([
-                  ["none", "Нет"],
-                  ["type", "Тип"],
-                  ["assignee", "Исполнитель"],
+                  ["none", "None"],
+                  ["type", "Type"],
+                  ["assignee", "Assignee"],
                   ["project", "Project"],
                   ...(isolatedWorkspacesEnabled ? ([["workspace", "Workspace"]] as const) : []),
                 ] as const).map(([value, label]) => (
@@ -2291,7 +2291,7 @@ export function Inbox() {
                       >
                         <div className="h-px flex-1 bg-border/80" />
                         <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                          {group.searchSection === "archived" ? "Архивировано" : "Other results"}
+                          {group.searchSection === "archived" ? "Archived" : "Other results"}
                         </span>
                         <div className="h-px flex-1 bg-border/80" />
                       </div>,

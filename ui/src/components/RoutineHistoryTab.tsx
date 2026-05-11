@@ -501,19 +501,19 @@ function RevisionPreview({
   const fieldRows: Array<{ key: string; label: string; value: string; differs: boolean }> = [
     {
       key: "title",
-      label: "Название",
+      label: "Title",
       value: snapshot.title,
       differs: !!currentSnapshot && currentSnapshot.title !== snapshot.title,
     },
     {
       key: "priority",
-      label: "Приоритет",
+      label: "Priority",
       value: snapshot.priority,
       differs: !!currentSnapshot && currentSnapshot.priority !== snapshot.priority,
     },
     {
       key: "status",
-      label: "Статус",
+      label: "Status",
       value: snapshot.status,
       differs: !!currentSnapshot && currentSnapshot.status !== snapshot.status,
     },
@@ -1018,8 +1018,8 @@ function computeFieldChanges(
       changes.push({ field: label, oldValue: transform(oldVal), newValue: transform(newVal) });
     }
   };
-  compareScalar("title", "Название", oldRoutine.title, newRoutine.title);
-  compareScalar("priority", "Приоритет", oldRoutine.priority, newRoutine.priority);
+  compareScalar("title", "Title", oldRoutine.title, newRoutine.title);
+  compareScalar("priority", "Priority", oldRoutine.priority, newRoutine.priority);
   compareScalar(
     "assigneeAgentId",
     "Агент по умолчанию",
@@ -1034,7 +1034,7 @@ function computeFieldChanges(
   );
   compareScalar("concurrencyPolicy", "Concurrency", oldRoutine.concurrencyPolicy, newRoutine.concurrencyPolicy);
   compareScalar("catchUpPolicy", "Catch-up", oldRoutine.catchUpPolicy, newRoutine.catchUpPolicy);
-  compareScalar("status", "Статус", oldRoutine.status, newRoutine.status);
+  compareScalar("status", "Status", oldRoutine.status, newRoutine.status);
   if (JSON.stringify(oldRoutine.variables) !== JSON.stringify(newRoutine.variables)) {
     changes.push({
       field: "Variables",

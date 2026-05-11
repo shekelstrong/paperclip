@@ -632,9 +632,9 @@ export function OnboardingWizard() {
               <div className="flex items-center gap-0 mb-8 border-b border-border">
                 {(
                   [
-                    { step: 1 as Step, label: "Компания", icon: Building2 },
-                    { step: 2 as Step, label: "Агент", icon: Bot },
-                    { step: 3 as Step, label: "Задача", icon: ListTodo },
+                    { step: 1 as Step, label: "Company", icon: Building2 },
+                    { step: 2 as Step, label: "Agent", icon: Bot },
+                    { step: 3 as Step, label: "Task", icon: ListTodo },
                     { step: 4 as Step, label: "Launch", icon: Rocket }
                   ] as const
                 ).map(({ step: s, label, icon: Icon }) => (

@@ -27,10 +27,10 @@ import { MarkdownEditor, type MarkdownEditorRef } from "./MarkdownEditor";
 import { StatusBadge } from "./StatusBadge";
 
 const levelLabels: Record<string, string> = {
-  company: "Компания",
+  company: "Company",
   team: "Team",
-  agent: "Агент",
-  task: "Задача",
+  agent: "Agent",
+  task: "Task",
 };
 
 export function NewGoalDialog() {

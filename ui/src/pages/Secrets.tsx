@@ -376,7 +376,7 @@ export function Secrets() {
   const [vaultError, setVaultError] = useState<string | null>(null);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Секреты" }]);
+    setBreadcrumbs([{ label: "Secrets" }]);
   }, [setBreadcrumbs]);
 
   const secretsQuery = useQuery({
@@ -765,7 +765,7 @@ export function Secrets() {
       >
         <PageTabBar
           items={[
-            { value: "secrets", label: "Секреты" },
+            { value: "secrets", label: "Secrets" },
             { value: "vaults", label: "Provider vaults" },
           ]}
           align="start"
@@ -1020,7 +1020,7 @@ export function Secrets() {
                 <div className="border-b border-border px-4">
                   <PageTabBar
                     items={[
-                      { value: "details", label: "Детали" },
+                      { value: "details", label: "Details" },
                       { value: "usage", label: usageQuery.data ? `Usage (${usageQuery.data.bindings.length})` : "Usage" },
                       { value: "events", label: "Access events" },
                     ]}
@@ -1558,7 +1558,7 @@ function SecretsFiltersPopover({
     { value: "active", label: "Active" },
     { value: "all", label: "All statuses" },
     { value: "disabled", label: "Disabled" },
-    { value: "archived", label: "Архивировано" },
+    { value: "archived", label: "Archived" },
   ];
 
   return (
@@ -1568,7 +1568,7 @@ function SecretsFiltersPopover({
           variant="outline"
           size="icon"
           className={cn("relative h-8 w-8 shrink-0", activeFilterCount > 0 && "text-blue-600 dark:text-blue-400")}
-          title={activeFilterCount > 0 ? `Filters: ${activeFilterCount}` : "Фильтр"}
+          title={activeFilterCount > 0 ? `Filters: ${activeFilterCount}` : "Filter"}
         >
           <Filter className="h-3.5 w-3.5" />
           {activeFilterCount > 0 ? (
@@ -2036,7 +2036,7 @@ function SecretDetailsTab({
 }) {
   return (
     <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
-      <DetailRow label="Описание">
+      <DetailRow label="Description">
         <span>{secret.description ?? <span className="text-muted-foreground">—</span>}</span>
       </DetailRow>
       <DetailRow label="Custody">{modeLabel(secret.managedMode)}</DetailRow>

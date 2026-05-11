@@ -15,7 +15,7 @@ type SnippetStyle = {
 const SNIPPET_STYLES: Record<string, SnippetStyle> = {
   comment: { Icon: MessageSquare, label: "Comment" },
   document: { Icon: FileText, label: "Doc" },
-  description: { Icon: Quote, label: "Описание" },
+  description: { Icon: Quote, label: "Description" },
 };
 
 function snippetStyle(field: string, fallbackLabel: string): SnippetStyle {
@@ -78,7 +78,7 @@ function SearchResultRowImpl({
               text={result.snippets[0]?.text ?? result.snippet}
               highlights={result.snippets[0]?.highlights}
               field="agent"
-              fallbackLabel={result.sourceLabel ?? "Агент"}
+              fallbackLabel={result.sourceLabel ?? "Agent"}
             />
           ) : null}
         </div>

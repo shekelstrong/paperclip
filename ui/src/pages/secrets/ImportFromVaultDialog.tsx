@@ -1361,7 +1361,7 @@ function ResultStep({ result, draftList }: ResultStepProps) {
           <ResultGroup label="Skipped" rows={grouped.skipped} draftLookup={draftLookup} />
         )}
         {grouped.failed.length > 0 && (
-          <ResultGroup label="Ошибка" rows={grouped.failed} draftLookup={draftLookup} />
+          <ResultGroup label="Failed" rows={grouped.failed} draftLookup={draftLookup} />
         )}
       </div>
     </div>

@@ -31,12 +31,12 @@ const SEARCH_DEBOUNCE_MS = 250;
 const IDENTIFIER_PATTERN = /^[A-Z]+-\d+$/;
 
 const SCOPE_LABELS: Record<CompanySearchScope, string> = {
-  all: "Все",
-  issues: "Задачи",
-  comments: "Комментарии",
-  documents: "Документы",
-  agents: "Агенты",
-  projects: "Проекты",
+  all: "All",
+  issues: "Issues",
+  comments: "Comments",
+  documents: "Documents",
+  agents: "Agents",
+  projects: "Projects",
 };
 
 type SubGroupKey = "issues" | "comments" | "documents" | "agents" | "projects";
@@ -44,11 +44,11 @@ type SubGroupKey = "issues" | "comments" | "documents" | "agents" | "projects";
 const SUBGROUP_ORDER: SubGroupKey[] = ["issues", "comments", "documents", "agents", "projects"];
 
 const SUBGROUP_LABELS: Record<SubGroupKey, string> = {
-  issues: "Задачи",
-  comments: "Комментарии",
-  documents: "Документы",
-  agents: "Агенты",
-  projects: "Проекты",
+  issues: "Issues",
+  comments: "Comments",
+  documents: "Documents",
+  agents: "Agents",
+  projects: "Projects",
 };
 
 function classifyResult(result: CompanySearchResult): SubGroupKey {
@@ -128,7 +128,7 @@ export function Search() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Поиск" }]);
+    setBreadcrumbs([{ label: "Search" }]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {

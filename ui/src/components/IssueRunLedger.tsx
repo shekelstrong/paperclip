@@ -71,7 +71,7 @@ type LivenessCopy = {
 
 const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
   completed: {
-    label: "Завершено",
+    label: "Completed",
     tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
     description: "Issue reached a terminal state.",
   },
@@ -91,12 +91,12 @@ const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
     description: "Run finished without useful output.",
   },
   blocked: {
-    label: "Заблокировано",
+    label: "Blocked",
     tone: "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
     description: "Run or issue declared a blocker.",
   },
   failed: {
-    label: "Ошибка",
+    label: "Failed",
     tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
     description: "Run ended unsuccessfully.",
   },

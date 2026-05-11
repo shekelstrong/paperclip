@@ -61,8 +61,8 @@ export function Sidebar() {
           variant="ghost"
           size="icon-sm"
           className="text-muted-foreground shrink-0"
-          aria-label="Поиск"
-          title="Поиск"
+          aria-label="Search"
+          title="Search"
         >
           <NavLink to="/search">
             <Search className="h-4 w-4" />
@@ -80,10 +80,10 @@ export function Sidebar() {
             <SquarePen className="h-4 w-4 shrink-0" />
             <span className="truncate">New Issue</span>
           </button>
-          <SidebarNavItem to="/dashboard" label="Панель" icon={LayoutDashboard} liveCount={liveRunCount} />
+          <SidebarNavItem to="/dashboard" label="Dashboard" icon={LayoutDashboard} liveCount={liveRunCount} />
           <SidebarNavItem
             to="/inbox"
-            label="Входящие"
+            label="Inbox"
             icon={Inbox}
             badge={inboxBadge.inbox}
             badgeTone={inboxBadge.failedRuns > 0 ? "danger" : "default"}
@@ -98,12 +98,12 @@ export function Sidebar() {
           />
         </div>
 
-        <SidebarSection label="Работа">
-          <SidebarNavItem to="/issues" label="Задачи" icon={CircleDot} />
-          <SidebarNavItem to="/routines" label="Процедуры" icon={Repeat} />
-          <SidebarNavItem to="/goals" label="Цели" icon={Target} />
+        <SidebarSection label="Work">
+          <SidebarNavItem to="/issues" label="Issues" icon={CircleDot} />
+          <SidebarNavItem to="/routines" label="Routines" icon={Repeat} />
+          <SidebarNavItem to="/goals" label="Goals" icon={Target} />
           {showWorkspacesLink ? (
-            <SidebarNavItem to="/workspaces" label="Области" icon={GitBranch} />
+            <SidebarNavItem to="/workspaces" label="Workspaces" icon={GitBranch} />
           ) : null}
         </SidebarSection>
 
@@ -111,12 +111,12 @@ export function Sidebar() {
 
         <SidebarAgents />
 
-        <SidebarSection label="Компания">
-          <SidebarNavItem to="/org" label="Оргструктура" icon={Network} />
-          <SidebarNavItem to="/skills" label="Навыки" icon={Boxes} />
-          <SidebarNavItem to="/costs" label="Расходы" icon={DollarSign} />
-          <SidebarNavItem to="/activity" label="Активность" icon={History} />
-          <SidebarNavItem to="/company/settings" label="Настройки" icon={Settings} />
+        <SidebarSection label="Company">
+          <SidebarNavItem to="/org" label="Org" icon={Network} />
+          <SidebarNavItem to="/skills" label="Skills" icon={Boxes} />
+          <SidebarNavItem to="/costs" label="Costs" icon={DollarSign} />
+          <SidebarNavItem to="/activity" label="Activity" icon={History} />
+          <SidebarNavItem to="/company/settings" label="Settings" icon={Settings} />
         </SidebarSection>
 
         <PluginSlotOutlet

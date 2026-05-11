@@ -248,9 +248,9 @@ function CommandActionButtons({
         const label = action === "run"
           ? "Run"
           : action === "start"
-            ? "Начать"
+            ? "Start"
             : action === "stop"
-              ? "Остановить"
+              ? "Stop"
               : "Restart";
         const showSpinner = isPending && requestMatchesPending(pendingRequest, request);
         const disabled =

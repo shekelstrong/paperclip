@@ -128,7 +128,7 @@ export function InstanceGeneralSettings() {
             />
             <StatusBox
               label="Bootstrap invite"
-              value={healthQuery.data?.bootstrapInviteActive ? "Active" : "Нет"}
+              value={healthQuery.data?.bootstrapInviteActive ? "Active" : "None"}
             />
           </div>
         </div>

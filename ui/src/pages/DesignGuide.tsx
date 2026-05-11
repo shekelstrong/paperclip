@@ -185,8 +185,8 @@ export function DesignGuide() {
     "This is an editable description. Click to edit it — the textarea auto-sizes to fit the content without layout shift."
   );
   const [filters, setFilters] = useState<FilterValue[]>([
-    { key: "status", label: "Статус", value: "Active" },
-    { key: "priority", label: "Приоритет", value: "High" },
+    { key: "status", label: "Status", value: "Active" },
+    { key: "priority", label: "Priority", value: "High" },
   ]);
 
   return (
@@ -913,8 +913,8 @@ export function DesignGuide() {
             size="sm"
             onClick={() =>
               setFilters([
-                { key: "status", label: "Статус", value: "Active" },
-                { key: "priority", label: "Приоритет", value: "High" },
+                { key: "status", label: "Status", value: "Active" },
+                { key: "priority", label: "Priority", value: "High" },
               ])
             }
           >
@@ -1290,7 +1290,7 @@ export function DesignGuide() {
       <Section title="Common Icons (Lucide)">
         <div className="grid grid-cols-4 md:grid-cols-6 gap-4">
           {[
-            ["Входящие", Inbox],
+            ["Inbox", Inbox],
             ["ListTodo", ListTodo],
             ["CircleDot", CircleDot],
             ["Hexagon", Hexagon],
@@ -1298,11 +1298,11 @@ export function DesignGuide() {
             ["LayoutDashboard", LayoutDashboard],
             ["Bot", Bot],
             ["DollarSign", DollarSign],
-            ["История", History],
-            ["Поиск", Search],
+            ["History", History],
+            ["Search", Search],
             ["Plus", Plus],
             ["Trash2", Trash2],
-            ["Настройки", Settings],
+            ["Settings", Settings],
             ["User", User],
             ["Mail", Mail],
             ["Upload", Upload],

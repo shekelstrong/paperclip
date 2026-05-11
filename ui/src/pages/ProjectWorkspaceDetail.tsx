@@ -262,9 +262,9 @@ export function ProjectWorkspaceDetail() {
   useEffect(() => {
     if (!project) return;
     setBreadcrumbs([
-      { label: "Проекты", href: "/projects" },
+      { label: "Projects", href: "/projects" },
       { label: project.name, href: `/projects/${canonicalProjectRef}` },
-      { label: "Области", href: `/projects/${canonicalProjectRef}/workspaces` },
+      { label: "Workspaces", href: `/projects/${canonicalProjectRef}/workspaces` },
       { label: workspace?.name ?? routeWorkspaceId },
     ]);
   }, [setBreadcrumbs, project, canonicalProjectRef, workspace?.name, routeWorkspaceId]);
@@ -600,7 +600,7 @@ export function ProjectWorkspaceDetail() {
               <span className="break-all font-mono text-xs">{workspace.id}</span>
             </DetailRow>
             <DetailRow label="Local path">
-              <span className="break-all font-mono text-xs">{workspace.cwd ?? "Нет"}</span>
+              <span className="break-all font-mono text-xs">{workspace.cwd ?? "None"}</span>
             </DetailRow>
             <DetailRow label="Repo">
               {workspace.repoUrl && isSafeExternalUrl(workspace.repoUrl) ? (
@@ -610,9 +610,9 @@ export function ProjectWorkspaceDetail() {
                 </a>
               ) : workspace.repoUrl ? (
                 <span className="break-all font-mono text-xs">{workspace.repoUrl}</span>
-              ) : "Нет"}
+              ) : "None"}
             </DetailRow>
-            <DetailRow label="Default ref">{workspace.defaultRef ?? "Нет"}</DetailRow>
+            <DetailRow label="Default ref">{workspace.defaultRef ?? "None"}</DetailRow>
             <DetailRow label="Updated">{new Date(workspace.updatedAt).toLocaleString()}</DetailRow>
           </div>
 

@@ -56,7 +56,7 @@ export function RoutineListRow<TRoutine extends RoutineListRowItem>({
   runningRoutineId,
   statusMutationRoutineId,
   href,
-  configureLabel = "Изменить",
+  configureLabel = "Edit",
   managedByLabel,
   secondaryDetails,
   runNowButton = false,
@@ -140,7 +140,7 @@ export function RoutineListRow<TRoutine extends RoutineListRowItem>({
             onClick={() => onRunNow(routine)}
           >
             <Play className="h-3.5 w-3.5" />
-            {runningRoutineId === routine.id ? "Running..." : "Run now"}
+            {runningRoutineId === routine.id ? "Running..." : "Запустить сейчас"}
           </Button>
         ) : null}
 
@@ -153,7 +153,7 @@ export function RoutineListRow<TRoutine extends RoutineListRowItem>({
             aria-label={enabled ? `Disable ${routine.title}` : `Enable ${routine.title}`}
           />
           <span className="w-12 text-xs text-muted-foreground">
-            {isArchived ? "Архивировано" : isDraft ? "Черновик" : enabled ? "On" : "Off"}
+            {isArchived ? "Archived" : isDraft ? "Draft" : enabled ? "On" : "Off"}
           </span>
         </div>
 
@@ -171,7 +171,7 @@ export function RoutineListRow<TRoutine extends RoutineListRowItem>({
               disabled={runDisabled}
               onClick={() => onRunNow(routine)}
             >
-              {runningRoutineId === routine.id ? "Running..." : "Run now"}
+              {runningRoutineId === routine.id ? "Running..." : "Запустить сейчас"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -185,7 +185,7 @@ export function RoutineListRow<TRoutine extends RoutineListRowItem>({
                 onClick={() => onToggleArchived(routine)}
                 disabled={isStatusPending}
               >
-                {routine.status === "archived" ? "Restore" : "Архивировать"}
+                {routine.status === "archived" ? "Restore" : "Archive"}
               </DropdownMenuItem>
             ) : null}
           </DropdownMenuContent>

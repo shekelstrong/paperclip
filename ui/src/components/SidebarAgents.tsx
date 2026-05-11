@@ -345,7 +345,7 @@ export function SidebarAgents() {
 
   return (
     <SidebarSection
-      label="Агенты"
+      label="Agents"
       collapsible={{ open, onOpenChange: setOpen }}
       headerAction={{
         ariaLabel: "Новый агент",

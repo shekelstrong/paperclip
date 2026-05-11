@@ -1,26 +1,26 @@
 import { describe, expect, it } from "vitest";
-import type { АктивностьEvent } from "@paperclipai/shared";
-import { extractЗадачаTimelineEvents } from "./issue-timeline-events";
+import type { ActivityEvent } from "@paperclipai/shared";
+import { extractIssueTimelineEvents } from "./issue-timeline-events";
 
-describe("extractЗадачаTimelineEvents", () => {
+describe("extractIssueTimelineEvents", () => {
   it("extracts and sorts status and assignee changes from issue updates", () => {
-    const events = extractЗадачаTimelineEvents([
+    const events = extractIssueTimelineEvents([
       {
         id: "evt-2",
         companyId: "company-1",
-        actorТип: "user",
+        actorType: "user",
         actorId: "local-board",
         action: "issue.updated",
-        entityТип: "issue",
+        entityType: "issue",
         entityId: "issue-1",
         agentId: null,
         runId: null,
         createdAt: new Date("2026-03-31T12:02:00.000Z"),
         details: {
-          assigneeАгентId: "agent-2",
+          assigneeAgentId: "agent-2",
           assigneeUserId: null,
           _previous: {
-            assigneeАгентId: "agent-1",
+            assigneeAgentId: "agent-1",
             assigneeUserId: null,
           },
         },
@@ -28,10 +28,10 @@ describe("extractЗадачаTimelineEvents", () => {
       {
         id: "evt-1",
         companyId: "company-1",
-        actorТип: "user",
+        actorType: "user",
         actorId: "local-board",
         action: "issue.updated",
-        entityТип: "issue",
+        entityType: "issue",
         entityId: "issue-1",
         agentId: null,
         runId: null,
@@ -46,10 +46,10 @@ describe("extractЗадачаTimelineEvents", () => {
       {
         id: "evt-ignored",
         companyId: "company-1",
-        actorТип: "user",
+        actorType: "user",
         actorId: "local-board",
         action: "issue.comment_added",
-        entityТип: "issue",
+        entityType: "issue",
         entityId: "issue-1",
         agentId: null,
         runId: null,
@@ -58,13 +58,13 @@ describe("extractЗадачаTimelineEvents", () => {
           commentId: "comment-1",
         },
       },
-    ] satisfies АктивностьEvent[]);
+    ] satisfies ActivityEvent[]);
 
     expect(events).toEqual([
       {
         id: "evt-1",
         createdAt: new Date("2026-03-31T12:01:00.000Z"),
-        actorТип: "user",
+        actorType: "user",
         actorId: "local-board",
         runId: null,
         statusChange: {
@@ -75,7 +75,7 @@ describe("extractЗадачаTimelineEvents", () => {
       {
         id: "evt-2",
         createdAt: new Date("2026-03-31T12:02:00.000Z"),
-        actorТип: "user",
+        actorType: "user",
         actorId: "local-board",
         runId: null,
         assigneeChange: {
@@ -93,14 +93,14 @@ describe("extractЗадачаTimelineEvents", () => {
   });
 
   it("uses reopenedFrom when a reopen update omits _previous", () => {
-    const events = extractЗадачаTimelineEvents([
+    const events = extractIssueTimelineEvents([
       {
         id: "evt-reopen",
         companyId: "company-1",
-        actorТип: "agent",
+        actorType: "agent",
         actorId: "agent-1",
         action: "issue.updated",
-        entityТип: "issue",
+        entityType: "issue",
         entityId: "issue-1",
         agentId: "agent-1",
         runId: "run-1",
@@ -112,13 +112,13 @@ describe("extractЗадачаTimelineEvents", () => {
           source: "comment",
         },
       },
-    ] satisfies АктивностьEvent[]);
+    ] satisfies ActivityEvent[]);
 
     expect(events).toEqual([
       {
         id: "evt-reopen",
         createdAt: new Date("2026-03-31T12:01:00.000Z"),
-        actorТип: "agent",
+        actorType: "agent",
         actorId: "agent-1",
         runId: "run-1",
         statusChange: {
@@ -130,14 +130,14 @@ describe("extractЗадачаTimelineEvents", () => {
   });
 
   it("marks explicit follow-up timeline updates", () => {
-    const events = extractЗадачаTimelineEvents([
+    const events = extractIssueTimelineEvents([
       {
         id: "evt-follow-up",
         companyId: "company-1",
-        actorТип: "agent",
+        actorType: "agent",
         actorId: "agent-1",
         action: "issue.updated",
-        entityТип: "issue",
+        entityType: "issue",
         entityId: "issue-1",
         agentId: "agent-1",
         runId: "run-1",
@@ -152,13 +152,13 @@ describe("extractЗадачаTimelineEvents", () => {
           followUpRequested: true,
         },
       },
-    ] satisfies АктивностьEvent[]);
+    ] satisfies ActivityEvent[]);
 
     expect(events).toEqual([
       {
         id: "evt-follow-up",
         createdAt: new Date("2026-03-31T12:01:00.000Z"),
-        actorТип: "agent",
+        actorType: "agent",
         actorId: "agent-1",
         runId: "run-1",
         commentId: "comment-1",
@@ -172,59 +172,59 @@ describe("extractЗадачаTimelineEvents", () => {
   });
 
   it("extracts workspace changes from issue update activity", () => {
-    const events = extractЗадачаTimelineEvents([
+    const events = extractIssueTimelineEvents([
       {
         id: "evt-workspace",
         companyId: "company-1",
-        actorТип: "user",
+        actorType: "user",
         actorId: "local-board",
         action: "issue.updated",
-        entityТип: "issue",
+        entityType: "issue",
         entityId: "issue-1",
         agentId: null,
         runId: null,
         createdAt: new Date("2026-03-31T12:01:00.000Z"),
         details: {
-          projectРаботаspaceId: "workspace-2",
+          projectWorkspaceId: "workspace-2",
           workspaceChange: {
             from: {
               label: "Main workspace",
-              projectРаботаspaceId: "workspace-1",
-              executionРаботаspaceId: null,
+              projectWorkspaceId: "workspace-1",
+              executionWorkspaceId: null,
               mode: "shared_workspace",
             },
             to: {
               label: "Feature branch",
-              projectРаботаspaceId: "workspace-2",
-              executionРаботаspaceId: null,
+              projectWorkspaceId: "workspace-2",
+              executionWorkspaceId: null,
               mode: "shared_workspace",
             },
           },
           _previous: {
-            projectРаботаspaceId: "workspace-1",
+            projectWorkspaceId: "workspace-1",
           },
         },
       },
-    ] satisfies АктивностьEvent[]);
+    ] satisfies ActivityEvent[]);
 
     expect(events).toEqual([
       {
         id: "evt-workspace",
         createdAt: new Date("2026-03-31T12:01:00.000Z"),
-        actorТип: "user",
+        actorType: "user",
         actorId: "local-board",
         runId: null,
         workspaceChange: {
           from: {
             label: "Main workspace",
-            projectРаботаspaceId: "workspace-1",
-            executionРаботаspaceId: null,
+            projectWorkspaceId: "workspace-1",
+            executionWorkspaceId: null,
             mode: "shared_workspace",
           },
           to: {
             label: "Feature branch",
-            projectРаботаspaceId: "workspace-2",
-            executionРаботаspaceId: null,
+            projectWorkspaceId: "workspace-2",
+            executionWorkspaceId: null,
             mode: "shared_workspace",
           },
         },
@@ -233,14 +233,14 @@ describe("extractЗадачаTimelineEvents", () => {
   });
 
   it("synthesizes non-status follow-up rows from comment activity", () => {
-    const events = extractЗадачаTimelineEvents([
+    const events = extractIssueTimelineEvents([
       {
         id: "evt-comment-follow-up",
         companyId: "company-1",
-        actorТип: "agent",
+        actorType: "agent",
         actorId: "agent-1",
         action: "issue.comment_added",
-        entityТип: "issue",
+        entityType: "issue",
         entityId: "issue-1",
         agentId: "agent-1",
         runId: "run-1",
@@ -251,13 +251,13 @@ describe("extractЗадачаTimelineEvents", () => {
           followUpRequested: true,
         },
       },
-    ] satisfies АктивностьEvent[]);
+    ] satisfies ActivityEvent[]);
 
     expect(events).toEqual([
       {
         id: "evt-comment-follow-up",
         createdAt: new Date("2026-03-31T12:01:00.000Z"),
-        actorТип: "agent",
+        actorType: "agent",
         actorId: "agent-1",
         runId: "run-1",
         commentId: "comment-1",
@@ -267,14 +267,14 @@ describe("extractЗадачаTimelineEvents", () => {
   });
 
   it("ignores issue updates without visible status, assignee, or workspace transitions", () => {
-    const events = extractЗадачаTimelineEvents([
+    const events = extractIssueTimelineEvents([
       {
         id: "evt-title",
         companyId: "company-1",
-        actorТип: "user",
+        actorType: "user",
         actorId: "local-board",
         action: "issue.updated",
-        entityТип: "issue",
+        entityType: "issue",
         entityId: "issue-1",
         agentId: null,
         runId: null,
@@ -286,7 +286,7 @@ describe("extractЗадачаTimelineEvents", () => {
           },
         },
       },
-    ] satisfies АктивностьEvent[]);
+    ] satisfies ActivityEvent[]);
 
     expect(events).toEqual([]);
   });

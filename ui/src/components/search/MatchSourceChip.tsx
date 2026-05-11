@@ -14,7 +14,7 @@ const chipStyles: Record<MatchSourceChipKind, string> = {
 };
 
 const chipLabels: Record<MatchSourceChipKind, string> = {
-  title: "Название",
+  title: "Title",
   identifier: "Identifier",
   comment: "Comment",
   document: "Doc",
