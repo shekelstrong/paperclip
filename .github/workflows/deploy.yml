@@ -1,0 +1,56 @@
+name: Деплой Paperclip RU
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      
+      - name: Установка зависимостей
+        run: pnpm install --frozen-lockfile
+      
+      - name: Сборка проекта
+        run: |
+          pnpm -r typecheck || true
+          pnpm build || true
+          cd ui && pnpm build || true
+      
+      - name: Деплой на сервер
+        uses: easingthemes/ssh-deploy@v5
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          ARGS: "-rlgoDzvc --delete"
+          SOURCE: "./"
+          REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
+          REMOTE_USER: ${{ secrets.DEPLOY_USER }}
+          TARGET: "/opt/paperclip-ru"
+          EXCLUDE: "/node_modules/, /.git/, /__pycache__/, /.pnpm-store/"
+      
+      - name: Перезапуск Paperclip
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/paperclip-ru
+            pnpm install --frozen-lockfile
+            pnpm -r build || true
+            cd ui && pnpm build || true
+            pkill -f "paperclip" || true
+            nohup pnpm dev > /dev/null 2>&1 &
+            echo "Paperclip RU перезапущен"
