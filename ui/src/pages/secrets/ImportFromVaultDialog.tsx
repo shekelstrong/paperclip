@@ -113,7 +113,7 @@ function statusBadgeLabel(status: RemoteSecretImportCandidate["status"]) {
       return "Conflict";
     case "ready":
     default:
-      return "Готово";
+      return "Ready";
   }
 }
 
@@ -198,7 +198,7 @@ function readableErrorMessage(error: unknown): string {
     return error.message || `Request failed: ${error.status}`;
   }
   if (error instanceof Error) return error.message;
-  return "Unexpected error";
+  return "Неожиданная ошибка";
 }
 
 function apiErrorCode(error: ApiError): string | null {
@@ -970,7 +970,7 @@ function SelectStep(props: SelectStepProps) {
             className="h-6 px-2 text-xs"
             onClick={() => onShowOnlySelectedChange(!showOnlySelected)}
           >
-            {showOnlySelected ? "Show all" : "Show selected"}
+            {showOnlySelected ? "Показать все" : "Show selected"}
           </Button>
         </div>
       )}

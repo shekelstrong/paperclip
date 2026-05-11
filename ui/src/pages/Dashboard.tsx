@@ -50,7 +50,7 @@ export function Dashboard() {
   });
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Панель управления" }]);
+    setBreadcrumbs([{ label: "Панель" }]);
   }, [setBreadcrumbs]);
 
   const { data, isLoading, error } = useQuery({
@@ -177,7 +177,7 @@ export function Dashboard() {
         <EmptyState
           icon={LayoutDashboard}
           message="Welcome to Paperclip. Set up your first company and agent to get started."
-          action="Начать"
+          action="Начать работу"
           onAction={openOnboarding}
         />
       );

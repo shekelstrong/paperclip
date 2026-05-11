@@ -80,7 +80,7 @@ export function Sidebar() {
             <SquarePen className="h-4 w-4 shrink-0" />
             <span className="truncate">New Issue</span>
           </button>
-          <SidebarNavItem to="/dashboard" label="Панель управления" icon={LayoutDashboard} liveCount={liveRunCount} />
+          <SidebarNavItem to="/dashboard" label="Панель" icon={LayoutDashboard} liveCount={liveRunCount} />
           <SidebarNavItem
             to="/inbox"
             label="Входящие"
@@ -103,7 +103,7 @@ export function Sidebar() {
           <SidebarNavItem to="/routines" label="Процедуры" icon={Repeat} />
           <SidebarNavItem to="/goals" label="Цели" icon={Target} />
           {showWorkspacesLink ? (
-            <SidebarNavItem to="/workspaces" label="Рабочие области" icon={GitBranch} />
+            <SidebarNavItem to="/workspaces" label="Области" icon={GitBranch} />
           ) : null}
         </SidebarSection>
 

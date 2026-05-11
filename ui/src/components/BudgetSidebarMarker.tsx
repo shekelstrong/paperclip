@@ -9,8 +9,8 @@ const levelClasses: Record<BudgetSidebarMarkerLevel, string> = {
 };
 
 const defaultTitles: Record<BudgetSidebarMarkerLevel, string> = {
-  healthy: "Budget healthy",
-  warning: "Budget warning",
+  healthy: "Бюджет в норме",
+  warning: "Предупреждение бюджета",
   critical: "Paused by budget",
 };
 

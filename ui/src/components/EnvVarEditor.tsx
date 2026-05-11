@@ -157,7 +157,7 @@ export function EnvVarEditor({
     if (!key || plain.length === 0) return;
 
     const suggested = defaultSecretName(key) || "secret";
-    const name = window.prompt("Secret name", suggested)?.trim();
+    const name = window.prompt("Название секрета", suggested)?.trim();
     if (!name) return;
 
     try {

@@ -570,10 +570,10 @@ export function CompanyEnvironments() {
 
         <div className="border-t border-border/60 pt-4">
           <div className="mb-3 text-sm font-medium">
-            {editingEnvironmentId ? "Edit environment" : "Add environment"}
+            {editingEnvironmentId ? "Edit environment" : "Добавить окружение"}
           </div>
           <div className="space-y-3">
-            <Field label="Имя" hint="Operator-facing name for this execution target.">
+            <Field label="Name" hint="Operator-facing name for this execution target.">
               <input
                 className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                 type="text"

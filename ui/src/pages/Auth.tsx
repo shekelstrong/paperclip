@@ -83,7 +83,7 @@ export function AuthPage() {
           </div>
 
           <h1 className="text-xl font-semibold">
-            {mode === "sign_in" ? "Вход в Paperclip" : "Create your Paperclip account"}
+            {mode === "sign_in" ? "Вход в Paperclip" : "Создайте аккаунт Paperclip"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "sign_in"
@@ -99,7 +99,7 @@ export function AuthPage() {
               event.preventDefault();
               if (mutation.isPending) return;
               if (!canSubmit) {
-                setError("Please fill in all required fields.");
+                setError("Заполните все обязательные поля.");
                 return;
               }
               mutation.mutate();
@@ -155,12 +155,12 @@ export function AuthPage() {
                 ? "Working…"
                 : mode === "sign_in"
                   ? "Войти"
-                  : "Create Account"}
+                  : "Создать аккаунт"}
             </Button>
           </form>
 
           <div className="mt-5 text-sm text-muted-foreground">
-            {mode === "sign_in" ? "Need an account?" : "Already have an account?"}{" "}
+            {mode === "sign_in" ? "Нужен аккаунт?" : "Уже есть аккаунт?"}{" "}
             <button
               type="button"
               className="font-medium text-foreground underline underline-offset-2"
@@ -169,7 +169,7 @@ export function AuthPage() {
                 setMode(mode === "sign_in" ? "sign_up" : "sign_in");
               }}
             >
-              {mode === "sign_in" ? "Create one" : "Войти"}
+              {mode === "sign_in" ? "Создать" : "Войти"}
             </button>
           </div>
         </div>

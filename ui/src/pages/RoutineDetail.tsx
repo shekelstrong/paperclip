@@ -510,7 +510,7 @@ export function RoutineDetail() {
           : {}),
       }),
     onSuccess: async () => {
-      pushToast({ title: "Routine run started", tone: "success" });
+      pushToast({ title: "Запуск процедуры начат", tone: "success" });
       setRunVariablesOpen(false);
       setActiveTab("runs");
       await Promise.all([
@@ -522,7 +522,7 @@ export function RoutineDetail() {
     },
     onError: (error) => {
       pushToast({
-        title: "Routine run failed",
+        title: "Запуск процедуры не удался",
         body: error instanceof Error ? error.message : "Paperclip could not start the routine run.",
         tone: "error",
       });
@@ -533,7 +533,7 @@ export function RoutineDetail() {
     mutationFn: (status: string) => routinesApi.update(routineId!, { status }),
     onSuccess: async (_data, status) => {
       pushToast({
-        title: "Routine saved",
+        title: "Процедура сохранена",
         body: status === "paused" ? "Automation paused." : "Automation enabled.",
         tone: "success",
       });
@@ -734,7 +734,7 @@ export function RoutineDetail() {
     : !routine.assigneeAgentId
       ? "Черновик"
       : automationEnabled
-        ? "Активен"
+        ? "Active"
         : "Приостановлено";
   const automationLabelClassName = routine.status === "archived"
     ? "text-muted-foreground"
@@ -943,7 +943,7 @@ export function RoutineDetail() {
             placeholder="Project"
             noneLabel="No project"
             searchPlaceholder="Search projects..."
-            emptyMessage="No projects found."
+            emptyMessage="Проекты не найдены."
             onChange={(projectId) => {
               if (projectId) trackRecentProject(projectId);
               setEditDraft((current) => ({ ...current, projectId }));
@@ -1144,7 +1144,7 @@ export function RoutineDetail() {
             </div>
             <div className="flex items-center justify-end">
               <Button size="sm" onClick={() => createTrigger.mutate()} disabled={createTrigger.isPending}>
-                {createTrigger.isPending ? "Adding..." : "Add trigger"}
+                {createTrigger.isPending ? "Adding..." : "Добавить триггер"}
               </Button>
             </div>
           </div>

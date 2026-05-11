@@ -1177,7 +1177,7 @@ export function IssueDocumentsSection({
                       onClick={() => deleteDocument.mutate(doc.key)}
                       disabled={deleteDocument.isPending}
                     >
-                      {deleteDocument.isPending ? "Deleting..." : "Удалить"}
+                      {deleteDocument.isPending ? "Deleting..." : "Delete"}
                     </Button>
                   </div>
                 </div>

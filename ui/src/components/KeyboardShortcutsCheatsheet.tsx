@@ -31,7 +31,7 @@ const sections: ShortcutSection[] = [
     title: "Issue detail",
     shortcuts: [
       { keys: ["y"], label: "Quick-archive back to inbox" },
-      { keys: ["g", "i"], label: "Go to inbox" },
+      { keys: ["g", "i"], label: "Перейти к входящим" },
       { keys: ["g", "c"], label: "Focus comment composer" },
     ],
   },

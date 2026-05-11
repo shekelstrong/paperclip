@@ -293,7 +293,7 @@ function NewSkillForm({
             onClick={() => onCreate({ name, slug: slug || null, description: description || null })}
             disabled={isPending || name.trim().length === 0}
           >
-            {isPending ? "Creating..." : "Create skill"}
+            {isPending ? "Creating..." : "Создать навык"}
           </Button>
         </div>
       </div>
@@ -920,7 +920,7 @@ export function CompanySkills() {
     onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Skill import failed",
+        title: "Ошибка импорта навыка",
         body: error instanceof Error ? error.message : "Failed to import skill source.",
       });
     },
@@ -934,14 +934,14 @@ export function CompanySkills() {
       setCreateOpen(false);
       pushToast({
         tone: "success",
-        title: "Skill created",
+        title: "Навык создан",
         body: `${skill.name} is now editable in the Paperclip workspace.`,
       });
     },
     onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Skill creation failed",
+        title: "Ошибка создания навыка",
         body: error instanceof Error ? error.message : "Failed to create skill.",
       });
     },
@@ -1003,14 +1003,14 @@ export function CompanySkills() {
       setEditMode(false);
       pushToast({
         tone: "success",
-        title: "Skill saved",
+        title: "Навык сохранён",
         body: result.path,
       });
     },
     onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Save failed",
+        title: "Ошибка сохранения",
         body: error instanceof Error ? error.message : "Failed to save skill file.",
       });
     },
@@ -1028,14 +1028,14 @@ export function CompanySkills() {
       navigate(skillRoute(skill.id, selectedPath));
       pushToast({
         tone: "success",
-        title: "Skill updated",
+        title: "Навык обновлён",
         body: skill.sourceRef ? `Pinned to ${shortRef(skill.sourceRef)}` : skill.name,
       });
     },
     onError: (error) => {
       pushToast({
         tone: "error",
-        title: "Update failed",
+        title: "Ошибка обновления",
         body: error instanceof Error ? error.message : "Failed to install skill update.",
       });
     },
@@ -1066,7 +1066,7 @@ export function CompanySkills() {
       navigate("/skills", { replace: true });
       pushToast({
         tone: "success",
-        title: "Skill removed",
+        title: "Навык удалён",
         body: `${skill.name} was removed from the company skill library.`,
       });
     },
@@ -1134,7 +1134,7 @@ export function CompanySkills() {
                   onClick={() => deleteSkill.mutate()}
                   disabled={deleteSkill.isPending || !deleteTargetSkillId}
                 >
-                  {deleteSkill.isPending ? "Removing..." : "Remove skill"}
+                  {deleteSkill.isPending ? "Removing..." : "Удалить навык"}
                 </Button>
               </>
             )}
@@ -1215,7 +1215,7 @@ export function CompanySkills() {
               <input
                 value={skillFilter}
                 onChange={(event) => setSkillFilter(event.target.value)}
-                placeholder="Filter skills"
+                placeholder="Фильтр навыков"
                 className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
             </div>

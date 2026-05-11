@@ -137,7 +137,7 @@ export function Agents() {
           <PageTabBar
             items={[
               { value: "all", label: "Все" },
-              { value: "active", label: "Активен" },
+              { value: "active", label: "Active" },
               { value: "paused", label: "Приостановлено" },
               { value: "error", label: "Ошибка" },
             ]}
@@ -216,7 +216,7 @@ export function Agents() {
         <EmptyState
           icon={Bot}
           message="Create your first agent to get started."
-          action="New Agent"
+          action="Новый агент"
           onAction={openNewAgent}
         />
       )}

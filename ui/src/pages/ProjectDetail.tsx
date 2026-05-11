@@ -698,11 +698,11 @@ export function ProjectDetail() {
         <PageTabBar
           items={[
             { value: "list", label: "Задачи" },
-            { value: "overview", label: "Overview" },
+            { value: "overview", label: "Обзор" },
             ...(project.managedByPlugin ? [{ value: "plugin-operations", label: "Plugin operations" }] : []),
-            ...(showWorkspacesTab ? [{ value: "workspaces", label: "Рабочие области" }] : []),
+            ...(showWorkspacesTab ? [{ value: "workspaces", label: "Области" }] : []),
             { value: "configuration", label: "Configuration" },
-            { value: "budget", label: "Budget" },
+            { value: "budget", label: "Бюджет" },
             ...pluginTabItems.map((item) => ({
               value: item.value,
               label: item.label,

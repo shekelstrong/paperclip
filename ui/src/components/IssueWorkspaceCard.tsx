@@ -17,7 +17,7 @@ import { Check, Copy, GitBranch, FolderOpen, Pencil, X } from "lucide-react";
 /* -------------------------------------------------------------------------- */
 
 const EXECUTION_WORKSPACE_OPTIONS = [
-  { value: "shared_workspace", label: "Project default" },
+  { value: "shared_workspace", label: "Проект по умолчанию" },
   { value: "isolated_workspace", label: "New isolated workspace" },
   { value: "reuse_existing", label: "Reuse existing workspace" },
 ] as const;
@@ -117,7 +117,7 @@ function configuredWorkspaceLabel(
         ? "Existing isolated workspace"
         : "Reuse existing workspace";
     default:
-      return "Project default";
+      return "Проект по умолчанию";
   }
 }
 

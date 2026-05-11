@@ -106,7 +106,7 @@ function SidebarAgentItem({
   const pauseResumeDisabledLabel = disabled
     ? "Updating..."
     : isBudgetPaused
-      ? "Budget paused"
+      ? "Бюджет приостановлен"
       : pauseResumeLabel;
 
   return (
@@ -129,7 +129,7 @@ function SidebarAgentItem({
         {(agent.pauseReason === "budget" || runCount > 0) && (
           <span className="ml-auto flex items-center gap-1.5 shrink-0">
             {agent.pauseReason === "budget" ? (
-              <BudgetSidebarMarker title="Agent paused by budget" />
+              <BudgetSidebarMarker title="Агент приостановлен (бюджет)" />
             ) : null}
             {runCount > 0 ? (
               <span className="relative flex h-2 w-2">
@@ -181,7 +181,7 @@ function SidebarAgentItem({
               onPauseResume(agent, isPaused ? "resume" : "pause");
             }}
             disabled={pauseResumeDisabled}
-            title={isBudgetPaused ? "Agent was paused by budget limits" : undefined}
+            title={isBudgetPaused ? "Агент приостановлен из-за лимитов" : undefined}
           >
             {isPaused ? <PlayCircle className="size-4" /> : <PauseCircle className="size-4" />}
             <span>{pauseResumeDisabledLabel}</span>
@@ -322,7 +322,7 @@ export function SidebarAgents() {
         queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agentRouteRef(agent)) }),
       ]);
       pushToast({
-        title: action === "pause" ? "Agent paused" : "Agent resumed",
+        title: action === "pause" ? "Агент приостановлен" : "Агент возобновлён",
         body: agent.name,
         tone: "success",
       });
@@ -348,7 +348,7 @@ export function SidebarAgents() {
       label="Агенты"
       collapsible={{ open, onOpenChange: setOpen }}
       headerAction={{
-        ariaLabel: "New agent",
+        ariaLabel: "Новый агент",
         icon: Plus,
         onClick: openNewAgent,
       }}
@@ -358,7 +358,7 @@ export function SidebarAgents() {
           { type: "item", label: "Browse agents", icon: Users, href: "/agents/all" },
           { type: "separator" },
         ],
-        radioLabel: "Agent sort",
+        radioLabel: "Сортировка агентов",
         radioChoices: AGENT_SORT_CHOICES,
         radioValue: sortMode,
         onRadioValueChange: persistSortMode,

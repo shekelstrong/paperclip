@@ -159,13 +159,13 @@ export function buildRoutineGroups(
   const groups = groupBy(routines, (routine) => routine.assigneeAgentId ?? "__unassigned");
   return Object.keys(groups)
     .sort((left, right) => {
-      const leftLabel = left === "__unassigned" ? "Не назначен" : (agentById.get(left)?.name ?? "Unknown agent");
-      const rightLabel = right === "__unassigned" ? "Не назначен" : (agentById.get(right)?.name ?? "Unknown agent");
+      const leftLabel = left === "__unassigned" ? "Unassigned" : (agentById.get(left)?.name ?? "Unknown agent");
+      const rightLabel = right === "__unassigned" ? "Unassigned" : (agentById.get(right)?.name ?? "Unknown agent");
       return leftLabel.localeCompare(rightLabel);
     })
     .map((key) => ({
       key,
-      label: key === "__unassigned" ? "Не назначен" : (agentById.get(key)?.name ?? "Unknown agent"),
+      label: key === "__unassigned" ? "Unassigned" : (agentById.get(key)?.name ?? "Unknown agent"),
       items: groups[key]!,
     }));
 }
@@ -310,7 +310,7 @@ export function Routines() {
       setAdvancedOpen(false);
       await queryClient.invalidateQueries({ queryKey: queryKeys.routines.list(selectedCompanyId!) });
       pushToast({
-        title: "Routine created",
+        title: "Процедура создана",
         body: routine.assigneeAgentId
           ? "Add the first trigger to turn it into a live workflow."
           : "Draft saved. Add a default agent before enabling automation.",
@@ -378,7 +378,7 @@ export function Routines() {
     },
     onError: (mutationError) => {
       pushToast({
-        title: "Routine run failed",
+        title: "Запуск процедуры не удался",
         body: mutationError instanceof Error ? mutationError.message : "Paperclip could not start the routine run.",
         tone: "error",
       });
@@ -428,7 +428,7 @@ export function Routines() {
   const recentRunsIssueLinkState = useMemo(
     () =>
       createIssueDetailLocationState(
-        "Recent Runs",
+        "Недавние запуски",
         buildRoutinesTabHref("runs"),
         "issues",
       ),
@@ -510,7 +510,7 @@ export function Routines() {
           onValueChange={handleTabChange}
           items={[
             { value: "routines", label: "Процедуры" },
-            { value: "runs", label: "Recent Runs" },
+            { value: "runs", label: "Недавние запуски" },
           ]}
         />
         <TabsContent value="routines" className="space-y-4">
@@ -733,7 +733,7 @@ export function Routines() {
                     placeholder="Project"
                     noneLabel="No project"
                     searchPlaceholder="Search projects..."
-                    emptyMessage="No projects found."
+                    emptyMessage="Проекты не найдены."
                     onChange={(projectId) => {
                       if (projectId) trackRecentProject(projectId);
                       setDraft((current) => ({ ...current, projectId }));

@@ -178,15 +178,15 @@ export function ExecutionWorkspaceCloseDialog({
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div>
                       <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Branch</div>
-                      <div className="font-mono text-xs">{readiness.git.branchName ?? "Неизвестно"}</div>
+                      <div className="font-mono text-xs">{readiness.git.branchName ?? "Unknown"}</div>
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Base ref</div>
-                      <div className="font-mono text-xs">{readiness.git.baseRef ?? "Not set"}</div>
+                      <div className="font-mono text-xs">{readiness.git.baseRef ?? "Не задано"}</div>
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Merged into base</div>
-                      <div>{readiness.git.isMergedIntoBase == null ? "Неизвестно" : readiness.git.isMergedIntoBase ? "Да" : "Нет"}</div>
+                      <div>{readiness.git.isMergedIntoBase == null ? "Unknown" : readiness.git.isMergedIntoBase ? "Yes" : "No"}</div>
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Ahead / behind</div>

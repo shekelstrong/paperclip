@@ -394,7 +394,7 @@ export function PluginManager() {
                           variant="outline"
                           size="icon-sm"
                           className="h-8 w-8"
-                          title={plugin.status === "ready" ? "Отключить" : "Включить"}
+                          title={plugin.status === "ready" ? "Disable" : "Enable"}
                           onClick={() => {
                             if (plugin.status === "ready") {
                               disableMutation.mutate(plugin.id);

@@ -8,7 +8,7 @@ export const PRESET_LABELS: Record<DatePreset, string> = {
   "30d": "Last 30 Days",
   ytd: "Year to Date",
   all: "All Time",
-  custom: "Свой",
+  custom: "Custom",
 };
 
 export const PRESET_KEYS: DatePreset[] = ["mtd", "7d", "30d", "ytd", "all", "custom"];

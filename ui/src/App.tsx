@@ -181,7 +181,7 @@ function OnboardingRoutePage() {
                 : openOnboarding()
             }
           >
-            {matchedCompany ? "Add Agent" : "Start Onboarding"}
+            {matchedCompany ? "Добавить агента" : "Start Onboarding"}
           </Button>
         </div>
       </div>

@@ -18,7 +18,7 @@ export function NotFoundPage({ scope = "global", requestedPrefix }: NotFoundPage
   const { companies, selectedCompany } = useCompany();
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Not Found" }]);
+    setBreadcrumbs([{ label: "Не найдено" }]);
   }, [setBreadcrumbs]);
 
   const fallbackCompany = selectedCompany ?? companies[0] ?? null;
@@ -30,7 +30,7 @@ export function NotFoundPage({ scope = "global", requestedPrefix }: NotFoundPage
   const description =
     scope === "invalid_company_prefix"
       ? `No company matches prefix "${normalizedPrefix ?? "unknown"}".`
-      : "This route does not exist.";
+      : "Этого маршрута не существует.";
 
   return (
     <div className="mx-auto max-w-2xl py-10">

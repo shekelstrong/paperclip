@@ -60,9 +60,9 @@ function resolveActorLabel(args: {
     return agentMap?.get(agentId)?.name ?? agentId.slice(0, 8);
   }
   if (userId) {
-    return formatAssigneeUserLabel(userId, currentUserId, userLabelMap) ?? "Board";
+    return formatAssigneeUserLabel(userId, currentUserId, userLabelMap) ?? "Совет";
   }
-  return "Неизвестно";
+  return "Unknown";
 }
 
 function statusLabel(status: IssueThreadInteraction["status"]) {
@@ -761,7 +761,7 @@ function AskUserQuestionsCard({
                 </div>
                 <TaskField
                   label={question.selectionMode === "single" ? "Pick" : "Pick many"}
-                  value={question.required ? "Обязательно" : "Опционально"}
+                  value={question.required ? "Required" : "Optional"}
                   tone="subtle"
                 />
               </div>
@@ -1140,7 +1140,7 @@ function RequestConfirmationCard({
                 setRejecting((current) => !current);
               }}
             >
-              {interaction.payload.rejectLabel ?? "Отклонить"}
+              {interaction.payload.rejectLabel ?? "Decline"}
             </Button>
           </div>
 
@@ -1184,7 +1184,7 @@ function RequestConfirmationCard({
                       Saving...
                     </>
                   ) : (
-                    interaction.payload.rejectLabel ?? "Отклонить"
+                    interaction.payload.rejectLabel ?? "Decline"
                   )}
                 </Button>
               </div>

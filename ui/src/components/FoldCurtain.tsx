@@ -60,8 +60,8 @@ export function FoldCurtain({
   children,
   collapsedHeight: explicitCollapsedHeight,
   activationBuffer = 120,
-  moreLabel = "Show more",
-  lessLabel = "Show less",
+  moreLabel = "Показать больше",
+  lessLabel = "Показать меньше",
   className,
   contentClassName,
 }: FoldCurtainProps) {

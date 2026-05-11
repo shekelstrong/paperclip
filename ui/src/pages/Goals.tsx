@@ -41,8 +41,8 @@ export function Goals() {
       {goals && goals.length === 0 && (
         <EmptyState
           icon={Target}
-          message="No goals yet."
-          action="Add Goal"
+          message="Целей пока нет."
+          action="Добавить цель"
           onAction={() => openNewGoal()}
         />
       )}

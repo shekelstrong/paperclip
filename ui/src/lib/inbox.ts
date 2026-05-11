@@ -816,7 +816,7 @@ const inboxWorkItemKindOrder: InboxWorkItem["kind"][] = [
 
 const inboxWorkItemKindLabels: Record<InboxWorkItem["kind"], string> = {
   issue: "Задачи",
-  approval: "Approvals",
+  approval: "Согласования",
   failed_run: "Failed runs",
   join_request: "Join requests",
 };
@@ -844,7 +844,7 @@ function resolveIssueAssigneeGroup(
     };
   }
 
-  return { key: "assignee:none", label: "Не назначен" };
+  return { key: "assignee:none", label: "Unassigned" };
 }
 
 function resolveIssueProjectGroup(

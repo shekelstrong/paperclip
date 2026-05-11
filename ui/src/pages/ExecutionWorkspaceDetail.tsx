@@ -455,7 +455,7 @@ function ExecutionWorkspaceRoutinesList({
     },
     onError: (mutationError) => {
       pushToast({
-        title: "Routine run failed",
+        title: "Запуск процедуры не удался",
         body: mutationError instanceof Error ? mutationError.message : "Paperclip could not start the routine run.",
         tone: "error",
       });
@@ -610,7 +610,7 @@ export function ExecutionWorkspaceDetail() {
     const crumbs = [
       { label: "Проекты", href: "/projects" },
       ...(project ? [{ label: project.name, href: `/projects/${projectRef}` }] : []),
-      ...(project ? [{ label: "Рабочие области", href: `/projects/${projectRef}/workspaces` }] : []),
+      ...(project ? [{ label: "Области", href: `/projects/${projectRef}/workspaces` }] : []),
       { label: workspace.name },
     ];
     setBreadcrumbs(crumbs);
@@ -790,7 +790,7 @@ export function ExecutionWorkspaceDetail() {
               <div className="space-y-6">
                 <div className="space-y-4">
                   <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">General</div>
-                  <Field label="Workspace name">
+                  <Field label="Название области">
                     <Input
                       value={form.name}
                       onChange={(event) => setForm((current) => current ? { ...current, name: event.target.value } : current)}
@@ -823,7 +823,7 @@ export function ExecutionWorkspaceDetail() {
                     </Field>
                   </div>
 
-                  <Field label="Repo URL">
+                  <Field label="URL репозитория">
                     <Input
                       value={form.repoUrl}
                       onChange={(event) => setForm((current) => current ? { ...current, repoUrl: event.target.value } : current)}
@@ -836,7 +836,7 @@ export function ExecutionWorkspaceDetail() {
 
                 <div className="space-y-4">
                   <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Paths</div>
-                  <Field label="Working directory">
+                  <Field label="Рабочая директория">
                     <Input
                       className="font-mono"
                       value={form.cwd}
@@ -1044,7 +1044,7 @@ export function ExecutionWorkspaceDetail() {
               <DetailRow label="Provider ref">
                 {workspace.providerRef ? <MonoValue value={workspace.providerRef} copy /> : "Нет"}
               </DetailRow>
-              <DetailRow label="Repo URL">
+              <DetailRow label="URL репозитория">
                 {workspace.repoUrl && isSafeExternalUrl(workspace.repoUrl) ? (
                   <div className="inline-flex max-w-full items-start gap-2">
                     <a href={workspace.repoUrl} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1 break-all hover:underline">

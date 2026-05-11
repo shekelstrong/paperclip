@@ -156,13 +156,13 @@ function PropertyRow({ label, children }: { label: string; children: React.React
 
 const ISSUE_THINKING_EFFORT_OPTIONS = {
   claude_local: [
-    { value: "", label: "По умолчанию" },
+    { value: "", label: "Default" },
     { value: "low", label: "Low" },
     { value: "medium", label: "Medium" },
     { value: "high", label: "High" },
   ],
   codex_local: [
-    { value: "", label: "По умолчанию" },
+    { value: "", label: "Default" },
     { value: "minimal", label: "Minimal" },
     { value: "low", label: "Low" },
     { value: "medium", label: "Medium" },
@@ -170,7 +170,7 @@ const ISSUE_THINKING_EFFORT_OPTIONS = {
     { value: "xhigh", label: "X-High" },
   ],
   opencode_local: [
-    { value: "", label: "По умолчанию" },
+    { value: "", label: "Default" },
     { value: "minimal", label: "Minimal" },
     { value: "low", label: "Low" },
     { value: "medium", label: "Medium" },
@@ -689,7 +689,7 @@ export function IssueProperties({
               )}
               onClick={() => setAssigneeOverrideLane(lane)}
             >
-              {lane === "primary" ? "Primary" : lane === "cheap" ? "Cheap" : "Свой"}
+              {lane === "primary" ? "Primary" : lane === "cheap" ? "Cheap" : "Custom"}
             </button>
           ))}
         </div>
@@ -960,7 +960,7 @@ export function IssueProperties({
     scheduledRetry?.scheduledRetryReason === "max_turns_continuation";
   const scheduledRetryRelativeLabel = (() => {
     if (!scheduledRetryRelative) return "Pending schedule";
-    const action = scheduledRetryIsContinuation ? "Continuation" : "Повторить";
+    const action = scheduledRetryIsContinuation ? "Continuation" : "Retry";
     if (scheduledRetryRelative === "now") return `${action} due now`;
     return `${action} ${scheduledRetryRelative}`;
   })();
@@ -1187,8 +1187,8 @@ export function IssueProperties({
       type="button"
       className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent/50 transition-colors text-muted-foreground hover:text-foreground"
       onClick={() => setLabelsOpen(true)}
-      aria-label="Add label"
-      title="Add label"
+      aria-label="Добавить метку"
+      title="Добавить метку"
     >
       <Plus className="h-3 w-3" />
     </button>
@@ -1281,7 +1281,7 @@ export function IssueProperties({
             id: `user:${currentUserId}`,
             kind: "user" as const,
             userId: currentUserId,
-            label: "Assign to me",
+            label: "Назначить мне",
             searchText: userLabel(currentUserId) ?? "",
           }]
         : []),
@@ -1290,7 +1290,7 @@ export function IssueProperties({
             id: `user:${issue.createdByUserId}`,
             kind: "user" as const,
             userId: issue.createdByUserId,
-            label: creatorUserLabel ? `Assign to ${creatorUserLabel}` : "Assign to requester",
+            label: creatorUserLabel ? `Assign to ${creatorUserLabel}` : "Назначить заявителю",
             searchText: creatorUserLabel ?? "requester",
           }]
         : []),

@@ -376,7 +376,7 @@ export function Secrets() {
   const [vaultError, setVaultError] = useState<string | null>(null);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Secrets" }]);
+    setBreadcrumbs([{ label: "Секреты" }]);
   }, [setBreadcrumbs]);
 
   const secretsQuery = useQuery({
@@ -528,7 +528,7 @@ export function Secrets() {
       return secretsApi.create(selectedCompanyId!, input);
     },
     onSuccess: (created) => {
-      pushToast({ title: "Secret created", body: created.name, tone: "success" });
+      pushToast({ title: "Секрет создан", body: created.name, tone: "success" });
       setCreateOpen(false);
       setCreateForm({
         name: "",
@@ -605,14 +605,14 @@ export function Secrets() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => secretsApi.remove(id),
     onSuccess: (_response, id) => {
-      pushToast({ title: "Secret deleted", tone: "info" });
+      pushToast({ title: "Секрет удалён", tone: "info" });
       setDeleteConfirm(null);
       if (selectedSecretId === id) setSelectedSecretId(null);
       invalidateAll([id]);
     },
     onError: (error) => {
       pushToast({
-        title: "Delete failed",
+        title: "Ошибка удаления",
         body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
@@ -765,7 +765,7 @@ export function Secrets() {
       >
         <PageTabBar
           items={[
-            { value: "secrets", label: "Secrets" },
+            { value: "secrets", label: "Секреты" },
             { value: "vaults", label: "Provider vaults" },
           ]}
           align="start"
@@ -1020,7 +1020,7 @@ export function Secrets() {
                 <div className="border-b border-border px-4">
                   <PageTabBar
                     items={[
-                      { value: "details", label: "Details" },
+                      { value: "details", label: "Детали" },
                       { value: "usage", label: usageQuery.data ? `Usage (${usageQuery.data.bindings.length})` : "Usage" },
                       { value: "events", label: "Access events" },
                     ]}
@@ -1279,7 +1279,7 @@ export function Secrets() {
               }
             >
               {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {createMode === "managed" ? "Create secret" : "Link reference"}
+              {createMode === "managed" ? "Создать секрет" : "Link reference"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1555,7 +1555,7 @@ function SecretsFiltersPopover({
   };
 
   const statusOptions: Array<{ value: SecretStatus | "all"; label: string }> = [
-    { value: "active", label: "Активен" },
+    { value: "active", label: "Active" },
     { value: "all", label: "All statuses" },
     { value: "disabled", label: "Disabled" },
     { value: "archived", label: "Архивировано" },

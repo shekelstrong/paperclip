@@ -49,7 +49,7 @@ const inviteRoleOptions = [
 const inviteHistory = [
   {
     id: "invite-active",
-    state: "Активен",
+    state: "Active",
     humanRole: "operator",
     invitedBy: "Board User 25",
     email: "board25@paperclip.local",
@@ -251,7 +251,7 @@ function InlineAuthPreview({
     <div className="space-y-5">
       <div>
         <h3 className="text-lg font-semibold text-zinc-100">
-          {mode === "sign_up" ? "Create your account" : "Sign in to continue"}
+          {mode === "sign_up" ? "Создайте аккаунт" : "Sign in to continue"}
         </h3>
         <p className="mt-1 text-sm text-zinc-400">
           {mode === "sign_up"
@@ -460,7 +460,7 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
               <span className="text-sm font-medium">Paperclip</span>
             </div>
             <h3 className="text-xl font-semibold">
-              {mode === "sign_in" ? "Вход в Paperclip" : "Create your Paperclip account"}
+              {mode === "sign_in" ? "Вход в Paperclip" : "Создайте аккаунт Paperclip"}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               {mode === "sign_in"
@@ -496,13 +496,13 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
               </label>
               {error ? <p className="text-xs text-destructive">{error}</p> : null}
               <Button type="button" className="w-full">
-                {mode === "sign_in" ? "Войти" : "Create Account"}
+                {mode === "sign_in" ? "Войти" : "Создать аккаунт"}
               </Button>
             </div>
             <div className="mt-5 text-sm text-muted-foreground">
-              {mode === "sign_in" ? "Need an account?" : "Already have an account?"}{" "}
+              {mode === "sign_in" ? "Нужен аккаунт?" : "Уже есть аккаунт?"}{" "}
               <span className="font-medium text-foreground underline underline-offset-2">
-                {mode === "sign_in" ? "Create one" : "Войти"}
+                {mode === "sign_in" ? "Создать" : "Войти"}
               </span>
             </div>
           </div>
@@ -857,7 +857,7 @@ export function InviteUxLab() {
               <InviteSummaryPanel
                 title="Join Acme Robotics"
                 description="Review the invite details, then submit the agent information below to start the join request."
-                requestedAccess="Agent join request"
+                requestedAccess="Заявка агента"
               />
             }
             right={<AgentRequestPreview />}

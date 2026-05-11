@@ -14,7 +14,7 @@ export function DashboardLive() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Панель управления", href: "/dashboard" },
+      { label: "Панель", href: "/dashboard" },
       { label: "Live runs" },
     ]);
   }, [setBreadcrumbs]);

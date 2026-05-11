@@ -2,7 +2,7 @@
  * Adapter metadata utilities — built on top of the display registry and UI adapter list.
  *
  * This module bridges the static display metadata with the dynamic adapter registry.
- * "Coming soon" status is derived from the display registry's `comingSoon` flag.
+ * "Скоро" status is derived from the display registry's `comingSoon` flag.
  * "Hidden" status comes from the disabled-adapter store (server-side toggle).
  */
 import type { UIAdapterModule } from "./types";

@@ -185,7 +185,7 @@ export function DesignGuide() {
     "This is an editable description. Click to edit it — the textarea auto-sizes to fit the content without layout shift."
   );
   const [filters, setFilters] = useState<FilterValue[]>([
-    { key: "status", label: "Статус", value: "Активен" },
+    { key: "status", label: "Статус", value: "Active" },
     { key: "priority", label: "Приоритет", value: "High" },
   ]);
 
@@ -440,7 +440,7 @@ export function DesignGuide() {
           </div>
         </SubSection>
 
-        <SubSection title="Agent status dots">
+        <SubSection title="Индикаторы статуса">
           <div className="flex items-center gap-4 flex-wrap">
             {(["running", "active", "paused", "error", "archived"] as const).map((label) => (
               <div key={label} className="flex items-center gap-2">
@@ -559,7 +559,7 @@ export function DesignGuide() {
           <SubSection title="Default size">
             <Select value={selectValue} onValueChange={setSelectValue}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select status" />
+                <SelectValue placeholder="Выбрать статус" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="backlog">Backlog</SelectItem>
@@ -784,8 +784,8 @@ export function DesignGuide() {
 
         <SubSection title="Metric Cards">
           <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <MetricCard icon={Bot} value={12} label="Active Agents" description="+3 this week" />
-            <MetricCard icon={CircleDot} value={48} label="Open Issues" />
+            <MetricCard icon={Bot} value={12} label="Активные агенты" description="+3 this week" />
+            <MetricCard icon={CircleDot} value={48} label="Открытые задачи" />
             <MetricCard icon={DollarSign} value="$1,234" label="Monthly Cost" description="Under budget" />
             <MetricCard icon={Zap} value="99.9%" label="Uptime" />
           </div>
@@ -913,7 +913,7 @@ export function DesignGuide() {
             size="sm"
             onClick={() =>
               setFilters([
-                { key: "status", label: "Статус", value: "Активен" },
+                { key: "status", label: "Статус", value: "Active" },
                 { key: "priority", label: "Приоритет", value: "High" },
               ])
             }
@@ -1298,14 +1298,14 @@ export function DesignGuide() {
             ["LayoutDashboard", LayoutDashboard],
             ["Bot", Bot],
             ["DollarSign", DollarSign],
-            ["History", History],
+            ["История", History],
             ["Поиск", Search],
             ["Plus", Plus],
             ["Trash2", Trash2],
             ["Настройки", Settings],
             ["User", User],
             ["Mail", Mail],
-            ["Загрузить", Upload],
+            ["Upload", Upload],
             ["Zap", Zap],
           ].map(([name, Icon]) => {
             const LucideIcon = Icon as React.FC<{ className?: string }>;

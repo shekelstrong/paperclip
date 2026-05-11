@@ -33,8 +33,8 @@ const IDENTIFIER_PATTERN = /^[A-Z]+-\d+$/;
 const SCOPE_LABELS: Record<CompanySearchScope, string> = {
   all: "Все",
   issues: "Задачи",
-  comments: "Comments",
-  documents: "Documents",
+  comments: "Комментарии",
+  documents: "Документы",
   agents: "Агенты",
   projects: "Проекты",
 };
@@ -45,8 +45,8 @@ const SUBGROUP_ORDER: SubGroupKey[] = ["issues", "comments", "documents", "agent
 
 const SUBGROUP_LABELS: Record<SubGroupKey, string> = {
   issues: "Задачи",
-  comments: "Comments",
-  documents: "Documents",
+  comments: "Комментарии",
+  documents: "Документы",
   agents: "Агенты",
   projects: "Проекты",
 };
@@ -501,7 +501,7 @@ function SearchTabContent({
         <AlertTriangle className="h-10 w-10 text-destructive" aria-hidden />
         <div className="text-base font-semibold">Couldn’t run that search</div>
         <p className="text-sm text-muted-foreground">
-          {status ? `The server returned ${status}.` : "The request failed."} Your input and filters are still here, so
+          {status ? `The server returned ${status}.` : "Запрос не выполнен."} Your input and filters are still here, so
           you can retry or fall back to the Issues filter.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2">

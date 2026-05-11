@@ -399,7 +399,7 @@ export function RoutineRunVariablesDialog({
                 placeholder="Project"
                 noneLabel="No project"
                 searchPlaceholder="Search projects..."
-                emptyMessage="No projects found."
+                emptyMessage="Проекты не найдены."
                 disablePortal
                 openOnFocus={false}
                 onChange={(projectId) => {

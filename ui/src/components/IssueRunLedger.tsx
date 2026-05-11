@@ -339,7 +339,7 @@ function lastUsefulActionLabel(run: LedgerRun) {
   }
   if (run.livenessState === "empty_response") return "No useful output";
   if (!run.livenessState) return "Unavailable";
-  return "None recorded";
+  return "Не записано";
 }
 
 function continuationLabel(run: LedgerRun) {

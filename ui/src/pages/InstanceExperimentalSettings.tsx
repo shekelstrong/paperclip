@@ -110,7 +110,7 @@ function RecoveryPreviewDialog({
             Enable only
           </Button>
           <Button onClick={onEnableAndRun} disabled={isPending || !preview}>
-            {count > 0 ? `Enable and create ${count}` : "Включить"}
+            {count > 0 ? `Enable and create ${count}` : "Enable"}
           </Button>
         </DialogFooter>
       </DialogContent>

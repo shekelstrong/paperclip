@@ -519,7 +519,7 @@ function RevisionPreview({
     },
     {
       key: "assigneeAgentId",
-      label: "Default agent",
+      label: "Агент по умолчанию",
       value: resolveAgentName(snapshot.assigneeAgentId, agents),
       differs: !!currentSnapshot && currentSnapshot.assigneeAgentId !== snapshot.assigneeAgentId,
     },
@@ -950,7 +950,7 @@ function getActorLabel(revision: RoutineRevision): string {
 }
 
 function resolveAgentName(agentId: string | null, lookup: AgentLookup) {
-  if (!agentId) return "Не назначен";
+  if (!agentId) return "Unassigned";
   return lookup.get(agentId)?.name ?? agentId;
 }
 
@@ -1022,7 +1022,7 @@ function computeFieldChanges(
   compareScalar("priority", "Приоритет", oldRoutine.priority, newRoutine.priority);
   compareScalar(
     "assigneeAgentId",
-    "Default agent",
+    "Агент по умолчанию",
     resolveAgentName(oldRoutine.assigneeAgentId, agents),
     resolveAgentName(newRoutine.assigneeAgentId, agents),
   );

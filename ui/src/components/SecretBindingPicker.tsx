@@ -203,7 +203,7 @@ export function SecretBindingPicker({
           size="sm"
           onClick={() => setCreateOpen(true)}
           disabled={disabled || !selectedCompanyId}
-          aria-label="Create secret"
+          aria-label="Создать секрет"
         >
           <Plus className="h-3.5 w-3.5" />
         </Button>

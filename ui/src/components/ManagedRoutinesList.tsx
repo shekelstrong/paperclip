@@ -166,7 +166,7 @@ export function ManagedRoutinesList({
                       disabled={resettingRoutineKey === routine.key}
                       onClick={() => onReset(routine)}
                     >
-                      {resettingRoutineKey === routine.key ? "Resetting..." : "Сбросить"}
+                      {resettingRoutineKey === routine.key ? "Resetting..." : "Reset"}
                     </Button>
                   ) : null}
                 </span>

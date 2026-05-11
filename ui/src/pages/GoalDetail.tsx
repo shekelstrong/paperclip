@@ -39,7 +39,7 @@ export function GoalPropertiesToggleButton({
         panelVisible ? "opacity-0 pointer-events-none w-0 overflow-hidden" : "opacity-100",
       )}
       onClick={onShowProperties}
-      title="Show properties"
+      title="Показать свойства"
     >
       <SlidersHorizontal className="h-4 w-4" />
     </Button>
@@ -119,7 +119,7 @@ export function GoalDetail() {
   useEffect(() => {
     setBreadcrumbs([
       { label: "Цели", href: "/goals" },
-      { label: goal?.title ?? goalId ?? "Goal" }
+      { label: goal?.title ?? goalId ?? "Цель" }
     ]);
   }, [setBreadcrumbs, goal, goalId]);
 

@@ -30,7 +30,7 @@ const levelLabels: Record<string, string> = {
   company: "Компания",
   team: "Team",
   agent: "Агент",
-  task: "Task",
+  task: "Задача",
 };
 
 export function NewGoalDialog() {

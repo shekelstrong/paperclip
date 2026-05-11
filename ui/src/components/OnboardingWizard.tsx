@@ -634,7 +634,7 @@ export function OnboardingWizard() {
                   [
                     { step: 1 as Step, label: "Компания", icon: Building2 },
                     { step: 2 as Step, label: "Агент", icon: Bot },
-                    { step: 3 as Step, label: "Task", icon: ListTodo },
+                    { step: 3 as Step, label: "Задача", icon: ListTodo },
                     { step: 4 as Step, label: "Launch", icon: Rocket }
                   ] as const
                 ).map(({ step: s, label, icon: Icon }) => (
@@ -830,7 +830,7 @@ export function OnboardingWizard() {
                             <span className="font-medium">{opt.label}</span>
                             <span className="text-muted-foreground text-[10px]">
                               {opt.comingSoon
-                                ? opt.disabledLabel ?? "Coming soon"
+                                ? opt.disabledLabel ?? "Скоро"
                                 : opt.description}
                             </span>
                           </button>
@@ -865,7 +865,7 @@ export function OnboardingWizard() {
                                   : model ||
                                     (adapterType === "opencode_local"
                                       ? "Select model (required)"
-                                      : "По умолчанию")}
+                                      : "Default")}
                               </span>
                               <ChevronDown className="h-3 w-3 text-muted-foreground" />
                             </button>

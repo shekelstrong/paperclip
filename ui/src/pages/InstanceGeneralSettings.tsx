@@ -120,15 +120,15 @@ export function InstanceGeneralSettings() {
           <div className="grid gap-3 md:grid-cols-3">
             <StatusBox
               label="Auth readiness"
-              value={healthQuery.data?.authReady ? "Готово" : "Not ready"}
+              value={healthQuery.data?.authReady ? "Ready" : "Not ready"}
             />
             <StatusBox
               label="Bootstrap status"
-              value={healthQuery.data?.bootstrapStatus === "bootstrap_pending" ? "Setup required" : "Готово"}
+              value={healthQuery.data?.bootstrapStatus === "bootstrap_pending" ? "Setup required" : "Ready"}
             />
             <StatusBox
               label="Bootstrap invite"
-              value={healthQuery.data?.bootstrapInviteActive ? "Активен" : "Нет"}
+              value={healthQuery.data?.bootstrapInviteActive ? "Active" : "Нет"}
             />
           </div>
         </div>

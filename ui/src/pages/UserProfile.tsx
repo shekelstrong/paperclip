@@ -62,7 +62,7 @@ function WindowColumn({ stats }: { stats: UserProfileWindowStats }) {
       <div className="grid grid-cols-2 gap-x-5 gap-y-3">
         <Metric value={formatNumber(stats.touchedIssues)} label="Touched" />
         <Metric value={formatNumber(stats.completedIssues)} label="Завершено" />
-        <Metric value={formatNumber(stats.commentCount)} label="Comments" />
+        <Metric value={formatNumber(stats.commentCount)} label="Комментарии" />
         <Metric value={formatNumber(stats.activityCount)} label="Actions" />
       </div>
 
@@ -283,7 +283,7 @@ export function UserProfile() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <HeroStat label="All-time tokens" value={formatTokens(allTimeTokens)} hint={formatCents(allTime?.costCents ?? 0) + " spent"} />
+          <HeroStat label="Токены за всё время" value={formatTokens(allTimeTokens)} hint={formatCents(allTime?.costCents ?? 0) + " spent"} />
           <HeroStat label="Завершено" value={formatNumber(allTime?.completedIssues ?? 0)} hint={allTime ? `${completionRate(allTime)} rate` : undefined} />
           <HeroStat label="Open assigned" value={formatNumber(allTime?.assignedOpenIssues ?? 0)} hint={`${formatNumber(allTime?.createdIssues ?? 0)} created`} />
           <HeroStat label="7-day actions" value={formatNumber(last7?.activityCount ?? 0)} hint={`${formatNumber(last7?.commentCount ?? 0)} comments`} />
