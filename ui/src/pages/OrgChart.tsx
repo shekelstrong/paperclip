@@ -194,7 +194,7 @@ export function OrgChart() {
   }, [agents]);
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Org Chart" }]);
+    setBreadcrumbs([{ label: "Организационная структура" }]);
   }, [setBreadcrumbs]);
 
   // Layout computation

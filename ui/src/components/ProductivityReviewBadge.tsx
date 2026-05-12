@@ -13,8 +13,8 @@ const TRIGGER_LABELS: Record<string, string> = {
 
 const REVIEW_STATUS_LABELS: Record<string, string> = {
   todo: "Open",
-  in_progress: "In progress",
-  in_review: "In review",
+  in_progress: "В работе",
+  in_review: "На ревью",
   blocked: "Blocked",
   backlog: "Open",
 };
@@ -22,8 +22,8 @@ const REVIEW_STATUS_LABELS: Record<string, string> = {
 export function productivityReviewTriggerLabel(
   trigger: IssueProductivityReview["trigger"],
 ): string {
-  if (!trigger) return "Productivity review";
-  return TRIGGER_LABELS[trigger] ?? "Productivity review";
+  if (!trigger) return "Обзор продуктивности";
+  return TRIGGER_LABELS[trigger] ?? "Обзор продуктивности";
 }
 
 export function ProductivityReviewBadge({

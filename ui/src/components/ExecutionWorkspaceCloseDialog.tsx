@@ -45,7 +45,7 @@ export function ExecutionWorkspaceCloseDialog({
 }: ExecutionWorkspaceCloseDialogProps) {
   const queryClient = useQueryClient();
   const { pushToast } = useToastActions();
-  const actionLabel = currentStatus === "cleanup_failed" ? "Retry close" : "Close workspace";
+  const actionLabel = currentStatus === "cleanup_failed" ? "Повторить закрытие" : "Закрыть рабочее пространство";
 
   const readinessQuery = useQuery({
     queryKey: queryKeys.executionWorkspaces.closeReadiness(workspaceId),
@@ -68,7 +68,7 @@ export function ExecutionWorkspaceCloseDialog({
     onError: (error) => {
       pushToast({
         title: "Failed to close workspace",
-        body: error instanceof Error ? error.message : "Unknown error",
+        body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
     },

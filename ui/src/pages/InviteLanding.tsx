@@ -560,8 +560,8 @@ export function InviteLandingPage() {
                   {showsAgentForm
                     ? "Review the invite details, then submit the agent information below to start the join request."
                     : requiresHumanAccount
-                      ? "Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email."
-                      : "Your account is ready. Review the invite details, then accept it to continue."}
+                      ? "Сначала создайте аккаунт Paperclip. Если он уже есть, переключитесь на вход и продолжите приглашение с тем же email."
+                      : "Ваш аккаунт готов. Просмотрите детали приглашения, затем примите его, чтобы продолжить."}
                 </p>
               </div>
             </div>

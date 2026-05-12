@@ -250,13 +250,13 @@ export function CompanyEnvironments() {
         [environmentId]: {
           ok: false,
           driver: failedEnvironment?.driver ?? "local",
-          summary: error instanceof Error ? error.message : "Environment probe failed.",
+          summary: error instanceof Error ? error.message : "Проверка окружения не удалась.",
           details: null,
         },
       }));
       pushToast({
         title: "Environment probe failed",
-        body: error instanceof Error ? error.message : "Environment probe failed.",
+        body: error instanceof Error ? error.message : "Проверка окружения не удалась.",
         tone: "error",
       });
     },
@@ -277,7 +277,7 @@ export function CompanyEnvironments() {
     onError: (error) => {
       pushToast({
         title: "Draft probe failed",
-        body: error instanceof Error ? error.message : "Environment probe failed.",
+        body: error instanceof Error ? error.message : "Проверка окружения не удалась.",
         tone: "error",
       });
     },

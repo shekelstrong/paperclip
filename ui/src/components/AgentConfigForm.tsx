@@ -229,7 +229,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
   });
   const createSecret = useMutation({
     mutationFn: (input: { name: string; value: string }) => {
-      if (!selectedCompanyId) throw new Error("Select a company to create secrets");
+      if (!selectedCompanyId) throw new Error("Выберите компанию для создания секретов");
       return secretsApi.create(selectedCompanyId, input);
     },
     onSuccess: () => {
@@ -240,7 +240,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
 
   const uploadMarkdownImage = useMutation({
     mutationFn: async ({ file, namespace }: { file: File; namespace: string }) => {
-      if (!selectedCompanyId) throw new Error("Select a company to upload images");
+      if (!selectedCompanyId) throw new Error("Выберите компанию для загрузки изображений");
       return assetsApi.uploadImage(selectedCompanyId, file, namespace);
     },
   });
@@ -728,7 +728,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                 placeholder="e.g. VP of Engineering"
               />
             </Field>
-            <Field label="Reports to" hint={help.reportsTo}>
+            <Field label="Подчиняется" hint={help.reportsTo}>
               <ReportsToPicker
                 agents={companyAgents}
                 value={eff("identity", "reportsTo", props.agent.reportsTo ?? null)}
@@ -1185,7 +1185,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
               number={val!.intervalSec}
               onNumberChange={(v) => set!({ intervalSec: v })}
               numberLabel="sec"
-              numberPrefix="Run heartbeat every"
+              numberPrefix="Запускать heartbeat каждые"
               numberHint={help.intervalSec}
               showNumber={val!.heartbeatEnabled}
             />
@@ -1207,7 +1207,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                 number={eff("heartbeat", "intervalSec", Number(heartbeat.intervalSec ?? 300))}
                 onNumberChange={(v) => mark("heartbeat", "intervalSec", v)}
                 numberLabel="sec"
-                numberPrefix="Run heartbeat every"
+                numberPrefix="Запускать heartbeat каждые"
                 numberHint={help.intervalSec}
                 showNumber={eff("heartbeat", "enabled", heartbeat.enabled === true)}
               />
@@ -1530,7 +1530,7 @@ function ModelDropdown({
               {selected
                 ? selected.label
                 : value
-                  || (allowDefault ? (defaultLabel ?? "Default") : required ? "Select model (required)" : "Выбрать модель")}
+                  || (allowDefault ? (defaultLabel ?? "Default") : required ? "Выберите модель (обязательно)" : "Выбрать модель")}
             </span>
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
@@ -1715,7 +1715,7 @@ function ModelDropdown({
                 <p className="text-xs text-muted-foreground">
                   {onDetectModel
                     ? (emptyDetectHint ?? "No model detected yet. Enter a provider/model manually.")
-                    : "No models found."}
+                    : "Модели не найдены."}
                 </p>
               </div>
             )}

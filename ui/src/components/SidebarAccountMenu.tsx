@@ -239,7 +239,7 @@ export function SidebarAccountMenu({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-medium text-foreground">
-                      {signOutMutation.isPending ? "Signing out..." : "Sign out"}
+                      {signOutMutation.isPending ? "Выход..." : "Sign out"}
                     </span>
                     <span className="block text-xs text-muted-foreground">
                       End this browser session.

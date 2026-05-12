@@ -247,7 +247,7 @@ const priorities = [
 const EXECUTION_WORKSPACE_MODES = [
   { value: "shared_workspace", label: "Проект по умолчанию" },
   { value: "isolated_workspace", label: "Новая изолированная область" },
-  { value: "reuse_existing", label: "Reuse existing workspace" },
+  { value: "reuse_existing", label: "Повторно использовать рабочее пространство" },
 ] as const;
 
 function defaultProjectWorkspaceIdForProject(project: { workspaces?: Array<{ id: string; isPrimary: boolean }>; executionWorkspacePolicy?: { defaultProjectWorkspaceId?: string | null } | null } | null | undefined) {
@@ -607,7 +607,7 @@ export function NewIssueDialog() {
 
   const uploadDescriptionImage = useMutation({
     mutationFn: async (file: File) => {
-      if (!effectiveCompanyId) throw new Error("No company selected");
+      if (!effectiveCompanyId) throw new Error("Компания не выбрана");
       return assetsApi.uploadImage(effectiveCompanyId, file, "issues/drafts");
     },
   });
@@ -1340,7 +1340,7 @@ export function NewIssueDialog() {
                 placeholder="Assignee"
                 disablePortal
                 noneLabel="Нет назначенного"
-                searchPlaceholder="Search assignees..."
+                searchPlaceholder="Поиск исполнителей..."
                 emptyMessage="Назначенные не найдены."
                 onChange={(value) => {
                   const nextAssignee = parseAssigneeValue(value);
@@ -1396,8 +1396,8 @@ export function NewIssueDialog() {
                 placeholder="Project"
                 disablePortal
                 noneLabel="Нет проекта"
-                searchPlaceholder="Search projects..."
-                emptyMessage="No projects found."
+                searchPlaceholder="Поиск проектов..."
+                emptyMessage="Проекты не найдены."
                 onChange={handleProjectChange}
                 onConfirm={() => {
                   descriptionEditorRef.current?.focus();
@@ -1698,8 +1698,8 @@ export function NewIssueDialog() {
                       placeholder="Модель по умолчанию"
                       disablePortal
                       noneLabel="Модель по умолчанию"
-                      searchPlaceholder="Search models..."
-                      emptyMessage="No models found."
+                      searchPlaceholder="Поиск моделей..."
+                      emptyMessage="Модели не найдены."
                       onChange={setAssigneeModelOverride}
                     />
                   </div>

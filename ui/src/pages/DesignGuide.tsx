@@ -542,7 +542,7 @@ export function DesignGuide() {
                   onSave={setInlineDesc}
                   as="p"
                   className="text-sm text-muted-foreground"
-                  placeholder="Add a description..."
+                  placeholder="Добавьте описание..."
                   multiline
                 />
               </div>
@@ -951,9 +951,9 @@ export function DesignGuide() {
       <Section title="Identity">
         <SubSection title="Sizes">
           <div className="flex items-center gap-6">
-            <Identity name="Agent Alpha" size="sm" />
-            <Identity name="Agent Alpha" />
-            <Identity name="Agent Alpha" size="lg" />
+            <Identity name="Агент Альфа" size="sm" />
+            <Identity name="Агент Альфа" />
+            <Identity name="Агент Альфа" size="lg" />
           </div>
         </SubSection>
 
@@ -1204,7 +1204,7 @@ export function DesignGuide() {
             </div>
           </div>
           <div className="space-y-2">
-            <Textarea placeholder="Leave a comment..." rows={3} />
+            <Textarea placeholder="Оставьте комментарий..." rows={3} />
             <Button size="sm">Comment</Button>
           </div>
         </div>

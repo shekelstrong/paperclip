@@ -129,7 +129,7 @@ export function CompanyInvites() {
     onError: (error) => {
       pushToast({
         title: "Failed to create invite",
-        body: error instanceof Error ? error.message : "Unknown error",
+        body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
     },
@@ -144,7 +144,7 @@ export function CompanyInvites() {
     onError: (error) => {
       pushToast({
         title: "Failed to revoke invite",
-        body: error instanceof Error ? error.message : "Unknown error",
+        body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
     },

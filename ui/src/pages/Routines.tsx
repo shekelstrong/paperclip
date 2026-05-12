@@ -145,13 +145,13 @@ export function buildRoutineGroups(
     const groups = groupBy(routines, (routine) => routine.projectId ?? "__no_project");
     return Object.keys(groups)
       .sort((left, right) => {
-        const leftLabel = left === "__no_project" ? "No project" : (projectById.get(left)?.name ?? "Unknown project");
-        const rightLabel = right === "__no_project" ? "No project" : (projectById.get(right)?.name ?? "Unknown project");
+        const leftLabel = left === "__no_project" ? "Нет проекта" : (projectById.get(left)?.name ?? "Неизвестный проект");
+        const rightLabel = right === "__no_project" ? "Нет проекта" : (projectById.get(right)?.name ?? "Неизвестный проект");
         return leftLabel.localeCompare(rightLabel);
       })
       .map((key) => ({
         key,
-        label: key === "__no_project" ? "No project" : (projectById.get(key)?.name ?? "Unknown project"),
+        label: key === "__no_project" ? "Нет проекта" : (projectById.get(key)?.name ?? "Неизвестный проект"),
         items: groups[key]!,
       }));
   }
@@ -159,13 +159,13 @@ export function buildRoutineGroups(
   const groups = groupBy(routines, (routine) => routine.assigneeAgentId ?? "__unassigned");
   return Object.keys(groups)
     .sort((left, right) => {
-      const leftLabel = left === "__unassigned" ? "Unassigned" : (agentById.get(left)?.name ?? "Unknown agent");
-      const rightLabel = right === "__unassigned" ? "Unassigned" : (agentById.get(right)?.name ?? "Unknown agent");
+      const leftLabel = left === "__unassigned" ? "Unassigned" : (agentById.get(left)?.name ?? "Неизвестный агент");
+      const rightLabel = right === "__unassigned" ? "Unassigned" : (agentById.get(right)?.name ?? "Неизвестный агент");
       return leftLabel.localeCompare(rightLabel);
     })
     .map((key) => ({
       key,
-      label: key === "__unassigned" ? "Unassigned" : (agentById.get(key)?.name ?? "Unknown agent"),
+      label: key === "__unassigned" ? "Unassigned" : (agentById.get(key)?.name ?? "Неизвестный агент"),
       items: groups[key]!,
     }));
 }
@@ -379,7 +379,7 @@ export function Routines() {
     onError: (mutationError) => {
       pushToast({
         title: "Запуск процедуры не удался",
-        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not start the routine run.",
+        body: mutationError instanceof Error ? mutationError.message : "Paperclip не смог запустить выполнение процедуры.",
         tone: "error",
       });
     },
@@ -685,9 +685,9 @@ export function Routines() {
                     options={assigneeOptions}
                     recentOptionIds={recentAssigneeIds}
                     placeholder="Assignee"
-                    noneLabel="No assignee"
-                    searchPlaceholder="Search assignees..."
-                    emptyMessage="No assignees found."
+                    noneLabel="Нет исполнителя"
+                    searchPlaceholder="Поиск исполнителей..."
+                    emptyMessage="Исполнители не найдены."
                     onChange={(assigneeAgentId) => {
                       if (assigneeAgentId) trackRecentAssignee(assigneeAgentId);
                       setDraft((current) => ({ ...current, assigneeAgentId }));
@@ -731,8 +731,8 @@ export function Routines() {
                     options={projectOptions}
                     recentOptionIds={recentProjectIds}
                     placeholder="Project"
-                    noneLabel="No project"
-                    searchPlaceholder="Search projects..."
+                    noneLabel="Нет проекта"
+                    searchPlaceholder="Поиск проектов..."
                     emptyMessage="Проекты не найдены."
                     onChange={(projectId) => {
                       if (projectId) trackRecentProject(projectId);

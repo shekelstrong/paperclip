@@ -37,7 +37,7 @@ export function InstanceGeneralSettings() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Instance Settings" },
+      { label: "Настройки инстанса" },
       { label: "General" },
     ]);
   }, [setBreadcrumbs]);
@@ -302,7 +302,7 @@ export function InstanceGeneralSettings() {
             {[
               {
                 value: "allowed",
-                label: "Always allow",
+                label: "Всегда разрешать",
                 description: "Share voted AI outputs automatically.",
               },
               {
@@ -364,7 +364,7 @@ export function InstanceGeneralSettings() {
             onClick={() => signOutMutation.mutate()}
           >
             <LogOut className="size-4" />
-            {signOutMutation.isPending ? "Signing out..." : "Выйти"}
+            {signOutMutation.isPending ? "Выход..." : "Выйти"}
           </Button>
         </div>
       </section>

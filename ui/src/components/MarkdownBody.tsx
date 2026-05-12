@@ -383,7 +383,7 @@ function CodeBlock({
         try {
           textarea.select();
           const success = document.execCommand("copy");
-          if (!success) throw new Error("execCommand copy failed");
+          if (!success) throw new Error("Копирование через execCommand не удалось");
         } finally {
           document.body.removeChild(textarea);
         }
@@ -401,7 +401,7 @@ function CodeBlock({
     }, 1500);
   }, [children]);
 
-  const label = failed ? "Copy failed" : copied ? "Copied!" : "Copy";
+  const label = failed ? "Копирование не удалось" : copied ? "Copied!" : "Copy";
 
   return (
     <div className="paperclip-markdown-codeblock">

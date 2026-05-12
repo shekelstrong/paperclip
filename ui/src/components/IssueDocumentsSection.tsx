@@ -737,7 +737,7 @@ export function IssueDocumentsSection({
               onChange={(event) =>
                 setDraft((current) => current ? { ...current, title: event.target.value } : current)
               }
-              placeholder="Optional title"
+              placeholder="Опциональное название"
             />
           )}
           <MarkdownEditor
@@ -745,7 +745,7 @@ export function IssueDocumentsSection({
             onChange={(body) =>
               setDraft((current) => current ? { ...current, body } : current)
             }
-            placeholder="Markdown body"
+            placeholder="Тело markdown"
             bordered={false}
             className="bg-transparent"
             contentClassName="min-h-[220px] text-[15px] leading-7"
@@ -1007,7 +1007,7 @@ export function IssueDocumentsSection({
                           >
                             {restoreDocumentRevision.isPending && restoreDocumentRevision.variables?.key === doc.key
                               ? "Restoring..."
-                              : "Restore this revision"}
+                              : "Восстановить эту ревизию"}
                           </Button>
                         </div>
                       </div>
@@ -1081,7 +1081,7 @@ export function IssueDocumentsSection({
                         markDocumentDirty(doc.key);
                         setDraft((current) => current ? { ...current, title: event.target.value } : current);
                       }}
-                      placeholder="Optional title"
+                      placeholder="Опциональное название"
                     />
                   )}
                   <div
@@ -1103,7 +1103,7 @@ export function IssueDocumentsSection({
                             return current;
                           });
                         }}
-                        placeholder="Markdown body"
+                        placeholder="Тело markdown"
                         bordered={false}
                         className="bg-transparent"
                         contentClassName={documentBodyContentClassName}
@@ -1138,7 +1138,7 @@ export function IssueDocumentsSection({
                               : autosaveState === "saved"
                                 ? "Saved"
                                 : autosaveState === "error"
-                                  ? "Could not save"
+                                  ? "Не удалось сохранить"
                                   : ""
                             : ""
                           : ""}

@@ -1048,8 +1048,8 @@ function RequestConfirmationCard({
   const declineReasonInvalid = rejectRequiresReason && !canReject;
   const declineReasonPlaceholder =
     interaction.payload.declineReasonPlaceholder
-    ?? (interaction.payload.acceptLabel === "Approve plan"
-      ? "Optional: what would you like revised?"
+    ?? (interaction.payload.acceptLabel === "Утвердить план"
+      ? "Опционально: что бы вы хотели исправить?"
       : "Optional: tell the agent what you'd change.");
 
   useEffect(() => {

@@ -469,13 +469,13 @@ export function ImportFromVaultDialog({
         awsVaults.find((vault) => vault.id === vaultId)?.displayName ?? "AWS";
       if (result.errorCount === draftList.length && result.errorCount > 0) {
         toast.pushToast({
-          title: "Import failed",
+          title: "Импорт не удался",
           body: `No secrets were imported from ${vaultName}.`,
           tone: "error",
         });
       } else {
         toast.pushToast({
-          title: result.errorCount > 0 ? "Import completed with errors" : "Import complete",
+          title: result.errorCount > 0 ? "Import completed with errors" : "Импорт завершён",
           body: `${result.importedCount} created · ${result.skippedCount} skipped · ${result.errorCount} failed`,
           tone: result.errorCount > 0 ? "warn" : "success",
         });
@@ -483,7 +483,7 @@ export function ImportFromVaultDialog({
     },
     onError: (error) => {
       toast.pushToast({
-        title: "Import failed",
+        title: "Импорт не удался",
         body: readableErrorMessage(error),
         tone: "error",
       });
@@ -1338,10 +1338,10 @@ function ResultStep({ result, draftList }: ResultStepProps) {
 
   const heading =
     result.errorCount === result.results.length && result.errorCount > 0
-      ? "Import failed"
+      ? "Импорт не удался"
       : result.errorCount === 0 && result.skippedCount === 0
         ? `All ${result.importedCount} secrets imported`
-        : "Import complete";
+        : "Импорт завершён";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

@@ -128,7 +128,7 @@ export function InstanceExperimentalSettings() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Instance Settings" },
+      { label: "Настройки инстанса" },
       { label: "Experimental" },
     ]);
   }, [setBreadcrumbs]);
@@ -218,7 +218,7 @@ export function InstanceExperimentalSettings() {
 
   function previewForEnable() {
     if (!lookbackHoursIsValid) {
-      setActionError("Lookback hours must be a whole number from 1 to 720.");
+      setActionError("Часы ретроспективы должны быть целым числом от 1 до 720.");
       return;
     }
     previewMutation.mutate(parsedLookbackHours);
@@ -361,7 +361,7 @@ export function InstanceExperimentalSettings() {
                 variant="outline"
                 onClick={() => {
                   if (!lookbackHoursIsValid) {
-                    setActionError("Lookback hours must be a whole number from 1 to 720.");
+                    setActionError("Часы ретроспективы должны быть целым числом от 1 до 720.");
                     return;
                   }
                   toggleMutation.mutate({
@@ -383,7 +383,7 @@ export function InstanceExperimentalSettings() {
               <Button
                 onClick={() => {
                   if (!lookbackHoursIsValid) {
-                    setActionError("Lookback hours must be a whole number from 1 to 720.");
+                    setActionError("Часы ретроспективы должны быть целым числом от 1 до 720.");
                     return;
                   }
                   runRecoveryMutation.mutate(parsedLookbackHours);

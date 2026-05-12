@@ -43,14 +43,14 @@ export function CopyText({
         try {
           textarea.select();
           const success = document.execCommand("copy");
-          if (!success) throw new Error("execCommand copy failed");
+          if (!success) throw new Error("Копирование через execCommand не удалось");
         } finally {
           document.body.removeChild(textarea);
         }
       }
       setLabel(copiedLabel);
     } catch {
-      setLabel("Copy failed");
+      setLabel("Копирование не удалось");
     }
     clearTimeout(timerRef.current);
     setVisible(true);

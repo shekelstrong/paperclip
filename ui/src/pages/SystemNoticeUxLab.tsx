@@ -236,7 +236,7 @@ export function SystemNoticeUxLab() {
           />
           <SystemNotice
             tone="danger"
-            label="System alert"
+            label="Системное оповещение"
             source={{ label: "Paperclip", href: "/PAP/agents" }}
             timestamp="2026-05-04T16:48:00.000Z"
             body="Paperclip could not resolve this issue's missing disposition automatically. The issue is blocked on a recovery owner."
@@ -249,7 +249,7 @@ export function SystemNoticeUxLab() {
                     label: "Recovery issue",
                     identifier: "PAP-3440",
                     href: "/PAP/issues/PAP-3440",
-                    title: "Successful run handoff missing disposition",
+                    title: "Успешный запуск — отсутствует распоряжение",
                   },
                   {
                     kind: "agent",

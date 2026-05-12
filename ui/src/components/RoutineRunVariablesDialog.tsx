@@ -397,8 +397,8 @@ export function RoutineRunVariablesDialog({
                 options={projectOptions}
                 recentOptionIds={recentProjectIds}
                 placeholder="Project"
-                noneLabel="No project"
-                searchPlaceholder="Search projects..."
+                noneLabel="Нет проекта"
+                searchPlaceholder="Поиск проектов..."
                 emptyMessage="Проекты не найдены."
                 disablePortal
                 openOnFocus={false}

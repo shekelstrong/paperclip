@@ -35,7 +35,7 @@ export function ProfileSettings() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Instance Settings" },
+      { label: "Настройки инстанса" },
       { label: "Profile" },
     ]);
   }, [setBreadcrumbs]);

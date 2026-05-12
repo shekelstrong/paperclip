@@ -681,7 +681,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
       return;
     }
     if (!isLikelyAbsolutePath(trimmedPath)) {
-      setMessage({ type: "error", text: "Local folder must be a full absolute path." });
+      setMessage({ type: "error", text: "Локальная папка должна быть полным абсолютным путём." });
       return;
     }
     setMessage(null);
@@ -922,14 +922,14 @@ interface PluginConfigFormProps {
   schema: JsonSchemaNode;
   initialValues?: Record<string, unknown>;
   isLoading?: boolean;
-  /** Current plugin lifecycle status — "Test Configuration" only available when `ready`. */
+  /** Current plugin lifecycle status — "Тест конфигурации" only available when `ready`. */
   pluginStatus?: string;
   /** Whether the plugin worker implements `validateConfig`. */
   supportsConfigTest?: boolean;
 }
 
 /**
- * Inner component that manages form state, validation, save, and "Test Configuration"
+ * Inner component that manages form state, validation, save, and "Тест конфигурации"
  * for the auto-generated plugin config form.
  *
  * Separated from PluginSettings to isolate re-render scope — only the form
@@ -1103,7 +1103,7 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
                 Testing...
               </>
             ) : (
-              "Test Configuration"
+              "Тест конфигурации"
             )}
           </Button>
         )}

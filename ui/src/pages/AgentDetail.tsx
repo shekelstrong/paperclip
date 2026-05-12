@@ -1288,16 +1288,16 @@ function AgentOverview({
 
       {/* Charts */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <ChartCard title="Run Activity" subtitle="Last 14 days">
+        <ChartCard title="Run Activity" subtitle="Последние 14 дней">
           <RunActivityChart runs={runs} />
         </ChartCard>
-        <ChartCard title="Issues by Priority" subtitle="Last 14 days">
+        <ChartCard title="Issues by Priority" subtitle="Последние 14 дней">
           <PriorityChart issues={assignedIssues} />
         </ChartCard>
-        <ChartCard title="Issues by Status" subtitle="Last 14 days">
+        <ChartCard title="Issues by Status" subtitle="Последние 14 дней">
           <IssueStatusChart issues={assignedIssues} />
         </ChartCard>
-        <ChartCard title="Success Rate" subtitle="Last 14 days">
+        <ChartCard title="Success Rate" subtitle="Последние 14 дней">
           <SuccessRateChart runs={runs} />
         </ChartCard>
       </div>
@@ -1826,7 +1826,7 @@ function PromptsTab({
 
   const uploadMarkdownImage = useMutation({
     mutationFn: async ({ file, namespace }: { file: File; namespace: string }) => {
-      if (!selectedCompanyId) throw new Error("Select a company to upload images");
+      if (!selectedCompanyId) throw new Error("Выберите компанию для загрузки изображений");
       return assetsApi.uploadImage(selectedCompanyId, file, namespace);
     },
   });

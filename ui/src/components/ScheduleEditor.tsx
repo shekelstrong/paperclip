@@ -7,7 +7,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 type SchedulePreset = "every_minute" | "every_hour" | "every_day" | "weekdays" | "weekly" | "monthly" | "custom";
 
 const PRESETS: { value: SchedulePreset; label: string }[] = [
-  { value: "every_minute", label: "Every minute" },
+  { value: "every_minute", label: "Каждую минуту" },
   { value: "every_hour", label: "Every hour" },
   { value: "every_day", label: "Every day" },
   { value: "weekdays", label: "Weekdays" },
@@ -120,7 +120,7 @@ function describeSchedule(cron: string): string {
 
   switch (preset) {
     case "every_minute":
-      return "Every minute";
+      return "Каждую минуту";
     case "every_hour":
       return `Every hour at :${minute.padStart(2, "0")}`;
     case "every_day":

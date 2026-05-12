@@ -87,7 +87,7 @@ export function IssueRow({
   const planningModeIndicator = issue.workMode === "planning" ? (
     <span
       className="ml-1.5 inline-flex shrink-0 items-center rounded-full border border-amber-500/60 bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300"
-      title="This issue is in planning mode."
+      title="Эта задача в режиме планирования."
     >
       Planning
     </span>
@@ -192,7 +192,7 @@ export function IssueRow({
                 "inline-flex h-4 w-4 items-center justify-center rounded-full transition-colors",
                 selected ? "hover:bg-muted/80" : "hover:bg-blue-500/20",
               )}
-              aria-label="Mark as read"
+              aria-label="Отметить прочитанным"
             >
               <span
                 className={cn(
@@ -218,7 +218,7 @@ export function IssueRow({
               }}
               disabled={archiveDisabled}
               className="inline-flex h-4 w-4 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-30"
-              aria-label="Dismiss from inbox"
+              aria-label="Убрать из входящих"
             >
               <X className="h-3.5 w-3.5" />
             </button>

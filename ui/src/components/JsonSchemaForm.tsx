@@ -546,7 +546,7 @@ const SecretField = React.memo(({
               <Eye className="h-4 w-4 text-muted-foreground" />
             )}
             <span className="sr-only">
-              {isVisible ? "Hide secret" : "Показать секрет"}
+              {isVisible ? "Скрыть секрет" : "Показать секрет"}
             </span>
           </Button>
         </div>
@@ -575,7 +575,7 @@ const SecretField = React.memo(({
               <Eye className="h-4 w-4 text-muted-foreground" />
             )}
             <span className="sr-only">
-              {isVisible ? "Hide secret" : "Показать секрет"}
+              {isVisible ? "Скрыть секрет" : "Показать секрет"}
             </span>
           </Button>
         </div>

@@ -100,7 +100,7 @@ export function buildSearchUrl(href: string, query: string, scope: CompanySearch
 }
 
 function shapeError(error: unknown): { message: string; status?: number } {
-  if (!error) return { message: "Unknown error" };
+  if (!error) return { message: "Неизвестная ошибка" };
   if (error instanceof Error) {
     const status = (error as Error & { status?: number }).status;
     return { message: error.message, status: typeof status === "number" ? status : undefined };

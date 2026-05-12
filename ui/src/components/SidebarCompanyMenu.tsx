@@ -329,7 +329,7 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
               disabled={isEditingOrder || signOutMutation.isPending}
             >
               <LogOut className="size-4" />
-              <span>{signOutMutation.isPending ? "Signing out..." : "Выйти"}</span>
+              <span>{signOutMutation.isPending ? "Выход..." : "Выйти"}</span>
             </DropdownMenuItem>
           </>
         ) : null}

@@ -354,7 +354,7 @@ export function InlineEditor({
               : autosaveState === "saved"
                 ? "Saved"
                 : autosaveState === "error"
-                  ? "Could not save"
+                  ? "Не удалось сохранить"
                   : "Idle"}
           </span>
         </div>

@@ -26,7 +26,7 @@ import { EnvVarEditor } from "./EnvVarEditor";
 const PROJECT_STATUSES = [
   { value: "backlog", label: "Backlog" },
   { value: "planned", label: "Planned" },
-  { value: "in_progress", label: "In Progress" },
+  { value: "in_progress", label: "В работе" },
   { value: "completed", label: "Completed" },
   { value: "cancelled", label: "Cancelled" },
 ];
@@ -258,7 +258,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
   });
   const createSecret = useMutation({
     mutationFn: (input: { name: string; value: string }) => {
-      if (!selectedCompanyId) throw new Error("Select a company to create secrets");
+      if (!selectedCompanyId) throw new Error("Выберите компанию для создания секретов");
       return secretsApi.create(selectedCompanyId, input);
     },
     onSuccess: () => {
@@ -452,7 +452,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
       return;
     }
     if (!isAbsolutePath(cwd)) {
-      setWorkspaceError("Local folder must be a full absolute path.");
+      setWorkspaceError("Локальная папка должна быть полным абсолютным путём.");
       return;
     }
     setWorkspaceError(null);
@@ -467,7 +467,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
       return;
     }
     if (!looksLikeRepoUrl(repoUrl)) {
-      setWorkspaceError("Repo must use a valid GitHub or GitHub Enterprise repo URL.");
+      setWorkspaceError("Репозиторий должен использовать валидный URL GitHub или GitHub Enterprise.");
       return;
     }
     setWorkspaceError(null);
@@ -512,7 +512,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
               onCommit={(name) => commitField("name", { name })}
               immediate
               className="w-full rounded border border-border bg-transparent px-2 py-1 text-sm outline-none"
-              placeholder="Project name"
+              placeholder="Название проекта"
             />
           ) : (
             <span className="text-sm">{project.name}</span>
@@ -530,7 +530,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
               nullable
               as="p"
               className="text-sm text-muted-foreground"
-              placeholder="Add a description..."
+              placeholder="Добавьте описание..."
               multiline
             />
           ) : (

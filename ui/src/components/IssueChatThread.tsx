@@ -3299,7 +3299,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
           ? {
               ...item,
               status: "error",
-              error: err instanceof Error ? err.message : "Upload failed",
+              error: err instanceof Error ? err.message : "Загрузка не удалась",
             }
           : item,
       ));
@@ -3442,7 +3442,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
               attachment.status === "uploading"
                 ? "Uploading to issue"
                 : attachment.status === "error"
-                  ? attachment.error ?? "Upload failed"
+                  ? attachment.error ?? "Загрузка не удалась"
                   : attachment.inline
                     ? "Вставлено inline"
                     : "Прикреплено к задаче";

@@ -47,7 +47,7 @@ export function IssueScheduledRetryCard({
       ? scheduledRetry.scheduledRetryAttempt
       : null;
 
-  const badgeLabel = continuation ? "Continuation scheduled" : "Retry scheduled";
+  const badgeLabel = continuation ? "Continuation scheduled" : "Повтор запланирован";
   const titleAction = continuation ? "Automatic continuation" : "Automatic retry";
   let titleSuffix: string;
   if (relative === "now") {

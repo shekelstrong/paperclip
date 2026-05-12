@@ -26,7 +26,7 @@ export type SystemNoticeMetadataSection = {
 
 export type SystemNoticeProps = {
   tone?: SystemNoticeTone;
-  /** Short label that names the system actor + tone, e.g. "System warning". Required so tone is not color-only. */
+  /** Short label that names the system actor + tone, e.g. "Системное предупреждение". Required so tone is not color-only. */
   label?: string;
   /** Short visible body — one or two sentences from the system perspective. */
   body: ReactNode;
@@ -224,11 +224,11 @@ export function SystemNotice({
   const resolvedLabel =
     label ??
     {
-      neutral: "System notice",
-      info: "System notice",
-      success: "System notice",
-      warning: "System warning",
-      danger: "System alert",
+      neutral: "Системное уведомление",
+      info: "Системное уведомление",
+      success: "Системное уведомление",
+      warning: "Системное предупреждение",
+      danger: "Системное оповещение",
     }[tone];
 
   return (

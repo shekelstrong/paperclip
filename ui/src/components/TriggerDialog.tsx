@@ -25,8 +25,8 @@ const triggerKinds = ["schedule", "webhook"] as const;
 const signingModes = ["bearer", "hmac_sha256", "github_hmac", "none"] as const;
 const SIGNING_MODES_WITHOUT_REPLAY_WINDOW = new Set<string>(["github_hmac", "none"]);
 const signingModeDescriptions: Record<string, string> = {
-  bearer: "Expect a shared bearer token in the Authorization header.",
-  hmac_sha256: "Expect an HMAC SHA-256 signature over the request using the shared secret.",
+  bearer: "Ожидается общий bearer-токен в заголовке Authorization.",
+  hmac_sha256: "Ожидается HMAC SHA-256 подпись запроса с использованием общего секрета.",
   github_hmac: "Принять GitHub-style X-Hub-Signature-256 header (HMAC over raw body, no timestamp).",
   none: "Нет authentication — the webhook URL itself acts as a shared secret.",
 };

@@ -810,9 +810,9 @@ export function InviteUxLab() {
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
-                description="Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email."
-                inviteMessage="Welcome aboard."
+                title="Присоединиться к Acme Robotics"
+                description="Сначала создайте аккаунт Paperclip. Если он уже есть, переключитесь на вход и продолжите приглашение с тем же email."
+                inviteMessage="Добро пожаловать на борт."
                 requestedAccess="Operator"
               />
             }
@@ -822,9 +822,9 @@ export function InviteUxLab() {
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
-                description="Create your Paperclip account first. If you already have one, switch to sign in and continue the invite with the same email."
-                inviteMessage="Welcome aboard."
+                title="Присоединиться к Acme Robotics"
+                description="Сначала создайте аккаунт Paperclip. Если он уже есть, переключитесь на вход и продолжите приглашение с тем же email."
+                inviteMessage="Добро пожаловать на борт."
                 requestedAccess="Operator"
               />
             }
@@ -842,9 +842,9 @@ export function InviteUxLab() {
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
-                description="Your account is ready. Review the invite details, then accept it to continue."
-                inviteMessage="Welcome aboard."
+                title="Присоединиться к Acme Robotics"
+                description="Ваш аккаунт готов. Просмотрите детали приглашения, затем примите его, чтобы продолжить."
+                inviteMessage="Добро пожаловать на борт."
                 requestedAccess="Operator"
                 signedInLabel="Jane Example"
               />
@@ -855,7 +855,7 @@ export function InviteUxLab() {
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
+                title="Присоединиться к Acme Robotics"
                 description="Review the invite details, then submit the agent information below to start the join request."
                 requestedAccess="Заявка агента"
               />
@@ -866,8 +866,8 @@ export function InviteUxLab() {
           <InviteLandingShell
             left={
               <InviteSummaryPanel
-                title="Join Acme Robotics"
-                description="Your account is ready. Review the invite details, then accept it to continue."
+                title="Присоединиться к Acme Robotics"
+                description="Ваш аккаунт готов. Просмотрите детали приглашения, затем примите его, чтобы продолжить."
                 requestedAccess="Operator"
                 signedInLabel="Jane Example"
               />

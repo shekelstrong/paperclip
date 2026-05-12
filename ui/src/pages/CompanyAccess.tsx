@@ -121,7 +121,7 @@ export function CompanyAccess() {
     onError: (error) => {
       pushToast({
         title: "Failed to update member",
-        body: error instanceof Error ? error.message : "Unknown error",
+        body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
     },
@@ -139,7 +139,7 @@ export function CompanyAccess() {
     onError: (error) => {
       pushToast({
         title: "Failed to approve join request",
-        body: error instanceof Error ? error.message : "Unknown error",
+        body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
     },
@@ -157,7 +157,7 @@ export function CompanyAccess() {
     onError: (error) => {
       pushToast({
         title: "Failed to reject join request",
-        body: error instanceof Error ? error.message : "Unknown error",
+        body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
     },
@@ -213,7 +213,7 @@ export function CompanyAccess() {
     onError: (error) => {
       pushToast({
         title: "Failed to remove member",
-        body: error instanceof Error ? error.message : "Unknown error",
+        body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
     },

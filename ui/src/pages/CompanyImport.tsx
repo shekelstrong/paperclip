@@ -708,7 +708,7 @@ export function CompanyImport() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Org Chart", href: "/org" },
+      { label: "Организационная структура", href: "/org" },
       { label: "Import" },
     ]);
   }, [setBreadcrumbs]);
@@ -863,7 +863,7 @@ export function CompanyImport() {
       setSelectedCompanyId(importedCompany.id);
       pushToast({
         tone: "success",
-        title: "Import complete",
+        title: "Импорт завершён",
         body: `${result.company.name}: ${result.agents.length} agent${result.agents.length === 1 ? "" : "s"} processed.`,
       });
       // Force a fresh dashboard load so newly imported agents are immediately visible.
@@ -872,7 +872,7 @@ export function CompanyImport() {
     onError: (err) => {
       pushToast({
         tone: "error",
-        title: "Import failed",
+        title: "Импорт не удался",
         body: err instanceof Error ? err.message : "Failed to apply import.",
       });
     },

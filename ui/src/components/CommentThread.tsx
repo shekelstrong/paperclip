@@ -258,7 +258,7 @@ async function copyTextWithFallback(text: string) {
   try {
     textarea.select();
     const success = document.execCommand("copy");
-    if (!success) throw new Error("execCommand copy failed");
+    if (!success) throw new Error("Копирование через execCommand не удалось");
   } finally {
     document.body.removeChild(textarea);
   }
@@ -274,7 +274,7 @@ function CopyMarkdownButton({ text }: { text: string }) {
     }
   }, []);
 
-  const label = status === "copied" ? "Copied" : status === "failed" ? "Copy failed" : "Copy";
+  const label = status === "copied" ? "Copied" : status === "failed" ? "Копирование не удалось" : "Copy";
 
   return (
     <button
@@ -1008,7 +1008,7 @@ export function CommentThread({
             ref={editorRef}
             value={body}
             onChange={setBody}
-            placeholder="Leave a comment..."
+            placeholder="Оставьте комментарий..."
             mentions={mentions}
             onSubmit={handleSubmit}
             imageUploadHandler={imageUploadHandler}
@@ -1040,9 +1040,9 @@ export function CommentThread({
                 value={reassignTarget}
                 options={reassignOptions}
                 placeholder="Assignee"
-                noneLabel="No assignee"
-                searchPlaceholder="Search assignees..."
-                emptyMessage="No assignees found."
+                noneLabel="Нет исполнителя"
+                searchPlaceholder="Поиск исполнителей..."
+                emptyMessage="Исполнители не найдены."
                 onChange={setReassignTarget}
                 className="text-xs h-8"
                 renderTriggerValue={(option) => {

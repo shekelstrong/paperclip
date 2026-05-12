@@ -258,7 +258,7 @@ export function OutputFeedbackButtons({
                 );
               }}
             >
-              {isSaving ? "Saving..." : "Always allow"}
+              {isSaving ? "Saving..." : "Всегда разрешать"}
             </Button>
           </DialogFooter>
         </DialogContent>

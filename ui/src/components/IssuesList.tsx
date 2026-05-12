@@ -91,8 +91,8 @@ const boardIssueStatuses = ISSUE_STATUSES;
 const issueStatusLabels: Record<IssueStatus, string> = {
   backlog: "Backlog",
   todo: "Todo",
-  in_progress: "In progress",
-  in_review: "In review",
+  in_progress: "В работе",
+  in_review: "На ревью",
   done: "Done",
   blocked: "Blocked",
   cancelled: "Cancelled",
@@ -1318,7 +1318,7 @@ export function IssuesList({
               size="icon"
               className={cn("hidden h-8 w-8 shrink-0 sm:inline-flex", viewState.nestingEnabled && "bg-accent")}
               onClick={() => updateView({ nestingEnabled: !viewState.nestingEnabled })}
-              title={viewState.nestingEnabled ? "Disable parent-child nesting" : "Enable parent-child nesting"}
+              title={viewState.nestingEnabled ? "Отключить вложенность родитель-потомок" : "Включить вложенность родитель-потомок"}
             >
               <ListTree className="h-3.5 w-3.5" />
             </Button>
@@ -1633,8 +1633,8 @@ export function IssuesList({
                             {isSuccessfulRunHandoffRequired(issue) ? (
                               <span
                                 className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-amber-400/45 bg-amber-50/60 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:border-amber-300/35 dark:bg-amber-400/10 dark:text-amber-300"
-                                aria-label="Needs next step"
-                                title="This issue needs a next step"
+                                aria-label="Нужен следующий шаг"
+                                title="Этой задаче нужен следующий шаг"
                               >
                                 <CircleDot className="h-3 w-3" />
                                 Needs next step
@@ -1742,7 +1742,7 @@ export function IssuesList({
                                   >
                                     <input
                                       className="mb-1 w-full border-b border-border bg-transparent px-2 py-1.5 text-xs outline-none placeholder:text-muted-foreground/50"
-                                      placeholder="Search assignees..."
+                                      placeholder="Поиск исполнителей..."
                                       value={assigneeSearch}
                                       onChange={(e) => setAssigneeSearch(e.target.value)}
                                       autoFocus

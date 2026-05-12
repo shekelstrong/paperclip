@@ -80,8 +80,8 @@ const catchUpPolicyDescriptions: Record<string, string> = {
   enqueue_missed_with_cap: "Catch up missed schedule windows in capped batches after recovery.",
 };
 const signingModeDescriptions: Record<string, string> = {
-  bearer: "Expect a shared bearer token in the Authorization header.",
-  hmac_sha256: "Expect an HMAC SHA-256 signature over the request using the shared secret.",
+  bearer: "Ожидается общий bearer-токен в заголовке Authorization.",
+  hmac_sha256: "Ожидается HMAC SHA-256 подпись запроса с использованием общего секрета.",
   github_hmac: "Accept GitHub-style X-Hub-Signature-256 header (HMAC over raw body, no timestamp).",
   none: "No authentication — the webhook URL itself acts as a shared secret.",
 };
@@ -523,7 +523,7 @@ export function RoutineDetail() {
     onError: (error) => {
       pushToast({
         title: "Запуск процедуры не удался",
-        body: error instanceof Error ? error.message : "Paperclip could not start the routine run.",
+        body: error instanceof Error ? error.message : "Paperclip не смог запустить выполнение процедуры.",
         tone: "error",
       });
     },
@@ -895,9 +895,9 @@ export function RoutineDetail() {
             options={assigneeOptions}
             recentOptionIds={recentAssigneeIds}
             placeholder="Assignee"
-            noneLabel="No assignee"
-            searchPlaceholder="Search assignees..."
-            emptyMessage="No assignees found."
+            noneLabel="Нет исполнителя"
+            searchPlaceholder="Поиск исполнителей..."
+            emptyMessage="Исполнители не найдены."
             onChange={(assigneeAgentId) => {
               if (assigneeAgentId) trackRecentAssignee(assigneeAgentId);
               setEditDraft((current) => ({ ...current, assigneeAgentId }));
@@ -941,8 +941,8 @@ export function RoutineDetail() {
             options={projectOptions}
             recentOptionIds={recentProjectIds}
             placeholder="Project"
-            noneLabel="No project"
-            searchPlaceholder="Search projects..."
+            noneLabel="Нет проекта"
+            searchPlaceholder="Поиск проектов..."
             emptyMessage="Проекты не найдены."
             onChange={(projectId) => {
               if (projectId) trackRecentProject(projectId);

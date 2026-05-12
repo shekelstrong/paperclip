@@ -172,13 +172,13 @@ const ISSUE_COMMENT_AUTOLOAD_LIMIT = ISSUE_COMMENT_PAGE_SIZE * 3;
 const JUMP_TO_LATEST_MAX_COMMENT_PAGES = 10;
 const TREE_CONTROL_MODE_LABEL: Record<IssueTreeControlMode, string> = {
   pause: "Pause subtree",
-  resume: "Resume subtree",
+  resume: "Возобновить поддерево",
   cancel: "Cancel subtree",
   restore: "Restore subtree",
 };
 const LEAF_WORK_CONTROL_MODE_LABEL: Partial<Record<IssueTreeControlMode, string>> = {
-  pause: "Pause work",
-  resume: "Resume work",
+  pause: "Приостановить работу",
+  resume: "Возобновить работу",
 };
 const TREE_CONTROL_MODE_HELP_TEXT: Record<IssueTreeControlMode, string> = {
   pause: "Pause active execution in this issue subtree until an explicit resume.",
@@ -545,7 +545,7 @@ function InboxMobileToolbar({
             size="icon-sm"
             onClick={onArchive}
             disabled={archivePending}
-            aria-label="Archive from inbox"
+            aria-label="Архивировать из входящих"
           >
             <Archive className="h-5 w-5" />
           </Button>
@@ -891,7 +891,7 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
         interruptingQueuedRunId={interruptingQueuedRunId}
         stoppingRunId={pausingWorkRunId}
         onStopRun={onPauseWorkRun}
-        stopRunLabel="Pause work"
+        stopRunLabel="Приостановить работу"
         stoppingRunLabel="Pausing..."
         stopRunVariant="pause"
         onAcceptInteraction={onAcceptInteraction}
@@ -1960,8 +1960,8 @@ export function IssueDetail() {
           return;
         } catch (err) {
           pushToast({
-            title: "Cancel failed",
-            body: err instanceof Error ? err.message : "Unable to cancel the queued comment",
+            title: "Отмена не удалась",
+            body: err instanceof Error ? err.message : "Не удалось отменить комментарий в очереди",
             tone: "error",
           });
         }
@@ -1994,7 +1994,7 @@ export function IssueDetail() {
         queryClient.setQueryData(queryKeys.issues.detail(issueId!), context.previousIssue);
       }
       pushToast({
-        title: "Comment failed",
+        title: "Комментарий не удался",
         body: err instanceof Error ? err.message : "Unable to post comment",
         tone: "error",
       });
@@ -2107,7 +2107,7 @@ export function IssueDetail() {
     },
     onError: (err) => {
       pushToast({
-        title: "Cancel failed",
+        title: "Отмена не удалась",
         body: err instanceof Error ? err.message : "Unable to cancel the question",
         tone: "error",
       });
@@ -2185,8 +2185,8 @@ export function IssueDetail() {
           return;
         } catch (err) {
           pushToast({
-            title: "Cancel failed",
-            body: err instanceof Error ? err.message : "Unable to cancel the queued comment",
+            title: "Отмена не удалась",
+            body: err instanceof Error ? err.message : "Не удалось отменить комментарий в очереди",
             tone: "error",
           });
         }
@@ -2221,7 +2221,7 @@ export function IssueDetail() {
         queryClient.setQueryData(queryKeys.issues.detail(issueId!), context.previousIssue);
       }
       pushToast({
-        title: "Comment failed",
+        title: "Комментарий не удался",
         body: err instanceof Error ? err.message : "Unable to post comment",
         tone: "error",
       });
@@ -2347,8 +2347,8 @@ export function IssueDetail() {
     },
     onError: (err) => {
       pushToast({
-        title: "Cancel failed",
-        body: err instanceof Error ? err.message : "Unable to cancel the queued comment",
+        title: "Отмена не удалась",
+        body: err instanceof Error ? err.message : "Не удалось отменить комментарий в очереди",
         tone: "error",
       });
     },
@@ -2436,7 +2436,7 @@ export function IssueDetail() {
       }
       pushToast({
         title: "Failed to save feedback",
-        body: err instanceof Error ? err.message : "Unknown error",
+        body: err instanceof Error ? err.message : "Неизвестная ошибка",
         tone: "error",
       });
     },
@@ -2444,7 +2444,7 @@ export function IssueDetail() {
 
   const uploadAttachment = useMutation({
     mutationFn: async (file: File) => {
-      if (!selectedCompanyId) throw new Error("No company selected");
+      if (!selectedCompanyId) throw new Error("Компания не выбрана");
       return issuesApi.uploadAttachment(selectedCompanyId, issueId!, file);
     },
     onSuccess: () => {
@@ -2453,7 +2453,7 @@ export function IssueDetail() {
       invalidateIssueDetail();
     },
     onError: (err) => {
-      setAttachmentError(err instanceof Error ? err.message : "Upload failed");
+      setAttachmentError(err instanceof Error ? err.message : "Загрузка не удалась");
     },
   });
 
@@ -3016,15 +3016,15 @@ export function IssueDetail() {
   const treeControlPrimaryButtonLabel =
     treeControlMode === "pause"
       ? treeControlScope === "leaf"
-        ? "Pause work"
+        ? "Приостановить работу"
         : "Pause and stop work"
       : treeControlMode === "cancel"
         ? `Cancel ${previewAffectedIssueCount} issues`
       : treeControlMode === "restore"
           ? `Restore ${previewAffectedIssueCount} issues`
           : treeControlScope === "leaf"
-            ? "Resume work"
-            : "Resume subtree";
+            ? "Возобновить работу"
+            : "Возобновить поддерево";
   const treePreviewAffectedIssueRows = treePreviewDisplayIssues.map((candidate) => ({
     candidate,
     issue: {
@@ -3153,7 +3153,7 @@ export function IssueDetail() {
                       setTreeControlOpen(true);
                     }}
                   >
-                    {childIssues.length === 0 ? "Resume work" : "Resume subtree"}
+                    {childIssues.length === 0 ? "Возобновить работу" : "Возобновить поддерево"}
                   </Button>
                   <Button
                     variant="outline"
@@ -3249,7 +3249,7 @@ export function IssueDetail() {
           {issue.workMode === "planning" ? (
             <span
               className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 shrink-0"
-              title="This issue is in planning mode."
+              title="Эта задача в режиме планирования."
             >
               Planning
             </span>
@@ -3332,8 +3332,8 @@ export function IssueDetail() {
                   if (!archivePending && issue?.id) archiveFromInbox.mutate(issue.id);
                 }}
                 disabled={archivePending}
-                title="Archive from inbox"
-                aria-label="Archive from inbox"
+                title="Архивировать из входящих"
+                aria-label="Архивировать из входящих"
               >
                 <Archive className="h-4 w-4" />
               </Button>
@@ -3493,7 +3493,7 @@ export function IssueDetail() {
           onSave={(description) => updateIssue.mutateAsync({ description })}
           as="p"
           className="text-[15px] leading-7 text-foreground"
-          placeholder="Add a description..."
+          placeholder="Добавьте описание..."
           multiline
           foldable
           mentions={mentionOptions}

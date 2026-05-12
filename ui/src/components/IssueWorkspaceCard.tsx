@@ -18,8 +18,8 @@ import { Check, Copy, GitBranch, FolderOpen, Pencil, X } from "lucide-react";
 
 const EXECUTION_WORKSPACE_OPTIONS = [
   { value: "shared_workspace", label: "Проект по умолчанию" },
-  { value: "isolated_workspace", label: "New isolated workspace" },
-  { value: "reuse_existing", label: "Reuse existing workspace" },
+  { value: "isolated_workspace", label: "Новое изолированное рабочее пространство" },
+  { value: "reuse_existing", label: "Повторно использовать рабочее пространство" },
 ] as const;
 
 function issueModeForExistingWorkspace(mode: string | null | undefined) {
@@ -111,11 +111,11 @@ function configuredWorkspaceLabel(
 ) {
   switch (selection) {
     case "isolated_workspace":
-      return "New isolated workspace";
+      return "Новое изолированное рабочее пространство";
     case "reuse_existing":
       return reusableWorkspace?.mode === "isolated_workspace"
-        ? "Existing isolated workspace"
-        : "Reuse existing workspace";
+        ? "Существующее изолированное рабочее пространство"
+        : "Повторно использовать рабочее пространство";
     default:
       return "Проект по умолчанию";
   }
@@ -491,7 +491,7 @@ export function IssueWorkspaceCard({
             {EXECUTION_WORKSPACE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.value === "reuse_existing" && configuredReusableWorkspace?.mode === "isolated_workspace"
-                  ? "Existing isolated workspace"
+                  ? "Существующее изолированное рабочее пространство"
                   : option.label}
               </option>
             ))}
