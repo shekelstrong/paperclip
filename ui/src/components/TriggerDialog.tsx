@@ -158,7 +158,7 @@ export function TriggerDialog({
             <Label htmlFor="trigger-label" className="text-xs">Label</Label>
             <Input
               id="trigger-label"
-              placeholder="e.g. Morning digest"
+              placeholder="например, утренний дайджест"
               value={draft.label}
               onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
             />

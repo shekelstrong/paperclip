@@ -160,7 +160,7 @@ export function OpenClawGatewayConfigFields({
             />
           </Field>
 
-          <Field label="Session strategy">
+          <Field label="Стратегия сессии">
             <select
               value={sessionStrategy}
               onChange={(e) => mark("adapterConfig", "sessionKeyStrategy", e.target.value)}
@@ -201,7 +201,7 @@ export function OpenClawGatewayConfigFields({
             />
           </Field>
 
-          <Field label="Scopes (comma-separated)">
+          <Field label="Области (через запятую)">
             <DraftInput
               value={eff("adapterConfig", "scopes", parseScopes(config.scopes ?? ["operator.admin"]))}
               onCommit={(v) => {
@@ -217,7 +217,7 @@ export function OpenClawGatewayConfigFields({
             />
           </Field>
 
-          <Field label="Wait timeout (ms)">
+          <Field label="Таймаут ожидания (мс)">
             <DraftInput
               value={eff("adapterConfig", "waitTimeoutMs", String(config.waitTimeoutMs ?? "120000"))}
               onCommit={(v) => {

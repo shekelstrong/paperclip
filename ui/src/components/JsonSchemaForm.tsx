@@ -193,7 +193,7 @@ export function validateField(
 
   if (type === "number" || type === "integer") {
     const num = Number(value);
-    if (isNaN(num)) return "Must be a valid number";
+    if (isNaN(num)) return "Должно быть валидным числом";
     if (schema.minimum != null && num < schema.minimum) {
       return `Must be at least ${schema.minimum}`;
     }
@@ -207,7 +207,7 @@ export function validateField(
       return `Must be less than ${schema.exclusiveMaximum}`;
     }
     if (type === "integer" && !Number.isInteger(num)) {
-      return "Must be a whole number";
+      return "Должно быть целым числом";
     }
     if (schema.multipleOf != null && num % schema.multipleOf !== 0) {
       return `Must be a multiple of ${schema.multipleOf}`;

@@ -197,9 +197,9 @@ export const issueChatLongThreadFixtureContext = {
     projectName: "Paperclip App",
   },
   documents: [
-    "Implementation Plan",
+    "План реализации",
     "Заметки профайлера",
-    "Release Checklist",
+    "Чеклист релиза",
     "QA отчёт",
   ],
   subIssues: [
@@ -210,8 +210,8 @@ export const issueChatLongThreadFixtureContext = {
   ],
   sidebarStats: [
     ["Comments", String(LONG_THREAD_COMMENT_COUNT)],
-    ["Markdown bodies", String(LONG_THREAD_MARKDOWN_COMMENT_COUNT)],
-    ["Timeline events", String(LONG_THREAD_EVENT_COUNT)],
+    ["Тела markdown", String(LONG_THREAD_MARKDOWN_COMMENT_COUNT)],
+    ["События таймлайна", String(LONG_THREAD_EVENT_COUNT)],
     ["Связанные запуски", String(LONG_THREAD_LINKED_RUN_COUNT)],
   ],
 } as const;

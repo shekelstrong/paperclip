@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 const SURFACES = [
   {
-    title: "Inference ledger",
+    title: "Реестр инференса",
     description: "Использование в рамках запроса и оплачиваемые запуски из cost_events.",
     icon: Database,
     points: ["tokens + billed dollars", "provider, biller, model", "subscription and overage aware"],

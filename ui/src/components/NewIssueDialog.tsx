@@ -1099,7 +1099,7 @@ export function NewIssueDialog() {
       : assigneeAdapterType === "codex_local"
         ? "Опции Codex"
         : assigneeAdapterType === "opencode_local"
-          ? "OpenCode options"
+          ? "Настройки OpenCode"
         : "Параметры агента";
   const thinkingEffortOptions =
     assigneeAdapterType === "codex_local"
@@ -1486,7 +1486,7 @@ export function NewIssueDialog() {
                 placeholder="Reviewer"
                 disablePortal
                 noneLabel="Нет рецензента"
-                searchPlaceholder="Search reviewers..."
+                searchPlaceholder="Поиск рецензентов..."
                 emptyMessage="Рецензенты не найдены."
                 onChange={setReviewerValue}
                 renderTriggerValue={(option) =>
@@ -1531,7 +1531,7 @@ export function NewIssueDialog() {
                 placeholder="Approver"
                 disablePortal
                 noneLabel="Нет одобряющего"
-                searchPlaceholder="Search approvers..."
+                searchPlaceholder="Поиск утверждающих..."
                 emptyMessage="Одобряющие не найдены."
                 onChange={setApproverValue}
                 renderTriggerValue={(option) =>
@@ -1788,7 +1788,7 @@ export function NewIssueDialog() {
                           className="shrink-0 text-muted-foreground"
                           onClick={() => removeStagedFile(file.id)}
                           disabled={createIssue.isPending}
-                          title="Remove document"
+                          title="Удалить документ"
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
@@ -1819,7 +1819,7 @@ export function NewIssueDialog() {
                           className="shrink-0 text-muted-foreground"
                           onClick={() => removeStagedFile(file.id)}
                           disabled={createIssue.isPending}
-                          title="Remove attachment"
+                          title="Удалить вложение"
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>

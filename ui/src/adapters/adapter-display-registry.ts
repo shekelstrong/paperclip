@@ -63,19 +63,19 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
   },
   claude_local: {
     label: "Claude Code",
-    description: "Local Claude agent",
+    description: "Локальный агент Claude",
     icon: Sparkles,
     recommended: true,
   },
   codex_local: {
     label: "Codex",
-    description: "Local Codex agent",
+    description: "Локальный агент Codex",
     icon: Code,
     recommended: true,
   },
   gemini_local: {
     label: "Gemini CLI",
-    description: "Local Gemini agent",
+    description: "Локальный агент Gemini",
     icon: Gem,
   },
   opencode_local: {
@@ -95,12 +95,12 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
   },
   cursor: {
     label: "Cursor",
-    description: "Local Cursor agent",
+    description: "Локальный агент Cursor",
     icon: MousePointer2,
   },
   cursor_cloud: {
     label: "Cursor Cloud",
-    description: "Managed remote Cursor agent",
+    description: "Управляемый удалённый агент Cursor",
     icon: MousePointer2,
   },
   openclaw_gateway: {

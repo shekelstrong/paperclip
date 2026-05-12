@@ -433,7 +433,7 @@ function IssueSearchInput({
             e.currentTarget.blur();
           }
         }}
-        placeholder="Search issues..."
+        placeholder="Поиск задач..."
         className="pl-7 text-xs sm:text-sm"
         aria-label="Поиск задач"
         data-page-search-target="true"
@@ -508,7 +508,7 @@ function SubIssueProgressSummaryStrip({
           </div>
           <div
             role="progressbar"
-            aria-label="Sub-issues completion progress"
+            aria-label="Прогресс завершения подзадач"
             aria-valuemin={0}
             aria-valuenow={summary.doneCount}
             aria-valuemax={summary.totalCount}
@@ -530,7 +530,7 @@ function SubIssueProgressSummaryStrip({
           {target && targetIssue ? (
             <>
               <div className="text-xs font-medium text-muted-foreground">
-                {target.kind === "next" ? "Следующее" : "Waiting on blockers"}
+                {target.kind === "next" ? "Следующее" : "Ожидание блокеров"}
               </div>
               <Link
                 to={createIssueDetailPath(targetPathId)}
@@ -1821,10 +1821,10 @@ export function IssuesList({
             <div className="py-2" data-testid="issues-load-more-sentinel">
               <p className="text-xs text-muted-foreground">
                 {isLoadingMoreIssues
-                  ? "Loading more issues..."
+                  ? "Загрузка ещё задач..."
                   : remainingIssueRowCount > 0
                     ? `Rendering ${Math.min(renderedIssueRowLimit, filtered.length)} of ${filtered.length} issues`
-                    : "Scroll to load more issues"}
+                    : "Прокрутите для загрузки ещё задач"}
               </p>
             </div>
           )}

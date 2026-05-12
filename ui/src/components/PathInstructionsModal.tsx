@@ -31,15 +31,15 @@ const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
     steps: [
       "Откройте Проводник и перейдите к папке.",
       "Click in the address bar at the top — the full path will appear.",
-      "Copy the path, then paste here.",
+      "Скопируйте путь, затем вставьте здесь.",
     ],
     tip: "Alternatively, hold Shift and right-click the folder, then select \"Copy as path\".",
   },
   linux: {
     steps: [
       "Откройте терминал и перейдите в директорию с помощью cd.",
-      "Run pwd to print the full path.",
-      "Copy the output and paste here.",
+      "Запустите pwd для вывода полного пути.",
+      "Скопируйте вывод и вставьте здесь.",
     ],
     tip: "In most file managers, Ctrl+L reveals the full path in the address bar.",
   },

@@ -329,7 +329,7 @@ export function SidebarAgents() {
     },
     onError: (error, { agent, action }) => {
       pushToast({
-        title: action === "pause" ? "Could not pause agent" : "Could not resume agent",
+        title: action === "pause" ? "Не удалось приостановить агента" : "Не удалось возобновить агента",
         body: error instanceof Error ? error.message : agent.name,
         tone: "error",
       });
@@ -353,7 +353,7 @@ export function SidebarAgents() {
         onClick: openNewAgent,
       }}
       menu={{
-        ariaLabel: "Agents section actions",
+        ariaLabel: "Действия раздела агентов",
         actions: [
           { type: "item", label: "Обзор агентов", icon: Users, href: "/agents/all" },
           { type: "separator" },

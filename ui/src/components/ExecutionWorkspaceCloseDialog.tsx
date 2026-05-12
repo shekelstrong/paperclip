@@ -59,7 +59,7 @@ export function ExecutionWorkspaceCloseDialog({
       queryClient.setQueryData(queryKeys.executionWorkspaces.detail(workspace.id), workspace);
       queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.closeReadiness(workspace.id) });
       pushToast({
-        title: currentStatus === "cleanup_failed" ? "Workspace close retried" : "Workspace closed",
+        title: currentStatus === "cleanup_failed" ? "Повтор закрытия рабочего пространства" : "Рабочее пространство закрыто",
         tone: "success",
       });
       onOpenChange(false);
@@ -67,7 +67,7 @@ export function ExecutionWorkspaceCloseDialog({
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to close workspace",
+        title: "Не удалось закрыть рабочее пространство",
         body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
@@ -111,9 +111,9 @@ export function ExecutionWorkspaceCloseDialog({
             <div className={`rounded-xl border px-4 py-3 text-sm ${readinessTone(readiness.state)}`}>
               <div className="font-medium">
                 {readiness.state === "blocked"
-                  ? "Close is blocked"
+                  ? "Закрытие заблокировано"
                   : readiness.state === "ready_with_warnings"
-                    ? "Close is allowed with warnings"
+                    ? "Закрытие разрешено с предупреждениями"
                     : "Закрытие готово"}
               </div>
               <div className="mt-1 text-xs opacity-80">
@@ -236,7 +236,7 @@ export function ExecutionWorkspaceCloseDialog({
                         <span className="text-xs text-muted-foreground">{service.status} · {service.lifecycle}</span>
                       </div>
                       <div className="mt-1 break-words text-xs text-muted-foreground">
-                        {service.url ?? service.command ?? service.cwd ?? "No additional details"}
+                        {service.url ?? service.command ?? service.cwd ?? "Нет дополнительных деталей"}
                       </div>
                     </div>
                   ))}

@@ -586,7 +586,7 @@ function runDurationLabel(run: {
       return durationText ? `Timed out after ${durationText}` : "Запуск истёк по времени";
     case "cancelled":
       if (stopReason === "paused") {
-        return durationText ? `Paused by board after ${durationText}` : "Paused by board";
+        return durationText ? `Paused by board after ${durationText}` : "Приостановлено доской";
       }
       return durationText ? `Cancelled after ${durationText}` : "Запуск отменён";
     case "queued":

@@ -97,10 +97,10 @@ function CopyableInline({ value, label, mono }: { value: string; label?: string;
 
 function workspaceModeLabel(mode: string | null | undefined) {
   switch (mode) {
-    case "isolated_workspace": return "Isolated workspace";
-    case "operator_branch": return "Operator branch";
+    case "isolated_workspace": return "Изолированное рабочее пространство";
+    case "operator_branch": return "Ветка оператора";
     case "cloud_sandbox": return "Облачная песочница";
-    case "adapter_managed": return "Adapter managed";
+    case "adapter_managed": return "Управляется адаптером";
     default: return "Workspace";
   }
 }
@@ -531,7 +531,7 @@ export function IssueWorkspaceCard({
                       ? "Нет окружения на повторно используемом рабочем пространстве"
                       : "Выберите существующее рабочее пространство для просмотра его окружения"
                     : projectEnvironmentId
-                      ? "Project default environment"
+                      ? "Окружение проекта по умолчанию"
                       : "Нет окружения"}
                 </option>
                 {runSelectableEnvironments.map((environment) => (

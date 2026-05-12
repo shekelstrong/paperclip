@@ -32,7 +32,7 @@ export function WorktreeBanner() {
         <button
           type="button"
           onClick={handleCopyName}
-          title="Click to copy worktree name"
+          title="Нажмите для копирования имени worktree"
           className="truncate font-semibold tracking-[0.12em] cursor-pointer hover:opacity-80 transition-opacity bg-transparent border-none p-0 text-current uppercase text-[11px]"
         >
           {copied ? "Copied!" : branding.name}

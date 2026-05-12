@@ -261,7 +261,7 @@ export function IssueFiltersPopover({
                     <Input
                       value={creatorSearch}
                       onChange={(event) => setCreatorSearch(event.target.value)}
-                      placeholder="Search creators..."
+                      placeholder="Поиск создателей..."
                       className="h-8 pl-7 text-xs"
                     />
                   </div>

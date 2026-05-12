@@ -246,7 +246,7 @@ const BUILTIN_VARIABLE_DOCS: BuiltinVariableDoc[] = [
   },
   {
     name: "timestamp",
-    example: "April 28, 2026 at 12:17 PM UTC",
+    example: "28 апреля 2026 в 12:17 UTC",
     description: "Человекочитаемая дата и время (UTC) на момент запуска процедуры.",
   },
 ];
@@ -264,7 +264,7 @@ export function RoutineVariablesHint() {
           type="button"
           onClick={() => setHelpOpen(true)}
           className="shrink-0 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label="Show variable help"
+          aria-label="Показать справку по переменным"
         >
           <HelpCircle className="h-3.5 w-3.5" />
         </button>

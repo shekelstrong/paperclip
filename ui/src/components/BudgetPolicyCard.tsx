@@ -19,7 +19,7 @@ function parseDollarInput(value: string) {
 }
 
 function windowLabel(windowKind: BudgetPolicySummary["windowKind"]) {
-  return windowKind === "lifetime" ? "Lifetime budget" : "Monthly UTC budget";
+  return windowKind === "lifetime" ? "Бюджет за всё время" : "Ежемесячный UTC бюджет";
 }
 
 function statusTone(status: BudgetPolicySummary["status"]) {

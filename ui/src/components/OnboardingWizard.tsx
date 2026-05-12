@@ -377,7 +377,7 @@ export function OnboardingWizard() {
       return result;
     } catch (err) {
       setAdapterEnvError(
-        err instanceof Error ? err.message : "Adapter environment test failed"
+        err instanceof Error ? err.message : "Тест окружения адаптера не пройден"
       );
       return null;
     } finally {
@@ -415,7 +415,7 @@ export function OnboardingWizard() {
 
       setStep(2);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create company");
+      setError(err instanceof Error ? err.message : "Не удалось создать компанию");
     } finally {
       setLoading(false);
     }
@@ -577,7 +577,7 @@ export function OnboardingWizard() {
           : `/issues/${issueRef}`
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create task");
+      setError(err instanceof Error ? err.message : "Не удалось создать задачу");
     } finally {
       setLoading(false);
     }
@@ -1000,7 +1000,7 @@ export function OnboardingWizard() {
                           >
                             {unsetAnthropicLoading
                               ? "Retrying..."
-                              : "Unset ANTHROPIC_API_KEY"}
+                              : "Сбросить ANTHROPIC_API_KEY"}
                           </Button>
                         </div>
                       )}

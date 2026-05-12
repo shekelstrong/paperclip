@@ -47,8 +47,8 @@ export function IssueScheduledRetryCard({
       ? scheduledRetry.scheduledRetryAttempt
       : null;
 
-  const badgeLabel = continuation ? "Continuation scheduled" : "Повтор запланирован";
-  const titleAction = continuation ? "Automatic continuation" : "Automatic retry";
+  const badgeLabel = continuation ? "Продолжение запланировано" : "Повтор запланирован";
+  const titleAction = continuation ? "Автоматическое продолжение" : "Автоматическая повторная попытка";
   let titleSuffix: string;
   if (relative === "now") {
     titleSuffix = "due now";
@@ -61,7 +61,7 @@ export function IssueScheduledRetryCard({
 
   const helperIdle = continuation
     ? "Сразу вытягивает continuation вперёд"
-    : "Pulls retry forward immediately";
+    : "Сразу вытягивает повторную попытку вперёд";
   const isError = retryNow.isError || retryNow.lastError !== null;
   const isSuccessTransient = retryNow.isSuccess
     && (retryNow.data?.outcome === "promoted" || retryNow.data?.outcome === "already_promoted");
@@ -136,7 +136,7 @@ export function IssueScheduledRetryCard({
             ) : isSuccessTransient ? (
               <span className="inline-flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                {retryNow.data?.outcome === "already_promoted" ? "Already promoted" : "Promoted"}
+                {retryNow.data?.outcome === "already_promoted" ? "Уже продвинуто" : "Promoted"}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5">
@@ -147,7 +147,7 @@ export function IssueScheduledRetryCard({
           </Button>
           <span className="text-right text-xs text-muted-foreground sm:max-w-[12rem]">
             {retryNow.isPending
-              ? "Promoting scheduled retry"
+              ? "Продвижение запланированной повторной попытки"
               : isSuccessTransient
                 ? retryNow.data?.outcome === "already_promoted"
                   ? "Already promoted — run starting"

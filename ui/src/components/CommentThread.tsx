@@ -288,7 +288,7 @@ function CopyMarkdownButton({ text }: { text: string }) {
             : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
       )}
       title={label}
-      aria-label="Copy comment as markdown"
+      aria-label="Копировать комментарий как markdown"
       onClick={() => {
         void copyTextWithFallback(text)
           .then(() => setStatus("copied"))

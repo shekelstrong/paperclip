@@ -44,7 +44,7 @@ export function ActiveAgentsPanel({
   cardLimit = DASHBOARD_RUN_CARD_LIMIT,
   gridClassName,
   cardClassName,
-  emptyMessage = "No recent agent runs.",
+  emptyMessage = "Нет недавних запусков агентов.",
   queryScope = "dashboard",
   showMoreLink = true,
 }: ActiveAgentsPanelProps) {

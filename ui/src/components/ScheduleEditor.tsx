@@ -134,7 +134,7 @@ function describeSchedule(cron: string): string {
     case "monthly":
       return `Monthly on the ${dayOfMonth}${ordinalSuffix(Number(dayOfMonth))} at ${timeStr}`;
     case "custom":
-      return cron || "No schedule set";
+      return cron || "Расписание не установлено";
   }
 }
 
@@ -196,7 +196,7 @@ export function ScheduleEditor({
     <div className="space-y-3">
       <Select value={preset} onValueChange={(v) => handlePresetChange(v as SchedulePreset)}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Choose frequency..." />
+          <SelectValue placeholder="Выберите частоту..." />
         </SelectTrigger>
         <SelectContent>
           {PRESETS.map((p) => (

@@ -46,7 +46,7 @@ export function AgentIconPicker({ value, onChange, children }: AgentIconPickerPr
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-72 p-3" align="start">
         <Input
-          placeholder="Search icons..."
+          placeholder="Поиск иконок..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="mb-2 h-8 text-sm"

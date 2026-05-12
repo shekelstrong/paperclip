@@ -20,7 +20,7 @@ import { AGENT_ROLE_LABELS } from "@paperclipai/shared";
 
 /* ---- Help text for (?) tooltips ---- */
 export const help: Record<string, string> = {
-  name: "Display name for this agent.",
+  name: "Отображаемое имя для этого агента.",
   title: "Должность, отображаемая в орг. структуре.",
   role: "Организационная роль. Определяет позицию и возможности.",
   reportsTo: "Агент, которому этот подчиняется в иерархии организации.",

@@ -87,7 +87,7 @@ export function CloudAccessGate() {
           ? healthQuery.error.message
           : boardAccessQuery.error instanceof Error
             ? boardAccessQuery.error.message
-            : "Failed to load app state"}
+            : "Не удалось загрузить состояние приложения"}
       </div>
     );
   }

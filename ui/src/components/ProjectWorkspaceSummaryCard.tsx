@@ -9,7 +9,7 @@ import { timeAgo } from "../lib/timeAgo";
 import { Copy, ExternalLink, FolderOpen, GitBranch, Loader2, Play, Square } from "lucide-react";
 
 function workspaceKindLabel(kind: ProjectWorkspaceSummary["kind"]) {
-  return kind === "execution_workspace" ? "Execution workspace" : "Рабочее пространство проекта";
+  return kind === "execution_workspace" ? "Рабочее пространство выполнения" : "Рабочее пространство проекта";
 }
 
 function truncatePath(path: string) {

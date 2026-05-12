@@ -246,7 +246,7 @@ export function SecretBindingPicker({
                 value={createValue}
                 onChange={(event) => setCreateValue(event.target.value)}
                 rows={3}
-                placeholder="Paste the secret value"
+                placeholder="Вставьте значение секрета"
                 className="font-mono text-xs"
               />
               <p className="text-[11px] text-muted-foreground mt-1">
@@ -259,7 +259,7 @@ export function SecretBindingPicker({
                 id="secret-description"
                 value={createDescription}
                 onChange={(event) => setCreateDescription(event.target.value)}
-                placeholder="Optional notes (no values)"
+                placeholder="Опциональные заметки (без значений)"
               />
             </div>
             {createError ? <p className="text-xs text-destructive">{createError}</p> : null}

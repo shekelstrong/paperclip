@@ -21,7 +21,7 @@ function incidentStateLabel(incident: BudgetIncident) {
   if (incident.status === "resolved") return "Resolved";
   if (incident.status === "dismissed") return "Dismissed";
   if (incident.approvalStatus === "revision_requested") return "Escalated";
-  if (incident.approvalStatus === "pending") return "Pending approval";
+  if (incident.approvalStatus === "pending") return "Ожидание утверждения";
   return "Open";
 }
 

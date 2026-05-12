@@ -137,7 +137,7 @@ self.onmessage = function (e) {
 
       self.postMessage({ type: "ready" });
     } catch (err) {
-      self.postMessage({ type: "error", message: "Parser init failed: " + (err && err.message || String(err)) });
+      self.postMessage({ type: "error", message: "Ошибка инициализации парсера: " + (err && err.message || String(err)) });
     }
     return;
   }

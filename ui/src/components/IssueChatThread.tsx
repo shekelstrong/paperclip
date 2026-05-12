@@ -3440,7 +3440,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
             const sizeLabel = formatAttachmentSize(attachment.size);
             const statusLabel =
               attachment.status === "uploading"
-                ? "Uploading to issue"
+                ? "Загрузка в задачу"
                 : attachment.status === "error"
                   ? attachment.error ?? "Загрузка не удалась"
                   : attachment.inline

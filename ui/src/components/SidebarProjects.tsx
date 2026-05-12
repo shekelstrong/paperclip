@@ -110,7 +110,7 @@ function ProjectItem({
           style={{ backgroundColor: project.color ?? "#6366f1" }}
         />
         <span className="flex-1 truncate">{project.name}</span>
-        {project.pauseReason === "budget" ? <BudgetSidebarMarker title="Project paused by budget" /> : null}
+        {project.pauseReason === "budget" ? <BudgetSidebarMarker title="Проект приостановлен из-за бюджета" /> : null}
       </NavLink>
       {projectSidebarSlots.length > 0 && (
         <div className="ml-5 flex flex-col gap-0.5">
@@ -299,9 +299,9 @@ export function SidebarProjects() {
         onClick: openNewProject,
       }}
       menu={{
-        ariaLabel: "Projects section actions",
+        ariaLabel: "Действия раздела проектов",
         actions: [
-          { type: "item", label: "Browse projects", icon: FolderOpen, href: "/projects" },
+          { type: "item", label: "Обзор проектов", icon: FolderOpen, href: "/projects" },
           { type: "separator" },
         ],
         radioLabel: "Сортировка проектов",

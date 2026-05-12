@@ -27,7 +27,7 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
       },
       {
         kind: "text",
-        label: "Suggested action",
+        label: "Предложенное действие",
         value: "Переназначить на агента восстановления и выбрать распоряжение.",
       },
     ],
@@ -51,7 +51,7 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
       },
       {
         kind: "text",
-        label: "Normalized cause",
+        label: "Нормализованная причина",
         value: "Запуск завершён без выдачи распоряжения для задачи в работе.",
       },
     ],
@@ -60,7 +60,7 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
 
 const REQUIRED_METADATA: SystemNoticeMetadataSection[] = [
   {
-    title: "Required action",
+    title: "Требуемое действие",
     rows: [
       {
         kind: "issue",

@@ -123,7 +123,7 @@ function buildJobItem(
     workspaceCommandId: command.id,
     runtimeServiceId: null,
     serviceIndex: null,
-    disabledReason: command.disabledReason ?? (!command.command ? "This job is missing a command." : null),
+    disabledReason: command.disabledReason ?? (!command.command ? "Этой задаче не хватает команды." : null),
   };
 }
 
@@ -409,7 +409,7 @@ export function WorkspaceRuntimeControls({
               )}
             >
               <Activity className="h-3.5 w-3.5" />
-              {runningCount > 0 ? `${runningCount} services running` : "No services running"}
+              {runningCount > 0 ? `${runningCount} services running` : "Нет работающих сервисов"}
             </span>
             <span className="text-xs text-muted-foreground">
               {resolvedSections.jobs.length > 0
@@ -446,7 +446,7 @@ export function WorkspaceRuntimeControls({
 
       {resolvedSections.otherServices.length > 0 ? (
         <CommandSection
-          title="Untracked services"
+          title="Неотслеживаемые сервисы"
           description="Running services that no longer match the current workspace command config."
           items={resolvedSections.otherServices}
           emptyMessage=""

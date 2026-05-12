@@ -66,21 +66,21 @@ export function buildIssueThreadInteractionSummary(
       return createdCount === 1 ? "Принята 1 задача" : `Accepted ${createdCount} tasks`;
     }
     if (interaction.status === "rejected") {
-      return count === 1 ? "Rejected 1 task" : `Rejected ${count} tasks`;
+      return count === 1 ? "Отклонено 1 задача" : `Rejected ${count} tasks`;
     }
-    return count === 1 ? "Suggested 1 task" : `Suggested ${count} tasks`;
+    return count === 1 ? "Предложено 1 задача" : `Suggested ${count} tasks`;
   }
 
   if (interaction.kind === "request_confirmation") {
-    if (interaction.status === "accepted") return "Confirmed request";
-    if (interaction.status === "rejected") return "Declined request";
+    if (interaction.status === "accepted") return "Подтверждённый запрос";
+    if (interaction.status === "rejected") return "Отклонённый запрос";
     if (interaction.status === "expired") {
       const outcome = interaction.result?.outcome;
       if (outcome === "superseded_by_comment") return "Подтверждение истекло после комментария";
       if (outcome === "stale_target") return "Подтверждение истекло после изменения цели";
-      return "Confirmation expired";
+      return "Подтверждение истекло";
     }
-    return "Requested confirmation";
+    return "Запрошено подтверждение";
   }
 
   const count = interaction.payload.questions.length;
@@ -88,7 +88,7 @@ export function buildIssueThreadInteractionSummary(
     return count === 1 ? "Отвечен 1 вопрос" : `Answered ${count} questions`;
   }
   if (interaction.status === "cancelled") {
-    return count === 1 ? "Cancelled 1 question" : `Cancelled ${count} questions`;
+    return count === 1 ? "Отменено 1 вопрос" : `Cancelled ${count} questions`;
   }
   return count === 1 ? "Задан 1 вопрос" : `Asked ${count} questions`;
 }

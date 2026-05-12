@@ -6,8 +6,8 @@ import { createIssueDetailPath } from "../lib/issueDetailBreadcrumb";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 const TRIGGER_LABELS: Record<string, string> = {
-  no_comment_streak: "No-comment streak",
-  long_active_duration: "Long active duration",
+  no_comment_streak: "Серия без комментариев",
+  long_active_duration: "Длительная активная продолжительность",
   high_churn: "Высокая текучесть",
 };
 

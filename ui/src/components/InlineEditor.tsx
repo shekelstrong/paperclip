@@ -48,7 +48,7 @@ export function InlineEditor({
   onSave,
   as: Tag = "span",
   className,
-  placeholder = "Click to edit...",
+  placeholder = "Нажмите для редактирования...",
   multiline = false,
   nullable = false,
   imageUploadHandler,

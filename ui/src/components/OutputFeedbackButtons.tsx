@@ -145,7 +145,7 @@ export function OutputFeedbackButtons({
           <Textarea
             value={downvoteReason}
             onChange={(event) => setDownvoteReason(event.target.value)}
-            placeholder="Add a short note"
+            placeholder="Добавить короткую заметку"
             className="min-h-20 resize-y bg-background"
             disabled={disabled || isSaving}
           />

@@ -36,12 +36,12 @@ const issueColumnLabels: Record<InboxIssueColumn, string> = {
 const issueColumnDescriptions: Record<InboxIssueColumn, string> = {
   status: "Chip состояния задачи на левом краю.",
   id: "Идентификатор тикета, например PAP-1009.",
-  assignee: "Assigned agent or board user.",
+  assignee: "Назначенный агент или пользователь доски.",
   project: "Linked project pill с его цветом.",
   workspace: "Рабочее пространство выполнения или проекта, используемое для задачи.",
   parent: "Идентификатор и название родительской задачи.",
-  labels: "Issue labels and tags.",
-  updated: "Latest visible activity time.",
+  labels: "Метки и теги задачи.",
+  updated: "Время последней видимой активности.",
 };
 
 export function issueActivityText(issue: Issue): string {

@@ -50,7 +50,7 @@ export function IssueContinuationHandoff({
 
   if (!document) return null;
 
-  const title = document.title?.trim() || "Continuation handoff";
+  const title = document.title?.trim() || "Передача продолжения";
 
   return (
     <div
@@ -66,7 +66,7 @@ export function IssueContinuationHandoff({
           type="button"
           className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
           onClick={() => setExpanded((current) => !current)}
-          aria-label={expanded ? "Collapse continuation handoff" : "Expand continuation handoff"}
+          aria-label={expanded ? "Свернуть передачу продолжения" : "Развернуть передачу продолжения"}
           aria-expanded={expanded}
         >
           {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}

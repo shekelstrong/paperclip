@@ -73,7 +73,7 @@ export function IssueRow({
         selected ? "border-muted-foreground text-muted-foreground" : null,
       )}
       title={`Productivity review: ${productivityReviewTriggerLabel(productivityReview.trigger)}`}
-      aria-label="Productivity review open"
+      aria-label="Открыт обзор продуктивности"
     >
       <Eye className="h-2.5 w-2.5" aria-hidden />
     </span>

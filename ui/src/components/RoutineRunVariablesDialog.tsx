@@ -355,8 +355,8 @@ export function RoutineRunVariablesDialog({
                 options={assigneeOptions}
                 recentOptionIds={recentAssigneeIds}
                 placeholder="Agent"
-                noneLabel="Select an agent"
-                searchPlaceholder="Search agents..."
+                noneLabel="Выберите агента"
+                searchPlaceholder="Поиск агентов..."
                 emptyMessage="Агенты не найдены."
                 disablePortal
                 openOnFocus={false}

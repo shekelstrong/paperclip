@@ -258,7 +258,7 @@ export function IssueDocumentsSection({
       invalidateIssueDocuments();
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Failed to delete document");
+      setError(err instanceof Error ? err.message : "Не удалось удалить документ");
     },
   });
 
@@ -374,7 +374,7 @@ export function IssueDocumentsSection({
       if (currentDraft.isNew) {
         setError("Ключ и тело документа обязательны");
       } else if (!normalizedBody) {
-        setError("Document body cannot be empty");
+        setError("Тело документа не может быть пустым");
       }
       if (options?.trackAutosave) {
         resetAutosaveState();
@@ -466,7 +466,7 @@ export function IssueDocumentsSection({
           return false;
         }
       }
-      setError(err instanceof Error ? err.message : "Failed to save document");
+      setError(err instanceof Error ? err.message : "Не удалось сохранить документ");
       return false;
     }
   }, [documentConflict, invalidateIssueDocuments, issue.id, resetAutosaveState, runSave, sortedDocuments, syncDocumentCaches, upsertDocument]);
@@ -527,7 +527,7 @@ export function IssueDocumentsSection({
         setCopiedDocumentKey((current) => current === key ? null : current);
       }, 1400);
     } catch {
-      setError("Could not copy document");
+      setError("Не удалось скопировать документ");
     }
   }, []);
 
@@ -763,7 +763,7 @@ export function IssueDocumentsSection({
               onClick={() => void commitDraft(draft, { clearAfterSave: false, trackAutosave: false })}
               disabled={upsertDocument.isPending}
             >
-              {upsertDocument.isPending ? "Saving..." : "Create document"}
+              {upsertDocument.isPending ? "Saving..." : "Создать документ"}
             </Button>
           </div>
         </div>
@@ -920,7 +920,7 @@ export function IssueDocumentsSection({
                         variant="ghost"
                         size="icon-xs"
                         className="text-muted-foreground"
-                        title="Document actions"
+                        title="Действия с документом"
                       >
                         <MoreHorizontal className="h-3.5 w-3.5" />
                       </Button>
@@ -1055,7 +1055,7 @@ export function IssueDocumentsSection({
                             onClick={() => void overwriteDocumentFromDraft(doc.key)}
                             disabled={upsertDocument.isPending}
                           >
-                            {upsertDocument.isPending ? "Saving..." : "Overwrite remote"}
+                            {upsertDocument.isPending ? "Saving..." : "Перезаписать удалённое"}
                           </Button>
                         </div>
                       </div>
@@ -1128,7 +1128,7 @@ export function IssueDocumentsSection({
                       } ${activeDraft || isHistoricalPreview ? "opacity-100" : "opacity-0"}`}
                     >
                       {isHistoricalPreview
-                        ? "Viewing historical revision"
+                        ? "Просмотр исторической ревизии"
                         : activeDraft
                           ? activeConflict
                           ? "Устарело"

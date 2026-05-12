@@ -225,7 +225,7 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
         <Button
           variant="ghost"
           className="h-9 flex-1 justify-start gap-2 px-2 text-left"
-          aria-label={selectedCompany ? `Open ${selectedCompany.name} workspace switcher` : "Open workspace switcher"}
+          aria-label={selectedCompany ? `Open ${selectedCompany.name} workspace switcher` : "Открыть переключатель рабочих пространств"}
         >
           <span className="flex min-w-0 flex-1 items-center gap-2">
             {selectedCompany ? <WorkspaceIcon company={selectedCompany} /> : null}

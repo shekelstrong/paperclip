@@ -18,9 +18,9 @@ const sections: ShortcutSection[] = [
       { keys: ["↓"], label: "Переместить вниз" },
       { keys: ["k"], label: "Переместить вверх" },
       { keys: ["↑"], label: "Переместить вверх" },
-      { keys: ["←"], label: "Collapse selected group" },
-      { keys: ["→"], label: "Expand selected group" },
-      { keys: ["Enter"], label: "Open selected item" },
+      { keys: ["←"], label: "Свернуть выбранную группу" },
+      { keys: ["→"], label: "Развернуть выбранную группу" },
+      { keys: ["Enter"], label: "Открыть выбранный элемент" },
       { keys: ["a"], label: "Архивировать элемент" },
       { keys: ["y"], label: "Архивировать элемент" },
       { keys: ["r"], label: "Отметить прочитанным" },
@@ -30,9 +30,9 @@ const sections: ShortcutSection[] = [
   {
     title: "Детали задачи",
     shortcuts: [
-      { keys: ["y"], label: "Quick-archive back to inbox" },
+      { keys: ["y"], label: "Быстрое архивирование обратно во входящие" },
       { keys: ["g", "i"], label: "Перейти к входящим" },
-      { keys: ["g", "c"], label: "Focus comment composer" },
+      { keys: ["g", "c"], label: "Фокус на редакторе комментария" },
     ],
   },
   {
@@ -42,7 +42,7 @@ const sections: ShortcutSection[] = [
       { keys: ["c"], label: "Новая задача" },
       { keys: ["["], label: "Переключить сайдбар" },
       { keys: ["]"], label: "Переключить панель" },
-      { keys: ["?"], label: "Show keyboard shortcuts" },
+      { keys: ["?"], label: "Показать горячие клавиши" },
     ],
   },
 ];

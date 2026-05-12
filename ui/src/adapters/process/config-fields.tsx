@@ -51,7 +51,7 @@ export function ProcessConfigFields({
           placeholder="например: node, python"
         />
       </Field>
-      <Field label="Args (comma-separated)" hint={help.args}>
+      <Field label="Аргументы (через запятую)" hint={help.args}>
         <DraftInput
           value={
             isCreate

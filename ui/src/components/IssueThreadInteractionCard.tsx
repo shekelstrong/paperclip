@@ -89,9 +89,9 @@ function statusLabel(status: IssueThreadInteraction["status"]) {
 function interactionKindLabel(kind: IssueThreadInteraction["kind"]) {
   switch (kind) {
     case "suggest_tasks":
-      return "Suggested tasks";
+      return "Предложенные задачи";
     case "ask_user_questions":
-      return "Ask user questions";
+      return "Задать вопросы пользователю";
     case "request_confirmation":
       return "Confirmation";
     default:
@@ -497,7 +497,7 @@ function SuggestTasksCard({
             "mt-1 leading-6",
             !interaction.result?.rejectionReason && "text-rose-900/75",
           )}>
-            {interaction.result?.rejectionReason || "No reason provided."}
+            {interaction.result?.rejectionReason || "Причина не указана."}
           </p>
         </div>
       ) : null}
@@ -530,7 +530,7 @@ function SuggestTasksCard({
                     Accepting...
                   </>
                 ) : (
-                  selectedCount === totalTasks ? "Принять черновики" : "Accept selected drafts"
+                  selectedCount === totalTasks ? "Принять черновики" : "Принять выбранные черновики"
                 )}
               </Button>
               <Button
@@ -805,7 +805,7 @@ function AskUserQuestionsCard({
                       Cancelling...
                     </>
                   ) : (
-                    "Cancel question"
+                    "Отменить вопрос"
                   )}
                   </Button>
                 ) : null}
@@ -982,7 +982,7 @@ function RequestConfirmationResolution({
     return (
       <div className="space-y-3 rounded-sm border border-amber-500/60 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
         <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">
-          {expiredByComment ? "Expired by comment" : "Expired by target change"}
+          {expiredByComment ? "Истекло по комментарию" : "Истекло по изменению цели"}
         </div>
         <p className="leading-6">
           {expiredByComment
@@ -1250,7 +1250,7 @@ export function IssueThreadInteractionCard({
               <span className="inline-flex items-center gap-1 rounded-sm border border-border/70 bg-transparent px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-foreground/70">
                 <ListChecks className="h-3.5 w-3.5" />
                 {interaction.continuationPolicy === "wake_assignee_on_accept"
-                  ? "Wakes on confirm"
+                  ? "Будит при подтверждении"
                   : "Будит исполнителя"}
               </span>
             ) : null}
@@ -1259,10 +1259,10 @@ export function IssueThreadInteractionCard({
           <div className="mt-3 text-lg font-bold text-foreground">
             {interaction.title
               ?? (interaction.kind === "suggest_tasks"
-                ? "Suggested task tree"
+                ? "Предложенное дерево задач"
                 : interaction.kind === "ask_user_questions"
-                  ? interaction.payload.title ?? "Questions for the operator"
-                  : "Confirmation requested")}
+                  ? interaction.payload.title ?? "Вопросы для оператора"
+                  : "Подтверждение запрошено")}
           </div>
           {interaction.summary ? (
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">

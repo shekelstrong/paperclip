@@ -486,7 +486,7 @@ export function getInboxSearchSupplementIssues({
 
 function formatDefaultWorkspaceGroupLabel(name: string | null | undefined): string {
   const normalizedName = name?.trim();
-  return normalizedName ? `${normalizedName} (default)` : "Default workspace";
+  return normalizedName ? `${normalizedName} (default)` : "Рабочее пространство по умолчанию";
 }
 
 function resolveDefaultProjectWorkspaceInfo(

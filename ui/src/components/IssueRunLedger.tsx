@@ -73,7 +73,7 @@ const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
   completed: {
     label: "Completed",
     tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    description: "Issue reached a terminal state.",
+    description: "Задача достигла конечного состояния.",
   },
   advanced: {
     label: "Advanced",
@@ -98,17 +98,17 @@ const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
   failed: {
     label: "Failed",
     tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
-    description: "Run ended unsuccessfully.",
+    description: "Запуск завершился неудачно.",
   },
   needs_followup: {
-    label: "Needs follow-up",
+    label: "Требуется follow-up",
     tone: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
     description: "Запуск произвёл полезный вывод, но не доказал конкретного прогресса.",
   },
 };
 
 const PENDING_LIVENESS_COPY: LivenessCopy = {
-  label: "Checks after finish",
+  label: "Проверки после завершения",
   tone: "border-border bg-background text-muted-foreground",
   description: "Liveness оценивается после завершения запуска.",
 };
@@ -120,7 +120,7 @@ const RETRY_PENDING_LIVENESS_COPY: LivenessCopy = {
 };
 
 const MISSING_LIVENESS_COPY: LivenessCopy = {
-  label: "No liveness data",
+  label: "Нет данных liveness",
   tone: "border-border bg-background text-muted-foreground",
   description: "This run has no persisted liveness classification.",
 };
@@ -145,7 +145,7 @@ const RUN_OUTPUT_SILENCE_COPY: Partial<Record<RunOutputSilenceLevel, RunOutputSi
     tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
   },
   snoozed: {
-    label: "Silence snoozed",
+    label: "Тишина отложена",
     tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
   },
 };
@@ -324,20 +324,20 @@ function stopReasonLabel(run: RunForIssue) {
 function stopStatusLabel(run: LedgerRun, stopReason: string | null) {
   if (stopReason) return stopReason;
   if (run.status === "scheduled_retry") return "Повтор в ожидании";
-  if (run.status === "queued") return "Waiting to start";
+  if (run.status === "queued") return "Ожидание запуска";
   if (run.status === "running") return "Всё ещё работает";
   if (!run.livenessState) return "Unavailable";
   return "Нет причины остановки";
 }
 
 function lastUsefulActionLabel(run: LedgerRun) {
-  if (run.status === "scheduled_retry") return "Waiting for next attempt";
+  if (run.status === "scheduled_retry") return "Ожидание следующей попытки";
   if (run.lastUsefulActionAt) return relativeTime(run.lastUsefulActionAt);
-  if (isActiveRun(run)) return "No action recorded yet";
+  if (isActiveRun(run)) return "Пока нет записанных действий";
   if (run.livenessState === "plan_only" || run.livenessState === "needs_followup") {
-    return "No concrete action";
+    return "Нет конкретного действия";
   }
-  if (run.livenessState === "empty_response") return "No useful output";
+  if (run.livenessState === "empty_response") return "Нет полезного вывода";
   if (!run.livenessState) return "Unavailable";
   return "Не записано";
 }
@@ -449,7 +449,7 @@ export function IssueRunLedger({
       const dedupeSuffix = error instanceof ApiError ? String(error.status) : "error";
       setWatchdogDecisionError(message);
       pushToast({
-        title: "Watchdog decision not recorded",
+        title: "Решение watchdog не записано",
         body: message,
         tone: "error",
         dedupeKey: `watchdog-decision:${issueId}:${dedupeSuffix}`,
@@ -533,7 +533,7 @@ export function IssueRunLedgerContent({
   }, [activityEvents, canRenderActivityEvents, ledgerRuns]);
 
   return (
-    <section className="space-y-3" aria-label="Issue run ledger">
+    <section className="space-y-3" aria-label="Реестр запусков задачи">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h3 className="text-sm font-medium text-muted-foreground">Run ledger</h3>
@@ -542,7 +542,7 @@ export function IssueRunLedgerContent({
               ? runSummary(latestRun, agentMap)
               : issueStatus === "in_progress"
                 ? "Ожидание первой записи запуска."
-                : "No runs linked yet."}
+                : "Пока нет связанных запусков."}
           </p>
         </div>
         {latestRun ? (
@@ -599,8 +599,8 @@ export function IssueRunLedgerContent({
         >
           <p className="font-medium">
             {latestSilentRun.outputSilence.level === "critical"
-              ? "Stale-run watchdog alert"
-              : "Output silence watchdog warning"}
+              ? "Предупреждение watchdog устаревшего запуска"
+              : "Предупреждение watchdog тишины вывода"}
           </p>
           <p className="mt-1">
             Latest active run has been silent for{" "}
@@ -643,7 +643,7 @@ export function IssueRunLedgerContent({
                     decision: "snooze",
                     evaluationIssueId: latestSilentRun.outputSilence?.evaluationIssueId ?? null,
                     snoozedUntil: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-                    reason: "Snoozed from issue run ledger",
+                    reason: "Отложено из реестра запусков задачи",
                   })}
                 disabled={pendingWatchdogDecision != null}
               >
@@ -657,7 +657,7 @@ export function IssueRunLedgerContent({
                     runId: latestSilentRun.runId,
                     decision: "dismissed_false_positive",
                     evaluationIssueId: latestSilentRun.outputSilence?.evaluationIssueId ?? null,
-                    reason: "Dismissed from issue run ledger",
+                    reason: "Отклонено из реестра запусков задачи",
                   })}
                 disabled={pendingWatchdogDecision != null}
               >
