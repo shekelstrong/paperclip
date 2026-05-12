@@ -232,8 +232,8 @@ const statuses: ReadonlyArray<{ value: string; label: string; color: string; des
     color: issueStatusText.todo ?? issueStatusTextDefault,
     description: "Executable — assignee will be woken",
   },
-  { value: "in_progress", label: "In Progress", color: issueStatusText.in_progress ?? issueStatusTextDefault },
-  { value: "in_review", label: "In Review", color: issueStatusText.in_review ?? issueStatusTextDefault },
+  { value: "in_progress", label: "В работе", color: issueStatusText.in_progress ?? issueStatusTextDefault },
+  { value: "in_review", label: "На ревью", color: issueStatusText.in_review ?? issueStatusTextDefault },
   { value: "done", label: "Done", color: issueStatusText.done ?? issueStatusTextDefault },
 ];
 
@@ -246,7 +246,7 @@ const priorities = [
 
 const EXECUTION_WORKSPACE_MODES = [
   { value: "shared_workspace", label: "Проект по умолчанию" },
-  { value: "isolated_workspace", label: "New isolated workspace" },
+  { value: "isolated_workspace", label: "Новая изолированная область" },
   { value: "reuse_existing", label: "Reuse existing workspace" },
 ] as const;
 
@@ -313,7 +313,7 @@ const IssueTitleTextarea = memo(function IssueTitleTextarea({
   return (
     <textarea
       className="w-full text-lg font-semibold bg-transparent outline-none resize-none overflow-hidden placeholder:text-muted-foreground/50"
-      placeholder="Issue title"
+      placeholder="Название задачи"
       rows={1}
       value={draftValue}
       onChange={(e) => {
@@ -381,7 +381,7 @@ const IssueDescriptionEditor = memo(function IssueDescriptionEditor({
         setDraftValue(nextValue);
         onChange(nextValue);
       }}
-      placeholder="Add description..."
+      placeholder="Добавить описание..."
       bordered={false}
       mentions={mentions}
       contentClassName={cn("text-sm text-muted-foreground pb-12", expanded ? "min-h-[220px]" : "min-h-[120px]")}
@@ -1095,9 +1095,9 @@ export function NewIssueDialog() {
     && !isUsingParentExecutionWorkspace;
   const assigneeOptionsTitle =
     assigneeAdapterType === "claude_local"
-      ? "Claude options"
+      ? "Опции Claude"
       : assigneeAdapterType === "codex_local"
-        ? "Codex options"
+        ? "Опции Codex"
         : assigneeAdapterType === "opencode_local"
           ? "OpenCode options"
         : "Параметры агента";
@@ -1141,7 +1141,7 @@ export function NewIssueDialog() {
   const hasSavedDraft = Boolean(savedDraft?.title.trim() || savedDraft?.description.trim());
   const canDiscardDraft = hasDraft || hasSavedDraft;
   const createIssueErrorMessage =
-    createIssue.error instanceof Error ? createIssue.error.message : "Failed to create issue. Try again.";
+    createIssue.error instanceof Error ? createIssue.error.message : "Ошибка создания задачи. Попробуйте снова.";
   const stagedDocuments = stagedFiles.filter((file) => file.kind === "document");
   const stagedAttachments = stagedFiles.filter((file) => file.kind === "attachment");
 
@@ -1289,7 +1289,7 @@ export function NewIssueDialog() {
               </PopoverContent>
             </Popover>
             <span className="text-muted-foreground/60">&rsaquo;</span>
-            <span>{isSubIssueMode ? "New sub-issue" : "New issue"}</span>
+            <span>{isSubIssueMode ? "Новая подзадача" : "Новая задача"}</span>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -1339,9 +1339,9 @@ export function NewIssueDialog() {
                 recentOptionIds={recentAssigneeOptionIds}
                 placeholder="Assignee"
                 disablePortal
-                noneLabel="No assignee"
+                noneLabel="Нет назначенного"
                 searchPlaceholder="Search assignees..."
-                emptyMessage="No assignees found."
+                emptyMessage="Назначенные не найдены."
                 onChange={(value) => {
                   const nextAssignee = parseAssigneeValue(value);
                   if (nextAssignee.assigneeAgentId) {
@@ -1395,7 +1395,7 @@ export function NewIssueDialog() {
                 recentOptionIds={recentProjectIds}
                 placeholder="Project"
                 disablePortal
-                noneLabel="No project"
+                noneLabel="Нет проекта"
                 searchPlaceholder="Search projects..."
                 emptyMessage="No projects found."
                 onChange={handleProjectChange}
@@ -1436,7 +1436,7 @@ export function NewIssueDialog() {
                   <button
                     type="button"
                     className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:bg-accent/50 transition-colors"
-                    title="Add reviewer or approver"
+                    title="Добавить рецензента или одобряющего"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
@@ -1485,9 +1485,9 @@ export function NewIssueDialog() {
                 recentOptionIds={recentAssigneeOptionIds}
                 placeholder="Reviewer"
                 disablePortal
-                noneLabel="No reviewer"
+                noneLabel="Нет рецензента"
                 searchPlaceholder="Search reviewers..."
-                emptyMessage="No reviewers found."
+                emptyMessage="Рецензенты не найдены."
                 onChange={setReviewerValue}
                 renderTriggerValue={(option) =>
                   option ? (
@@ -1530,9 +1530,9 @@ export function NewIssueDialog() {
                 recentOptionIds={recentAssigneeOptionIds}
                 placeholder="Approver"
                 disablePortal
-                noneLabel="No approver"
+                noneLabel="Нет одобряющего"
                 searchPlaceholder="Search approvers..."
-                emptyMessage="No approvers found."
+                emptyMessage="Одобряющие не найдены."
                 onChange={setApproverValue}
                 renderTriggerValue={(option) =>
                   option ? (
@@ -1650,7 +1650,7 @@ export function NewIssueDialog() {
                   <div
                     className="flex w-full overflow-hidden rounded-md border border-border"
                     role="radiogroup"
-                    aria-label="Model lane"
+                    aria-label="Полоса модели"
                   >
                     {(["primary", ...(assigneeSupportsCheapLane ? (["cheap"] as const) : ([] as const)), "custom"] as const).map((lane) => (
                       <button
@@ -1695,9 +1695,9 @@ export function NewIssueDialog() {
                     <InlineEntitySelector
                       value={assigneeModelOverride}
                       options={modelOverrideOptions}
-                      placeholder="Default model"
+                      placeholder="Модель по умолчанию"
                       disablePortal
-                      noneLabel="Default model"
+                      noneLabel="Модель по умолчанию"
                       searchPlaceholder="Search models..."
                       emptyMessage="No models found."
                       onChange={setAssigneeModelOverride}
