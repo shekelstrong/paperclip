@@ -63,7 +63,7 @@ export function buildIssueThreadInteractionSummary(
       if (skippedCount > 0) {
         return `Accepted ${createdCount} of ${count} tasks`;
       }
-      return createdCount === 1 ? "Accepted 1 task" : `Accepted ${createdCount} tasks`;
+      return createdCount === 1 ? "Принята 1 задача" : `Accepted ${createdCount} tasks`;
     }
     if (interaction.status === "rejected") {
       return count === 1 ? "Rejected 1 task" : `Rejected ${count} tasks`;
@@ -85,12 +85,12 @@ export function buildIssueThreadInteractionSummary(
 
   const count = interaction.payload.questions.length;
   if (interaction.status === "answered") {
-    return count === 1 ? "Answered 1 question" : `Answered ${count} questions`;
+    return count === 1 ? "Отвечен 1 вопрос" : `Answered ${count} questions`;
   }
   if (interaction.status === "cancelled") {
     return count === 1 ? "Cancelled 1 question" : `Cancelled ${count} questions`;
   }
-  return count === 1 ? "Asked 1 question" : `Asked ${count} questions`;
+  return count === 1 ? "Задан 1 вопрос" : `Asked ${count} questions`;
 }
 
 export function buildSuggestedTaskTree(

@@ -22,9 +22,9 @@ const RETRY_REASON_LABELS: Record<string, string> = {
   transient_failure: "Transient failure",
   missing_issue_comment: "Missing issue comment",
   process_lost: "Process lost",
-  assignment_recovery: "Assignment recovery",
-  issue_continuation_needed: "Continuation needed",
-  max_turns_continuation: "Max-turn continuation",
+  assignment_recovery: "Восстановление назначения",
+  issue_continuation_needed: "Требуется продолжение",
+  max_turns_continuation: "Продолжение по макс. ходам",
 };
 
 function readNonEmptyString(value: unknown) {
@@ -65,7 +65,7 @@ export function describeRunRetryState(run: RetryAwareRun): RunRetryStateSummary 
   if (run.status === "scheduled_retry") {
     return {
       kind: "scheduled",
-      badgeLabel: isMaxTurnContinuation ? "Continuation scheduled" : "Retry scheduled",
+      badgeLabel: isMaxTurnContinuation ? "Продолжение запланировано" : "Retry scheduled",
       tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
       detail: joinFragments([attemptLabel, reasonLabel]),
       secondary: dueAt
@@ -78,9 +78,9 @@ export function describeRunRetryState(run: RetryAwareRun): RunRetryStateSummary 
   if (exhaustedReason) {
     return {
       kind: "exhausted",
-      badgeLabel: isMaxTurnContinuation ? "Continuation exhausted" : "Retry exhausted",
+      badgeLabel: isMaxTurnContinuation ? "Продолжение исчерпано" : "Retry exhausted",
       tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-      detail: joinFragments([attemptLabel, reasonLabel, "Automatic retries exhausted"]),
+      detail: joinFragments([attemptLabel, reasonLabel, "Исчерпаны автоматические повторы"]),
       secondary: exhaustedReason.includes("Manual intervention required")
         ? exhaustedReason
         : `${exhaustedReason} Manual intervention required.`,

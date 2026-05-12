@@ -122,7 +122,7 @@ export function billingTypeDisplayName(billingType: BillingType): string {
 
 export function quotaSourceDisplayName(source: string): string {
   const map: Record<string, string> = {
-    "anthropic-oauth": "Anthropic OAuth",
+    "anthropic-oauth": "OAuth Anthropic",
     "claude-cli": "Claude CLI",
     "bedrock": "AWS Bedrock",
     "codex-rpc": "Codex app server",
@@ -170,7 +170,7 @@ export function financeEventKindDisplayName(eventKind: FinanceEventKind): string
     credit_purchase: "Credit purchase",
     credit_refund: "Credit refund",
     credit_expiry: "Credit expiry",
-    byok_fee: "BYOK fee",
+    byok_fee: "Комиссия BYOK",
     gateway_overhead: "Gateway overhead",
     log_storage_charge: "Log storage",
     logpush_charge: "Logpush",

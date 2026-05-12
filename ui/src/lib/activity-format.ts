@@ -24,39 +24,39 @@ interface ActivityFormatOptions {
 const ACTIVITY_ROW_VERBS: Record<string, string> = {
   "issue.created": "created",
   "issue.updated": "updated",
-  "issue.checked_out": "checked out",
+  "issue.checked_out": "взял в работу",
   "issue.released": "released",
-  "issue.comment_added": "commented on",
-  "issue.comment_cancelled": "cancelled a queued comment on",
-  "issue.attachment_added": "attached file to",
-  "issue.attachment_removed": "removed attachment from",
-  "issue.document_created": "created document for",
-  "issue.document_updated": "updated document on",
-  "issue.document_deleted": "deleted document from",
-  "issue.monitor_scheduled": "scheduled monitor on",
-  "issue.monitor_triggered": "triggered monitor for",
-  "issue.monitor_cleared": "cleared monitor on",
-  "issue.monitor_skipped": "skipped monitor for",
-  "issue.monitor_exhausted": "exhausted monitor on",
-  "issue.monitor_recovery_wake_queued": "queued monitor recovery for",
-  "issue.monitor_recovery_issue_created": "created monitor recovery for",
-  "issue.monitor_escalated_to_board": "escalated monitor for",
-  "issue.commented": "commented on",
+  "issue.comment_added": "прокомментировал",
+  "issue.comment_cancelled": "отменил отложенный комментарий к",
+  "issue.attachment_added": "прикрепил файл к",
+  "issue.attachment_removed": "убрал вложение из",
+  "issue.document_created": "создал документ для",
+  "issue.document_updated": "обновил документ в",
+  "issue.document_deleted": "удалил документ из",
+  "issue.monitor_scheduled": "запланировал мониторинг для",
+  "issue.monitor_triggered": "активировал мониторинг для",
+  "issue.monitor_cleared": "снял мониторинг с",
+  "issue.monitor_skipped": "пропустил мониторинг для",
+  "issue.monitor_exhausted": "исчерпал мониторинг для",
+  "issue.monitor_recovery_wake_queued": "поставил в очередь восстановление мониторинга для",
+  "issue.monitor_recovery_issue_created": "создал задачу восстановления мониторинга для",
+  "issue.monitor_escalated_to_board": "эскалировал мониторинг для",
+  "issue.commented": "прокомментировал",
   "issue.deleted": "deleted",
-  "issue.successful_run_handoff_required": "flagged missing next step on",
-  "issue.successful_run_handoff_resolved": "recorded next step chosen on",
-  "issue.successful_run_handoff_escalated": "escalated missing next step on",
+  "issue.successful_run_handoff_required": "отметил отсутствие следующего шага в",
+  "issue.successful_run_handoff_resolved": "записал выбранный следующий шаг в",
+  "issue.successful_run_handoff_escalated": "эскалировал отсутствие следующего шага в",
   "agent.created": "created",
   "agent.updated": "updated",
   "agent.paused": "paused",
   "agent.resumed": "resumed",
   "agent.terminated": "terminated",
-  "agent.key_created": "created API key for",
-  "agent.budget_updated": "updated budget for",
-  "agent.runtime_session_reset": "reset session for",
-  "heartbeat.invoked": "invoked heartbeat for",
-  "heartbeat.cancelled": "cancelled heartbeat for",
-  "approval.created": "requested approval",
+  "agent.key_created": "создал API-ключ для",
+  "agent.budget_updated": "обновил бюджет для",
+  "agent.runtime_session_reset": "сбросил сессию для",
+  "heartbeat.invoked": "вызвал пульс для",
+  "heartbeat.cancelled": "отменил пульс для",
+  "approval.created": "запросил одобрение",
   "approval.approved": "approved",
   "approval.rejected": "rejected",
   "project.created": "created",
@@ -67,45 +67,45 @@ const ACTIVITY_ROW_VERBS: Record<string, string> = {
   "goal.deleted": "deleted",
   "cost.reported": "reported cost for",
   "cost.recorded": "recorded cost for",
-  "company.created": "created company",
-  "company.updated": "updated company",
+  "company.created": "создал компанию",
+  "company.updated": "обновил компанию",
   "company.archived": "archived",
-  "company.budget_updated": "updated budget for",
+  "company.budget_updated": "обновил бюджет для",
 };
 
 const ISSUE_ACTIVITY_LABELS: Record<string, string> = {
-  "issue.created": "created the issue",
-  "issue.updated": "updated the issue",
-  "issue.checked_out": "checked out the issue",
-  "issue.released": "released the issue",
-  "issue.comment_added": "added a comment",
-  "issue.comment_cancelled": "cancelled a queued comment",
-  "issue.feedback_vote_saved": "saved feedback on an AI output",
-  "issue.attachment_added": "added an attachment",
-  "issue.attachment_removed": "removed an attachment",
-  "issue.document_created": "created a document",
-  "issue.document_updated": "updated a document",
-  "issue.document_deleted": "deleted a document",
-  "issue.monitor_scheduled": "scheduled a monitor",
-  "issue.monitor_triggered": "triggered a monitor",
-  "issue.monitor_cleared": "cleared a monitor",
-  "issue.monitor_skipped": "skipped a monitor",
-  "issue.monitor_exhausted": "exhausted a monitor",
-  "issue.monitor_recovery_wake_queued": "queued a monitor recovery wake",
-  "issue.monitor_recovery_issue_created": "created a monitor recovery issue",
-  "issue.monitor_escalated_to_board": "escalated a monitor to the board",
-  "issue.deleted": "deleted the issue",
-  "issue.successful_run_handoff_required": "Run finished without a clear next step",
-  "issue.successful_run_handoff_resolved": "Next step chosen",
-  "issue.successful_run_handoff_escalated": "Run finished without a next step - recovery escalated",
-  "agent.created": "created an agent",
-  "agent.updated": "updated the agent",
-  "agent.paused": "paused the agent",
-  "agent.resumed": "resumed the agent",
-  "agent.terminated": "terminated the agent",
-  "heartbeat.invoked": "invoked a heartbeat",
-  "heartbeat.cancelled": "cancelled a heartbeat",
-  "approval.created": "requested approval",
+  "issue.created": "создал задачу",
+  "issue.updated": "обновил задачу",
+  "issue.checked_out": "взял задачу в работу",
+  "issue.released": "освободил задачу",
+  "issue.comment_added": "добавил комментарий",
+  "issue.comment_cancelled": "отменил отложенный комментарий",
+  "issue.feedback_vote_saved": "сохранил отзыв на вывод ИИ",
+  "issue.attachment_added": "добавил вложение",
+  "issue.attachment_removed": "убрал вложение",
+  "issue.document_created": "создал документ",
+  "issue.document_updated": "обновил документ",
+  "issue.document_deleted": "удалил документ",
+  "issue.monitor_scheduled": "запланировал мониторинг",
+  "issue.monitor_triggered": "активировал мониторинг",
+  "issue.monitor_cleared": "снял мониторинг",
+  "issue.monitor_skipped": "пропустил мониторинг",
+  "issue.monitor_exhausted": "исчерпал мониторинг",
+  "issue.monitor_recovery_wake_queued": "поставил в очередь восстановление мониторинга",
+  "issue.monitor_recovery_issue_created": "создал задачу восстановления мониторинга",
+  "issue.monitor_escalated_to_board": "эскалировал мониторинг на доску",
+  "issue.deleted": "удалил задачу",
+  "issue.successful_run_handoff_required": "Запуск завершён без чёткого следующего шага",
+  "issue.successful_run_handoff_resolved": "Следующий шаг выбран",
+  "issue.successful_run_handoff_escalated": "Запуск завершён без следующего шага — эскалировано восстановление",
+  "agent.created": "создал агента",
+  "agent.updated": "обновил агента",
+  "agent.paused": "приостановил агента",
+  "agent.resumed": "возобновил агента",
+  "agent.terminated": "завершил агента",
+  "heartbeat.invoked": "вызвал пульс",
+  "heartbeat.cancelled": "отменил пульс",
+  "approval.created": "запросил одобрение",
   "approval.approved": "approved",
   "approval.rejected": "rejected",
 };
@@ -143,8 +143,8 @@ function readIssueReferences(details: ActivityDetails, key: string): ActivityIss
 }
 
 function formatUserLabel(userId: string | null | undefined, options: ActivityFormatOptions = {}): string {
-  if (!userId || userId === "local-board") return "Board";
-  if (options.currentUserId && userId === options.currentUserId) return "You";
+  if (!userId || userId === "local-board") return "Доска";
+  if (options.currentUserId && userId === options.currentUserId) return "Вы";
   const profile = options.userProfileMap?.get(userId);
   if (profile) return profile.label;
   return `user ${userId.slice(0, 5)}`;
@@ -229,10 +229,10 @@ function formatIssueUpdatedAction(details: ActivityDetails, options: ActivityFor
   }
   if (details.assigneeAgentId !== undefined || details.assigneeUserId !== undefined) {
     const assigneeName = formatAssigneeName(details, options);
-    parts.push(assigneeName ? `assigned the issue to ${assigneeName}` : "unassigned the issue");
+    parts.push(assigneeName ? `assigned the issue to ${assigneeName}` : "снял назначение с задачи");
   }
-  if (details.title !== undefined) parts.push("updated the title");
-  if (details.description !== undefined) parts.push("updated the description");
+  if (details.title !== undefined) parts.push("обновил название");
+  if (details.description !== undefined) parts.push("обновил описание");
 
   return parts.length > 0 ? parts.join(", ") : null;
 }
@@ -257,7 +257,7 @@ function formatStructuredIssueChange(input: {
       const changed = formatChangedEntityLabel("blocker", "blockers", removed);
       return input.forIssueDetail ? `removed ${changed}` : `removed ${changed} from`;
     }
-    return input.forIssueDetail ? "updated blockers" : "updated blockers on";
+    return input.forIssueDetail ? "обновил блокировщики" : "обновил блокировщики в";
   }
 
   if (input.action === "issue.reviewers_updated" || input.action === "issue.approvers_updated") {
