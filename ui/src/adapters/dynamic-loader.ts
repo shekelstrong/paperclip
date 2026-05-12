@@ -120,7 +120,7 @@ function initSandboxedWorker(source: string): Promise<SandboxedParser> {
     const timeout = setTimeout(() => {
       drainPendingRequests(sandbox);
       worker.terminate();
-      reject(new Error("Parser worker init timed out"));
+      reject(new Error("Таймаут инициализации парсера"));
     }, 5000);
 
     worker.onmessage = (e: MessageEvent<SandboxResponse>) => {

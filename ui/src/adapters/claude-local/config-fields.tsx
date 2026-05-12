@@ -81,7 +81,7 @@ export function ClaudeLocalAdvancedFields({
   return (
     <>
       <ToggleField
-        label="Enable Chrome"
+        label="Включить Chrome"
         hint={help.chrome}
         checked={
           isCreate
@@ -95,7 +95,7 @@ export function ClaudeLocalAdvancedFields({
         }
       />
       <ToggleField
-        label="Skip permissions"
+        label="Пропустить разрешения"
         hint={help.dangerouslySkipPermissions}
         checked={
           isCreate
@@ -112,7 +112,7 @@ export function ClaudeLocalAdvancedFields({
             : mark("adapterConfig", "dangerouslySkipPermissions", v)
         }
       />
-      <Field label="Max turns per run" hint={help.maxTurnsPerRun}>
+      <Field label="Макс. ходов за запуск" hint={help.maxTurnsPerRun}>
         {isCreate ? (
           <input
             type="number"

@@ -9,14 +9,14 @@ import type { UIAdapterModule } from "./types";
 
 const externalAdapter: UIAdapterModule = {
   type: "external_test",
-  label: "External Test",
+  label: "Внешний тест",
   parseStdoutLine: () => [],
   ConfigFields: () => null,
   buildAdapterConfig: () => ({}),
 };
 
-describe("adapter metadata", () => {
-  it("treats registered external adapters as enabled by default", () => {
+describe("метаданные адаптера", () => {
+  it("внешние адаптеры по умолчанию включены", () => {
     expect(isEnabledAdapterType("external_test")).toBe(true);
 
     expect(
@@ -32,12 +32,12 @@ describe("adapter metadata", () => {
     ]);
   });
 
-  it("keeps intentionally withheld built-in adapters marked as coming soon", () => {
+  it("оставляет скрытые встроенные адаптеры помеченными", () => {
     expect(isEnabledAdapterType("process")).toBe(false);
     expect(isEnabledAdapterType("http")).toBe(false);
   });
 
-  it("keeps ACPX selectable from explicit configuration but out of visual pickers", () => {
+  it("оставляет ACPX выбираемым вручную", () => {
     expect(isEnabledAdapterType("acpx_local")).toBe(true);
     expect(isValidAdapterType("acpx_local")).toBe(true);
     expect(isVisualAdapterChoice("acpx_local")).toBe(false);

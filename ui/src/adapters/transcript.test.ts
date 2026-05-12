@@ -9,7 +9,7 @@ describe("buildTranscript", () => {
     { ts, stream: "stderr", chunk: "stderr /Users/dotta/project" },
   ];
 
-  it("defaults username censoring to off when options are omitted", () => {
+  it("по умолчанию выключает цензуру имён", () => {
     const entries = buildTranscript(chunks, (line, entryTs) => [{ kind: "stdout", ts: entryTs, text: line }]);
 
     expect(entries).toEqual([
@@ -18,7 +18,7 @@ describe("buildTranscript", () => {
     ]);
   });
 
-  it("still redacts usernames when explicitly enabled", () => {
+  it("всё ещё скрывает имена при включённом флаге", () => {
     const entries = buildTranscript(chunks, (line, entryTs) => [{ kind: "stdout", ts: entryTs, text: line }], {
       censorUsernameInLogs: true,
     });
@@ -29,10 +29,10 @@ describe("buildTranscript", () => {
     ]);
   });
 
-  it("creates a fresh stateful parser for each transcript build", () => {
+  it("создаёт новый парсер для каждой сборки", () => {
     const statefulAdapter: UIAdapterModule = {
       type: "stateful_test",
-      label: "Stateful Test",
+      label: "Состоятельный тест",
       parseStdoutLine: (line, entryTs) => [{ kind: "stdout", ts: entryTs, text: line }],
       createStdoutParser: () => {
         let pending: string | null = null;
@@ -71,7 +71,7 @@ describe("buildTranscript", () => {
     expect(second).toEqual([{ kind: "stdout", ts, text: "literal:finish" }]);
   });
 
-  it("converts parser failures into transcript error entries and keeps going", () => {
+  it("преобразует ошибки парсера в записи ошибок транскрипта", () => {
     const entries = buildTranscript(
       [
         { ts, stream: "stdout", chunk: "ok\nexplode\nlater\n" },
@@ -102,10 +102,10 @@ describe("buildTranscript", () => {
     ]);
   });
 
-  it("resets stateful parsers after a failure before parsing later lines", () => {
+  it("сбрасывает парсеры после ошибки", () => {
     const statefulAdapter: UIAdapterModule = {
       type: "stateful_test",
-      label: "Stateful Test",
+      label: "Состоятельный тест",
       parseStdoutLine: (line, entryTs) => [{ kind: "stdout", ts: entryTs, text: line }],
       createStdoutParser: () => {
         let pending: string | null = null;
@@ -156,12 +156,12 @@ describe("buildTranscript", () => {
     ]);
   });
 
-  it("handles trailing buffered parser failures without throwing", () => {
+  it("обрабатывает ошибки буфера парсера", () => {
     const entries = buildTranscript(
       [{ ts, stream: "stdout", chunk: "explode" }],
       (line, entryTs) => {
         if (line === "explode") {
-          throw new Error("trailing boom");
+          throw new Error("завершающая ошибка");
         }
         return [{ kind: "stdout", ts: entryTs, text: line }];
       },

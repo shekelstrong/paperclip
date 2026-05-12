@@ -23,7 +23,7 @@ export function listKnownAdapterTypes(): string[] {
 }
 
 /**
- * Check whether an adapter type is enabled (not "coming soon").
+ * Check whether an adapter type is enabled (not "скоро").
  * Unknown types (external adapters) are always considered enabled.
  */
 export function isEnabledAdapterType(type: string): boolean {
@@ -37,7 +37,7 @@ export function isEnabledAdapterType(type: string): boolean {
 /**
  * Check whether an adapter type is a valid choice for new agent creation.
  * Includes all registered UI adapters (built-in + external) and
- * any non-"coming soon" adapter from the display registry.
+ * any non-"скоро" adapter from the display registry.
  */
 export function isValidAdapterType(type: string): boolean {
   if (getAdapterDisplay(type).comingSoon) return false;

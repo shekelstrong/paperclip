@@ -5,7 +5,7 @@ import { SchemaConfigFields } from "../schema-config-fields";
 
 export const hermesLocalUIAdapter: UIAdapterModule = {
   type: "hermes_local",
-  label: "Hermes Agent",
+  label: "Агент Hermes",
   parseStdoutLine: parseHermesStdoutLine,
   ConfigFields: SchemaConfigFields,
   buildAdapterConfig: buildHermesConfig,

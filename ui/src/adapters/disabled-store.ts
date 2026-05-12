@@ -3,7 +3,7 @@
  *
  * Hydrated from the server's GET /api/adapters response.
  * Provides synchronous reads so module-level constants can filter against it.
- * Falls back to "nothing disabled" before the first hydration.
+ * Falls back to "ничего не отключено" before the first hydration.
  *
  * Usage in components:
  *   useQuery + adaptersApi.list() populates the store automatically.

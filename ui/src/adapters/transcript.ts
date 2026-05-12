@@ -55,7 +55,7 @@ function createTranscriptParseErrorEntry(
   error: unknown,
   redactionOptions: RedactionOptions,
 ): TranscriptEntry {
-  const errorText = formatTranscriptParserError(error) || "unknown parser error";
+  const errorText = formatTranscriptParserError(error) || "неизвестная ошибка парсера";
   const preview = truncateTranscriptLine(line);
   return {
     kind: "result",

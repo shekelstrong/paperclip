@@ -42,7 +42,7 @@ export function CodexLocalConfigFields({
   const fastModeSupported = isCodexLocalFastModeSupported(currentModel);
   const supportedModelsLabel = CODEX_LOCAL_FAST_MODE_SUPPORTED_MODELS.join(", ");
   const fastModeMessage = fastModeManualModel
-    ? "Fast mode will be passed through for this manual model. If Codex rejects it, turn the toggle off."
+    ? "Быстрый режим будет использоваться для этой модели. Если Codex отклонит, выключите тумблер."
     : fastModeSupported
       ? "Fast mode consumes credits/tokens much faster than standard Codex runs."
       : `Fast mode currently only works on ${supportedModelsLabel} or manual model IDs. Paperclip will ignore this toggle until the model is switched.`;
@@ -76,7 +76,7 @@ export function CodexLocalConfigFields({
         </Field>
       )}
       <ToggleField
-        label="Bypass sandbox"
+        label="Обход песочницы"
         hint={help.dangerouslyBypassSandbox}
         checked={
           isCreate
@@ -94,7 +94,7 @@ export function CodexLocalConfigFields({
         }
       />
       <ToggleField
-        label="Enable search"
+        label="Включить поиск"
         hint={help.search}
         checked={
           isCreate
@@ -108,7 +108,7 @@ export function CodexLocalConfigFields({
         }
       />
       <ToggleField
-        label="Fast mode"
+        label="Быстрый режим"
         hint={help.fastMode}
         checked={fastModeEnabled}
         onChange={(v) =>

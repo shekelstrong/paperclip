@@ -18,7 +18,7 @@ function readErrorMessage(error: unknown): string {
     return `Request failed (${error.status})`;
   }
   if (error instanceof Error && error.message) return error.message;
-  return "The request failed. Try again in a moment.";
+  return "Ошибка запроса. Попробуйте еще раз через мгновение.";
 }
 
 export const RETRY_NOW_OUTCOME_HEADLINE: Record<IssueRetryNowOutcome, string> = {

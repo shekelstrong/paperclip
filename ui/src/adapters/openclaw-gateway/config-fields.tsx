@@ -98,7 +98,7 @@ export function OpenClawGatewayConfigFields({
 
   return (
     <>
-      <Field label="Gateway URL" hint={help.webhookUrl}>
+      <Field label="URL шлюза" hint={help.webhookUrl}>
         <DraftInput
           value={
             isCreate
@@ -134,7 +134,7 @@ export function OpenClawGatewayConfigFields({
 
       {!isCreate && (
         <>
-          <Field label="Paperclip API URL override">
+          <Field label="Переопределение API-URL Paperclip">
             <DraftInput
               value={
                 eff(
@@ -150,7 +150,7 @@ export function OpenClawGatewayConfigFields({
             />
           </Field>
 
-          <Field label="Claimed API key path">
+          <Field label="Путь к API-ключу">
             <DraftInput
               value={eff("adapterConfig", "claimedApiKeyPath", String(config.claimedApiKeyPath ?? ""))}
               onCommit={(v) => mark("adapterConfig", "claimedApiKeyPath", v || undefined)}
@@ -188,7 +188,7 @@ export function OpenClawGatewayConfigFields({
             label="Gateway auth token (x-openclaw-token)"
             value={effectiveGatewayToken}
             onCommit={commitGatewayToken}
-            placeholder="OpenClaw gateway token"
+            placeholder="Токен шлюза OpenClaw"
           />
 
           <Field label="Role">

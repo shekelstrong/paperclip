@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { getWorkerBootstrapSource } from "./sandboxed-parser-worker";
 
-describe("sandboxed parser worker bootstrap", () => {
-  it("disables child worker and object URL escape hatches", () => {
+describe("загрузчик изолированного парсера", () => {
+  it("отключает дочерние воркеры", () => {
     const source = getWorkerBootstrapSource();
 
     expect(source).toContain("self.Worker = _undefined");
@@ -15,7 +15,7 @@ describe("sandboxed parser worker bootstrap", () => {
     expect(source).toContain('"revokeObjectURL"');
   });
 
-  it("evaluates parser source in strict mode", () => {
+  it("выполняет парсер в строгом режиме", () => {
     expect(getWorkerBootstrapSource()).toContain('\\"use strict\\";\\n{\\n" + msg.source');
   });
 

@@ -3,11 +3,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 export type DatePreset = "mtd" | "7d" | "30d" | "ytd" | "all" | "custom";
 
 export const PRESET_LABELS: Record<DatePreset, string> = {
-  mtd: "Month to Date",
-  "7d": "Last 7 Days",
-  "30d": "Last 30 Days",
-  ytd: "Year to Date",
-  all: "All Time",
+  mtd: "С начала месяца",
+  "7d": "Последние 7 дней",
+  "30d": "Последние 30 дней",
+  ytd: "С начала года",
+  all: "За все время",
   custom: "Custom",
 };
 

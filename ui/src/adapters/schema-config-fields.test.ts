@@ -26,19 +26,19 @@ function targetWithVisibleWhen(visibleWhen: Record<string, unknown>): ConfigFiel
 }
 
 describe("fieldMatchesVisibleWhen", () => {
-  it("treats an empty values array as no match", () => {
+  it("пустой массив как несовпадение", () => {
     const field = targetWithVisibleWhen({ key: "provider", values: [] });
 
     expect(fieldMatchesVisibleWhen(field, () => "claude", schema)).toBe(false);
   });
 
-  it("treats all non-string values as no match", () => {
+  it("все не-строковые значения как несовпадение", () => {
     const field = targetWithVisibleWhen({ key: "provider", values: [null, 42] });
 
     expect(fieldMatchesVisibleWhen(field, () => "claude", schema)).toBe(false);
   });
 
-  it("matches non-empty string values", () => {
+  it("сопоставление непустых строковых значений", () => {
     const field = targetWithVisibleWhen({ key: "provider", values: ["claude"] });
 
     expect(fieldMatchesVisibleWhen(field, () => "claude", schema)).toBe(true);

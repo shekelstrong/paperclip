@@ -12,13 +12,13 @@ import { SchemaConfigFields } from "./schema-config-fields";
 
 const externalUIAdapter: UIAdapterModule = {
   type: "external_test",
-  label: "External Test",
+  label: "Внешний тест",
   parseStdoutLine: () => [],
   ConfigFields: () => null,
   buildAdapterConfig: () => ({}),
 };
 
-describe("ui adapter registry", () => {
+describe("UI реестр адаптеров", () => {
   beforeEach(() => {
     unregisterUIAdapter("external_test");
   });
@@ -27,7 +27,7 @@ describe("ui adapter registry", () => {
     unregisterUIAdapter("external_test");
   });
 
-  it("registers adapters for lookup and listing", () => {
+  it("регистрирует адаптеры для поиска", () => {
     registerUIAdapter(externalUIAdapter);
 
     expect(findUIAdapter("external_test")).toBe(externalUIAdapter);

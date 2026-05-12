@@ -131,7 +131,7 @@ self.onmessage = function (e) {
       }
 
       if (!parseStdoutLine) {
-        self.postMessage({ type: "error", message: "Parser module exports no usable parseStdoutLine or createStdoutParser" });
+        self.postMessage({ type: "error", message: "Модуль парсера не экспортирует parseStdoutLine или createStdoutParser" });
         return;
       }
 

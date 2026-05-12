@@ -48,7 +48,7 @@ export function ProcessConfigFields({
           }
           immediate
           className={inputClass}
-          placeholder="e.g. node, python"
+          placeholder="например: node, python"
         />
       </Field>
       <Field label="Args (comma-separated)" hint={help.args}>
@@ -69,7 +69,7 @@ export function ProcessConfigFields({
           }
           immediate
           className={inputClass}
-          placeholder="e.g. script.js, --flag"
+          placeholder="например: script.js, --flag"
         />
       </Field>
     </>

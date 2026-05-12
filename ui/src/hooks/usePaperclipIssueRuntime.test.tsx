@@ -117,12 +117,12 @@ describe("usePaperclipIssueRuntime", () => {
     expect(secondAdapter).toBe(firstAdapter);
 
     await act(async () => {
-      await secondAdapter.onNew?.(createAppendMessage("latest callback"));
+      await secondAdapter.onNew?.(createAppendMessage("последний колбэк"));
     });
 
     expect(firstOnSend).not.toHaveBeenCalled();
     expect(secondOnSend).toHaveBeenCalledWith({
-      body: "latest callback",
+      body: "последний колбэк",
       reopen: undefined,
       reassignment: undefined,
     });

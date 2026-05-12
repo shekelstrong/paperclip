@@ -56,7 +56,7 @@ export interface AdapterDisplayInfo {
 const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
   acpx_local: {
     label: "ACPX",
-    description: "Experimental local ACPX multi-agent adapter",
+    description: "Экспериментальный локальный адаптер ACPX",
     icon: Bot,
     experimental: true,
     hideFromVisualSelection: true,
@@ -80,12 +80,12 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
   },
   opencode_local: {
     label: "OpenCode",
-    description: "Local multi-provider agent",
+    description: "Локальный мульти-провайдерный агент",
     icon: OpenCodeLogoIcon,
   },
   hermes_local: {
-    label: "Hermes Agent",
-    description: "Local Hermes CLI agent",
+    label: "Агент Hermes",
+    description: "Локальный агент Hermes CLI",
     icon: HermesIcon,
   },
   pi_local: {
@@ -104,21 +104,21 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
     icon: MousePointer2,
   },
   openclaw_gateway: {
-    label: "OpenClaw Gateway",
-    description: "Invoke OpenClaw via gateway protocol",
+    label: "Шлюз OpenClaw",
+    description: "Вызвать OpenClaw через шлюз",
     icon: Bot,
     comingSoon: true,
-    disabledLabel: "Configure OpenClaw within the App",
+    disabledLabel: "Настроить OpenClaw в приложении",
   },
   process: {
     label: "Process",
-    description: "Internal process adapter",
+    description: "Внутренний адаптер процесса",
     icon: Cpu,
     comingSoon: true,
   },
   http: {
     label: "HTTP",
-    description: "Internal HTTP adapter",
+    description: "Внутренний HTTP-адаптер",
     icon: Cpu,
     comingSoon: true,
   },
@@ -161,7 +161,7 @@ export function getAdapterDisplay(type: string): AdapterDisplayInfo {
   const label = withSuffix(humanizeType(type), suffix);
   return {
     label,
-    description: suffix ? `External ${suffix} adapter` : "External adapter",
+    description: suffix ? `External ${suffix} adapter` : "Внешний адаптер",
     icon: Cpu,
   };
 }
