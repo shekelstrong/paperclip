@@ -1,0 +1,62 @@
+
+> paperclip@ dev /opt/paperclip-ru
+> pnpm --filter @paperclipai/server exec tsx ../scripts/dev-runner.ts watch
+
+[paperclip] dev mode: local_trusted (default)
+[paperclip] building plugin sdk...
+
+> @paperclipai/plugin-sdk@1.0.0 build /opt/paperclip-ru/packages/plugins/sdk
+> pnpm --filter @paperclipai/shared build && tsc
+
+
+> @paperclipai/shared@0.3.1 build /opt/paperclip-ru/packages/shared
+> tsc
+
+
+> @paperclipai/server@0.3.1 dev:watch /opt/paperclip-ru/server
+> cross-env PAPERCLIP_MIGRATION_PROMPT=never PAPERCLIP_MIGRATION_AUTO_APPLY=true tsx ./scripts/dev-watch.ts
+
+[18:09:22] [33mWARN[39m: [36mEmbedded PostgreSQL already running; reusing existing process (pid=650374, port=54329)[39m
+[18:09:22] [32mINFO[39m: [36mEmbedded PostgreSQL ready[39m
+2026-05-12T15:09:24.396Z WARN [Better Auth]: [better-auth] Base URL could not be determined. Please set a valid base URL using the baseURL config option or the BETTER_AUTH_BASE_URL environment variable. Without this, callbacks and redirects may not work correctly.
+[18:09:24] [32mINFO[39m: [36mAuthenticated mode auth origin configuration[39m [90m{"authBaseUrlMode":"auto","authPublicBaseUrl":null,"trustedOrigins":["https://108.165.164.85","http://108.165.164.85","https://108.165.164.85:3105","http://108.165.164.85:3105"],"trustedOriginsSource":{"derived":4,"env":0}}[39m
+
+[36m██████╗  █████╗ ██████╗ ███████╗██████╗  ██████╗██╗     ██╗██████╗ [0m
+[36m██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝██║     ██║██╔══██╗[0m
+[36m██████╔╝███████║██████╔╝█████╗  ██████╔╝██║     ██║     ██║██████╔╝[0m
+[36m██╔═══╝ ██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗██║     ██║     ██║██╔═══╝ [0m
+[36m██║     ██║  ██║██║     ███████╗██║  ██║╚██████╗███████╗██║██║     [0m
+[36m╚═╝     ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝╚═╝     [0m
+[34m  ───────────────────────────────────────────────────────[0m
+[2mMode            [0m [32membedded-postgres[0m  |  [36mvite-dev-middleware[0m
+[2mDeploy          [0m authenticated (private)
+[2mBind            [0m loopback [2m(127.0.0.1)[0m
+[2mAuth            [0m [32mready[0m
+[2mServer          [0m 3105 [2m(requested 3101)[0m
+[2mAPI             [0m http://127.0.0.1:3105/api [2m(health: http://127.0.0.1:3105/api/health)[0m
+[2mUI              [0m http://127.0.0.1:3105
+[2mDatabase        [0m /home/paperclip/.paperclip/instances/default/db [2m(pg:54329)[0m
+[2mMigrations      [0m already applied
+[2mAgent JWT       [0m [32mset[0m
+[2mHeartbeat       [0m enabled [2m(30000ms)[0m
+[2mDB Backup       [0m enabled [2m(every 60m, keep 30d)[0m
+[2mBackup Dir      [0m /home/paperclip/.paperclip/instances/default/data/backups
+[2mConfig          [0m /home/paperclip/.paperclip/instances/default/config.json
+[34m  ───────────────────────────────────────────────────────[0m
+
+[18:09:26] [32mINFO[39m: [36mplugin job coordinator started — listening to lifecycle events[39m [90m{"service":"plugin-job-coordinator"}[39m
+[18:09:26] [32mINFO[39m: [36mplugin job scheduler started[39m [90m{"service":"plugin-job-scheduler","tickIntervalMs":30000,"maxConcurrentJobs":10}[39m
+[18:09:26] [32mINFO[39m: [36minitializing plugin tool dispatcher[39m [90m{"service":"plugin-tool-dispatcher"}[39m
+[18:09:26] [32mINFO[39m: [36mplugin-loader: loading all ready plugins[39m [90m{"service":"plugin-loader"}[39m
+[18:09:26] [33mWARN[39m: [36mRequested port is busy; using next free port (requestedPort=3101, selectedPort=3105)[39m
+[18:09:26] [32mINFO[39m: [36mAutomatic database backups enabled[39m [90m{"intervalMinutes":60,"retentionSource":"instance-settings-db","backupDir":"/home/paperclip/.paperclip/instances/default/data/backups"}[39m
+[18:09:26] [32mINFO[39m: [36mServer listening on 127.0.0.1:3105[39m
+[18:09:26] [32mINFO[39m: [36mplugin-loader: no ready plugins to load[39m [90m{"service":"plugin-loader"}[39m
+[18:09:26] [32mINFO[39m: [36mloaded tools from ready plugins[39m [90m{"service":"plugin-tool-dispatcher","readyPlugins":0,"registeredTools":0}[39m
+[18:09:26] [32mINFO[39m: [36mplugin tool dispatcher initialized[39m [90m{"service":"plugin-tool-dispatcher","totalTools":0}[39m
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @paperclipai/server@0.3.1 dev:watch: `cross-env PAPERCLIP_MIGRATION_PROMPT=never PAPERCLIP_MIGRATION_AUTO_APPLY=true tsx ./scripts/dev-watch.ts`
+Command failed with signal "SIGTERM"
+undefined
+/opt/paperclip-ru/server:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 143: tsx ../scripts/dev-runner.ts watch
+ ELIFECYCLE  Command failed with exit code 1.
