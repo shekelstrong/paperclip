@@ -28,14 +28,14 @@ const surfaceOptions: Array<{
     id: "live",
     label: "Виджет задачи",
     eyebrow: "Прямой эфир",
-    description: "The issue-detail live run widget, optimized for following an active run without leaving the task page.",
+    description: "Виджет активного запуска на странице задачи, оптимизированный для отслеживания без покидания страницы.",
     icon: RadioTower,
   },
   {
     id: "dashboard",
     label: "Карточка дашборда",
     eyebrow: "Компактная карточка",
-    description: "The active-agents dashboard card, tuned for compact scanning while keeping the same transcript language.",
+    description: "Карточка активных агентов на дашборде, оптимизированная для компактного сканирования.",
     icon: PanelsTopLeft,
   },
 ];

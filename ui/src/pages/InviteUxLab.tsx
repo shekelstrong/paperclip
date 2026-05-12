@@ -732,7 +732,7 @@ export function InviteUxLab() {
                 "Inline account creation and sign-in variants, including feedback/error copy",
                 "Переходы: принятие человеком, запрос агента, авто-принятие",
                 "Pending approval, joined-now, claim secret, and onboarding result screens",
-                "Company invite creation, copied-link, history, empty, and permission-error states",
+                "Состояния создания приглашения компании: скопированная ссылка, история, пустое состояние, ошибка разрешений",
               ].map((highlight) => (
                 <div
                   key={highlight}
@@ -766,7 +766,7 @@ export function InviteUxLab() {
           <StatusCard
             icon={<KeyRound className="h-4 w-4" />}
             title="Неверный токен приглашения"
-            body="The token is missing entirely, so the page short-circuits before any invite lookup."
+            body="Токен полностью отсутствует, поэтому страница прекращает работу до поиска приглашения."
             tone="error"
           />
           <StatusCard
@@ -778,7 +778,7 @@ export function InviteUxLab() {
           <StatusCard
             icon={<ShieldCheck className="h-4 w-4" />}
             title="Bootstrap завершён"
-            body="Result screen for bootstrap CEO invites after setup has been accepted successfully."
+            body="Экран результата для CEO-приглашений bootstrap после успешного принятия настройки."
             tone="success"
           />
           <StatusCard

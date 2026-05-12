@@ -1406,7 +1406,7 @@ export function Secrets() {
             <DialogDescription>
               {selectedSecret?.managedMode === "external_reference"
                 ? "Creates a new Paperclip metadata version that points at an existing provider secret. Paperclip does not write a new provider value."
-                : "Creates a new provider-backed version. Consumers pinned to latest pick up the new value on the next run."}
+                : "Создаёт новую версию, поддерживаемую провайдером. Потребители pinned to latest получат новое значение при следующем запуске."}
             </DialogDescription>
           </DialogHeader>
           <div>

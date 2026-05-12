@@ -265,7 +265,7 @@ export const issueChatUxTranscriptsByRunId = new Map<string, readonly IssueChatT
         kind: "tool_result",
         ts: "2026-04-06T12:04:22.000Z",
         toolUseId: "tool-edit-1",
-        content: "Updated layout classes and swapped Jump to latest to page-level scrolling.",
+        content: "Обновлены классы макета и заменён Jump to latest на прокрутку на уровне страницы.",
         isError: false,
       },
       {

@@ -3133,7 +3133,7 @@ export function IssueDetail() {
                 </span>
                 <span className="text-xs text-amber-900/80 dark:text-amber-100/80">
                   {childIssues.length === 0
-                    ? "Issue execution is held until resume. Human comments can still wake the assignee for triage."
+                    ? "Выполнение задачи приостановлено до возобновления. Комментарии людей всё ещё могут разбудить исполнителя для триажа."
                     : "Выполнение корня и потомков удержано до возобновления. Комментарии людей всё ещё могут пробудить исполнителей для триажа."}
                 </span>
               </div>

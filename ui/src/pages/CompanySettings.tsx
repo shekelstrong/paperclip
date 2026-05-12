@@ -442,7 +442,7 @@ export function CompanySettings() {
             <span className="text-xs text-muted-foreground">
               Generate an OpenClaw agent invite snippet.
             </span>
-            <HintIcon text="Creates a short-lived OpenClaw agent invite and renders a copy-ready prompt." />
+            <HintIcon text="Создаёт краткосрочное приглашение агента OpenClaw и отображает готовый к копированию промпт." />
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button

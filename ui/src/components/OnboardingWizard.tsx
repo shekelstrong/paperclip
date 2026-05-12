@@ -504,7 +504,7 @@ export function OnboardingWizard() {
       const result = await runAdapterEnvironmentTest(configWithUnset);
       if (result?.status === "fail") {
         setError(
-          "Retried with ANTHROPIC_API_KEY unset in adapter config, but the environment test is still failing."
+          "Повторная попытка с ANTHROPIC_API_KEY не задан в конфиге адаптера, но тест окружения всё ещё не проходит."
         );
       }
     } catch (err) {

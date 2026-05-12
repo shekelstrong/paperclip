@@ -74,7 +74,7 @@ function createSuggestTasksInteraction(
           parentClientKey: "root-design",
           title: "Добавить Storybook для состояний принятия и отклонения",
           description:
-            "Cover pending, accepted, rejected, and collapsed-child previews in a fixture-backed story.",
+            "Покрытие превью: ожидание, принятие, отклонение и свёрнутые дочерние элементы в fixture-backed story.",
           priority: "medium",
           assigneeAgentId: "agent-qa",
           labels: ["Storybook"],
@@ -84,7 +84,7 @@ function createSuggestTasksInteraction(
           parentClientKey: "root-design",
           title: "Прототип смешанного потока",
           description:
-            "Show comments, activity, live runs, and interaction cards in one chronological feed.",
+            "Показывать комментарии, активность, живые запуски и карточки взаимодействий в одном хронологическом потоке.",
           priority: "medium",
           assigneeAgentId: "agent-codex",
           labels: ["Поток задачи"],
@@ -94,7 +94,7 @@ function createSuggestTasksInteraction(
           parentClientKey: "child-mixed-thread",
           title: "Доработка отступов и кратких ответов",
           description:
-            "Collapse this under the visible task tree so the preview proves the hidden-descendant treatment.",
+            "Свернуть под видимым деревом задач, чтобы превью показало обработку скрытых потомков.",
           priority: "low",
           hiddenInPreview: true,
         },
@@ -191,7 +191,7 @@ function createRequestConfirmationInteraction(
     kind: "request_confirmation",
     title: "Approve the proposed plan",
     summary:
-      "The assignee is waiting on a direct board decision before continuing from the plan document.",
+      "Исполнитель ожидает прямого решения доски перед продолжением работы над планом.",
     status: "pending",
     continuationPolicy: "wake_assignee",
     createdByAgentId: "agent-codex",

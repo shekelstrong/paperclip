@@ -70,7 +70,7 @@ export function BudgetIncidentCard({
           <PauseCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             {incident.scopeType === "project"
-              ? "Project execution is paused. New work in this project will not start until you resolve the budget incident."
+              ? "Выполнение проекта приостановлено. Новая работа не начнётся до разрешения инцидента с бюджетом."
               : "This scope is paused. New heartbeats will not start until you resolve the budget incident."}
           </div>
         </div>

@@ -142,7 +142,7 @@ async function inflateZipEntry(compressionMethod: number, bytes: Uint8Array) {
     throw new Error("Unsupported zip archive: only STORE and DEFLATE entries are supported.");
   }
   if (typeof DecompressionStream !== "function") {
-    throw new Error("Unsupported zip archive: this browser cannot read compressed zip entries.");
+    throw new Error("Неподдерживаемый zip-архив: этот браузер не может читать сжатые zip-записи.");
   }
   const body = new Uint8Array(bytes.byteLength);
   body.set(bytes);

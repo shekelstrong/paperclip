@@ -73,16 +73,16 @@ const routineTabs = ["triggers", "runs", "activity", "history"] as const;
 const concurrencyPolicyDescriptions: Record<string, string> = {
   coalesce_if_active: "Keep one follow-up run queued while an active run is still working.",
   always_enqueue: "Queue every trigger occurrence, even if several runs stack up.",
-  skip_if_active: "Drop overlapping trigger occurrences while the routine is already active.",
+  skip_if_active: "Отбрасывать перекрывающиеся occurrences триггера, пока процедура уже активна.",
 };
 const catchUpPolicyDescriptions: Record<string, string> = {
-  skip_missed: "Ignore schedule windows that were missed while the routine or scheduler was paused.",
+  skip_missed: "Игнорировать окна расписания, пропущенные пока процедура или планировщик были приостановлены.",
   enqueue_missed_with_cap: "Настига пропущенные окна расписания ограниченными партиями после восстановления.",
 };
 const signingModeDescriptions: Record<string, string> = {
   bearer: "Ожидается общий bearer-токен в заголовке Authorization.",
   hmac_sha256: "Ожидается HMAC SHA-256 подпись запроса с использованием общего секрета.",
-  github_hmac: "Accept GitHub-style X-Hub-Signature-256 header (HMAC over raw body, no timestamp).",
+  github_hmac: "Принимать заголовок X-Hub-Signature-256 в стиле GitHub (HMAC над raw body, без timestamp).",
   none: "No authentication — the webhook URL itself acts as a shared secret.",
 };
 const SIGNING_MODES_WITHOUT_REPLAY_WINDOW = new Set(["github_hmac", "none"]);

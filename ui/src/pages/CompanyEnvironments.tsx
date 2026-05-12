@@ -689,7 +689,7 @@ export function CompanyEnvironments() {
                     />
                   </div>
                 </Field>
-                <Field label="Известные хосты" hint="Optional known_hosts block used when strict host key checking is enabled.">
+                <Field label="Известные хосты" hint="Опциональный known_hosts блок, используемый при включённой строгой проверке host key.">
                   <textarea
                     className="h-32 w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-mono outline-none"
                     value={environmentForm.sshKnownHosts}
@@ -699,7 +699,7 @@ export function CompanyEnvironments() {
                 <div className="md:col-span-2">
                   <ToggleField
                     label="Strict host key checking"
-                    hint="Keep this on unless you deliberately want probe-time host key acceptance disabled."
+                    hint="Оставьте включённым, если не хотите отключить probe-time host key acceptance."
                     checked={environmentForm.sshStrictHostKeyChecking}
                     onChange={(checked) =>
                       setEnvironmentForm((current) => ({ ...current, sshStrictHostKeyChecking: checked }))}

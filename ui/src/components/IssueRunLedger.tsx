@@ -389,7 +389,7 @@ function canBoardRecordWatchdogDecision(
 
 function watchdogDecisionErrorMessage(error: unknown) {
   if (error instanceof ApiError && error.status === 403) {
-    return "Only the board or the assigned recovery owner can record watchdog decisions";
+    return "Только доска или назначенный владелец восстановления могут записывать решения watchdog";
   }
   return error instanceof Error && error.message.trim().length > 0
     ? error.message
@@ -677,7 +677,7 @@ export function IssueRunLedgerContent({
         <div className="rounded-md border border-dashed border-border px-3 py-3 text-sm text-muted-foreground">
           {renderActivityEvent
             ? "Runs and activity will appear here once this issue has history."
-            : "Historical runs without liveness metadata will appear here once linked to this issue."}
+            : "Исторические запуски без метаданных liveness появятся здесь после связывания с задачей."}
         </div>
       ) : (
         <div className="space-y-1.5">

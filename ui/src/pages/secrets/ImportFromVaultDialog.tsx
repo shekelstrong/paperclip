@@ -267,7 +267,7 @@ function validateDraftRow(
   if (draft.name.length > 160) return "Name must be 160 characters or fewer.";
   if (!draft.key.trim()) return "Key is required.";
   if (!KEY_PATTERN.test(draft.key)) {
-    return "Key may only contain lowercase letters, numbers, dot, underscore, or hyphen.";
+    return "Ключ может содержать только строчные буквы, цифры, точку, подчёркивание или дефис.";
   }
   if (draft.key.length > 120) return "Key must be 120 characters or fewer.";
   if (draft.description.length > 500) return "Description must be 500 characters or fewer.";
@@ -1129,7 +1129,7 @@ function PreviewErrorBanner({ error, onRetry }: { error: unknown; onRetry: () =>
         </div>
         <div className="mt-1 text-xs leading-relaxed text-destructive/80">
           {isPermission
-            ? "The AWS principal behind this vault is missing secretsmanager:ListSecrets. Update IAM and try again."
+            ? "AWS principal для этого vault не имеет secretsmanager:ListSecrets. Обновите IAM и попробуйте снова."
             : message}
         </div>
         <div className="mt-2 flex items-center gap-2">

@@ -300,7 +300,7 @@ export function IssueDocumentsSection({
   const isEmpty = sortedDocuments.length === 0 && !issue.legacyPlanDocument;
   const newDocumentKeyError =
     draft?.isNew && draft.key.trim().length > 0 && !DOCUMENT_KEY_PATTERN.test(draft.key.trim())
-      ? "Use lowercase letters, numbers, -, or _, and start with a letter or number."
+      ? "Используйте строчные буквы, цифры, - или _, начинайте с буквы или цифры."
       : null;
 
   const resetAutosaveState = useCallback(() => {
@@ -383,7 +383,7 @@ export function IssueDocumentsSection({
     }
 
     if (!DOCUMENT_KEY_PATTERN.test(normalizedKey)) {
-      setError("Document key must start with a letter or number and use only lowercase letters, numbers, -, or _.");
+      setError("Ключ документа должен начинаться с буквы или цифры и содержать только строчные буквы, цифры, - или _.");
       if (options?.trackAutosave) {
         resetAutosaveState();
       }

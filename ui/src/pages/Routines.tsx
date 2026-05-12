@@ -54,7 +54,7 @@ const concurrencyPolicyDescriptions: Record<string, string> = {
   skip_if_active: "Drop new trigger occurrences while a run is still active.",
 };
 const catchUpPolicyDescriptions: Record<string, string> = {
-  skip_missed: "Ignore windows that were missed while the scheduler or routine was paused.",
+  skip_missed: "Игнорировать окна, пропущенные пока планировщик или процедура были приостановлены.",
   enqueue_missed_with_cap: "Настига пропущенные окна расписания ограниченными партиями после восстановления.",
 };
 
@@ -877,7 +877,7 @@ export function Routines() {
             <div className="py-12">
               <EmptyState
                 icon={Repeat}
-                message="No routines yet. Use Create routine to define the first recurring workflow."
+                message="Пока нет процедур. Используйте Создать процедуру для определения первого повторяющегося workflow."
               />
             </div>
           ) : (

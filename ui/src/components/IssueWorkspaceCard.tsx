@@ -544,7 +544,7 @@ export function IssueWorkspaceCard({
                 <div className="text-[11px] text-muted-foreground">
                   {configuredReusableWorkspace
                     ? "Environment selection is locked while reusing an existing workspace. The next run will use that workspace's persisted environment config."
-                    : "Choose an existing workspace first. Its persisted environment config will determine the next run."}
+                    : "Сначала выберите существующее рабочее пространство. Его сохранённая конфигурация определит следующий запуск."}
                 </div>
               )}
             </>

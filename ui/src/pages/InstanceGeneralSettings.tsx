@@ -114,8 +114,8 @@ export function InstanceGeneralSettings() {
             {healthQuery.data?.deploymentMode === "local_trusted"
               ? "Local trusted mode is optimized for a local operator. Browser requests run as local board context and no sign-in is required."
               : healthQuery.data?.deploymentExposure === "public"
-                ? "Authenticated public mode requires sign-in for board access and is intended for public URLs."
-                : "Authenticated private mode requires sign-in and is intended for LAN, VPN, or other private-network deployments."}
+                ? "Публичный режим требует входа для доступа к доске и предназначен для публичных URL."
+                : "Приватный режим требует входа и предназначен для LAN, VPN или частных сетей."}
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <StatusBox

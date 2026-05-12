@@ -174,7 +174,7 @@ function ArchiveDangerZone({
       <p className="text-sm text-muted-foreground">
         {isArchive
           ? "Archive this project to hide it from the sidebar and project selectors."
-          : "Unarchive this project to restore it in the sidebar and project selectors."}
+          : "Разархивировать проект, чтобы восстановить его в сайдбаре и селекторах проектов."}
       </p>
       {archivePending ? (
         <Button size="sm" variant="destructive" disabled>

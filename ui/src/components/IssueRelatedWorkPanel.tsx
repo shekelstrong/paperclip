@@ -95,7 +95,7 @@ export function IssueRelatedWorkPanel({
     <div className="space-y-3">
       <Section
         title="References"
-        description="Other tasks this issue currently points at in its title, description, comments, or documents."
+        description="Другие задачи, на которые эта задача указывает в заголовке, описании, комментариях или документах."
         items={outbound}
         emptyLabel="This issue does not reference any other tasks yet."
       />

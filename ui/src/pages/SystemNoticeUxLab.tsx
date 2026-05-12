@@ -120,8 +120,8 @@ const checklist = [
   "One container per system notice — no nested chat bubble",
   "Tone communicated by icon + label, never color alone",
   "Operational evidence hidden behind Details, expanded only on demand",
-  "Issue, agent, and run metadata render as typed link rows, not raw markdown",
-  "Hierarchy visibly distinct from user (right-aligned) and agent (left-aligned) bubbles",
+  "Метаданные задачи, агента и запуска отображаются как типизированные ссылочные строки, а не raw markdown",
+  "Иерархия визуально отличается от пузырей пользователя (справа) и агента (слева)",
 ];
 
 export function SystemNoticeUxLab() {
