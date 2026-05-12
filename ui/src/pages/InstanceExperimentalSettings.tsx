@@ -54,7 +54,7 @@ function RecoveryPreviewDialog({
           <DialogDescription>
             {preview
               ? `${count} recovery ${count === 1 ? "task" : "tasks"} match the last ${preview.lookbackHours} hours.`
-              : "Checking recovery candidates before enabling."}
+              : "Проверка кандидатов на восстановление перед включением."}
           </DialogDescription>
         </DialogHeader>
 
@@ -293,7 +293,7 @@ export function InstanceExperimentalSettings() {
             checked={enableIsolatedWorkspaces}
             onCheckedChange={() => toggleMutation.mutate({ enableIsolatedWorkspaces: !enableIsolatedWorkspaces })}
             disabled={toggleMutation.isPending}
-            aria-label="Toggle isolated workspaces experimental setting"
+            aria-label="Переключить экспериментальную настройку изолированных рабочих пространств"
           />
         </div>
       </section>
@@ -336,7 +336,7 @@ export function InstanceExperimentalSettings() {
                 previewForEnable();
               }}
               disabled={recoveryActionPending}
-              aria-label="Toggle issue graph liveness auto-recovery"
+              aria-label="Переключить авто-восстановление liveness графа задач"
             />
           </div>
 

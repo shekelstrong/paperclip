@@ -49,9 +49,9 @@ import type { RoutineListItem, RoutineVariable } from "@paperclipai/shared";
 const concurrencyPolicies = ["coalesce_if_active", "always_enqueue", "skip_if_active"];
 const catchUpPolicies = ["skip_missed", "enqueue_missed_with_cap"];
 const concurrencyPolicyDescriptions: Record<string, string> = {
-  coalesce_if_active: "If a run is already active, keep just one follow-up run queued.",
-  always_enqueue: "Queue every trigger occurrence, even if the routine is already running.",
-  skip_if_active: "Drop new trigger occurrences while a run is still active.",
+  coalesce_if_active: "Если запуск уже активен, держите в очереди только один follow-up запуск.",
+  always_enqueue: "Ставить в очередь каждое occurrence триггера, даже если процедура уже работает.",
+  skip_if_active: "Отбрасывать новые occurrences триггера, пока запуск всё ещё активен.",
 };
 const catchUpPolicyDescriptions: Record<string, string> = {
   skip_missed: "Игнорировать окна, пропущенные пока планировщик или процедура были приостановлены.",
@@ -312,8 +312,8 @@ export function Routines() {
       pushToast({
         title: "Процедура создана",
         body: routine.assigneeAgentId
-          ? "Add the first trigger to turn it into a live workflow."
-          : "Draft saved. Add a default agent before enabling automation.",
+          ? "Добавьте первый триггер, чтобы превратить его в живой workflow."
+          : "Черновик сохранён. Добавьте агента по умолчанию перед включением автоматизации.",
         tone: "success",
       });
       navigate(`/routines/${routine.id}?tab=triggers`);

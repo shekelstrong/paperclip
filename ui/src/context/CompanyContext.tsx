@@ -185,7 +185,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 export function useCompany() {
   const ctx = useContext(CompanyContext);
   if (!ctx) {
-    throw new Error("useCompany must be used within CompanyProvider");
+    throw new Error("useCompany должен использоваться внутри CompanyProvider");
   }
   return ctx;
 }

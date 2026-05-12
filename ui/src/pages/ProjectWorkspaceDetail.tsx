@@ -39,8 +39,8 @@ type ProjectWorkspaceVisibility = ProjectWorkspace["visibility"];
 const SOURCE_TYPE_OPTIONS: Array<{ value: ProjectWorkspaceSourceType; label: string; description: string }> = [
   { value: "local_path", label: "Local git checkout", description: "A local path Paperclip can use directly." },
   { value: "non_git_path", label: "Local non-git path", description: "A local folder without git semantics." },
-  { value: "git_repo", label: "Remote git repo", description: "A repo URL with optional refs and local checkout." },
-  { value: "remote_managed", label: "Remote-managed workspace", description: "A hosted workspace tracked by external reference." },
+  { value: "git_repo", label: "Remote git repo", description: "URL репозитория с опциональными refs и локальным checkout." },
+  { value: "remote_managed", label: "Remote-managed workspace", description: "Хостированное рабочее пространство, отслеживаемое внешним референсом." },
 ];
 
 const VISIBILITY_OPTIONS: Array<{ value: ProjectWorkspaceVisibility; label: string }> = [
@@ -154,10 +154,10 @@ function validateWorkspaceForm(form: WorkspaceFormState) {
 
   if (form.sourceType === "remote_managed") {
     if (!remoteWorkspaceRef && !repoUrl) {
-      return "Remote-managed workspaces require a remote workspace ref or repo URL.";
+      return "Удалённо управляемые рабочие пространства требуют remote workspace ref или URL репозитория.";
     }
   } else if (!cwd && !repoUrl) {
-    return "Workspace requires at least one local path or repo URL.";
+    return "Рабочее пространство требует хотя бы один локальный путь или URL репозитория.";
   }
 
   if (cwd && (form.sourceType === "local_path" || form.sourceType === "non_git_path") && !isAbsolutePath(cwd)) {
@@ -317,9 +317,9 @@ export function ProjectWorkspaceDetail() {
         request.action === "run"
           ? "Задача рабочего пространства завершена."
           : request.action === "stop"
-            ? "Workspace service stopped. Issue execution is not paused."
+            ? "Сервис рабочего пространства остановлен. Выполнение задачи не приостановлено."
             : request.action === "restart"
-              ? "Workspace service restarted. Issue execution is not paused."
+              ? "Сервис рабочего пространства перезапущен. Выполнение задачи не приостановлено."
               : "Сервис рабочего пространства запущен.",
       );
     },
@@ -527,7 +527,7 @@ export function ProjectWorkspaceDetail() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Команда настройки" hint="Runs when this workspace needs custom bootstrap">
+                <Field label="Команда настройки" hint="Выполняется, когда рабочему пространству нужен custom bootstrap">
                   <textarea
                     className="min-h-28 w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm outline-none"
                     value={form.setupCommand}
@@ -535,7 +535,7 @@ export function ProjectWorkspaceDetail() {
                     placeholder="pnpm install && pnpm dev"
                   />
                 </Field>
-                <Field label="Команда очистки" hint="Runs before project-level execution workspace teardown">
+                <Field label="Команда очистки" hint="Выполняется перед teardown рабочего пространства на уровне проекта">
                   <textarea
                     className="min-h-28 w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm outline-none"
                     value={form.cleanupCommand}
@@ -636,7 +636,7 @@ export function ProjectWorkspaceDetail() {
                   ? "No services have been started for this workspace yet."
                   : "No workspace command config is defined for this workspace yet."
               }
-              jobEmptyMessage="No one-shot jobs are configured for this workspace yet."
+              jobEmptyMessage="Пока нет настроенных one-shot задач для этого рабочего пространства."
               disabledHint="Project workspaces need a working directory before local commands can run, and services also need runtime config."
               onAction={(request) => controlRuntimeServices.mutate(request)}
             />

@@ -242,12 +242,12 @@ const BUILTIN_VARIABLE_DOCS: BuiltinVariableDoc[] = [
   {
     name: "date",
     example: "2026-04-28",
-    description: "Current date in YYYY-MM-DD format (UTC) at the time the routine runs.",
+    description: "Текущая дата в формате YYYY-MM-DD (UTC) на момент запуска процедуры.",
   },
   {
     name: "timestamp",
     example: "April 28, 2026 at 12:17 PM UTC",
-    description: "Human-readable date and time (UTC) at the time the routine runs.",
+    description: "Человекочитаемая дата и время (UTC) на момент запуска процедуры.",
   },
 ];
 

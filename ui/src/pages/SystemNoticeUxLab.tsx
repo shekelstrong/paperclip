@@ -119,7 +119,7 @@ function MockAgentBubble({ agentName, body }: { agentName: string; body: string 
 const checklist = [
   "One container per system notice — no nested chat bubble",
   "Tone communicated by icon + label, never color alone",
-  "Operational evidence hidden behind Details, expanded only on demand",
+  "Оперативные доказательства скрыты за Details, разворачиваются только по запросу",
   "Метаданные задачи, агента и запуска отображаются как типизированные ссылочные строки, а не raw markdown",
   "Иерархия визуально отличается от пузырей пользователя (справа) и агента (слева)",
 ];

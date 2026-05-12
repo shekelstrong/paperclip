@@ -132,13 +132,13 @@ function FinanceSummaryCard({
         <MetricTile
           label="Net"
           value={formatCents(netCents)}
-          subtitle="Debit minus credit for the selected period"
+          subtitle="Дебет минус кредит за выбранный период"
           icon={ReceiptText}
         />
         <MetricTile
           label="Estimated"
           value={formatCents(estimatedDebitCents)}
-          subtitle="Estimated debits that are not yet invoice-authoritative"
+          subtitle="Оценочные списания, ещё не являющиеся invoice-authoritative"
           icon={Coins}
         />
       </CardContent>
@@ -855,7 +855,7 @@ export function Costs() {
                   <MetricTile
                     label="Pending approvals"
                     value={String(budgetData?.pendingApprovalCount ?? 0)}
-                    subtitle="Budget override approvals awaiting board action"
+                    subtitle="Утверждения превышения бюджета, ожидающие действия доски"
                     icon={ArrowUpRight}
                   />
                   <MetricTile
@@ -912,8 +912,8 @@ export function Costs() {
                           {scopeType === "company"
                             ? "Company-wide monthly policy."
                             : scopeType === "agent"
-                              ? "Recurring monthly spend policies for individual agents."
-                              : "Lifetime spend policies for execution-bound projects."}
+                              ? "Повторяющиеся ежемесячные политики расходов для отдельных агентов."
+                              : "Политики расходов за всё время для проектов с выполнением."}
                         </p>
                       </div>
                       <div className="grid gap-4 xl:grid-cols-2">

@@ -185,7 +185,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 export function useDialogActions() {
   const ctx = useContext(DialogActionsContext);
   if (!ctx) {
-    throw new Error("useDialogActions must be used within DialogProvider");
+    throw new Error("useDialogActions должен использоваться внутри DialogProvider");
   }
   return ctx;
 }
@@ -193,7 +193,7 @@ export function useDialogActions() {
 export function useDialogState() {
   const ctx = useContext(DialogStateContext);
   if (!ctx) {
-    throw new Error("useDialogState must be used within DialogProvider");
+    throw new Error("useDialogState должен использоваться внутри DialogProvider");
   }
   return ctx;
 }

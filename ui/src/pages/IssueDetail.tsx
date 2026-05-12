@@ -3049,7 +3049,7 @@ export function IssueDetail() {
     ? (
       issue.assigneeAgentId
         ? `Sending this comment will wake ${agentMap.get(issue.assigneeAgentId)?.name ?? "the assignee"} for triage while the subtree remains paused.`
-        : "Assign an agent to wake them for triage while the subtree remains paused."
+        : "Назначьте агента для пробуждения на триаж, пока поддерево остаётся приостановленным."
     )
     : null;
   const composerHint = pausedComposerHint;

@@ -78,12 +78,12 @@ const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
   advanced: {
     label: "Advanced",
     tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
-    description: "Run produced concrete evidence of progress.",
+    description: "Запуск произвёл конкретные доказательства прогресса.",
   },
   plan_only: {
     label: "Только план",
     tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-    description: "Run described future work without concrete action evidence.",
+    description: "Запуск описал будущую работу без конкретных доказательств действий.",
   },
   empty_response: {
     label: "Пустой ответ",
@@ -103,14 +103,14 @@ const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
   needs_followup: {
     label: "Needs follow-up",
     tone: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
-    description: "Run produced useful output but did not prove concrete progress.",
+    description: "Запуск произвёл полезный вывод, но не доказал конкретного прогресса.",
   },
 };
 
 const PENDING_LIVENESS_COPY: LivenessCopy = {
   label: "Checks after finish",
   tone: "border-border bg-background text-muted-foreground",
-  description: "Liveness is evaluated after the run finishes.",
+  description: "Liveness оценивается после завершения запуска.",
 };
 
 const RETRY_PENDING_LIVENESS_COPY: LivenessCopy = {
@@ -393,7 +393,7 @@ function watchdogDecisionErrorMessage(error: unknown) {
   }
   return error instanceof Error && error.message.trim().length > 0
     ? error.message
-    : "Paperclip could not record the watchdog decision.";
+    : "Paperclip не смог записать решение watchdog.";
 }
 
 export function IssueRunLedger({
@@ -676,7 +676,7 @@ export function IssueRunLedgerContent({
       {feedItems.length === 0 ? (
         <div className="rounded-md border border-dashed border-border px-3 py-3 text-sm text-muted-foreground">
           {renderActivityEvent
-            ? "Runs and activity will appear here once this issue has history."
+            ? "Запуски и активность появятся здесь, как только у задачи появится история."
             : "Исторические запуски без метаданных liveness появятся здесь после связывания с задачей."}
         </div>
       ) : (

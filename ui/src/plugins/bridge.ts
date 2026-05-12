@@ -177,7 +177,7 @@ function usePluginBridgeContext(): PluginBridgeContextValue {
   if (!ctx) {
     throw new Error(
       "Plugin bridge hook called outside of a <PluginBridgeContext.Provider>. " +
-        "Ensure the plugin component is rendered within a PluginBridgeScope.",
+        "Убедитесь, что компонент плагина отображается внутри PluginBridgeScope.",
     );
   }
   return ctx;

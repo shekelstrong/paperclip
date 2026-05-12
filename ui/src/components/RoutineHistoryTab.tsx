@@ -114,7 +114,7 @@ export function RoutineHistoryTab({
         title: `Restored revision ${restoredFromNumber} as revision ${newNumber}`,
         body: data.secretMaterials.length > 0
           ? "Состояние триггера восстановлено из снимка. Новые webhook-секреты доступны в баннере выше."
-          : "Trigger enabled state was restored from the snapshot.",
+          : "Состояние включённого триггера восстановлено из снимка.",
         tone: "success",
       });
       onRestoreSecretMaterials(data);
@@ -717,7 +717,7 @@ function RestoreConfirmDialog({
           <Input
             id="restore-change-summary"
             value={changeSummary}
-            placeholder="Why are you restoring? Visible in history."
+            placeholder="Почему вы восстанавливаете? Видно в истории."
             onChange={(event) => onChangeSummaryChange(event.target.value)}
           />
         </div>

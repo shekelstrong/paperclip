@@ -270,27 +270,27 @@ function validateDraftRow(
     return "Ключ может содержать только строчные буквы, цифры, точку, подчёркивание или дефис.";
   }
   if (draft.key.length > 120) return "Key must be 120 characters or fewer.";
-  if (draft.description.length > 500) return "Description must be 500 characters or fewer.";
+  if (draft.description.length > 500) return "Описание должно быть не более 500 символов.";
 
   const lowerName = draft.name.trim().toLowerCase();
   const lowerKey = draft.key.trim().toLowerCase();
 
   for (const existingSecret of existing) {
     if (existingSecret.name.trim().toLowerCase() === lowerName) {
-      return "A Paperclip secret already uses this name.";
+      return "Секрет Paperclip уже использует это имя.";
     }
     if (existingSecret.key.trim().toLowerCase() === lowerKey) {
-      return "A Paperclip secret already uses this key.";
+      return "Секрет Paperclip уже использует этот ключ.";
     }
   }
 
   for (const other of otherDrafts) {
     if (other === draft) continue;
     if (other.name.trim().toLowerCase() === lowerName) {
-      return "Another row in this batch already uses this name.";
+      return "Другая строка в этой партии уже использует это имя.";
     }
     if (other.key.trim().toLowerCase() === lowerKey) {
-      return "Another row in this batch already uses this key.";
+      return "Другая строка в этой партии уже использует этот ключ.";
     }
   }
 
@@ -876,7 +876,7 @@ function SelectStep(props: SelectStepProps) {
       <div className="flex min-h-0 flex-1 items-center justify-center p-6" data-testid="select-empty-vaults">
         <EmptyState
           icon={Cloud}
-          message="No AWS provider vault configured. Add one to import secrets."
+          message="Хранилище провайдера AWS не настроено. Добавьте его для импорта секретов."
           action={onManageVaults ? "Управлять хранилищами" : undefined}
           onAction={onManageVaults}
         />

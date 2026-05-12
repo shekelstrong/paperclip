@@ -176,14 +176,14 @@ export function Dashboard() {
       return (
         <EmptyState
           icon={LayoutDashboard}
-          message="Welcome to Paperclip. Set up your first company and agent to get started."
+          message="Добро пожаловать в Paperclip. Настройте первую компанию и агента, чтобы начать."
           action="Начать работу"
           onAction={openOnboarding}
         />
       );
     }
     return (
-      <EmptyState icon={LayoutDashboard} message="Create or select a company to view the dashboard." />
+      <EmptyState icon={LayoutDashboard} message="Создайте или выберите компанию для просмотра дашборда." />
     );
   }
 

@@ -21,7 +21,7 @@ const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
   mac: {
     steps: [
       "Open Finder and navigate to the folder.",
-      "Right-click (or Control-click) the folder.",
+      "Щёлкните правой кнопкой (или Control-click) по папке.",
       "Hold the Option (⌥) key — \"Copy\" changes to \"Copy as Pathname\".",
       "Click \"Copy as Pathname\", then paste here.",
     ],
@@ -29,7 +29,7 @@ const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
   },
   windows: {
     steps: [
-      "Open File Explorer and navigate to the folder.",
+      "Откройте Проводник и перейдите к папке.",
       "Click in the address bar at the top — the full path will appear.",
       "Copy the path, then paste here.",
     ],
@@ -37,7 +37,7 @@ const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
   },
   linux: {
     steps: [
-      "Open a terminal and navigate to the directory with cd.",
+      "Откройте терминал и перейдите в директорию с помощью cd.",
       "Run pwd to print the full path.",
       "Copy the output and paste here.",
     ],

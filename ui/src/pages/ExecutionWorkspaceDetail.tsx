@@ -859,7 +859,7 @@ export function ExecutionWorkspaceDetail() {
 
                 <div className="space-y-4">
                   <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Lifecycle commands</div>
-                  <Field label="Provision command" hint="Runs when Paperclip prepares this execution workspace">
+                  <Field label="Provision command" hint="Выполняется, когда Paperclip готовит это рабочее пространство выполнения">
                     <Textarea
                       className="min-h-20 font-mono"
                       value={form.provisionCommand}
@@ -868,7 +868,7 @@ export function ExecutionWorkspaceDetail() {
                     />
                   </Field>
 
-                  <Field label="Teardown command" hint="Runs when the execution workspace is archived or cleaned up">
+                  <Field label="Teardown command" hint="Выполняется, когда рабочее пространство выполнения архивируется или очищается">
                     <Textarea
                       className="min-h-20 font-mono"
                       value={form.teardownCommand}
@@ -877,7 +877,7 @@ export function ExecutionWorkspaceDetail() {
                     />
                   </Field>
 
-                  <Field label="Команда очистки" hint="Workspace-specific cleanup before teardown">
+                  <Field label="Команда очистки" hint="Очистка для конкретного рабочего пространства перед teardown">
                     <Textarea
                       className="min-h-16 font-mono"
                       value={form.cleanupCommand}

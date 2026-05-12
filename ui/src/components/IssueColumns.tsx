@@ -38,7 +38,7 @@ const issueColumnDescriptions: Record<InboxIssueColumn, string> = {
   id: "Ticket identifier like PAP-1009.",
   assignee: "Assigned agent or board user.",
   project: "Linked project pill with its color.",
-  workspace: "Execution or project workspace used for the issue.",
+  workspace: "Рабочее пространство выполнения или проекта, используемое для задачи.",
   parent: "Parent issue identifier and title.",
   labels: "Issue labels and tags.",
   updated: "Latest visible activity time.",

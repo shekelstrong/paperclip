@@ -462,7 +462,7 @@ export function IssueDocumentsSection({
           resetAutosaveState();
           return false;
         } catch {
-          setError("Document changed remotely and the latest version could not be loaded");
+          setError("Документ изменён удалённо, последняя версия не может быть загружена");
           return false;
         }
       }
@@ -552,7 +552,7 @@ export function IssueDocumentsSection({
       return;
     }
     if (documentConflict?.key === doc.key || documentHasUnsavedChanges(doc, draft)) {
-      setError("Save or cancel your local changes before viewing an older revision.");
+      setError("Сохраните или отмените локальные изменения перед просмотром старой ревизии.");
       return;
     }
     resetAutosaveState();

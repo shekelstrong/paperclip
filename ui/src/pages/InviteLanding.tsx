@@ -320,7 +320,7 @@ export function InviteLandingPage() {
     mutationFn: async () => {
       if (!invite) throw new Error("Invite not found");
       if (isCheckingExistingMembership) {
-        throw new Error("Checking your company access. Try again in a moment.");
+        throw new Error("Проверка доступа к компании. Попробуйте снова через мгновение.");
       }
       if (isCurrentMember) {
         throw new Error("Этот аккаунт уже принадлежит компании.");

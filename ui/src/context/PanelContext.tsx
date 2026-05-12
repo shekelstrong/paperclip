@@ -67,7 +67,7 @@ export function PanelProvider({ children }: { children: ReactNode }) {
 export function usePanel() {
   const ctx = useContext(PanelContext);
   if (!ctx) {
-    throw new Error("usePanel must be used within PanelProvider");
+    throw new Error("usePanel должен использоваться внутри PanelProvider");
   }
   return ctx;
 }

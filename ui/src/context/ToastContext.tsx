@@ -173,7 +173,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 export function useToastState() {
   const context = useContext(ToastStateContext);
   if (!context) {
-    throw new Error("useToastState must be used within a ToastProvider");
+    throw new Error("useToastState должен использоваться внутри ToastProvider");
   }
   return context;
 }
@@ -181,7 +181,7 @@ export function useToastState() {
 export function useToastActions() {
   const context = useContext(ToastActionsContext);
   if (!context) {
-    throw new Error("useToastActions must be used within a ToastProvider");
+    throw new Error("useToastActions должен использоваться внутри ToastProvider");
   }
   return context;
 }

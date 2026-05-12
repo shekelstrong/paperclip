@@ -28,7 +28,7 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
       {
         kind: "text",
         label: "Suggested action",
-        value: "Reassign to a recovery agent and pick a disposition.",
+        value: "Переназначить на агента восстановления и выбрать распоряжение.",
       },
     ],
   },
@@ -52,7 +52,7 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
       {
         kind: "text",
         label: "Normalized cause",
-        value: "Run completed without issuing a disposition for an in_progress task.",
+        value: "Запуск завершён без выдачи распоряжения для задачи в работе.",
       },
     ],
   },
@@ -78,7 +78,7 @@ const REQUIRED_METADATA: SystemNoticeMetadataSection[] = [
       {
         kind: "text",
         label: "Следующий шаг",
-        value: "Pick done, blocked, or in_review and post a one-line rationale.",
+        value: "Выберите done, blocked или in_review и укажите однострочное обоснование.",
       },
     ],
   },
@@ -199,6 +199,6 @@ export const systemNoticeFixtures: readonly SystemNoticeFixture[] = [
     label: "Системное предупреждение",
     source: { label: "Paperclip" },
     timestamp: "2026-05-04T17:02:00.000Z",
-    body: "This run paused while waiting on board approval.",
+    body: "Этот запуск приостановлен в ожидании утверждения доской.",
   },
 ];

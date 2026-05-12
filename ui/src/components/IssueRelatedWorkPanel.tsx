@@ -97,11 +97,11 @@ export function IssueRelatedWorkPanel({
         title="References"
         description="Другие задачи, на которые эта задача указывает в заголовке, описании, комментариях или документах."
         items={outbound}
-        emptyLabel="This issue does not reference any other tasks yet."
+        emptyLabel="Эта задача пока не ссылается на другие задачи."
       />
       <Section
         title="Упоминается в"
-        description="Other tasks that currently point at this issue."
+        description="Другие задачи, которые в данный момент указывают на эту."
         items={inbound}
         emptyLabel="No other tasks reference this issue yet."
       />

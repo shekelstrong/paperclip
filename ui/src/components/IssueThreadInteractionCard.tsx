@@ -559,7 +559,7 @@ function SuggestTasksCard({
               <Textarea
                 value={rejectReason}
                 onChange={(event) => setRejectReason(event.target.value)}
-                placeholder="Add a short reason for rejecting this suggestion"
+                placeholder="Добавьте краткую причину отклонения этого предложения"
                 className="min-h-24 bg-background text-sm"
               />
               <div className="flex justify-end">
@@ -986,8 +986,8 @@ function RequestConfirmationResolution({
         </div>
         <p className="leading-6">
           {expiredByComment
-            ? "A board comment superseded this confirmation before it was resolved."
-            : "The requested target changed before this confirmation was resolved."}
+            ? "Комментарий доски заменил это подтверждение до его разрешения."
+            : "Запрошенная цель изменилась до разрешения этого подтверждения."}
         </p>
         {expiredByComment && interaction.result?.commentId ? (
           <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-amber-950 hover:bg-amber-500/15 dark:text-amber-50">

@@ -242,7 +242,7 @@ export function CompanyAccess() {
   if (membersQuery.error) {
     const message =
       membersQuery.error instanceof ApiError && membersQuery.error.status === 403
-        ? "You do not have permission to manage company members."
+        ? "У вас нет разрешения на управление членами компании."
         : membersQuery.error instanceof Error
           ? membersQuery.error.message
           : "Failed to load company members.";

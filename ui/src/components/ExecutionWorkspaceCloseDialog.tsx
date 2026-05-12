@@ -104,7 +104,7 @@ export function ExecutionWorkspaceCloseDialog({
           </div>
         ) : readinessQuery.error ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-            {readinessQuery.error instanceof Error ? readinessQuery.error.message : "Failed to inspect workspace close readiness."}
+            {readinessQuery.error instanceof Error ? readinessQuery.error.message : "Не удалось проверить готовность закрытия рабочего пространства."}
           </div>
         ) : readiness ? (
           <div className="space-y-4">
@@ -123,7 +123,7 @@ export function ExecutionWorkspaceCloseDialog({
                     ? "This execution workspace has its own checkout path and can be archived independently."
                     : readiness.isProjectPrimaryWorkspace
                       ? "This execution workspace currently points at the project's primary workspace path."
-                      : "This workspace is disposable and can be archived."}
+                      : "Это рабочее пространство одноразовое и может быть архивировано."}
               </div>
             </div>
 

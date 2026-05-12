@@ -414,7 +414,7 @@ export function WorkspaceRuntimeControls({
             <span className="text-xs text-muted-foreground">
               {resolvedSections.jobs.length > 0
                 ? `${resolvedSections.jobs.length} job${resolvedSections.jobs.length === 1 ? "" : "s"} available to run on demand.`
-                : "Each command can be controlled independently."}
+                : "Каждая команда может контролироваться независимо."}
             </span>
           </div>
           {visibleDisabledHint ? <p className="text-xs text-muted-foreground">{visibleDisabledHint}</p> : null}
@@ -423,7 +423,7 @@ export function WorkspaceRuntimeControls({
 
       <CommandSection
         title="Services"
-        description="Long-running commands that Paperclip can supervise for this workspace."
+        description="Долгоживущие команды, которые Paperclip может контролировать для этого рабочего пространства."
         items={resolvedSections.services}
         emptyMessage={resolvedServiceEmptyMessage}
         disabledHint={visibleDisabledHint}
@@ -435,7 +435,7 @@ export function WorkspaceRuntimeControls({
 
       <CommandSection
         title="Jobs"
-        description="One-shot commands that run now and exit when they finish."
+        description="Одноразовые команды, запускающиеся сейчас и завершающиеся по окончании."
         items={resolvedSections.jobs}
         emptyMessage={jobEmptyMessage}
         isPending={isPending}

@@ -728,10 +728,10 @@ export function InviteUxLab() {
             </div>
             <div className="space-y-3">
               {[
-                "Invite loading, access-check, missing-token, and unavailable states",
+                "Загрузка приглашения, проверка доступа, отсутствие токена и недоступные состояния",
                 "Inline account creation and sign-in variants, including feedback/error copy",
                 "Переходы: принятие человеком, запрос агента, авто-принятие",
-                "Pending approval, joined-now, claim secret, and onboarding result screens",
+                "Ожидание утверждения, присоединение, получение секрета и экраны результата онбординга",
                 "Состояния создания приглашения компании: скопированная ссылка, история, пустое состояние, ошибка разрешений",
               ].map((highlight) => (
                 <div
@@ -886,7 +886,7 @@ export function InviteUxLab() {
         <div className="grid gap-5 xl:grid-cols-3">
           <InviteResultPreview
             title="Запрос на присоединение к Acme Robotics"
-            description="Board User must approve your request to join."
+            description="Пользователь доски должен утвердить ваш запрос на присоединение."
             claimSecret="pcp_claim_secret_demo"
             onboardingTextUrl="/api/invites/pcp_invite_test/onboarding.txt"
           />

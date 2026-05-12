@@ -633,7 +633,7 @@ async function readLocalPackageZip(file: File): Promise<{
   }
   const archive = await readZipArchive(await file.arrayBuffer());
   if (Object.keys(archive.files).length === 0) {
-    throw new Error("No package files were found in the selected zip archive.");
+    throw new Error("Файлы пакетов не найдены в выбранном zip-архиве.");
   }
   return {
     name: file.name,
@@ -1178,7 +1178,7 @@ export function CompanyImport() {
           </Field>
         )}
 
-        <Field label="Target" hint="Import into this company or create a new one.">
+        <Field label="Target" hint="Импортировать в эту компанию или создать новую.">
           <select
             className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
             value={targetMode}
@@ -1197,7 +1197,7 @@ export function CompanyImport() {
         {targetMode === "new" && (
           <Field
             label="New company name"
-            hint="Optional override. Leave blank to use the package name."
+            hint="Опциональное переопределение. Оставьте пустым для использования имени пакета."
           >
             <input
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
@@ -1211,7 +1211,7 @@ export function CompanyImport() {
 
         <Field
           label="Collision strategy"
-          hint="Board imports can rename, skip, or replace matching company content."
+          hint="Импорты доски могут переименовывать, пропускать или заменять соответствующий контент компании."
         >
           <select
             className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"

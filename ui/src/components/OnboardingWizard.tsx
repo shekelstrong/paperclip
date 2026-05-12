@@ -359,7 +359,7 @@ export function OnboardingWizard() {
   ): Promise<AdapterEnvironmentTestResult | null> {
     if (!createdCompanyId) {
       setAdapterEnvError(
-        "Create or select a company before testing adapter environment."
+        "Создайте или выберите компанию перед тестированием окружения адаптера."
       );
       return null;
     }
@@ -450,7 +450,7 @@ export function OnboardingWizard() {
       if (hire.approval) {
         await approvalsApi.approve(
           hire.approval.id,
-          "Approved during onboarding first-agent setup."
+          "Утверждено во время онбординга настройки первого агента."
         );
         queryClient.invalidateQueries({
           queryKey: queryKeys.approvals.list(createdCompanyId)
@@ -511,7 +511,7 @@ export function OnboardingWizard() {
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to unset ANTHROPIC_API_KEY and retry."
+          : "Не удалось сбросить ANTHROPIC_API_KEY и повторить."
       );
     } finally {
       setUnsetAnthropicLoading(false);

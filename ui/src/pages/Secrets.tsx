@@ -266,7 +266,7 @@ export function getProviderConfigBlockReason(
 ) {
   if (!config) return null;
   if (config.status === "disabled") return "This provider vault is disabled.";
-  if (config.status === "coming_soon") return "This provider vault is saved as draft metadata only.";
+  if (config.status === "coming_soon") return "Это хранилище провайдера сохранено только как черновые метаданные.";
   if (config.healthStatus === "error") {
     return config.healthMessage ?? "This provider vault health check failed.";
   }
@@ -1719,7 +1719,7 @@ function ImportFromVaultButton({
         size="sm"
         onClick={onManageVaults}
         className={cn("text-xs text-muted-foreground", className)}
-        title="Configure an AWS provider vault to enable remote import"
+        title="Настройте хранилище провайдера AWS для удалённого импорта"
       >
         <Cloud className="h-3.5 w-3.5 mr-1" /> AWS vault disabled — manage
       </Button>

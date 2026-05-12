@@ -73,7 +73,7 @@ export function CompanyInvites() {
 
     pushToast({
       title: "Clipboard unavailable",
-      body: "Copy the invite URL manually from the field below.",
+      body: "Скопируйте URL приглашения вручную из поля ниже.",
       tone: "warn",
     });
     return false;
@@ -122,7 +122,7 @@ export function CompanyInvites() {
       await queryClient.invalidateQueries({ queryKey: inviteHistoryQueryKey });
       pushToast({
         title: "Приглашение создано",
-        body: copied ? "Invite ready below and copied to clipboard." : "Invite ready below.",
+        body: copied ? "Приглашение готово ниже и скопировано в буфер обмена." : "Invite ready below.",
         tone: "success",
       });
     },
@@ -161,7 +161,7 @@ export function CompanyInvites() {
   if (invitesQuery.error) {
     const message =
       invitesQuery.error instanceof ApiError && invitesQuery.error.status === 403
-        ? "You do not have permission to manage company invites."
+        ? "У вас нет разрешения на управление приглашениями компании."
         : invitesQuery.error instanceof Error
           ? invitesQuery.error.message
           : "Failed to load invites.";

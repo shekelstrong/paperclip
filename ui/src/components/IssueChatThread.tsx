@@ -4165,7 +4165,7 @@ export function IssueChatThread({
   const resolvedEmptyMessage = emptyMessage
     ?? (variant === "embedded"
       ? "Пока нет вывода запуска."
-      : "This issue conversation is empty. Start with a message below.");
+      : "Обсуждение этой задачи пусто. Начните с сообщения ниже.");
   const previousErrorBoundaryMessagesRef = useRef<readonly ThreadMessage[] | null>(null);
   const errorBoundaryResetVersionRef = useRef(0);
   if (previousErrorBoundaryMessagesRef.current !== messages) {

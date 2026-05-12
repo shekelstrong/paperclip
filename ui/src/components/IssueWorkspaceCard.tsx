@@ -438,9 +438,9 @@ export function IssueWorkspaceCard({
           {!workspace && (
             <div className="text-muted-foreground">
               {currentSelection === "isolated_workspace"
-                ? "A fresh isolated workspace will be created when this issue runs."
+                ? "Новое изолированное рабочее пространство будет создано при запуске этой задачи."
                 : currentSelection === "reuse_existing"
-                  ? "This issue will reuse an existing workspace when it runs."
+                  ? "Эта задача будет повторно использовать существующее рабочее пространство при запуске."
                   : "This issue will use the project default workspace configuration when it runs."}
             </div>
           )}
@@ -529,7 +529,7 @@ export function IssueWorkspaceCard({
                   {reuseExistingSelection
                     ? configuredReusableWorkspace
                       ? "No environment on reused workspace"
-                      : "Select an existing workspace to inspect its environment"
+                      : "Выберите существующее рабочее пространство для просмотра его окружения"
                     : projectEnvironmentId
                       ? "Project default environment"
                       : "Нет окружения"}

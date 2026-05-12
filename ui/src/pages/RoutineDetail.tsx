@@ -71,8 +71,8 @@ const triggerKinds = ["schedule", "webhook"];
 const signingModes = ["bearer", "hmac_sha256", "github_hmac", "none"];
 const routineTabs = ["triggers", "runs", "activity", "history"] as const;
 const concurrencyPolicyDescriptions: Record<string, string> = {
-  coalesce_if_active: "Keep one follow-up run queued while an active run is still working.",
-  always_enqueue: "Queue every trigger occurrence, even if several runs stack up.",
+  coalesce_if_active: "Держать один follow-up запуск в очереди, пока активный запуск всё ещё работает.",
+  always_enqueue: "Ставить в очередь каждое occurrence триггера, даже если несколько запусков накапливаются.",
   skip_if_active: "Отбрасывать перекрывающиеся occurrences триггера, пока процедура уже активна.",
 };
 const catchUpPolicyDescriptions: Record<string, string> = {
@@ -482,7 +482,7 @@ export function RoutineDetail() {
         setSaveConflict(true);
         pushToast({
           title: "Routine changed",
-          body: "Someone else updated this routine. Reload to see the latest revision.",
+          body: "Кто-то обновил эту процедуру. Перезагрузите для просмотра последней ревизии.",
           tone: "warn",
         });
         return;

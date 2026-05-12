@@ -536,7 +536,7 @@ function buildJoinRequestToast(
 
   return {
     title: `${label} wants to join`,
-    body: "A new join request is waiting for approval.",
+    body: "Новый запрос на присоединение ожидает утверждения.",
     tone: "info",
     action: { label: "Просмотр входящих", href: "/inbox/mine" },
     dedupeKey: `join-request:${entityId}`,
@@ -1008,7 +1008,7 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
 
     // Delay initial connect slightly so React StrictMode's double-invoke
     // cleanup fires before the WebSocket is created, avoiding the
-    // "WebSocket closed before connection established" dev-mode error.
+    // "WebSocket закрыт до установления соединения" dev-mode error.
     const connectTimer = window.setTimeout(connect, 0);
 
     return () => {

@@ -719,7 +719,7 @@ export function PluginLauncherProvider({ children }: { children: ReactNode }) {
 export function usePluginLauncherRuntime(): PluginLauncherRuntimeContextValue {
   const value = useContext(PluginLauncherRuntimeContext);
   if (!value) {
-    throw new Error("usePluginLauncherRuntime must be used within PluginLauncherProvider");
+    throw new Error("usePluginLauncherRuntime должен использоваться внутри PluginLauncherProvider");
   }
   return value;
 }

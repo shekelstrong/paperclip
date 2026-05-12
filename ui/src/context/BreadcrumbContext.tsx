@@ -65,7 +65,7 @@ export function BreadcrumbProvider({ children, companyName }: BreadcrumbProvider
 export function useBreadcrumbs() {
   const ctx = useContext(BreadcrumbContext);
   if (!ctx) {
-    throw new Error("useBreadcrumbs must be used within BreadcrumbProvider");
+    throw new Error("useBreadcrumbs должен использоваться внутри BreadcrumbProvider");
   }
   return ctx;
 }

@@ -662,7 +662,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
         type: nextStatus.healthy ? "success" : "error",
         text: nextStatus.healthy
           ? "Local folder saved."
-          : "Local folder saved, but validation still needs attention.",
+          : "Локальная папка сохранена, но валидация требует внимания.",
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.plugins.localFolders(pluginId, companyId) });
     },

@@ -259,7 +259,7 @@ export function CompanySettings() {
           </Field>
           <Field
             label="Description"
-            hint="Optional description shown in the company profile."
+            hint="Опциональное описание, отображаемое в профиле компании."
           >
             <input
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
@@ -290,7 +290,7 @@ export function CompanySettings() {
             <div className="flex-1 space-y-3">
               <Field
                 label="Logo"
-                hint="Upload a PNG, JPEG, WEBP, GIF, or SVG logo image."
+                hint="Загрузите изображение логотипа PNG, JPEG, WEBP, GIF или SVG."
               >
                 <div className="space-y-2">
                   <input
@@ -331,7 +331,7 @@ export function CompanySettings() {
               </Field>
               <Field
                 label="Цвет бренда"
-                hint="Sets the hue for the company icon. Leave empty for auto-generated color."
+                hint="Устанавливает оттенок для иконки компании. Оставьте пустым для автоматического цвета."
               >
                 <div className="flex items-center gap-2">
                   <input
@@ -424,7 +424,7 @@ export function CompanySettings() {
         <div className="rounded-md border border-border px-4 py-3">
           <ToggleField
             label="Require board approval for new hires"
-            hint="New agent hires stay pending until approved by board."
+            hint="Новые агенты остаются в ожидании до утверждения доской."
             checked={!!selectedCompany.requireBoardApprovalForNewAgents}
             onChange={(v) => settingsMutation.mutate(v)}
             toggleTestId="company-settings-team-approval-toggle"

@@ -90,7 +90,7 @@ export function InstanceAccess() {
   if (usersQuery.error) {
     const message =
       usersQuery.error instanceof ApiError && usersQuery.error.status === 403
-        ? "Instance admin access is required to manage users."
+        ? "Для управления пользователями требуется доступ администратора инстанса."
         : usersQuery.error instanceof Error
           ? usersQuery.error.message
           : "Failed to load users.";

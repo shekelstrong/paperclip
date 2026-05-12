@@ -43,7 +43,7 @@ function createSuggestTasksInteraction(
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
     kind: "suggest_tasks",
-    title: "Suggested issue tree for the first interaction pass",
+    title: "Предлагаемое дерево задач для первого прохода взаимодействия",
     summary:
       "Draft task creation stays pending until a reviewer accepts it, so the thread can preview structure without mutating the task system.",
     status: "pending",
@@ -141,19 +141,19 @@ function createAskUserQuestionsInteraction(
             {
               id: "visible-root",
               label: "Only collapse hidden descendants",
-              description: "Keep top-level and visible child tasks expanded.",
+              description: "Держать развёрнутыми корневые и видимые дочерние задачи.",
             },
             {
               id: "collapse-all",
               label: "Collapse all descendants by default",
-              description: "Show only root tasks until the operator expands the tree.",
+              description: "Показывать только корневые задачи, пока оператор не развернёт дерево.",
             },
           ],
         },
         {
           id: "post-submit-summary",
           prompt: "What should the answered-state card emphasize after submission?",
-          helpText: "Pick every summary treatment that would help future reviewers.",
+          helpText: "Выберите каждое summary treatment, которое поможет будущим рецензентам.",
           selectionMode: "multi",
           required: true,
           options: [
@@ -165,12 +165,12 @@ function createAskUserQuestionsInteraction(
             {
               id: "summary-note",
               label: "Short markdown summary",
-              description: "Add a compact narrative summary at the bottom of the card.",
+              description: "Добавьте компактное повествовательное summary внизу карточки.",
             },
             {
               id: "resolver-meta",
               label: "Resolver metadata",
-              description: "Show who answered and when without opening the raw thread.",
+              description: "Показать, кто ответил и когда, без открытия raw thread.",
             },
           ],
         },
@@ -207,7 +207,7 @@ function createRequestConfirmationInteraction(
       acceptLabel: "Утвердить план",
       rejectLabel: "Запросить правки",
       rejectRequiresReason: true,
-      rejectReasonLabel: "Describe the plan changes needed before approval",
+      rejectReasonLabel: "Опишите изменения плана, необходимые перед утверждением",
       detailsMarkdown:
         "This confirmation watches the `plan` document revision so stale approvals are blocked if the plan changes.",
       supersedeOnUserComment: true,
@@ -315,7 +315,7 @@ export const pendingRequestConfirmationInteraction = createRequestConfirmationIn
 export const genericPendingRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-generic-pending",
   title: "Confirm next step",
-  summary: "The assignee needs a lightweight yes or no before continuing.",
+  summary: "Исполнителю нужно простое да или нет перед продолжением.",
   continuationPolicy: "none",
   payload: {
     version: 1,
@@ -341,7 +341,7 @@ export const disabledDeclineReasonRequestConfirmationInteraction = createRequest
   continuationPolicy: "none",
   payload: {
     version: 1,
-    prompt: "Close this low-risk follow-up as unnecessary?",
+    prompt: "Закрыть этот низкорисковый follow-up как ненужный?",
     acceptLabel: "Закрыть",
     rejectLabel: "Оставить",
     allowDeclineReason: false,
