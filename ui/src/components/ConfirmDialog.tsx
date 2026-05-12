@@ -2,10 +2,10 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogОписание,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogНазвание,
+  DialogTitle,
 } from "@/components/ui/dialog";
 
 interface ПодтвердитьDialogProps {
@@ -16,7 +16,7 @@ interface ПодтвердитьDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
-  onПодтвердить: () => void;
+  onConfirm: () => void;
   busy?: boolean;
 }
 
@@ -28,15 +28,15 @@ export function ПодтвердитьDialog({
   confirmLabel = "Подтвердить",
   cancelLabel = "Отмена",
   destructive,
-  onПодтвердить,
+  onConfirm,
   busy,
 }: ПодтвердитьDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogНазвание>{title}</DialogНазвание>
-          {description && <DialogОписание>{description}</DialogОписание>}
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={busy}>
@@ -45,7 +45,7 @@ export function ПодтвердитьDialog({
           <Button
             variant={destructive ? "destructive" : "default"}
             size="sm"
-            onClick={onПодтвердить}
+            onClick={onConfirm}
             disabled={busy}
           >
             {busy ? "Работаing…" : confirmLabel}

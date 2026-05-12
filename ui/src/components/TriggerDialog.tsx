@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import type { ПроцедураTrigger } from "@paperclipai/shared";
+import type { RoutineTrigger } from "@paperclipai/shared";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogОписание,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogНазвание,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,15 +16,15 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectЗначение,
+  SelectValue,
 } from "@/components/ui/select";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
-import { РасписаниеИзменитьor } from "./РасписаниеИзменитьor";
+import { ScheduleEditor } from "./ScheduleEditor";
 
 const triggerKinds = ["schedule", "webhook"] as const;
 const signingModes = ["bearer", "hmac_sha256", "github_hmac", "none"] as const;
 const SIGNING_MODES_WITHOUT_REPLAY_WINDOW = new Set<string>(["github_hmac", "none"]);
-const signingModeОписаниеs: Record<string, string> = {
+const signingModeDescriptions: Record<string, string> = {
   bearer: "Expect a shared bearer token in the Authorization header.",
   hmac_sha256: "Expect an HMAC SHA-256 signature over the request using the shared secret.",
   github_hmac: "Принять GitHub-style X-Hub-Signature-256 header (HMAC over raw body, no timestamp).",
@@ -46,11 +46,11 @@ interface TriggerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** When editing an existing trigger, pass it here. Null for create. */
-  trigger: ПроцедураTrigger | null;
+  trigger: RoutineTrigger | null;
   /** Timezone to use when creating a new schedule trigger (the detail page uses the browser's zone). */
   fallbackTimezone: string;
   /** Called when the user submits. For updates `id` is non-null. */
-  onОтправить: (payload: {
+  onSubmit: (payload: {
     id: string | null;
     kind: TriggerKind;
     // For create: full body. For update: partial patch ready to send.
@@ -68,7 +68,7 @@ const BLANK: TriggerDialogState = {
   enabled: true,
 };
 
-function draftFromTrigger(trigger: ПроцедураTrigger | null): TriggerDialogState {
+function draftFromTrigger(trigger: RoutineTrigger | null): TriggerDialogState {
   if (!trigger) return { ...BLANK };
   return {
     label: trigger.label ?? "",
@@ -91,23 +91,23 @@ export function TriggerDialog({
   onOpenChange,
   trigger,
   fallbackTimezone,
-  onОтправить,
+  onSubmit,
   submitting,
 }: TriggerDialogProps) {
-  const isИзменить = !!trigger;
-  const [draft, setЧерновик] = useState<TriggerDialogState>(() => draftFromTrigger(trigger));
+  const isEdit = !!trigger;
+  const [draft, setDraft] = useState<TriggerDialogState>(() => draftFromTrigger(trigger));
 
   // Сбросить the draft whenever the dialog opens with a different trigger.
   useEffect(() => {
-    if (open) setЧерновик(draftFromTrigger(trigger));
+    if (open) setDraft(draftFromTrigger(trigger));
   }, [open, trigger]);
 
-  const handleОтправить = () => {
+  const handleSubmit = () => {
     const labelTrimmed = draft.label.trim();
 
-    if (isИзменить && trigger) {
+    if (isEdit && trigger) {
       // Build a PATCH body. Match the fields the backend accepts on
-      // PATCH /routine-triggers/:id (see updateПроцедураTriggerSchema).
+      // PATCH /routine-triggers/:id (see updateRoutineTriggerSchema).
       const patch: Record<string, unknown> = {
         label: labelTrimmed || null,
         enabled: draft.enabled,
@@ -120,11 +120,11 @@ export function TriggerDialog({
         patch.signingMode = draft.signingMode;
         patch.replayWindowSec = parseReplayWindowSec(draft.replayWindowSec);
       }
-      onОтправить({ id: trigger.id, kind: trigger.kind as TriggerKind, body: patch });
+      onSubmit({ id: trigger.id, kind: trigger.kind as TriggerKind, body: patch });
       return;
     }
 
-    // Создать body: match POST /routines/:id/triggers (createПроцедураTriggerSchema).
+    // Создать body: match POST /routines/:id/triggers (createRoutineTriggerSchema).
     const body: Record<string, unknown> = {
       kind: draft.kind,
       label: labelTrimmed || draft.kind,
@@ -137,20 +137,20 @@ export function TriggerDialog({
       body.signingMode = draft.signingMode;
       body.replayWindowSec = parseReplayWindowSec(draft.replayWindowSec);
     }
-    onОтправить({ id: null, kind: draft.kind, body });
+    onSubmit({ id: null, kind: draft.kind, body });
   };
 
   const showWebhookFields = draft.kind === "webhook";
-  const showРасписаниеFields = draft.kind === "schedule";
+  const showScheduleFields = draft.kind === "schedule";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogНазвание>{isИзменить ? "Изменить trigger" : "Добавить триггер"}</DialogНазвание>
-          <DialogОписание>
+          <DialogTitle>{isEdit ? "Изменить trigger" : "Добавить триггер"}</DialogTitle>
+          <DialogDescription>
             Configure when and how this routine fires.
-          </DialogОписание>
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 pt-1">
@@ -160,7 +160,7 @@ export function TriggerDialog({
               id="trigger-label"
               placeholder="e.g. Morning digest"
               value={draft.label}
-              onChange={(e) => setЧерновик((d) => ({ ...d, label: e.target.value }))}
+              onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
             />
             <p className="text-xs text-muted-foreground">
               Опционально — shown in the trigger list.
@@ -171,36 +171,36 @@ export function TriggerDialog({
             <Label className="text-xs">Kind</Label>
             <Select
               value={draft.kind}
-              onЗначениеChange={(kind) => setЧерновик((d) => ({ ...d, kind: kind as TriggerKind }))}
-              disabled={isИзменить}
+              onValueChange={(kind) => setDraft((d) => ({ ...d, kind: kind as TriggerKind }))}
+              disabled={isEdit}
             >
               <SelectTrigger>
-                <SelectЗначение />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {triggerKinds.map((kind) => (
                   <SelectItem
                     key={kind}
                     value={kind}
-                    disabled={!isИзменить && kind === "webhook"}
+                    disabled={!isEdit && kind === "webhook"}
                   >
                     {kind}
-                    {!isИзменить && kind === "webhook" ? " — COMING SOON" : ""}
+                    {!isEdit && kind === "webhook" ? " — COMING SOON" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {isИзменить && (
+            {isEdit && (
               <p className="text-xs text-muted-foreground">
                 Kind can't be changed after creation.
               </p>
             )}
           </div>
 
-          {showРасписаниеFields && (
-            <РасписаниеИзменитьor
+          {showScheduleFields && (
+            <ScheduleEditor
               value={draft.cronExpression}
-              onChange={(cronExpression) => setЧерновик((d) => ({ ...d, cronExpression }))}
+              onChange={(cronExpression) => setDraft((d) => ({ ...d, cronExpression }))}
             />
           )}
 
@@ -210,10 +210,10 @@ export function TriggerDialog({
                 <Label className="text-xs">Signing mode</Label>
                 <Select
                   value={draft.signingMode}
-                  onЗначениеChange={(signingMode) => setЧерновик((d) => ({ ...d, signingMode }))}
+                  onValueChange={(signingMode) => setDraft((d) => ({ ...d, signingMode }))}
                 >
                   <SelectTrigger>
-                    <SelectЗначение />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {signingModes.map((mode) => (
@@ -224,7 +224,7 @@ export function TriggerDialog({
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  {signingModeОписаниеs[draft.signingMode]}
+                  {signingModeDescriptions[draft.signingMode]}
                 </p>
               </div>
               {!SIGNING_MODES_WITHOUT_REPLAY_WINDOW.has(draft.signingMode) && (
@@ -236,7 +236,7 @@ export function TriggerDialog({
                     step={1}
                     value={draft.replayWindowSec}
                     onChange={(e) =>
-                      setЧерновик((d) => ({ ...d, replayWindowSec: e.target.value }))
+                      setDraft((d) => ({ ...d, replayWindowSec: e.target.value }))
                     }
                   />
                 </div>
@@ -246,11 +246,11 @@ export function TriggerDialog({
         </div>
 
         <DialogFooter className="mt-6">
-          {isИзменить && (
+          {isEdit && (
             <label className="flex items-center gap-2 cursor-pointer text-sm mr-auto">
               <ToggleSwitch
                 checked={draft.enabled}
-                onCheckedChange={(enabled) => setЧерновик((d) => ({ ...d, enabled }))}
+                onCheckedChange={(enabled) => setDraft((d) => ({ ...d, enabled }))}
               />
               <span>{draft.enabled ? "Включитьd" : "Приостановлен"}</span>
             </label>
@@ -258,8 +258,8 @@ export function TriggerDialog({
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Отмена
           </Button>
-          <Button size="sm" onClick={handleОтправить} disabled={submitting}>
-            {submitting ? "Saving…" : isИзменить ? "Сохранить изменения" : "Добавить триггер"}
+          <Button size="sm" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? "Saving…" : isEdit ? "Сохранить изменения" : "Добавить триггер"}
           </Button>
         </DialogFooter>
       </DialogContent>

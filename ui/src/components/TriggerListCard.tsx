@@ -1,40 +1,40 @@
-import { Clock3, Pencil, ОбновитьCw, Trash2, Webhook, Zap } from "lucide-react";
-import type { ПроцедураTrigger } from "@paperclipai/shared";
+import { Clock3, Pencil, RefreshCw, Trash2, Webhook, Zap } from "lucide-react";
+import type { RoutineTrigger } from "@paperclipai/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
-import { describeРасписание } from "./РасписаниеИзменитьor";
+import { describeSchedule } from "./ScheduleEditor";
 import { timeAgo } from "../lib/timeAgo";
 
 interface TriggerListCardProps {
-  trigger: ПроцедураTrigger;
-  onИзменить: () => void;
-  onУдалить: () => void;
-  onToggleВключитьd: (enabled: boolean) => void;
-  onRotateСекрет?: () => void;
-  toggleОжидание?: boolean;
+  trigger: RoutineTrigger;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleEnabled: (enabled: boolean) => void;
+  onRotateSecret?: () => void;
+  togglePending?: boolean;
 }
 
 export function TriggerListCard({
   trigger,
-  onИзменить,
-  onУдалить,
-  onToggleВключитьd,
-  onRotateСекрет,
-  toggleОжидание,
+  onEdit,
+  onDelete,
+  onToggleEnabled,
+  onRotateSecret,
+  togglePending,
 }: TriggerListCardProps) {
-  const isРасписание = trigger.kind === "schedule";
+  const isSchedule = trigger.kind === "schedule";
   const isWebhook = trigger.kind === "webhook";
-  const Icon = isРасписание ? Clock3 : isWebhook ? Webhook : Zap;
+  const Icon = isSchedule ? Clock3 : isWebhook ? Webhook : Zap;
 
-  const summary = isРасписание && trigger.cronExpression
-    ? describeРасписание(trigger.cronExpression)
+  const summary = isSchedule && trigger.cronExpression
+    ? describeSchedule(trigger.cronExpression)
     : isWebhook
       ? `Webhook${trigger.publicId ? ` · ${trigger.publicId}` : ""}`
       : "API trigger";
 
-  const nextЗапустить = isРасписание && trigger.enabled && trigger.nextЗапуститьAt
-    ? new Date(trigger.nextЗапуститьAt).toLocaleString(undefined, {
+  const nextRun = isSchedule && trigger.enabled && trigger.nextRunAt
+    ? new Date(trigger.nextRunAt).toLocaleString(undefined, {
       weekday: "short",
       day: "numeric",
       month: "short",
@@ -45,7 +45,7 @@ export function TriggerListCard({
 
   const lastFired = trigger.lastFiredAt ? timeAgo(trigger.lastFiredAt) : "Никогда";
 
-  const resultIsОшибка = typeof trigger.lastResult === "string" && /error|fail/i.test(trigger.lastResult);
+  const resultIsError = typeof trigger.lastResult === "string" && /error|fail/i.test(trigger.lastResult);
 
   return (
     <div
@@ -56,12 +56,12 @@ export function TriggerListCard({
           <Icon className="h-3.5 w-3.5" />
         </div>
         <span className={`text-sm font-medium truncate flex-1 min-w-0 ${trigger.enabled ? "" : "text-muted-foreground"}`}>
-          {trigger.label || (isРасписание ? "Расписание" : isWebhook ? "Webhook" : "Trigger")}
+          {trigger.label || (isSchedule ? "Расписание" : isWebhook ? "Webhook" : "Trigger")}
         </span>
         <ToggleSwitch
           checked={trigger.enabled}
-          onCheckedChange={onToggleВключитьd}
-          disabled={toggleОжидание}
+          onCheckedChange={onToggleEnabled}
+          disabled={togglePending}
           aria-label={trigger.enabled ? "Отключить trigger" : "Включить trigger"}
         />
       </div>
@@ -78,7 +78,7 @@ export function TriggerListCard({
       </div>
 
       <div className="mt-2 text-sm break-words">{summary}</div>
-      {isРасписание && trigger.cronExpression && (
+      {isSchedule && trigger.cronExpression && (
         <div className="text-xs text-muted-foreground mt-1 font-mono break-all">
           {trigger.cronExpression}
           {trigger.timezone ? ` · ${trigger.timezone}` : ""}
@@ -88,7 +88,7 @@ export function TriggerListCard({
       <dl className="mt-3 space-y-2 text-xs">
         <div className="flex flex-col gap-0.5 min-w-0">
           <dt className="text-muted-foreground">Далее run</dt>
-          <dd className="break-words">{nextЗапустить}</dd>
+          <dd className="break-words">{nextRun}</dd>
         </div>
         <div className="flex flex-col gap-0.5 min-w-0">
           <dt className="text-muted-foreground">Last fired</dt>
@@ -100,7 +100,7 @@ export function TriggerListCard({
             {trigger.lastResult ? (
               <span
                 className={`inline-block rounded px-1.5 py-0.5 text-[11px] break-words ${
-                  resultIsОшибка
+                  resultIsError
                     ? "bg-destructive/15 text-destructive"
                     : "bg-secondary text-secondary-foreground"
                 }`}
@@ -116,18 +116,18 @@ export function TriggerListCard({
       </dl>
 
       <div className="mt-3 flex items-center justify-end gap-1 border-t border-border pt-2">
-        {isWebhook && onRotateСекрет && (
-          <Button variant="ghost" size="xs" onClick={onRotateСекрет} title="Rotate secret">
-            <ОбновитьCw className="h-3.5 w-3.5" />
+        {isWebhook && onRotateSecret && (
+          <Button variant="ghost" size="xs" onClick={onRotateSecret} title="Rotate secret">
+            <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         )}
-        <Button variant="ghost" size="xs" onClick={onИзменить} title="Изменить">
+        <Button variant="ghost" size="xs" onClick={onEdit} title="Изменить">
           <Pencil className="h-3.5 w-3.5" />
         </Button>
         <Button
           variant="ghost"
           size="xs"
-          onClick={onУдалить}
+          onClick={onDelete}
           title="Удалить"
           className="text-muted-foreground hover:text-destructive"
         >
