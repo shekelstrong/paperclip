@@ -326,7 +326,7 @@ export function SystemNoticeUxLab() {
 
         <LabSection
           eyebrow="After"
-          title="System notice replacement"
+          title="Замена системного уведомления"
           description="One container, system-authored label, hidden details. The chat surface keeps user and agent bubbles unchanged."
           accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.05),transparent_28%),var(--background)]"
         >

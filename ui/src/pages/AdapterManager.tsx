@@ -77,7 +77,7 @@ function AdapterRow({
             <Badge variant="outline">{adapter.source === "external" ? "External" : "Built-in"}</Badge>
             {adapter.source === "external" && (
               adapter.isLocalPath
-                ? <span title="Installed from local path"><FolderOpen className="h-4 w-4 text-amber-500" /></span>
+                ? <span title="Установлено из локального пути"><FolderOpen className="h-4 w-4 text-amber-500" /></span>
                 : <span title="Installed from npm"><Package className="h-4 w-4 text-red-500" /></span>
             )}
             {adapter.version && (
@@ -127,7 +127,7 @@ function AdapterRow({
               variant="outline"
               size="icon-sm"
               className="h-8 w-8"
-              title="Reload adapter (hot-swap)"
+              title="Перезагрузить адаптер (hot-swap)"
               disabled={isReloading}
               onClick={() => onReload(adapter.type)}
             >
@@ -570,7 +570,7 @@ export function AdapterManager() {
                   isReloading={reloadMutation.isPending}
                   isReinstalling={reinstallMutation.isPending}
                   toggleTitleDisabled={isBuiltinOverride ? "Pause external override" : undefined}
-                  toggleTitleEnabled={isBuiltinOverride ? "Resume external override" : undefined}
+                  toggleTitleEnabled={isBuiltinOverride ? "Возобновить внешнее override" : undefined}
                   disabledBadgeLabel={isBuiltinOverride ? "Override paused" : undefined}
                 />
               );

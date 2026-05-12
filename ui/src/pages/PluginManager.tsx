@@ -103,10 +103,10 @@ export function PluginManager() {
       invalidatePluginQueries();
       setInstallDialogOpen(false);
       setInstallPackage("");
-      pushToast({ title: "Plugin installed successfully", tone: "success" });
+      pushToast({ title: "Плагин успешно установлен", tone: "success" });
     },
     onError: (err: Error) => {
-      pushToast({ title: "Failed to install plugin", body: err.message, tone: "error" });
+      pushToast({ title: "Не удалось установить плагин", body: err.message, tone: "error" });
     },
   });
 
@@ -114,10 +114,10 @@ export function PluginManager() {
     mutationFn: (pluginId: string) => pluginsApi.uninstall(pluginId),
     onSuccess: () => {
       invalidatePluginQueries();
-      pushToast({ title: "Plugin uninstalled successfully", tone: "success" });
+      pushToast({ title: "Плагин успешно удалён", tone: "success" });
     },
     onError: (err: Error) => {
-      pushToast({ title: "Failed to uninstall plugin", body: err.message, tone: "error" });
+      pushToast({ title: "Не удалось удалить плагин", body: err.message, tone: "error" });
     },
   });
 
@@ -139,7 +139,7 @@ export function PluginManager() {
       pushToast({ title: "Plugin disabled", tone: "info" });
     },
     onError: (err: Error) => {
-      pushToast({ title: "Failed to disable plugin", body: err.message, tone: "error" });
+      pushToast({ title: "Не удалось отключить плагин", body: err.message, tone: "error" });
     },
   });
 
@@ -485,7 +485,7 @@ export function PluginManager() {
                     What errored
                   </p>
                   <p className="text-red-700/90 dark:text-red-200/90 break-words">
-                    {errorDetailsPlugin ? getPluginErrorSummary(errorDetailsPlugin) : "No error summary available."}
+                    {errorDetailsPlugin ? getPluginErrorSummary(errorDetailsPlugin) : "Нет доступного summary ошибки."}
                   </p>
                 </div>
               </div>
@@ -493,7 +493,7 @@ export function PluginManager() {
             <div className="space-y-2">
               <p className="text-sm font-medium">Full error output</p>
               <pre className="max-h-[50vh] overflow-auto rounded-md border bg-muted/40 p-3 text-xs leading-5 whitespace-pre-wrap break-words">
-                {errorDetailsPlugin?.lastError ?? "No stored error message."}
+                {errorDetailsPlugin?.lastError ?? "Нет сохранённого сообщения об ошибке."}
               </pre>
             </div>
           </div>

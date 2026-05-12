@@ -379,7 +379,7 @@ class LauncherErrorBoundary extends Component<LauncherErrorBoundaryProps, Launch
   }
 
   override componentDidCatch(error: unknown, info: ErrorInfo): void {
-    console.error("Plugin launcher render failed", {
+    console.error("Рендеринг лаунчера плагина не удался", {
       pluginKey: this.props.launcher.pluginKey,
       launcherId: this.props.launcher.id,
       error,

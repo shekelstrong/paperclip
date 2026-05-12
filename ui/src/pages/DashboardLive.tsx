@@ -55,7 +55,7 @@ export function DashboardLive() {
         cardLimit={DASHBOARD_LIVE_RUN_LIMIT}
         gridClassName="gap-3 md:grid-cols-2 2xl:grid-cols-3"
         cardClassName="h-[420px]"
-        emptyMessage="No active or recent agent runs."
+        emptyMessage="Нет активных или недавних запусков агентов."
         queryScope="dashboard-live"
         showMoreLink={false}
       />

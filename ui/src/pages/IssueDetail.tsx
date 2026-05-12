@@ -1747,7 +1747,7 @@ export function IssueDetail() {
             ? treeControlScope === "leaf" ? "Работа приостановлена" : "Поддерево приостановлено"
             : `${modeLabel} applied`,
         body: result.kind === "release"
-          ? (result.hold.releaseReason?.trim() || (treeControlScope === "leaf" ? "Active issue pause released." : "Active subtree pause released."))
+          ? (result.hold.releaseReason?.trim() || (treeControlScope === "leaf" ? "Приостановка активной задачи снята." : "Приостановка активного поддерева снята."))
           : result.hold.mode === "pause"
             ? treeControlScope === "leaf"
               ? `Work paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`

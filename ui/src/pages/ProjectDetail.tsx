@@ -405,7 +405,7 @@ export function ProjectDetail() {
     },
     onError: (_, archived) => {
       pushToast({
-        title: archived ? "Failed to archive project" : "Failed to unarchive project",
+        title: archived ? "Не удалось архивировать проект" : "Не удалось разархивировать проект",
         tone: "error",
       });
     },

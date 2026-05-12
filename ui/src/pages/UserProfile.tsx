@@ -351,7 +351,7 @@ export function UserProfile() {
       </div>
 
       <div className="grid gap-10 xl:grid-cols-2">
-        <UsageList title="Agent attribution" empty="No issue-linked token usage yet." rows={agentUsageRows} />
+        <UsageList title="Agent attribution" empty="Пока нет использования токенов, связанных с задачами." rows={agentUsageRows} />
         <UsageList title="Смесь провайдеров" empty="Пока нет приписанного использования провайдера." rows={providerUsageRows} />
       </div>
     </div>

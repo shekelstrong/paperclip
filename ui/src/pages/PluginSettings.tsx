@@ -667,7 +667,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
       queryClient.invalidateQueries({ queryKey: queryKeys.plugins.localFolders(pluginId, companyId) });
     },
     onError: (err: Error) => {
-      setMessage({ type: "error", text: err.message || "Failed to save local folder." });
+      setMessage({ type: "error", text: err.message || "Не удалось сохранить локальную папку." });
     },
   });
 
@@ -677,7 +677,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
 
   const handleSave = useCallback(() => {
     if (!trimmedPath) {
-      setMessage({ type: "error", text: "Local folder path is required." });
+      setMessage({ type: "error", text: "Требуется путь локальной папки." });
       return;
     }
     if (!isLikelyAbsolutePath(trimmedPath)) {
@@ -980,7 +980,7 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
       setTimeout(() => setSaveMessage(null), 3000);
     },
     onError: (err: Error) => {
-      setSaveMessage({ type: "error", text: err.message || "Failed to save configuration." });
+      setSaveMessage({ type: "error", text: err.message || "Не удалось сохранить конфигурацию." });
     },
   });
 
@@ -990,7 +990,7 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
       pluginsApi.testConfig(pluginId, configJson),
     onSuccess: (result) => {
       if (result.valid) {
-        setTestResult({ type: "success", text: "Configuration test passed." });
+        setTestResult({ type: "success", text: "Тест конфигурации пройден." });
       } else {
         setTestResult({ type: "error", text: result.message || "Тест конфигурации не пройден." });
       }

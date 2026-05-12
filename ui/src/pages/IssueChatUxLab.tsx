@@ -164,7 +164,7 @@ export function IssueChatUxLab() {
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Button variant="outline" size="sm" className="rounded-full" onClick={() => setShowComposer((value) => !value)}>
-                {showComposer ? "Hide composer in primary preview" : "Show composer in primary preview"}
+                {showComposer ? "Скрыть composer в основном превью" : "Показать composer в основном превью"}
               </Button>
               <a
                 href="#live-execution"
@@ -310,7 +310,7 @@ export function IssueChatUxLab() {
       <div className="grid gap-6 xl:grid-cols-2">
         <LabSection
           eyebrow="Settled review"
-          title="Durable comments and feedback"
+          title="Устойчивые комментарии и обратная связь"
           description="Shows the post-run state: assistant comment feedback controls, historical run context, and timeline reassignment without any active stream."
           accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.05),transparent_26%),var(--background)]"
         >

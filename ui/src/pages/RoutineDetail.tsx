@@ -435,7 +435,7 @@ export function RoutineDetail() {
     } catch (error) {
       pushToast({
         title: `Failed to copy ${label.toLowerCase()}`,
-        body: error instanceof Error ? error.message : "Clipboard access was denied.",
+        body: error instanceof Error ? error.message : "Доступ к буферу обмена отклонён.",
         tone: "error",
       });
     }
@@ -581,7 +581,7 @@ export function RoutineDetail() {
       } else {
         pushToast({
           title: "Триггер добавлен",
-          body: "The routine schedule was saved.",
+          body: "Расписание процедуры сохранено.",
           tone: "success",
         });
       }
@@ -616,7 +616,7 @@ export function RoutineDetail() {
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to update trigger",
+        title: "Не удалось обновить триггер",
         body: error instanceof Error ? error.message : "Paperclip could not update the trigger.",
         tone: "error",
       });
@@ -638,7 +638,7 @@ export function RoutineDetail() {
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to delete trigger",
+        title: "Не удалось удалить триггер",
         body: error instanceof Error ? error.message : "Paperclip could not delete the trigger.",
         tone: "error",
       });
@@ -662,7 +662,7 @@ export function RoutineDetail() {
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to rotate webhook secret",
+        title: "Не удалось сменить webhook secret",
         body: error instanceof Error ? error.message : "Paperclip could not rotate the webhook secret.",
         tone: "error",
       });
@@ -806,7 +806,7 @@ export function RoutineDetail() {
               updateRoutineStatus.mutate(automationEnabled ? "paused" : "active");
             }}
             disabled={automationToggleDisabled}
-            aria-label={automationEnabled ? "Pause automatic triggers" : "Enable automatic triggers"}
+            aria-label={automationEnabled ? "Приостановить автоматические триггеры" : "Включить автоматические триггеры"}
           />
           <span className={`min-w-[3.75rem] text-sm font-medium ${automationLabelClassName}`}>
             {automationLabel}

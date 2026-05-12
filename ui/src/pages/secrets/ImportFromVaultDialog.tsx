@@ -475,7 +475,7 @@ export function ImportFromVaultDialog({
         });
       } else {
         toast.pushToast({
-          title: result.errorCount > 0 ? "Import completed with errors" : "Импорт завершён",
+          title: result.errorCount > 0 ? "Импорт завершён с ошибками" : "Импорт завершён",
           body: `${result.importedCount} created · ${result.skippedCount} skipped · ${result.errorCount} failed`,
           tone: result.errorCount > 0 ? "warn" : "success",
         });
@@ -544,7 +544,7 @@ export function ImportFromVaultDialog({
       })
       .catch((error) => {
         toast.pushToast({
-          title: "Could not load more results",
+          title: "Не удалось загрузить больше результатов",
           body: readableErrorMessage(error),
           tone: "error",
         });
@@ -1125,7 +1125,7 @@ function PreviewErrorBanner({ error, onRetry }: { error: unknown; onRetry: () =>
             ? "AWS denied list access"
             : isThrottling
               ? "AWS throttled listing запрос"
-              : "Could not load remote secrets"}
+              : "Не удалось загрузить удалённые секреты"}
         </div>
         <div className="mt-1 text-xs leading-relaxed text-destructive/80">
           {isPermission
@@ -1447,7 +1447,7 @@ function FooterStatus({
     return (
       <div className="text-xs text-muted-foreground">
         {totalSelected === 0
-          ? "Select remote secrets to import"
+          ? "Выберите удалённые секреты для импорта"
           : `${totalSelected} selected`}
       </div>
     );

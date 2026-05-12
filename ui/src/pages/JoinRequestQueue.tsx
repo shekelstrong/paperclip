@@ -69,7 +69,7 @@ export function JoinRequestQueue() {
         ? "У вас нет разрешения на просмотр запросов на присоединение для этой компании."
         : requestsQuery.error instanceof Error
           ? requestsQuery.error.message
-          : "Failed to load join requests.";
+          : "Не удалось загрузить запросы на присоединение.";
     return <div className="text-sm text-destructive">{message}</div>;
   }
 

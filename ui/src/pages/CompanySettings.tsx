@@ -265,7 +265,7 @@ export function CompanySettings() {
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
               value={description}
-              placeholder="Optional company description"
+              placeholder="Опциональное описание компании"
               onChange={(e) => setDescription(e.target.value)}
             />
           </Field>
@@ -453,7 +453,7 @@ export function CompanySettings() {
             >
               {inviteMutation.isPending
                 ? "Generating..."
-                : "Generate OpenClaw Invite Prompt"}
+                : "Сгенерировать OpenClaw Invite Prompt"}
             </Button>
           </div>
           {inviteError && (
@@ -583,7 +583,7 @@ export function CompanySettings() {
               <span className="text-xs text-destructive">
                 {archiveMutation.error instanceof Error
                   ? archiveMutation.error.message
-                  : "Failed to archive company"}
+                  : "Не удалось архивировать компанию"}
               </span>
             )}
           </div>

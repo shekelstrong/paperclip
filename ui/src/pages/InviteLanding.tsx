@@ -799,7 +799,7 @@ export function InviteLandingPage() {
                       : isCurrentMember
                       ? `This account already belongs to ${companyDisplayName}.`
                       : `This will ${
-                          invite.inviteType === "bootstrap_ceo" ? "finish setting up Paperclip" : `submit or complete your join request for ${companyDisplayName}`
+                          invite.inviteType === "bootstrap_ceo" ? "завершить настройку Paperclip" : `submit or complete your join request for ${companyDisplayName}`
                         }.`}
                   </p>
                 </div>

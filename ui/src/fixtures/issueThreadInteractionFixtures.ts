@@ -189,7 +189,7 @@ function createRequestConfirmationInteraction(
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
     kind: "request_confirmation",
-    title: "Approve the proposed plan",
+    title: "Утвердить предложенный план",
     summary:
       "Исполнитель ожидает прямого решения доски перед продолжением работы над планом.",
     status: "pending",

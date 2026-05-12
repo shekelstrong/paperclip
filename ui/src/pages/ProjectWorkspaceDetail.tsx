@@ -40,7 +40,7 @@ const SOURCE_TYPE_OPTIONS: Array<{ value: ProjectWorkspaceSourceType; label: str
   { value: "local_path", label: "Local git checkout", description: "Локальный путь, который Paperclip может использовать напрямую." },
   { value: "non_git_path", label: "Local non-git path", description: "Локальная папка без git семантики." },
   { value: "git_repo", label: "Remote git repo", description: "URL репозитория с опциональными refs и локальным checkout." },
-  { value: "remote_managed", label: "Remote-managed workspace", description: "Хостированное рабочее пространство, отслеживаемое внешним референсом." },
+  { value: "remote_managed", label: "Удалённо управляемое рабочее пространство", description: "Хостированное рабочее пространство, отслеживаемое внешним референсом." },
 ];
 
 const VISIBILITY_OPTIONS: Array<{ value: ProjectWorkspaceVisibility; label: string }> = [
@@ -292,7 +292,7 @@ export function ProjectWorkspaceDetail() {
       setErrorMessage(null);
     },
     onError: (error) => {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to save workspace.");
+      setErrorMessage(error instanceof Error ? error.message : "Не удалось сохранить рабочее пространство.");
     },
   });
 
@@ -303,7 +303,7 @@ export function ProjectWorkspaceDetail() {
       setErrorMessage(null);
     },
     onError: (error) => {
-      setErrorMessage(error instanceof Error ? error.message : "Failed to update workspace.");
+      setErrorMessage(error instanceof Error ? error.message : "Не удалось обновить рабочее пространство.");
     },
   });
 

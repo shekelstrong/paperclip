@@ -2648,7 +2648,7 @@ export function AgentSkillsTab({
       case "persistent":
         return "Сохранено в рабочем пространстве";
       case "ephemeral":
-        return "Applied when the agent runs";
+        return "Применяется, когда агент работает";
       case "unsupported":
         return "Только отслеживаемое";
       default:

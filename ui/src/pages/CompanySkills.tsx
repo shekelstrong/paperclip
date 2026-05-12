@@ -921,7 +921,7 @@ export function CompanySkills() {
       pushToast({
         tone: "error",
         title: "Ошибка импорта навыка",
-        body: error instanceof Error ? error.message : "Failed to import skill source.",
+        body: error instanceof Error ? error.message : "Не удалось импортировать источник навыка.",
       });
     },
   });
@@ -953,13 +953,13 @@ export function CompanySkills() {
       setScanStatusMessage("Сканирование рабочих пространств проекта для навыков...");
     },
     onSuccess: async (result) => {
-      setScanStatusMessage("Refreshing skills list...");
+      setScanStatusMessage("Обновление списка навыков...");
       await queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(selectedCompanyId!) });
       const summary = formatProjectScanSummary(result);
       setScanStatusMessage(summary);
       pushToast({
         tone: "success",
-        title: "Project skill scan complete",
+        title: "Сканирование навыков проекта завершено",
         body: summary,
       });
       if (result.conflicts[0]) {
@@ -980,7 +980,7 @@ export function CompanySkills() {
       setScanStatusMessage(null);
       pushToast({
         tone: "error",
-        title: "Project skill scan failed",
+        title: "Сканирование навыков проекта не удалось",
         body: error instanceof Error ? error.message : "Не удалось сканировать рабочие пространства проекта.",
       });
     },
@@ -1011,7 +1011,7 @@ export function CompanySkills() {
       pushToast({
         tone: "error",
         title: "Ошибка сохранения",
-        body: error instanceof Error ? error.message : "Failed to save skill file.",
+        body: error instanceof Error ? error.message : "Не удалось сохранить файл навыка.",
       });
     },
   });
@@ -1036,7 +1036,7 @@ export function CompanySkills() {
       pushToast({
         tone: "error",
         title: "Ошибка обновления",
-        body: error instanceof Error ? error.message : "Failed to install skill update.",
+        body: error instanceof Error ? error.message : "Не удалось установить обновление навыка.",
       });
     },
   });

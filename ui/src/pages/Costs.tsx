@@ -529,7 +529,7 @@ export function Costs() {
   }), [budgetPolicies]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={DollarSign} message="Select a company to view costs." />;
+    return <EmptyState icon={DollarSign} message="Выберите компанию для просмотра затрат." />;
   }
 
   const showCustomPrompt = preset === "custom" && !customReady;
@@ -598,7 +598,7 @@ export function Costs() {
                   ? `${budgetData?.pausedAgentCount ?? 0} agents paused · ${budgetData?.pausedProjectCount ?? 0} projects paused`
                   : spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
                     ? `${formatCents(spendData.summary.spendCents)} of ${formatCents(spendData.summary.budgetCents)}`
-                    : "No monthly cap configured"
+                    : "Ежемесячный лимит не настроен"
               }
               icon={Coins}
             />
@@ -910,7 +910,7 @@ export function Costs() {
                         <h2 className="text-lg font-semibold capitalize">{scopeType} budgets</h2>
                         <p className="text-sm text-muted-foreground">
                           {scopeType === "company"
-                            ? "Company-wide monthly policy."
+                            ? "Ежемесячная политика для всей компании."
                             : scopeType === "agent"
                               ? "Повторяющиеся ежемесячные политики расходов для отдельных агентов."
                               : "Политики расходов за всё время для проектов с выполнением."}

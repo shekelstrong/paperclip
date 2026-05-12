@@ -368,7 +368,7 @@ function WorkspaceRoutineRow({
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span>{routine.assigneeAgentId ? "Default agent set" : "Choose agent when running"}</span>
+          <span>{routine.assigneeAgentId ? "Default agent set" : "Выбрать агента при запуске"}</span>
           <span>Last run {formatOptionalDateTime(routine.lastRun?.triggeredAt ?? routine.lastTriggeredAt)}</span>
           <span className="flex flex-wrap gap-1">
             {variableNames.map((name) => (
@@ -476,7 +476,7 @@ function ExecutionWorkspaceRoutinesList({
             <p className="text-sm text-muted-foreground">Loading routines...</p>
           ) : error ? (
             <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : "Failed to load routines."}
+              {error instanceof Error ? error.message : "Не удалось загрузить процедуры."}
             </p>
           ) : workspaceRoutines.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-10 text-center">
@@ -652,9 +652,9 @@ export function ExecutionWorkspaceDetail() {
         request.action === "run"
           ? "Задача рабочего пространства завершена."
           : request.action === "stop"
-            ? "Workspace service stopped."
+            ? "Сервис рабочего пространства остановлен."
             : request.action === "restart"
-              ? "Workspace service restarted."
+              ? "Сервис рабочего пространства перезапущен."
               : "Сервис рабочего пространства запущен.",
       );
     },
@@ -794,7 +794,7 @@ export function ExecutionWorkspaceDetail() {
                     <Input
                       value={form.name}
                       onChange={(event) => setForm((current) => current ? { ...current, name: event.target.value } : current)}
-                      placeholder="Execution workspace name"
+                      placeholder="Имя рабочего пространства выполнения"
                     />
                   </Field>
                 </div>
@@ -804,7 +804,7 @@ export function ExecutionWorkspaceDetail() {
                 <div className="space-y-4">
                   <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Source control</div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Название ветки" hint="Useful for isolated worktrees">
+                    <Field label="Название ветки" hint="Полезно для изолированных worktrees">
                       <Input
                         className="font-mono"
                         value={form.branchName}

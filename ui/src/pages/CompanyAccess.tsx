@@ -29,11 +29,11 @@ import { queryKeys } from "@/lib/queryKeys";
 
 const permissionLabels: Record<PermissionKey, string> = {
   "agents:create": "Создать агентов",
-  "users:invite": "Invite humans and agents",
-  "users:manage_permissions": "Manage members and grants",
+  "users:invite": "Пригласить людей и агентов",
+  "users:manage_permissions": "Управлять членами и правами",
   "tasks:assign": "Назначать задачи",
   "tasks:assign_scope": "Assign scoped tasks",
-  "tasks:manage_active_checkouts": "Manage active task checkouts",
+  "tasks:manage_active_checkouts": "Управлять активными checkout задач",
   "joins:approve": "Approve join requests",
   "environments:manage": "Manage environments",
 };
@@ -245,7 +245,7 @@ export function CompanyAccess() {
         ? "У вас нет разрешения на управление членами компании."
         : membersQuery.error instanceof Error
           ? membersQuery.error.message
-          : "Failed to load company members.";
+          : "Не удалось загрузить членов компании.";
     return <div className="text-sm text-destructive">{message}</div>;
   }
 
@@ -542,7 +542,7 @@ export function CompanyAccess() {
                 <div className="text-sm text-muted-foreground">{removingMember.user?.email || removingMember.principalId}</div>
                 <div className="mt-2 text-sm text-muted-foreground">
                   {assignedIssuesQuery.isLoading
-                    ? "Checking assigned issues..."
+                    ? "Проверка назначенных задач..."
                     : `${assignedIssues.length} open assigned issue${assignedIssues.length === 1 ? "" : "s"}`}
                 </div>
               </div>

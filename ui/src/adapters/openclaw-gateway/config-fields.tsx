@@ -185,7 +185,7 @@ export function OpenClawGatewayConfigFields({
           )}
 
           <SecretField
-            label="Gateway auth token (x-openclaw-token)"
+            label="Auth token шлюза (x-openclaw-token)"
             value={effectiveGatewayToken}
             onCommit={commitGatewayToken}
             placeholder="Токен шлюза OpenClaw"

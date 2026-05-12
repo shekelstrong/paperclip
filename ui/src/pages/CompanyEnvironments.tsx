@@ -224,7 +224,7 @@ export function CompanyEnvironments() {
     onError: (error) => {
       pushToast({
         title: "Не удалось сохранить окружение",
-        body: error instanceof Error ? error.message : "Environment save failed.",
+        body: error instanceof Error ? error.message : "Сохранение окружения не удалось.",
         tone: "error",
       });
     },
@@ -238,7 +238,7 @@ export function CompanyEnvironments() {
         [environmentId]: probe,
       }));
       pushToast({
-        title: probe.ok ? "Environment probe passed" : "Проверка окружения не удалась",
+        title: probe.ok ? "Проверка окружения пройдена" : "Проверка окружения не удалась",
         body: probe.summary,
         tone: probe.ok ? "success" : "error",
       });
@@ -698,7 +698,7 @@ export function CompanyEnvironments() {
                 </Field>
                 <div className="md:col-span-2">
                   <ToggleField
-                    label="Strict host key checking"
+                    label="Строгая проверка host key"
                     hint="Оставьте включённым, если не хотите отключить probe-time host key acceptance."
                     checked={environmentForm.sshStrictHostKeyChecking}
                     onChange={(checked) =>

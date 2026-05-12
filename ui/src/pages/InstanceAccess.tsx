@@ -156,7 +156,7 @@ export function InstanceAccess() {
             <div className="text-sm text-muted-foreground">Loading user access…</div>
           ) : userAccessQuery.error ? (
             <div className="text-sm text-destructive">
-              {userAccessQuery.error instanceof Error ? userAccessQuery.error.message : "Failed to load user access."}
+              {userAccessQuery.error instanceof Error ? userAccessQuery.error.message : "Не удалось загрузить доступ пользователя."}
             </div>
           ) : (
             <>
@@ -174,7 +174,7 @@ export function InstanceAccess() {
                   onClick={() => setAdminMutation.mutate(!(selectedUser?.isInstanceAdmin ?? false))}
                   disabled={setAdminMutation.isPending}
                 >
-                  {selectedUser?.isInstanceAdmin ? "Remove instance admin" : "Promote to instance admin"}
+                  {selectedUser?.isInstanceAdmin ? "Remove instance admin" : "Повысить до администратора инстанса"}
                 </Button>
               </div>
 

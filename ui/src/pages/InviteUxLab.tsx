@@ -879,7 +879,7 @@ export function InviteUxLab() {
 
       <LabSection
         eyebrow="Состояния результатов"
-        title="Approval and completion screens"
+        title="Экраны утверждения и завершения"
         description="These are the post-submit states returned from invite acceptance, including optional claim and onboarding metadata."
         accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.06),transparent_30%),var(--background)]"
       >
@@ -916,7 +916,7 @@ export function InviteUxLab() {
 
       <LabSection
         eyebrow="Company settings"
-        title="Company invite management"
+        title="Управление приглашениями компании"
         description="This section captures the board-side invite creation flow, copied-link state, audit table, and the edge states that are otherwise tedious to stage."
         accentClassName="bg-[linear-gradient(180deg,rgba(244,114,182,0.06),transparent_28%),var(--background)]"
       >

@@ -91,7 +91,7 @@ export function CliAuthPage() {
       <div className="mx-auto max-w-xl py-10">
         <div className="rounded-lg border border-border bg-card p-6">
           <h1 className="text-xl font-semibold">
-            {challenge.status === "expired" ? "CLI auth challenge expired" : "CLI auth challenge cancelled"}
+            {challenge.status === "expired" ? "CLI auth challenge истёк" : "CLI auth challenge отменён"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Start the CLI auth flow again from your terminal to generate a new approval request.

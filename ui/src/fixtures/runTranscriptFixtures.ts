@@ -13,7 +13,7 @@ export interface RunTranscriptFixtureMeta {
 
 export const runTranscriptFixtureMeta: RunTranscriptFixtureMeta = {
   sourceRunId: "65a79d5d-5f85-4392-a5cc-8fb48beb9e71",
-  fixtureLabel: "Sanitized development fixture",
+  fixtureLabel: "Очищенный development fixture",
   agentName: "CodexCoder",
   agentId: "codexcoder-fixture",
   issueIdentifier: "PAP-473",

@@ -852,7 +852,7 @@ export function DesignGuide() {
               </>
             }
             identifier="PAP-001"
-            title="Implement authentication flow"
+            title="Реализовать поток аутентификации"
             subtitle="Назначено на Агента Альфа"
             trailing={<StatusBadge status="in_progress" />}
             onClick={() => {}}
@@ -1157,7 +1157,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  GROUPED LIST (Issues pattern)                                */}
       {/* ============================================================ */}
-      <Section title="Grouped List (Issues pattern)">
+      <Section title="Группированный список (паттерн задач)">
         <div>
           <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-t-md">
             <StatusIcon status="in_progress" />
@@ -1168,13 +1168,13 @@ export function DesignGuide() {
             <EntityRow
               leading={<PriorityIcon priority="high" />}
               identifier="PAP-101"
-              title="Build agent heartbeat system"
+              title="Построить систему heartbeat агента"
               onClick={() => {}}
             />
             <EntityRow
               leading={<PriorityIcon priority="medium" />}
               identifier="PAP-102"
-              title="Add cost tracking dashboard"
+              title="Добавить дашборд отслеживания затрат"
               onClick={() => {}}
             />
           </div>
@@ -1326,7 +1326,7 @@ export function DesignGuide() {
         <div className="border border-border rounded-md divide-y divide-border text-sm">
           {[
             ["Cmd+K / Ctrl+K", "Открыть палитру команд"],
-            ["C", "New Issue (outside inputs)"],
+            ["C", "Новая задача (внешние входы)"],
             ["[", "Toggle Sidebar"],
             ["]", "Toggle Properties Panel"],
 
