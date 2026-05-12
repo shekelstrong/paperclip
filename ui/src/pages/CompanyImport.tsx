@@ -727,7 +727,7 @@ export function CompanyImport() {
   const previewMutation = useMutation({
     mutationFn: () => {
       const source = buildSource();
-      if (!source) throw new Error("No source configured.");
+      if (!source) throw new Error("Источник не настроен.");
       return companiesApi.importPreview({
         source,
         include: { company: true, agents: true, projects: true, issues: true },
@@ -831,7 +831,7 @@ export function CompanyImport() {
   const importMutation = useMutation({
     mutationFn: () => {
       const source = buildSource();
-      if (!source) throw new Error("No source configured.");
+      if (!source) throw new Error("Источник не настроен.");
       return companiesApi.importBundle({
         source,
         include: { company: true, agents: true, projects: true, issues: true },

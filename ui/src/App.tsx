@@ -160,13 +160,13 @@ function OnboardingRoutePage() {
   const title = matchedCompany
     ? `Add another agent to ${matchedCompany.name}`
     : companies.length > 0
-      ? "Create another company"
-      : "Create your first company";
+      ? "Создать другую компанию"
+      : "Создайте первую компанию";
   const description = matchedCompany
-    ? "Run onboarding again to add an agent and a starter task for this company."
+    ? "Запустите онбординг снова, чтобы добавить агента и стартовую задачу для этой компании."
     : companies.length > 0
-      ? "Run onboarding again to create another company and seed its first agent."
-      : "Get started by creating a company and your first agent.";
+      ? "Запустите онбординг снова, чтобы создать другую компанию и добавить первого агента."
+      : "Начните с создания компании и первого агента.";
 
   return (
     <div className="mx-auto max-w-xl py-10">
@@ -181,7 +181,7 @@ function OnboardingRoutePage() {
                 : openOnboarding()
             }
           >
-            {matchedCompany ? "Добавить агента" : "Start Onboarding"}
+            {matchedCompany ? "Добавить агента" : "Начать онбординг"}
           </Button>
         </div>
       </div>

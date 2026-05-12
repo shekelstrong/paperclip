@@ -55,7 +55,7 @@ const inviteHistory = [
     email: "board25@paperclip.local",
     createdAt: "Apr 25, 2026, 9:00 AM",
     action: "Revoke",
-    relatedLabel: "Review request",
+    relatedLabel: "Запрос на ревью",
   },
   {
     id: "invite-accepted",
@@ -289,7 +289,7 @@ function InlineAuthPreview({
         {mode === "sign_up" ? (
           <label className="block text-sm">
             <span className="mb-1 block text-zinc-400">Name</span>
-            <input name="name" className={fieldClassName} defaultValue="Jane Example" readOnly />
+            <input name="name" className={fieldClassName} defaultValue="Джейн Пример" readOnly />
           </label>
         ) : null}
         <label className="block text-sm">
@@ -464,8 +464,8 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               {mode === "sign_in"
-                ? "Use your email and password to access this instance."
-                : "Create an account for this instance. Email confirmation is not required in v1."}
+                ? "Используйте email и пароль для доступа к этому инстансу."
+                : "Создайте аккаунт для этого инстанса. Подтверждение email не требуется в v1."}
             </p>
             <div className="mt-6 space-y-4">
               {mode === "sign_up" ? (
@@ -473,7 +473,7 @@ function AuthScreenPreview({ mode, error }: { mode: "sign_in" | "sign_up"; error
                   <span className="mb-1 block text-xs text-muted-foreground">Name</span>
                   <input
                     className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
-                    defaultValue="Jane Example"
+                    defaultValue="Джейн Пример"
                     readOnly
                   />
                 </label>
@@ -651,7 +651,7 @@ function CompanyInvitesPreview() {
                     </td>
                     <td className="px-5 py-3 align-top text-muted-foreground">{invite.createdAt}</td>
                     <td className="px-5 py-3 align-top">
-                      {invite.relatedLabel === "Review request" ? (
+                      {invite.relatedLabel === "Запрос на ревью" ? (
                         <a href="/inbox/requests" className="underline underline-offset-4">
                           {invite.relatedLabel}
                         </a>
@@ -846,7 +846,7 @@ export function InviteUxLab() {
                 description="Ваш аккаунт готов. Просмотрите детали приглашения, затем примите его, чтобы продолжить."
                 inviteMessage="Добро пожаловать на борт."
                 requestedAccess="Operator"
-                signedInLabel="Jane Example"
+                signedInLabel="Джейн Пример"
               />
             }
             right={<AcceptInvitePreview autoAccept />}
@@ -869,7 +869,7 @@ export function InviteUxLab() {
                 title="Присоединиться к Acme Robotics"
                 description="Ваш аккаунт готов. Просмотрите детали приглашения, затем примите его, чтобы продолжить."
                 requestedAccess="Operator"
-                signedInLabel="Jane Example"
+                signedInLabel="Джейн Пример"
               />
             }
             right={<AcceptInvitePreview error="Этот аккаунт уже принадлежит компании." isCurrentMember />}
@@ -885,7 +885,7 @@ export function InviteUxLab() {
       >
         <div className="grid gap-5 xl:grid-cols-3">
           <InviteResultPreview
-            title="Request to join Acme Robotics"
+            title="Запрос на присоединение к Acme Robotics"
             description="Board User must approve your request to join."
             claimSecret="pcp_claim_secret_demo"
             onboardingTextUrl="/api/invites/pcp_invite_test/onboarding.txt"
@@ -896,7 +896,7 @@ export function InviteUxLab() {
             joinedNow
           />
           <InviteResultPreview
-            title="Request to join Acme Robotics"
+            title="Запрос на присоединение к Acme Robotics"
             description="Ask them to visit Company Settings → Access to approve your request."
           />
         </div>

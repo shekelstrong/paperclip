@@ -61,7 +61,7 @@ function createSuggestTasksInteraction(
       tasks: [
         {
           clientKey: "root-design",
-          title: "Prototype issue-thread interaction cards",
+          title: "Прототип карточек взаимодействия задач-потоков",
           description:
             "Build render-only cards that sit in the issue feed and show suggested tasks before anything is persisted.",
           priority: "high",
@@ -72,7 +72,7 @@ function createSuggestTasksInteraction(
         {
           clientKey: "child-stories",
           parentClientKey: "root-design",
-          title: "Add Storybook coverage for acceptance and rejection states",
+          title: "Добавить Storybook для состояний принятия и отклонения",
           description:
             "Cover pending, accepted, rejected, and collapsed-child previews in a fixture-backed story.",
           priority: "medium",
@@ -82,7 +82,7 @@ function createSuggestTasksInteraction(
         {
           clientKey: "child-mixed-thread",
           parentClientKey: "root-design",
-          title: "Prototype the mixed thread feed",
+          title: "Прототип смешанного потока",
           description:
             "Show comments, activity, live runs, and interaction cards in one chronological feed.",
           priority: "medium",
@@ -92,7 +92,7 @@ function createSuggestTasksInteraction(
         {
           clientKey: "hidden-follow-up",
           parentClientKey: "child-mixed-thread",
-          title: "Follow-up polish on spacing and answered summaries",
+          title: "Доработка отступов и кратких ответов",
           description:
             "Collapse this under the visible task tree so the preview proves the hidden-descendant treatment.",
           priority: "low",
@@ -239,13 +239,13 @@ export const acceptedSuggestedTasksInteraction = createSuggestTasksInteraction({
         clientKey: "root-design",
         issueId: "issue-created-1",
         identifier: "PAP-1713",
-        title: "Prototype issue-thread interaction cards",
+        title: "Прототип карточек взаимодействия задач-потоков",
       },
       {
         clientKey: "child-stories",
         issueId: "issue-created-2",
         identifier: "PAP-1714",
-        title: "Add Storybook coverage for acceptance and rejection states",
+        title: "Добавить Storybook для состояний принятия и отклонения",
         parentIssueId: "issue-created-1",
         parentIdentifier: "PAP-1713",
       },
@@ -253,7 +253,7 @@ export const acceptedSuggestedTasksInteraction = createSuggestTasksInteraction({
         clientKey: "child-mixed-thread",
         issueId: "issue-created-3",
         identifier: "PAP-1715",
-        title: "Prototype the mixed thread feed",
+        title: "Прототип смешанного потока",
         parentIssueId: "issue-created-1",
         parentIdentifier: "PAP-1713",
       },
@@ -261,7 +261,7 @@ export const acceptedSuggestedTasksInteraction = createSuggestTasksInteraction({
         clientKey: "hidden-follow-up",
         issueId: "issue-created-4",
         identifier: "PAP-1716",
-        title: "Follow-up polish on spacing and answered summaries",
+        title: "Доработка отступов и кратких ответов",
         parentIssueId: "issue-created-3",
         parentIdentifier: "PAP-1715",
       },

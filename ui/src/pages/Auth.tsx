@@ -87,8 +87,8 @@ export function AuthPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "sign_in"
-              ? "Use your email and password to access this instance."
-              : "Create an account for this instance. Email confirmation is not required in v1."}
+              ? "Используйте email и пароль для доступа к этому инстансу."
+              : "Создайте аккаунт для этого инстанса. Подтверждение email не требуется в v1."}
           </p>
 
           <form

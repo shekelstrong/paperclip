@@ -1697,7 +1697,7 @@ export function IssueDetail() {
         queryClient.setQueryData(queryKeys.issues.list(context.selectedCompanyId), context.previousList);
       }
       pushToast({
-        title: "Issue update failed",
+        title: "Обновление задачи не удалось",
         body: err instanceof Error ? err.message : "Unable to save issue changes",
         tone: "error",
       });
@@ -1744,7 +1744,7 @@ export function IssueDetail() {
         title: result.kind === "release"
           ? treeControlScope === "leaf" ? "Work resumed" : "Subtree resumed"
           : result.hold.mode === "pause"
-            ? treeControlScope === "leaf" ? "Work paused" : "Subtree paused"
+            ? treeControlScope === "leaf" ? "Работа приостановлена" : "Subtree paused"
             : `${modeLabel} applied`,
         body: result.kind === "release"
           ? (result.hold.releaseReason?.trim() || (treeControlScope === "leaf" ? "Active issue pause released." : "Active subtree pause released."))
@@ -1785,7 +1785,7 @@ export function IssueDetail() {
     onError: (err) => {
       pushToast({
         title: "Unable to apply subtree control",
-        body: err instanceof Error ? err.message : "Please try again.",
+        body: err instanceof Error ? err.message : "Пожалуйста, попробуйте снова.",
         tone: "error",
       });
     },
@@ -1803,7 +1803,7 @@ export function IssueDetail() {
     onSuccess: async (result) => {
       const cancelCount = result.preview?.totals.activeRuns ?? 0;
       pushToast({
-        title: "Work paused",
+        title: "Работа приостановлена",
         body: cancelCount > 0
           ? `Work paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
           : "Work paused. This issue is held until resume.",
@@ -1824,7 +1824,7 @@ export function IssueDetail() {
     onError: (err) => {
       pushToast({
         title: "Unable to pause work",
-        body: err instanceof Error ? err.message : "Please try again.",
+        body: err instanceof Error ? err.message : "Пожалуйста, попробуйте снова.",
         tone: "error",
       });
     },
@@ -1843,7 +1843,7 @@ export function IssueDetail() {
     },
     onError: (err) => {
       pushToast({
-        title: "Issue update failed",
+        title: "Обновление задачи не удалось",
         body: err instanceof Error ? err.message : "Unable to save sub-issue changes",
         tone: "error",
       });
@@ -1995,7 +1995,7 @@ export function IssueDetail() {
       }
       pushToast({
         title: "Комментарий не удался",
-        body: err instanceof Error ? err.message : "Unable to post comment",
+        body: err instanceof Error ? err.message : "Не удалось опубликовать комментарий",
         tone: "error",
       });
     },
@@ -2222,7 +2222,7 @@ export function IssueDetail() {
       }
       pushToast({
         title: "Комментарий не удался",
-        body: err instanceof Error ? err.message : "Unable to post comment",
+        body: err instanceof Error ? err.message : "Не удалось опубликовать комментарий",
         tone: "error",
       });
     },
@@ -2340,8 +2340,8 @@ export function IssueDetail() {
       invalidateIssueThreadLazily();
       invalidateIssueCollections();
       pushToast({
-        title: "Queued comment canceled",
-        body: "The queued message was restored to the composer.",
+        title: "Комментарий в очереди отменён",
+        body: "Сообщение из очереди было восстановлено в редактор.",
         tone: "success",
       });
     },
@@ -2366,8 +2366,8 @@ export function IssueDetail() {
       if (cancelledCommentBody) {
         restoreQueuedCommentDraft(cancelledCommentBody);
         pushToast({
-          title: "Queued comment canceled",
-          body: "The queued message was restored to the composer.",
+          title: "Комментарий в очереди отменён",
+          body: "Сообщение из очереди было восстановлено в редактор.",
           tone: "success",
         });
       }
@@ -3308,7 +3308,7 @@ export function IssueDetail() {
                 variant="ghost"
                 size="icon-xs"
                 onClick={copyIssueToClipboard}
-                title="Copy issue as markdown"
+                title="Копировать задачу как markdown"
               >
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
@@ -3342,7 +3342,7 @@ export function IssueDetail() {
               variant="ghost"
               size="icon-xs"
               onClick={copyIssueToClipboard}
-              title="Copy issue as markdown"
+              title="Копировать задачу как markdown"
             >
               {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </Button>
@@ -3365,8 +3365,8 @@ export function IssueDetail() {
                   variant="ghost"
                   size="icon-xs"
                   className="shrink-0"
-                  aria-label="More issue actions"
-                  title="More issue actions"
+                  aria-label="Больше действий с задачей"
+                  title="Больше действий с задачей"
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
@@ -3695,7 +3695,7 @@ export function IssueDetail() {
                       e.stopPropagation();
                       setConfirmDeleteId(attachment.id);
                     }}
-                    title="Delete attachment"
+                    title="Удалить вложение"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -3724,7 +3724,7 @@ export function IssueDetail() {
                     className="text-muted-foreground hover:text-destructive"
                     onClick={() => deleteAttachment.mutate(attachment.id)}
                     disabled={deleteAttachment.isPending}
-                    title="Delete attachment"
+                    title="Удалить вложение"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
