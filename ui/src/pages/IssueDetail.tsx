@@ -174,21 +174,21 @@ const TREE_CONTROL_MODE_LABEL: Record<IssueTreeControlMode, string> = {
   pause: "Pause subtree",
   resume: "Возобновить поддерево",
   cancel: "Cancel subtree",
-  restore: "Restore subtree",
+  restore: "Восстановить поддерево",
 };
 const LEAF_WORK_CONTROL_MODE_LABEL: Partial<Record<IssueTreeControlMode, string>> = {
   pause: "Приостановить работу",
   resume: "Возобновить работу",
 };
 const TREE_CONTROL_MODE_HELP_TEXT: Record<IssueTreeControlMode, string> = {
-  pause: "Pause active execution in this issue subtree until an explicit resume.",
-  resume: "Release the active subtree pause hold so held work can continue.",
+  pause: "Приостановить активное выполнение в поддереве задачи до явного возобновления.",
+  resume: "Освободите активное удержание паузы поддерева, чтобы удерживаемая работа продолжилась.",
   cancel: "Cancel non-terminal issues in this subtree and stop queued/running work where possible.",
-  restore: "Restore issues cancelled by this subtree operation so work can resume.",
+  restore: "Восстановите задачи, отменённые этой операцией поддерева, чтобы работа возобновилась.",
 };
 const LEAF_WORK_CONTROL_MODE_HELP_TEXT: Partial<Record<IssueTreeControlMode, string>> = {
-  pause: "Pause active execution on this issue until an explicit resume.",
-  resume: "Release the active pause hold so this issue can continue.",
+  pause: "Приостановить активное выполнение в задаче до явного возобновления.",
+  resume: "Освободите активное удержание паузы, чтобы задача продолжилась.",
 };
 function issueTreeControlLabel(mode: IssueTreeControlMode, scope: "leaf" | "subtree") {
   return scope === "leaf"
@@ -204,11 +204,11 @@ function issueTreeControlHelpText(mode: IssueTreeControlMode, scope: "leaf" | "s
 
 function treeControlPreviewErrorCopy(error: unknown): string {
   if (error instanceof ApiError) {
-    if (error.status === 403) return "Only board users can preview subtree controls.";
-    if (error.status === 409) return "Preview is stale because subtree hold state changed. Retry to refresh.";
+    if (error.status === 403) return "Только пользователи доски могут просматривать управление поддеревом.";
+    if (error.status === 409) return "Превью устарело, так как изменилось состояние удержания поддерева. Повторите для обновления.";
     if (error.status === 422) return "This subtree action is currently invalid for the selected issues.";
   }
-  return error instanceof Error ? error.message : "Unable to load preview.";
+  return error instanceof Error ? error.message : "Не удалось загрузить превью.";
 }
 
 function resolveRunningIssueRun(
@@ -553,7 +553,7 @@ function InboxMobileToolbar({
 
         <Popover open={menuOpen} onOpenChange={setMenuOpen}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label="More actions">
+            <Button variant="ghost" size="icon-sm" aria-label="Больше действий">
               <MoreVertical className="h-5 w-5" />
             </Button>
           </PopoverTrigger>
@@ -849,7 +849,7 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
             disabled={commentsLoadingOlder}
             onClick={onLoadOlderComments}
           >
-            {commentsLoadingOlder ? "Loading earlier comments..." : "Load earlier comments"}
+            {commentsLoadingOlder ? "Загрузка ранних комментариев..." : "Загрузить ранние комментарии"}
           </Button>
         </div>
       ) : null}
@@ -1698,7 +1698,7 @@ export function IssueDetail() {
       }
       pushToast({
         title: "Обновление задачи не удалось",
-        body: err instanceof Error ? err.message : "Unable to save issue changes",
+        body: err instanceof Error ? err.message : "Не удалось сохранить изменения задачи",
         tone: "error",
       });
     },
@@ -1714,7 +1714,7 @@ export function IssueDetail() {
       if (treeControlMode === "resume") {
         const pauseHoldId = treeControlState?.activePauseHold?.holdId;
         if (!pauseHoldId) {
-          throw new Error("No active subtree pause hold is available to resume.");
+          throw new Error("Нет активной приостановки поддерева для возобновления.");
         }
         const releasedHold = await issuesApi.releaseTreeHold(issueId!, pauseHoldId, {
           reason: treeControlReason.trim() || null,
@@ -1742,9 +1742,9 @@ export function IssueDetail() {
       const cancelCount = result.preview?.totals.activeRuns ?? 0;
       pushToast({
         title: result.kind === "release"
-          ? treeControlScope === "leaf" ? "Work resumed" : "Subtree resumed"
+          ? treeControlScope === "leaf" ? "Работа возобновлена" : "Поддерево возобновлено"
           : result.hold.mode === "pause"
-            ? treeControlScope === "leaf" ? "Работа приостановлена" : "Subtree paused"
+            ? treeControlScope === "leaf" ? "Работа приостановлена" : "Поддерево приостановлено"
             : `${modeLabel} applied`,
         body: result.kind === "release"
           ? (result.hold.releaseReason?.trim() || (treeControlScope === "leaf" ? "Active issue pause released." : "Active subtree pause released."))
@@ -1754,7 +1754,7 @@ export function IssueDetail() {
               : `Subtree paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
             : result.hold.reason?.trim()
               ? result.hold.reason
-              : "Subtree control applied.",
+              : "Управление поддеревом применено.",
       });
       setTreeControlOpen(false);
       setTreeControlReason("");
@@ -1784,7 +1784,7 @@ export function IssueDetail() {
     },
     onError: (err) => {
       pushToast({
-        title: "Unable to apply subtree control",
+        title: "Не удалось применить управление поддеревом",
         body: err instanceof Error ? err.message : "Пожалуйста, попробуйте снова.",
         tone: "error",
       });
@@ -1794,7 +1794,7 @@ export function IssueDetail() {
     mutationFn: async ({ runId, scope }: { runId: string; scope: "leaf" | "subtree" }) => {
       const created = await issuesApi.createTreeHold(issueId!, {
         mode: "pause",
-        reason: "Paused from active run controls.",
+        reason: "Приостановлено из управления активным запуском.",
         releasePolicy: { strategy: "manual", note: scope === "leaf" ? "leaf_pause" : "full_pause" },
         metadata: { source: "issue_active_run_control", runId },
       });
@@ -1806,7 +1806,7 @@ export function IssueDetail() {
         title: "Работа приостановлена",
         body: cancelCount > 0
           ? `Work paused. ${cancelCount} run${cancelCount === 1 ? "" : "s"} cancelled.`
-          : "Work paused. This issue is held until resume.",
+          : "Работа приостановлена. Задача удержана до возобновления.",
         tone: "success",
       });
       await Promise.all([
@@ -1823,7 +1823,7 @@ export function IssueDetail() {
     },
     onError: (err) => {
       pushToast({
-        title: "Unable to pause work",
+        title: "Не удалось приостановить работу",
         body: err instanceof Error ? err.message : "Пожалуйста, попробуйте снова.",
         tone: "error",
       });
@@ -1844,7 +1844,7 @@ export function IssueDetail() {
     onError: (err) => {
       pushToast({
         title: "Обновление задачи не удалось",
-        body: err instanceof Error ? err.message : "Unable to save sub-issue changes",
+        body: err instanceof Error ? err.message : "Не удалось сохранить изменения подзадачи",
         tone: "error",
       });
     },
@@ -1860,14 +1860,14 @@ export function IssueDetail() {
       invalidateIssueRunState();
       invalidateIssueCollections();
       pushToast({
-        title: "Monitor check queued",
+        title: "Проверка монитора в очереди",
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Monitor check failed",
-        body: err instanceof Error ? err.message : "Unable to trigger the monitor right now",
+        title: "Проверка монитора не пройдена",
+        body: err instanceof Error ? err.message : "Не удалось запустить монитор прямо сейчас",
         tone: "error",
       });
     },
@@ -1892,14 +1892,14 @@ export function IssueDetail() {
         queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list(resolvedCompanyId) });
       }
       pushToast({
-        title: variables.action === "approve" ? "Approval approved" : "Approval rejected",
+        title: variables.action === "approve" ? "Утверждение одобрено" : "Утверждение отклонено",
         tone: "success",
       });
     },
     onError: (err, variables) => {
       pushToast({
-        title: variables.action === "approve" ? "Approval failed" : "Rejection failed",
-        body: err instanceof Error ? err.message : "Unable to update approval",
+        title: variables.action === "approve" ? "Утверждение не удалось" : "Отклонение не удалось",
+        body: err instanceof Error ? err.message : "Не удалось обновить утверждение",
         tone: "error",
       });
     },
@@ -2032,17 +2032,17 @@ export function IssueDetail() {
         : 0;
       pushToast({
         title: interaction.kind === "request_confirmation"
-          ? "Request confirmed"
+          ? "Запрос подтверждён"
           : skippedCount > 0
           ? `Accepted ${createdCount} draft${createdCount === 1 ? "" : "s"} and skipped ${skippedCount}`
-          : "Suggested tasks accepted",
+          : "Предложенные задачи приняты",
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Accept failed",
-        body: err instanceof Error ? err.message : "Unable to accept the suggested tasks",
+        title: "Принятие не удалось",
+        body: err instanceof Error ? err.message : "Не удалось принять предложенные задачи",
         tone: "error",
       });
     },
@@ -2055,14 +2055,14 @@ export function IssueDetail() {
       invalidateIssueDetail();
       invalidateIssueCollections();
       pushToast({
-        title: interaction.kind === "request_confirmation" ? "Request declined" : "Suggestion rejected",
+        title: interaction.kind === "request_confirmation" ? "Запрос отклонён" : "Предложение отклонено",
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
         title: "Отклонение не удалось",
-        body: err instanceof Error ? err.message : "Unable to reject the suggested tasks",
+        body: err instanceof Error ? err.message : "Не удалось отклонить предложенные задачи",
         tone: "error",
       });
     },
@@ -2080,14 +2080,14 @@ export function IssueDetail() {
       invalidateIssueDetail();
       invalidateIssueCollections();
       pushToast({
-        title: "Answers submitted",
+        title: "Ответы отправлены",
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
-        title: "Submit failed",
-        body: err instanceof Error ? err.message : "Unable to submit answers",
+        title: "Отправка не удалась",
+        body: err instanceof Error ? err.message : "Не удалось отправить ответы",
         tone: "error",
       });
     },
@@ -2101,14 +2101,14 @@ export function IssueDetail() {
       invalidateIssueDetail();
       invalidateIssueCollections();
       pushToast({
-        title: "Question cancelled",
+        title: "Вопрос отменён",
         tone: "success",
       });
     },
     onError: (err) => {
       pushToast({
         title: "Отмена не удалась",
-        body: err instanceof Error ? err.message : "Unable to cancel the question",
+        body: err instanceof Error ? err.message : "Не удалось отменить вопрос",
         tone: "error",
       });
     },
@@ -2302,8 +2302,8 @@ export function IssueDetail() {
       invalidateIssueDetail();
       invalidateIssueRunState();
       pushToast({
-        title: "Interrupt requested",
-        body: "The active run is stopping so queued comments can continue next.",
+        title: "Прерывание запрошено",
+        body: "Активный запуск останавливается, чтобы комментарии в очереди могли продолжиться.",
         tone: "success",
       });
     },
@@ -2318,8 +2318,8 @@ export function IssueDetail() {
         setLocallyQueuedCommentRunIds(context.previousLocalQueuedCommentRunIds);
       }
       pushToast({
-        title: "Interrupt failed",
-        body: err instanceof Error ? err.message : "Unable to interrupt the active run",
+        title: "Прерывание не удалось",
+        body: err instanceof Error ? err.message : "Не удалось прервать активный запуск",
         tone: "error",
       });
     },
@@ -2422,11 +2422,11 @@ export function IssueDetail() {
         title:
           variables.sharingPreferenceAtSubmit === "prompt"
             ? variables.allowSharing
-              ? "Feedback saved. Future votes will share"
-              : "Feedback saved. Future votes will stay local"
+              ? "Отзыв сохранён. Будущие голоса будут общими"
+              : "Отзыв сохранён. Будущие голоса останутся локальными"
             : variables.allowSharing
-              ? "Feedback saved and sharing enabled"
-              : "Feedback saved",
+              ? "Отзыв сохранён, обмен включён"
+              : "Отзыв сохранён",
         tone: "success",
       });
     },
@@ -2435,7 +2435,7 @@ export function IssueDetail() {
         queryClient.setQueryData(queryKeys.issues.feedbackVotes(issueId!), context.previousVotes);
       }
       pushToast({
-        title: "Failed to save feedback",
+        title: "Не удалось сохранить отзыв",
         body: err instanceof Error ? err.message : "Неизвестная ошибка",
         tone: "error",
       });
@@ -2478,7 +2478,7 @@ export function IssueDetail() {
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.documents(issueId!) });
     },
     onError: (err) => {
-      setAttachmentError(err instanceof Error ? err.message : "Document import failed");
+      setAttachmentError(err instanceof Error ? err.message : "Импорт документа не удался");
     },
   });
 
@@ -2490,7 +2490,7 @@ export function IssueDetail() {
       invalidateIssueDetail();
     },
     onError: (err) => {
-      setAttachmentError(err instanceof Error ? err.message : "Delete failed");
+      setAttachmentError(err instanceof Error ? err.message : "Удаление не удалось");
     },
   });
 
@@ -2499,12 +2499,12 @@ export function IssueDetail() {
     onSuccess: () => {
       invalidateIssueCollections();
       navigate(sourceBreadcrumb.href.startsWith("/inbox") ? sourceBreadcrumb.href : "/inbox", { replace: true });
-      pushToast({ title: "Issue archived from inbox", tone: "success" });
+      pushToast({ title: "Задача архивирована из входящих", tone: "success" });
     },
     onError: (err) => {
       pushToast({
-        title: "Archive failed",
-        body: err instanceof Error ? err.message : "Unable to archive this issue from the inbox",
+        title: "Архивирование не удалось",
+        body: err instanceof Error ? err.message : "Не удалось архивировать задачу из входящих",
         tone: "error",
       });
     },
@@ -2759,7 +2759,7 @@ export function IssueDetail() {
     const md = `# ${issue.identifier}: ${title}\n\n${body}`.trimEnd();
     await navigator.clipboard.writeText(md);
     setCopied(true);
-    pushToast({ title: "Copied to clipboard", tone: "success" });
+    pushToast({ title: "Скопировано в буфер обмена", tone: "success" });
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -3017,7 +3017,7 @@ export function IssueDetail() {
     treeControlMode === "pause"
       ? treeControlScope === "leaf"
         ? "Приостановить работу"
-        : "Pause and stop work"
+        : "Приостановить и остановить работу"
       : treeControlMode === "cancel"
         ? `Cancel ${previewAffectedIssueCount} issues`
       : treeControlMode === "restore"
@@ -3129,12 +3129,12 @@ export function IssueDetail() {
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">
-                  {childIssues.length === 0 ? "Paused by board." : "Subtree pause is active."}
+                  {childIssues.length === 0 ? "Приостановлено доской." : "Приостановка поддерева активна."}
                 </span>
                 <span className="text-xs text-amber-900/80 dark:text-amber-100/80">
                   {childIssues.length === 0
                     ? "Issue execution is held until resume. Human comments can still wake the assignee for triage."
-                    : "Root and descendant execution is held until resume. Human comments can still wake assignees for triage."}
+                    : "Выполнение корня и потомков удержано до возобновления. Комментарии людей всё ещё могут пробудить исполнителей для триажа."}
                 </span>
               </div>
               <div className="text-xs text-amber-900/80 dark:text-amber-100/80">
@@ -3905,7 +3905,7 @@ export function IssueDetail() {
               <Textarea
                 value={treeControlReason}
                 onChange={(event) => setTreeControlReason(event.target.value)}
-                placeholder="Explain why this subtree control is being applied..."
+                placeholder="Объясните, почему применяется управление поддеревом..."
                 className="min-h-[88px]"
               />
             </div>
@@ -3924,8 +3924,8 @@ export function IssueDetail() {
                     <span className="block font-medium">Wake affected agents ({previewAffectedAgentCount})</span>
                     <span className="text-xs text-muted-foreground">
                       {previewAffectedAgentCount === 0
-                        ? "No assigned agents are eligible to wake from this preview."
-                        : "Wake assigned agents after this operation completes."}
+                        ? "Нет назначенных агентов, доступных для пробуждения из этого превью."
+                        : "Разбудить назначенных агентов после завершения операции."}
                     </span>
                   </span>
                 </label>

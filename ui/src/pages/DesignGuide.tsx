@@ -179,8 +179,8 @@ export function DesignGuide() {
   const [selectValue, setSelectValue] = useState("in_progress");
   const [menuChecked, setMenuChecked] = useState(true);
   const [collapsibleOpen, setCollapsibleOpen] = useState(false);
-  const [inlineText, setInlineText] = useState("Click to edit this text");
-  const [inlineTitle, setInlineTitle] = useState("Editable Title");
+  const [inlineText, setInlineText] = useState("Нажмите, чтобы отредактировать текст");
+  const [inlineTitle, setInlineTitle] = useState("Редактируемое название");
   const [inlineDesc, setInlineDesc] = useState(
     "This is an editable description. Click to edit it — the textarea auto-sizes to fit the content without layout shift."
   );
@@ -207,7 +207,7 @@ export function DesignGuide() {
           This page should be updated when new UI primitives or app-level patterns ship.
         </p>
         <div className="grid gap-6 md:grid-cols-2">
-          <SubSection title="UI primitives">
+          <SubSection title="UI примитивы">
             <div className="flex flex-wrap gap-2">
               {[
                 "avatar", "badge", "breadcrumb", "button", "card", "checkbox", "collapsible",
@@ -246,10 +246,10 @@ export function DesignGuide() {
             <Swatch name="Foreground" cssVar="--foreground" />
             <Swatch name="Card" cssVar="--card" />
             <Swatch name="Primary" cssVar="--primary" />
-            <Swatch name="Primary foreground" cssVar="--primary-foreground" />
+            <Swatch name="Основной передний план" cssVar="--primary-foreground" />
             <Swatch name="Secondary" cssVar="--secondary" />
             <Swatch name="Muted" cssVar="--muted" />
-            <Swatch name="Muted foreground" cssVar="--muted-foreground" />
+            <Swatch name="Приглушённый передний план" cssVar="--muted-foreground" />
             <Swatch name="Accent" cssVar="--accent" />
             <Swatch name="Destructive" cssVar="--destructive" />
             <Swatch name="Border" cssVar="--border" />
@@ -260,7 +260,7 @@ export function DesignGuide() {
         <SubSection title="Sidebar">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Swatch name="Sidebar" cssVar="--sidebar" />
-            <Swatch name="Sidebar border" cssVar="--sidebar-border" />
+            <Swatch name="Граница сайдбара" cssVar="--sidebar-border" />
           </div>
         </SubSection>
 
@@ -349,7 +349,7 @@ export function DesignGuide() {
           </div>
         </SubSection>
 
-        <SubSection title="Icon buttons">
+        <SubSection title="Кнопки с иконками">
           <div className="flex items-center gap-2 flex-wrap">
             <Button variant="ghost" size="icon-xs"><Search /></Button>
             <Button variant="ghost" size="icon-sm"><Search /></Button>
@@ -358,7 +358,7 @@ export function DesignGuide() {
           </div>
         </SubSection>
 
-        <SubSection title="With icons">
+        <SubSection title="С иконками">
           <div className="flex items-center gap-2 flex-wrap">
             <Button><Plus /> New Issue</Button>
             <Button variant="outline"><Upload /> Upload</Button>
@@ -393,8 +393,8 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  STATUS BADGES & ICONS                                        */}
       {/* ============================================================ */}
-      <Section title="Status System">
-        <SubSection title="StatusBadge (all statuses)">
+      <Section title="Система статусов">
+        <SubSection title="StatusBadge (все статусы)">
           <div className="flex items-center gap-2 flex-wrap">
             {[
               "active", "running", "paused", "idle", "archived", "planned",
@@ -408,7 +408,7 @@ export function DesignGuide() {
           </div>
         </SubSection>
 
-        <SubSection title="StatusIcon (interactive)">
+        <SubSection title="StatusIcon (интерактивный)">
           <div className="flex items-center gap-3 flex-wrap">
             {["backlog", "todo", "in_progress", "in_review", "done", "cancelled", "blocked"].map(
               (s) => (
@@ -425,7 +425,7 @@ export function DesignGuide() {
           </div>
         </SubSection>
 
-        <SubSection title="PriorityIcon (interactive)">
+        <SubSection title="PriorityIcon (интерактивный)">
           <div className="flex items-center gap-3 flex-wrap">
             {["critical", "high", "medium", "low"].map((p) => (
               <div key={p} className="flex items-center gap-1.5">
@@ -476,10 +476,10 @@ export function DesignGuide() {
           </p>
           <div className="flex items-center gap-2 flex-wrap">
             <IssueReferencePill issue={{ id: "demo-1", identifier: "PAP-123", title: "Identifier only — no status yet" }} />
-            <IssueReferencePill issue={{ id: "demo-2", identifier: "PAP-456", title: "With in_progress status", status: "in_progress" }} />
-            <IssueReferencePill issue={{ id: "demo-3", identifier: "PAP-789", title: "Done status", status: "done" }} />
+            <IssueReferencePill issue={{ id: "demo-2", identifier: "PAP-456", title: "Со статусом в работе", status: "in_progress" }} />
+            <IssueReferencePill issue={{ id: "demo-3", identifier: "PAP-789", title: "Статус завершено", status: "done" }} />
             <IssueReferencePill issue={{ id: "demo-4", identifier: "PAP-101", title: "Blocked status", status: "blocked" }} />
-            <IssueReferencePill strikethrough issue={{ id: "demo-5", identifier: "PAP-202", title: "Removed (strikethrough)", status: "todo" }} />
+            <IssueReferencePill strikethrough issue={{ id: "demo-5", identifier: "PAP-202", title: "Удалено (зачёркивание)", status: "todo" }} />
           </div>
         </SubSection>
       </Section>
@@ -487,15 +487,15 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  FORM ELEMENTS                                                */}
       {/* ============================================================ */}
-      <Section title="Form Elements">
+      <Section title="Элементы формы">
         <div className="grid gap-6 md:grid-cols-2">
           <SubSection title="Input">
-            <Input placeholder="Default input" />
-            <Input placeholder="Disabled input" disabled className="mt-2" />
+            <Input placeholder="Ввод по умолчанию" />
+            <Input placeholder="Отключённый ввод" disabled className="mt-2" />
           </SubSection>
 
           <SubSection title="Textarea">
-            <Textarea placeholder="Write something..." />
+            <Textarea placeholder="Напишите что-нибудь..." />
           </SubSection>
 
           <SubSection title="Checkbox & Label">
@@ -515,7 +515,7 @@ export function DesignGuide() {
             </div>
           </SubSection>
 
-          <SubSection title="Inline Editor">
+          <SubSection title="Встроенный редактор">
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Title (single-line)</p>
@@ -556,7 +556,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       <Section title="Select">
         <div className="grid gap-6 md:grid-cols-2">
-          <SubSection title="Default size">
+          <SubSection title="Размер по умолчанию">
             <Select value={selectValue} onValueChange={setSelectValue}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Выбрать статус" />
@@ -571,7 +571,7 @@ export function DesignGuide() {
             </Select>
             <p className="text-xs text-muted-foreground">Current value: {selectValue}</p>
           </SubSection>
-          <SubSection title="Small trigger">
+          <SubSection title="Маленький триггер">
             <Select defaultValue="high">
               <SelectTrigger size="sm" className="w-full">
                 <SelectValue />
@@ -590,7 +590,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  DROPDOWN MENU                                                */}
       {/* ============================================================ */}
-      <Section title="Dropdown Menu">
+      <Section title="Выпадающее меню">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
@@ -654,7 +654,7 @@ export function DesignGuide() {
           <CollapsibleContent className="rounded-md border border-border p-3">
             <div className="space-y-2">
               <Label htmlFor="owner-filter">Owner</Label>
-              <Input id="owner-filter" placeholder="Filter by agent name" />
+              <Input id="owner-filter" placeholder="Фильтр по имени агента" />
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -694,7 +694,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  SCROLL AREA                                                  */}
       {/* ============================================================ */}
-      <Section title="Scroll Area">
+      <Section title="Область прокрутки">
         <ScrollArea className="h-36 rounded-md border border-border">
           <div className="space-y-2 p-3">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -712,7 +712,7 @@ export function DesignGuide() {
       <Section title="Command (CMDK)">
         <div className="rounded-md border border-border">
           <Command>
-            <CommandInput placeholder="Type a command or search..." />
+            <CommandInput placeholder="Введите команду или поиск..." />
             <CommandList>
               <CommandEmpty>No results found.</CommandEmpty>
               <CommandGroup heading="Pages">
@@ -766,7 +766,7 @@ export function DesignGuide() {
       {/*  CARDS                                                        */}
       {/* ============================================================ */}
       <Section title="Cards">
-        <SubSection title="Standard Card">
+        <SubSection title="Стандартная карточка">
           <Card>
             <CardHeader>
               <CardTitle>Card Title</CardTitle>
@@ -782,11 +782,11 @@ export function DesignGuide() {
           </Card>
         </SubSection>
 
-        <SubSection title="Metric Cards">
+        <SubSection title="Карточки метрик">
           <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
             <MetricCard icon={Bot} value={12} label="Активные агенты" description="+3 this week" />
             <MetricCard icon={CircleDot} value={48} label="Открытые задачи" />
-            <MetricCard icon={DollarSign} value="$1,234" label="Monthly Cost" description="Under budget" />
+            <MetricCard icon={DollarSign} value="$1,234" label="Ежемесячные расходы" description="В рамках бюджета" />
             <MetricCard icon={Zap} value="99.9%" label="Uptime" />
           </div>
         </SubSection>
@@ -796,7 +796,7 @@ export function DesignGuide() {
       {/*  TABS                                                         */}
       {/* ============================================================ */}
       <Section title="Tabs">
-        <SubSection title="Default (pill) variant">
+        <SubSection title="Вариант по умолчанию (pill)">
           <Tabs defaultValue="overview">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -819,7 +819,7 @@ export function DesignGuide() {
           </Tabs>
         </SubSection>
 
-        <SubSection title="Line variant">
+        <SubSection title="Линейный вариант">
           <Tabs defaultValue="summary">
             <TabsList variant="line">
               <TabsTrigger value="summary">Summary</TabsTrigger>
@@ -853,7 +853,7 @@ export function DesignGuide() {
             }
             identifier="PAP-001"
             title="Implement authentication flow"
-            subtitle="Assigned to Agent Alpha"
+            subtitle="Назначено на Агента Альфа"
             trailing={<StatusBadge status="in_progress" />}
             onClick={() => {}}
           />
@@ -878,7 +878,7 @@ export function DesignGuide() {
               </>
             }
             identifier="PAP-003"
-            title="Write API documentation"
+            title="Написать API документацию"
             trailing={<StatusBadge status="todo" />}
             onClick={() => {}}
           />
@@ -957,15 +957,15 @@ export function DesignGuide() {
           </div>
         </SubSection>
 
-        <SubSection title="Initials derivation">
+        <SubSection title="Получение инициалей">
           <div className="flex flex-col gap-2">
             <Identity name="Агент-CEO" size="sm" />
             <Identity name="Alpha" size="sm" />
-            <Identity name="Quality Assurance Lead" size="sm" />
+            <Identity name="Руководитель контроля качества" size="sm" />
           </div>
         </SubSection>
 
-        <SubSection title="Custom initials">
+        <SubSection title="Пользовательские инициалы">
           <Identity name="Backend Service" initials="BS" size="sm" />
         </SubSection>
       </Section>
@@ -1008,7 +1008,7 @@ export function DesignGuide() {
             <div className="space-y-3">
               <div>
                 <Label>Name</Label>
-                <Input placeholder="Enter a name" className="mt-1.5" />
+                <Input placeholder="Введите имя" className="mt-1.5" />
               </div>
               <div>
                 <Label>Description</Label>
@@ -1026,11 +1026,11 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  EMPTY STATE                                                  */}
       {/* ============================================================ */}
-      <Section title="Empty State">
+      <Section title="Пустое состояние">
         <div className="border border-border rounded-md">
           <EmptyState
             icon={Inbox}
-            message="No items to show. Create your first one to get started."
+            message="Нет элементов для отображения. Создайте первый, чтобы начать."
             action="Create Item"
             onAction={() => {}}
           />
@@ -1040,7 +1040,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  PROGRESS BARS                                                */}
       {/* ============================================================ */}
-      <Section title="Progress Bars (Budget)">
+      <Section title="Прогресс-бары (Бюджет)">
         <div className="space-y-3">
           {[
             { label: "Under budget (40%)", pct: 40, color: "bg-green-400" },
@@ -1066,7 +1066,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  LOG VIEWER                                                   */}
       {/* ============================================================ */}
-      <Section title="Log Viewer">
+      <Section title="Просмотрщик логов">
         <div className="bg-neutral-950 rounded-lg p-3 font-mono text-xs max-h-80 overflow-y-auto">
           <div className="text-foreground">[12:00:01] INFO  Agent started successfully</div>
           <div className="text-foreground">[12:00:02] INFO  Processing task PAP-001</div>
@@ -1088,7 +1088,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  PROPERTY ROW PATTERN                                         */}
       {/* ============================================================ */}
-      <Section title="Property Row Pattern">
+      <Section title="Паттерн строки свойства">
         <div className="border border-border rounded-md p-4 space-y-1 max-w-sm">
           <div className="flex items-center justify-between py-1.5">
             <span className="text-xs text-muted-foreground">Status</span>
@@ -1115,8 +1115,8 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  NAVIGATION PATTERNS                                          */}
       {/* ============================================================ */}
-      <Section title="Navigation Patterns">
-        <SubSection title="Sidebar nav items">
+      <Section title="Паттерны навигации">
+        <SubSection title="Элементы навигации сайдбара">
           <div className="w-60 border border-border rounded-md p-3 space-y-0.5 bg-card">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-accent text-accent-foreground">
               <LayoutDashboard className="h-4 w-4" />
@@ -1140,7 +1140,7 @@ export function DesignGuide() {
           </div>
         </SubSection>
 
-        <SubSection title="View toggle">
+        <SubSection title="Переключатель вида">
           <div className="flex items-center border border-border rounded-md w-fit">
             <button className="px-3 py-1.5 text-xs font-medium bg-accent text-foreground rounded-l-md">
               <ListTodo className="h-3.5 w-3.5 inline mr-1" />
@@ -1256,13 +1256,13 @@ export function DesignGuide() {
           </div>
         </SubSection>
 
-        <SubSection title="Page Skeleton (list)">
+        <SubSection title="Скелет страницы (список)">
           <div className="border border-border rounded-md p-4">
             <PageSkeleton variant="list" />
           </div>
         </SubSection>
 
-        <SubSection title="Page Skeleton (detail)">
+        <SubSection title="Скелет страницы (детали)">
           <div className="border border-border rounded-md p-4">
             <PageSkeleton variant="detail" />
           </div>
@@ -1322,15 +1322,15 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  KEYBOARD SHORTCUTS                                           */}
       {/* ============================================================ */}
-      <Section title="Keyboard Shortcuts">
+      <Section title="Горячие клавиши">
         <div className="border border-border rounded-md divide-y divide-border text-sm">
           {[
-            ["Cmd+K / Ctrl+K", "Open Command Palette"],
+            ["Cmd+K / Ctrl+K", "Открыть палитру команд"],
             ["C", "New Issue (outside inputs)"],
             ["[", "Toggle Sidebar"],
             ["]", "Toggle Properties Panel"],
 
-            ["Cmd+Enter / Ctrl+Enter", "Submit markdown comment"],
+            ["Cmd+Enter / Ctrl+Enter", "Отправить markdown-комментарий"],
           ].map(([key, desc]) => (
             <div key={key} className="flex items-center justify-between px-4 py-2">
               <span className="text-muted-foreground">{desc}</span>

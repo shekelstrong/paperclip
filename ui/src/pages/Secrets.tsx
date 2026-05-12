@@ -204,13 +204,13 @@ function normalizeSecretKeyForPreview(input: string) {
 
 
 function modeLabel(managedMode: SecretManagedMode) {
-  return managedMode === "paperclip_managed" ? "Paperclip-managed" : "Linked external";
+  return managedMode === "paperclip_managed" ? "Paperclip-managed" : "Связан внешне";
 }
 
 function modeDescription(managedMode: SecretManagedMode) {
   return managedMode === "paperclip_managed"
-    ? "Paperclip owns create and rotation writes for this provider secret."
-    : "Paperclip resolves this provider reference but does not rotate the provider value.";
+    ? "Paperclip владеет созданием и ротацией для этого секрета провайдера."
+    : "Paperclip разрешает этот референс провайдера, но не ротирует значение провайдера.";
 }
 
 function healthEntryForProvider(
@@ -225,7 +225,7 @@ export function getCreateProviderBlockReason(
   mode: CreateMode,
   health: SecretProviderHealthResponse | null,
 ) {
-  if (!provider) return "Select a provider.";
+  if (!provider) return "Выберите провайдера.";
   if (mode === "managed" && provider.supportsManagedValues === false) {
     return `${provider.label} does not support Paperclip-managed secret values.`;
   }
@@ -289,7 +289,7 @@ export function getDefaultProviderConfigId(
 
 function providerVaultLabel(configs: CompanySecretProviderConfig[], id: string | null | undefined) {
   if (!id) return "Deployment default";
-  return configs.find((config) => config.id === id)?.displayName ?? "Unknown vault";
+  return configs.find((config) => config.id === id)?.displayName ?? "Неизвестное хранилище";
 }
 
 function buildProviderVaultConfig(form: ProviderVaultForm): Record<string, unknown> {
@@ -550,7 +550,7 @@ export function Secrets() {
 
   const rotateMutation = useMutation({
     mutationFn: () => {
-      if (!selectedSecret) throw new Error("Select a secret first");
+      if (!selectedSecret) throw new Error("Сначала выберите секрет");
       if (selectedSecret.managedMode === "external_reference") {
         return secretsApi.rotate(selectedSecret.id, {
           externalRef: rotateExternalRef.trim() || selectedSecret.externalRef || undefined,
@@ -572,7 +572,7 @@ export function Secrets() {
       invalidateAll([updated.id]);
     },
     onError: (error) => {
-      setRotateError(error instanceof Error ? error.message : "Rotate failed");
+      setRotateError(error instanceof Error ? error.message : "Ротация не удалась");
     },
   });
 
@@ -595,7 +595,7 @@ export function Secrets() {
     },
     onError: (error) => {
       pushToast({
-        title: "Status update failed",
+        title: "Обновление статуса не удалось",
         body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
@@ -636,7 +636,7 @@ export function Secrets() {
       } as CreateSecretProviderConfigInput);
     },
     onSuccess: (saved) => {
-      pushToast({ title: editingVault ? "Provider vault updated" : "Provider vault created", body: saved.displayName, tone: "success" });
+      pushToast({ title: editingVault ? "Хранилище провайдера обновлено" : "Хранилище провайдера создано", body: saved.displayName, tone: "success" });
       setVaultDialogOpen(false);
       setEditingVault(null);
       setVaultForm(emptyProviderVaultForm());
@@ -651,12 +651,12 @@ export function Secrets() {
   const disableVaultMutation = useMutation({
     mutationFn: (id: string) => secretsApi.disableProviderConfig(id),
     onSuccess: (updated) => {
-      pushToast({ title: "Provider vault disabled", body: updated.displayName, tone: "info" });
+      pushToast({ title: "Хранилище провайдера отключено", body: updated.displayName, tone: "info" });
       invalidateAll();
     },
     onError: (error) => {
       pushToast({
-        title: "Disable failed",
+        title: "Отключение не удалось",
         body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
@@ -666,12 +666,12 @@ export function Secrets() {
   const defaultVaultMutation = useMutation({
     mutationFn: (id: string) => secretsApi.setDefaultProviderConfig(id),
     onSuccess: (updated) => {
-      pushToast({ title: "Default vault set", body: updated.displayName, tone: "success" });
+      pushToast({ title: "Хранилище по умолчанию установлено", body: updated.displayName, tone: "success" });
       invalidateAll();
     },
     onError: (error) => {
       pushToast({
-        title: "Default update failed",
+        title: "Обновление по умолчанию не удалось",
         body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
@@ -681,12 +681,12 @@ export function Secrets() {
   const healthVaultMutation = useMutation({
     mutationFn: (id: string) => secretsApi.checkProviderConfigHealth(id),
     onSuccess: (health) => {
-      pushToast({ title: "Health checked", body: health.message, tone: health.status === "error" ? "error" : "info" });
+      pushToast({ title: "Здоровье проверено", body: health.message, tone: health.status === "error" ? "error" : "info" });
       invalidateAll();
     },
     onError: (error) => {
       pushToast({
-        title: "Health check failed",
+        title: "Проверка здоровья не пройдена",
         body: error instanceof Error ? error.message : "Попробовать снова",
         tone: "error",
       });
@@ -766,7 +766,7 @@ export function Secrets() {
         <PageTabBar
           items={[
             { value: "secrets", label: "Secrets" },
-            { value: "vaults", label: "Provider vaults" },
+            { value: "vaults", label: "Хранилища провайдеров" },
           ]}
           align="start"
           value={activeTab}
@@ -781,9 +781,9 @@ export function Secrets() {
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name, key, ref"
+                placeholder="Поиск по имени, ключу, референсу"
                 className="pl-7 text-xs sm:text-sm"
-                aria-label="Search secrets"
+                aria-label="Поиск секретов"
                 data-page-search-target="true"
               />
             </div>
@@ -817,12 +817,12 @@ export function Secrets() {
             ) : secrets.length === 0 && !secretsQuery.isPending ? (
               <EmptyState
                 icon={KeyRound}
-                message="No secrets yet. Create your first managed secret or link an external reference."
-                action="New secret"
+                message="Пока нет секретов. Создайте первый управляемый секрет или свяжите внешний референс."
+                action="Новый секрет"
                 onAction={() => setCreateOpen(true)}
               />
             ) : filtered.length === 0 ? (
-              <EmptyState icon={Search} message="No secrets match your filters." />
+              <EmptyState icon={Search} message="Нет секретов, соответствующих фильтрам." />
             ) : (
               <table className="w-full text-sm">
               <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
@@ -1225,7 +1225,7 @@ export function Secrets() {
                     }
                     rows={3}
                     className="font-mono text-xs"
-                    placeholder="Stored once, never re-displayed"
+                    placeholder="Сохранено один раз, больше не отображается"
                   />
                 </div>
               </>
@@ -1257,7 +1257,7 @@ export function Secrets() {
                 onChange={(event) =>
                   setCreateForm((current) => ({ ...current, description: event.target.value }))
                 }
-                placeholder="What is this secret used for? (no values)"
+                placeholder="Для чего используется этот секрет? (без значений)"
               />
             </div>
             {createError ? <p className="text-xs text-destructive">{createError}</p> : null}
@@ -1279,7 +1279,7 @@ export function Secrets() {
               }
             >
               {createMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {createMode === "managed" ? "Создать секрет" : "Link reference"}
+              {createMode === "managed" ? "Создать секрет" : "Ссылочный референс"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1288,7 +1288,7 @@ export function Secrets() {
       <Dialog open={vaultDialogOpen} onOpenChange={setVaultDialogOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingVault ? "Edit provider vault" : "Create provider vault"}</DialogTitle>
+            <DialogTitle>{editingVault ? "Редактировать хранилище провайдера" : "Создать хранилище провайдера"}</DialogTitle>
             <DialogDescription>
               Save only non-sensitive routing metadata. Credentials stay in the runtime environment or provider identity.
             </DialogDescription>
@@ -1322,7 +1322,7 @@ export function Secrets() {
                   onChange={(event) =>
                     setVaultForm((current) => ({ ...current, displayName: event.target.value }))
                   }
-                  placeholder="Production local vault"
+                  placeholder="Производственное локальное хранилище"
                 />
               </div>
               <div>
@@ -1391,7 +1391,7 @@ export function Secrets() {
               }
             >
               {saveVaultMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {editingVault ? "Save vault" : "Create vault"}
+              {editingVault ? "Сохранить хранилище" : "Создать хранилище"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1401,7 +1401,7 @@ export function Secrets() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {selectedSecret?.managedMode === "external_reference" ? "Update external reference" : "Update secret value"}
+              {selectedSecret?.managedMode === "external_reference" ? "Обновить внешний референс" : "Обновить значение секрета"}
             </DialogTitle>
             <DialogDescription>
               {selectedSecret?.managedMode === "external_reference"
@@ -1444,7 +1444,7 @@ export function Secrets() {
                 id="rotate-ref"
                 value={rotateExternalRef}
                 onChange={(event) => setRotateExternalRef(event.target.value)}
-                placeholder={selectedSecret.externalRef ?? "Updated reference"}
+                placeholder={selectedSecret.externalRef ?? "Обновлённый референс"}
                 className="font-mono text-xs"
               />
               <p className="mt-1 text-[11px] text-muted-foreground">
@@ -1460,7 +1460,7 @@ export function Secrets() {
                 onChange={(event) => setRotateValue(event.target.value)}
                 rows={3}
                 className="font-mono text-xs"
-                placeholder="Paste the new value"
+                placeholder="Вставьте новое значение"
               />
             </div>
           )}
@@ -1677,7 +1677,7 @@ function ProviderVaultInlineWarning({ config }: { config: CompanySecretProviderC
   if (!message) {
     return (
       <p className="mt-1 text-[11px] text-muted-foreground">
-        {config.isDefault ? "Default vault" : "Vault"} · {config.status.replace("_", " ")}
+        {config.isDefault ? "Хранилище по умолчанию" : "Vault"} · {config.status.replace("_", " ")}
       </p>
     );
   }
@@ -1828,8 +1828,8 @@ export function ProviderVaultsTab({
             {configs.length === 0 ? (
               <div className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
                 {isComingSoonFamily
-                  ? "Not yet supported."
-                  : "No company-specific vaults yet. Secrets can still use the deployment default provider settings."}
+                  ? "Пока не поддерживается."
+                  : "Пока нет специфичных хранилищ компании. Секреты всё ещё могут использовать настройки провайдера по умолчанию."}
               </div>
             ) : (
               <div className="space-y-3">
@@ -1974,9 +1974,9 @@ function ProviderVaultFields({
         <TextField label="AWS region" value={form.region} onChange={(value) => setField("region", value)} placeholder="us-east-1" required />
         <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
         <TextField label="Префикс названия секрета" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
-        <TextField label="KMS key id" value={form.kmsKeyId} onChange={(value) => setField("kmsKeyId", value)} placeholder="alias/paperclip-secrets" />
-        <TextField label="Owner tag" value={form.ownerTag} onChange={(value) => setField("ownerTag", value)} placeholder="platform" />
-        <TextField label="Environment tag" value={form.environmentTag} onChange={(value) => setField("environmentTag", value)} placeholder="prod" />
+        <TextField label="ID ключа KMS" value={form.kmsKeyId} onChange={(value) => setField("kmsKeyId", value)} placeholder="alias/paperclip-secrets" />
+        <TextField label="Тег владельца" value={form.ownerTag} onChange={(value) => setField("ownerTag", value)} placeholder="platform" />
+        <TextField label="Тег окружения" value={form.environmentTag} onChange={(value) => setField("environmentTag", value)} placeholder="prod" />
       </div>
     );
   }
@@ -1984,7 +1984,7 @@ function ProviderVaultFields({
   if (form.provider === "gcp_secret_manager") {
     return (
       <div className="grid gap-3 sm:grid-cols-2">
-        <TextField label="Project id" value={form.projectId} onChange={(value) => setField("projectId", value)} placeholder="paperclip-prod" />
+        <TextField label="ID проекта" value={form.projectId} onChange={(value) => setField("projectId", value)} placeholder="paperclip-prod" />
         <TextField label="Location" value={form.location} onChange={(value) => setField("location", value)} placeholder="global" />
         <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
         <TextField label="Префикс названия секрета" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
@@ -1996,8 +1996,8 @@ function ProviderVaultFields({
     <div className="grid gap-3 sm:grid-cols-2">
       <TextField label="Address" value={form.address} onChange={(value) => setField("address", value)} placeholder="https://vault.example.com" />
       <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="admin" />
-      <TextField label="Mount path" value={form.mountPath} onChange={(value) => setField("mountPath", value)} placeholder="secret" />
-      <TextField label="Secret path prefix" value={form.secretPathPrefix} onChange={(value) => setField("secretPathPrefix", value)} placeholder="paperclip/prod" />
+      <TextField label="Путь монтирования" value={form.mountPath} onChange={(value) => setField("mountPath", value)} placeholder="secret" />
+      <TextField label="Префикс пути секрета" value={form.secretPathPrefix} onChange={(value) => setField("secretPathPrefix", value)} placeholder="paperclip/prod" />
     </div>
   );
 }
@@ -2041,16 +2041,16 @@ function SecretDetailsTab({
       </DetailRow>
       <DetailRow label="Custody">{modeLabel(secret.managedMode)}</DetailRow>
       <DetailRow label="Provider">{secret.provider.replaceAll("_", " ")}</DetailRow>
-      <DetailRow label="Provider vault">{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
-      <DetailRow label="Latest version">v{secret.latestVersion}</DetailRow>
+      <DetailRow label="Хранилище провайдера">{providerVaultLabel(providerConfigs, secret.providerConfigId)}</DetailRow>
+      <DetailRow label="Последняя версия">v{secret.latestVersion}</DetailRow>
       <DetailRow label="Created">{formatRelative(secret.createdAt)}</DetailRow>
       <DetailRow label="Updated">{formatRelative(secret.updatedAt)}</DetailRow>
-      <DetailRow label="Last rotated">{formatRelative(secret.lastRotatedAt)}</DetailRow>
-      <DetailRow label="Last resolved">{formatRelative(secret.lastResolvedAt)}</DetailRow>
+      <DetailRow label="Последняя ротация">{formatRelative(secret.lastRotatedAt)}</DetailRow>
+      <DetailRow label="Последнее разрешение">{formatRelative(secret.lastResolvedAt)}</DetailRow>
       {secret.externalRef ? (
         <div className="col-span-2">
           <dt className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">
-            {secret.managedMode === "external_reference" ? "Linked provider reference" : "Provider-managed path"}
+            {secret.managedMode === "external_reference" ? "Связанный референс провайдера" : "Путь управляемый провайдером"}
           </dt>
           <dd className="font-mono text-xs break-all flex items-center gap-1">
             <ExternalLink className="h-3 w-3" /> {secret.externalRef}

@@ -208,9 +208,9 @@ function InviteSummaryPanel({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <MetaCard label="Company" value="Acme Robotics" />
-        <MetaCard label="Invited by" value="Board User" />
-        <MetaCard label="Requested access" value={requestedAccess} />
-        <MetaCard label="Invite expires" value="Mar 7, 2027" />
+        <MetaCard label="Приглашён" value="Board User" />
+        <MetaCard label="Запрошен доступ" value={requestedAccess} />
+        <MetaCard label="Приглашение истекает" value="Mar 7, 2027" />
       </div>
 
       {inviteMessage ? (
@@ -345,7 +345,7 @@ function AgentRequestPreview() {
         <textarea
           className={fieldClassName}
           rows={4}
-          defaultValue="Reviews invites, triages requests, and keeps the board queue moving."
+          defaultValue="Проверяет приглашения, сортирует запросы и поддерживает движение очереди доски."
           readOnly
         />
       </label>
@@ -371,7 +371,7 @@ function AcceptInvitePreview({
         <h3 className="text-lg font-semibold text-zinc-100">Accept company invite</h3>
         <p className="mt-1 text-sm text-zinc-400">
           {autoAccept
-            ? "Submitting your join request for Acme Robotics."
+            ? "Отправка запроса на присоединение к Acme Robotics."
             : isCurrentMember
               ? "This account already belongs to Acme Robotics."
               : "This will submit or complete your join request for Acme Robotics."}
@@ -730,7 +730,7 @@ export function InviteUxLab() {
               {[
                 "Invite loading, access-check, missing-token, and unavailable states",
                 "Inline account creation and sign-in variants, including feedback/error copy",
-                "Human accept, agent request, and auto-accept transitions",
+                "Переходы: принятие человеком, запрос агента, авто-принятие",
                 "Pending approval, joined-now, claim secret, and onboarding result screens",
                 "Company invite creation, copied-link, history, empty, and permission-error states",
               ].map((highlight) => (
@@ -747,54 +747,54 @@ export function InviteUxLab() {
       </div>
 
       <LabSection
-        eyebrow="Top-level states"
-        title="Landing state coverage"
-        description="Small cards for the fast-return invite states that do not render the full split-screen layout."
+        eyebrow="Верхнеуровневые состояния"
+        title="Покрытие состояний лендинга"
+        description="Маленькие карточки для быстрых состояний приглашения без полноэкранного разделённого макета."
         accentClassName="bg-[linear-gradient(180deg,rgba(59,130,246,0.05),transparent_30%),var(--background)]"
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatusCard
             icon={<Loader2 className="h-4 w-4 animate-spin" />}
-            title="Loading invite"
-            body="Shown while invite summary, deployment mode, or auth session data is still loading."
+            title="Загрузка приглашения"
+            body="Показано, пока загружается сводка приглашения, режим деплоя или данные сессии."
           />
           <StatusCard
             icon={<Clock3 className="h-4 w-4" />}
-            title="Checking your access"
-            body="Shown after sign-in while the app verifies whether the current user already belongs to the invited company."
+            title="Проверка вашего доступа"
+            body="Показано после входа, пока приложение проверяет, принадлежит ли текущий пользователь приглашённой компании."
           />
           <StatusCard
             icon={<KeyRound className="h-4 w-4" />}
-            title="Invalid invite token"
+            title="Неверный токен приглашения"
             body="The token is missing entirely, so the page short-circuits before any invite lookup."
             tone="error"
           />
           <StatusCard
             icon={<Link2 className="h-4 w-4" />}
-            title="Invite not available"
-            body="Used for expired, revoked, already-consumed, or otherwise missing invites."
+            title="Приглашение недоступно"
+            body="Используется для истёкших, отозванных, уже использованных или иначе отсутствующих приглашений."
             tone="warn"
           />
           <StatusCard
             icon={<ShieldCheck className="h-4 w-4" />}
-            title="Bootstrap complete"
+            title="Bootstrap завершён"
             body="Result screen for bootstrap CEO invites after setup has been accepted successfully."
             tone="success"
           />
           <StatusCard
             icon={<ArrowRight className="h-4 w-4" />}
             title="Auto-accept in progress"
-            body="Signed-in human users skip the extra button click and move straight into join submission."
+            body="Вошедшие пользователи пропускают лишний клик и переходят сразу к отправке присоединения."
           />
           <StatusCard
             icon={<Users className="h-4 w-4" />}
-            title="Already a member"
-            body="Acceptance stays disabled and the page redirects into the company once membership is confirmed."
+            title="Уже член"
+            body="Принятие остаётся отключённым, страница перенаправит в компанию после подтверждения членства."
           />
           <StatusCard
             icon={<UserPlus className="h-4 w-4" />}
             title="Invite result surfaces"
-            body="Both pending-approval and joined-now confirmations are included below with claim and onboarding extras."
+            body="Оба подтверждения — ожидание утверждения и присоединение — включены ниже с дополнениями."
             tone="success"
           />
         </div>
@@ -802,7 +802,7 @@ export function InviteUxLab() {
 
       <LabSection
         eyebrow="Invite landing"
-        title="Split-screen invite flows"
+        title="Разделённые потоки приглашения"
         description="These frames mirror the production invite surface closely enough to review spacing, hierarchy, and control states while keeping data fixture-driven."
         accentClassName="bg-[linear-gradient(180deg,rgba(234,179,8,0.06),transparent_28%),var(--background)]"
       >
@@ -891,8 +891,8 @@ export function InviteUxLab() {
             onboardingTextUrl="/api/invites/pcp_invite_test/onboarding.txt"
           />
           <InviteResultPreview
-            title="You joined the company"
-            description="Your account already matched the approved invite, so the board can be opened immediately."
+            title="Вы присоединились к компании"
+            description="Ваш аккаунт уже соответствует утверждённому приглашению, доска может быть открыта сразу."
             joinedNow
           />
           <InviteResultPreview
@@ -903,13 +903,13 @@ export function InviteUxLab() {
       </LabSection>
 
       <LabSection
-        eyebrow="Standalone auth"
+        eyebrow="Автономная авторизация"
         title="Auth page states"
         description="The general `/auth` page uses a different composition from invite landing. These previews keep both sign-in and sign-up variants visible."
         accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.06),transparent_28%),var(--background)]"
       >
         <div className="space-y-5">
-          <AuthScreenPreview mode="sign_in" error="Invalid email or password" />
+          <AuthScreenPreview mode="sign_in" error="Неверный email или пароль" />
           <AuthScreenPreview mode="sign_up" />
         </div>
       </LabSection>
