@@ -418,10 +418,10 @@ function IssueAssigneePausedNotice({ agent }: { agent: Agent | null }) {
 
   const pauseDetail =
     agent.pauseReason === "budget"
-      ? "It was paused by a budget hard stop."
+      ? "Приостановлено из-за жёсткого ограничения бюджета."
       : agent.pauseReason === "system"
-        ? "It was paused by the system."
-        : "It was paused manually.";
+        ? "Приостановлено системой."
+        : "Приостановлено вручную.";
 
   return (
     <div className="mb-3 rounded-md border border-orange-300/70 bg-orange-50/90 px-3 py-2.5 text-sm text-orange-950 shadow-sm dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-100">
@@ -1367,8 +1367,8 @@ function IssueChatUserMessage({
           <button
             type="button"
             className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-            title="Copy message"
-            aria-label="Copy message"
+            title="Копировать сообщение"
+            aria-label="Копировать сообщение"
             onClick={() => {
               const text = message.content
                 .filter((p): p is { type: "text"; text: string } => p.type === "text")
@@ -1423,7 +1423,7 @@ function IssueChatAssistantMessage({
     onVote,
     agentMap,
     onStopRun,
-    stopRunLabel = "Stop run",
+    stopRunLabel = "Остановить запуск",
     stoppingRunLabel = "Stopping...",
     stopRunVariant = "stop",
   } = useContext(IssueChatCtx);
@@ -1563,8 +1563,8 @@ function IssueChatAssistantMessage({
                 <button
                   type="button"
                   className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  title="Copy message"
-                  aria-label="Copy message"
+                  title="Копировать сообщение"
+                  aria-label="Копировать сообщение"
                   onClick={() => {
                     void navigator.clipboard.writeText(copyText).then(() => {
                       setCopied(true);
@@ -1601,8 +1601,8 @@ function IssueChatAssistantMessage({
                       variant="ghost"
                       size="icon-xs"
                       className="text-muted-foreground hover:text-foreground"
-                      title="More actions"
-                      aria-label="More actions"
+                      title="Другие действия"
+                      aria-label="Другие действия"
                     >
                       <MoreHorizontal className="h-3.5 w-3.5" />
                     </Button>
@@ -1762,8 +1762,8 @@ function IssueChatFeedbackButtons({
                 ? "text-amber-600 dark:text-amber-400"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
-            title="Needs work"
-            aria-label="Needs work"
+            title="Требует доработки"
+            aria-label="Требует доработки"
             onClick={handleThumbsDown}
           >
             <ThumbsDown className="h-3.5 w-3.5" />
@@ -1774,7 +1774,7 @@ function IssueChatFeedbackButtons({
           <Textarea
             value={downvoteReason}
             onChange={(event) => setDownvoteReason(event.target.value)}
-            placeholder="Add a short note"
+            placeholder="Добавить короткую заметку"
             className="min-h-20 resize-y bg-background text-sm"
             disabled={isSaving}
           />
@@ -1797,7 +1797,7 @@ function IssueChatFeedbackButtons({
               disabled={isSaving || !downvoteReason.trim()}
               onClick={handleSubmitReason}
             >
-              {isSaving ? "Saving..." : "Save note"}
+              {isSaving ? "Saving..." : "Сохранить заметку"}
             </Button>
           </div>
         </PopoverContent>
@@ -1866,7 +1866,7 @@ function IssueChatFeedbackButtons({
                 }).then(() => setPendingSharingDialog(null));
               }}
             >
-              {isSaving ? "Saving..." : "Always allow"}
+              {isSaving ? "Saving..." : "Всегда разрешать"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1931,7 +1931,7 @@ function ExpiredRequestConfirmationActivity({
           onClick={() => setExpanded((current) => !current)}
         >
           <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
-          {expanded ? "Hide confirmation" : "Expired confirmation"}
+          {expanded ? "Скрыть подтверждение" : "Подтверждение истекло"}
         </button>
       </div>
       {expanded ? (
@@ -2315,8 +2315,8 @@ function SystemNoticeCommentRow({
             <button
               type="button"
               className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-              title="Copy link"
-              aria-label="Copy link to system notice"
+              title="Копировать ссылку"
+              aria-label="Копировать ссылку на системное уведомление"
               onClick={handleCopyLink}
             >
               {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Paperclip className="h-3.5 w-3.5" />}
@@ -2325,8 +2325,8 @@ function SystemNoticeCommentRow({
           <button
             type="button"
             className="inline-flex h-6 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-            title="Copy notice text"
-            aria-label="Copy system notice"
+            title="Копировать текст уведомления"
+            aria-label="Копировать системное уведомление"
             onClick={handleCopy}
           >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -3193,8 +3193,8 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
       && !unassignedConfirmed
     ) {
       toastActions?.pushToast({
-        title: "No assignee selected",
-        body: "Pick an assignee or click Send again to post without one.",
+        title: "Не выбран назначенный",
+        body: "Выберите назначенного или нажмите Отправить повторно без назначенного.",
         tone: "warn",
         dedupeKey: `issue-chat-no-assignee:${draftKey ?? ""}`,
       });
@@ -3289,7 +3289,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
       } else {
         setComposerAttachments((prev) => prev.map((item) =>
           item.id === attachmentId
-            ? { ...item, status: "error", error: "This file type cannot be attached here" }
+            ? { ...item, status: "error", error: "Этот тип файла нельзя прикрепить здесь" }
             : item,
         ));
       }
@@ -3444,8 +3444,8 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
                 : attachment.status === "error"
                   ? attachment.error ?? "Upload failed"
                   : attachment.inline
-                    ? "Inserted inline"
-                    : "Attached to issue";
+                    ? "Вставлено inline"
+                    : "Прикреплено к задаче";
             return (
               <div
                 key={attachment.id}
@@ -3491,7 +3491,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
                 size="icon-sm"
                 onClick={() => attachInputRef.current?.click()}
                 disabled={attaching}
-                title="Attach file"
+                title="Прикрепить файл"
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
@@ -3504,7 +3504,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
                   variant="ghost"
                   size="icon-sm"
                   data-testid="issue-chat-composer-work-mode-menu"
-                  title="More composer options"
+                  title="Другие опции композера"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -3528,7 +3528,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
                   ) : (
                     <ClipboardList className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden />
                   )}
-                  <span>{isPlanning ? "Switch to standard" : "Switch to planning"}</span>
+                  <span>{isPlanning ? "Переключиться на обычный режим" : "Переключиться на планирование"}</span>
                 </button>
               </PopoverContent>
             </Popover>
@@ -3539,7 +3539,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
               data-testid="issue-chat-composer-work-mode-toggle"
               data-pending-work-mode={pendingWorkMode}
               aria-pressed
-              title="Planning mode is on for this submission. Click to switch to Standard."
+              title="Включён режим планирования. Нажмите для переключения в обычный режим."
               onClick={() => setPendingWorkMode("standard")}
               className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/60 bg-amber-500/15 px-2 py-1 text-xs text-amber-800 transition-colors hover:bg-amber-500/25 dark:border-amber-500/50 dark:bg-amber-500/15 dark:text-amber-200 dark:hover:bg-amber-500/25"
             >
@@ -3554,9 +3554,9 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
             value={reassignTarget}
             options={reassignOptions}
             placeholder="Assignee"
-            noneLabel="No assignee"
-            searchPlaceholder="Search assignees..."
-            emptyMessage="No assignees found."
+            noneLabel="Нет назначенного"
+            searchPlaceholder="Поиск назначенных..."
+            emptyMessage="Назначенные не найдены."
             onChange={setReassignTarget}
             className="h-8 text-xs"
             renderTriggerValue={(option) => {
@@ -4164,7 +4164,7 @@ export function IssueChatThread({
   const resolvedShowJumpToLatest = showJumpToLatest ?? variant === "full";
   const resolvedEmptyMessage = emptyMessage
     ?? (variant === "embedded"
-      ? "No run output yet."
+      ? "Пока нет вывода запуска."
       : "This issue conversation is empty. Start with a message below.");
   const previousErrorBoundaryMessagesRef = useRef<readonly ThreadMessage[] | null>(null);
   const errorBoundaryResetVersionRef = useRef(0);
