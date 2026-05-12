@@ -288,7 +288,7 @@ export function getDefaultProviderConfigId(
 }
 
 function providerVaultLabel(configs: CompanySecretProviderConfig[], id: string | null | undefined) {
-  if (!id) return "Deployment default";
+  if (!id) return "По умолчанию для deployment";
   return configs.find((config) => config.id === id)?.displayName ?? "Неизвестное хранилище";
 }
 

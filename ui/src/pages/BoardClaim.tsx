@@ -117,7 +117,7 @@ export function BoardClaimPage() {
           onClick={() => claimMutation.mutate()}
           disabled={claimMutation.isPending}
         >
-          {claimMutation.isPending ? "Claiming…" : "Claim ownership"}
+          {claimMutation.isPending ? "Claiming…" : "Присвоить владение"}
         </Button>
       </div>
     </div>

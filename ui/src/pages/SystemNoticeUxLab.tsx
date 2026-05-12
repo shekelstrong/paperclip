@@ -188,7 +188,7 @@ export function SystemNoticeUxLab() {
       <LabSection
         id="tones"
         eyebrow="Матрица тональности"
-        title="Three tones, two states"
+        title="Три тона, два состояния"
         description="Each tone pairs a unique icon and tone label so the notice is recognizable without color. Collapsed is the default; the Details affordance reveals operational metadata only when reviewers ask for it."
         accentClassName="bg-[linear-gradient(180deg,rgba(245,158,11,0.05),transparent_28%),var(--background)]"
       >
@@ -219,7 +219,7 @@ export function SystemNoticeUxLab() {
 
       <LabSection
         id="hierarchy"
-        eyebrow="Hierarchy in thread"
+        eyebrow="Иерархия в thread"
         title="Отличается от комментариев пользователя и агента"
         description="Side-by-side with adjacent comment types so reviewers can confirm the system row reads as a system row — full width, no avatar gutter, no chat bubble — while user and agent comments keep their existing rounded bubbles."
         accentClassName="bg-[linear-gradient(180deg,rgba(8,145,178,0.05),transparent_28%),var(--background)]"

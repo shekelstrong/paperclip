@@ -78,7 +78,7 @@ function AdapterRow({
             {adapter.source === "external" && (
               adapter.isLocalPath
                 ? <span title="Установлено из локального пути"><FolderOpen className="h-4 w-4 text-amber-500" /></span>
-                : <span title="Installed from npm"><Package className="h-4 w-4 text-red-500" /></span>
+                : <span title="Установлено из npm"><Package className="h-4 w-4 text-red-500" /></span>
             )}
             {adapter.version && (
               <Badge variant="secondary" className="font-mono text-[10px]">
@@ -139,8 +139,8 @@ function AdapterRow({
             size="icon-sm"
             className="h-8 w-8"
             title={adapter.disabled
-              ? (toggleTitleEnabled ?? "Show in agent menus")
-              : (toggleTitleDisabled ?? "Hide from agent menus")}
+              ? (toggleTitleEnabled ?? "Показать в меню агентов")
+              : (toggleTitleDisabled ?? "Скрыть из меню агентов")}
             disabled={isToggling}
             onClick={() => onToggle(adapter.type, !adapter.disabled)}
           >
@@ -291,7 +291,7 @@ export function AdapterManager() {
       setInstallVersion("");
       setIsLocalPath(false);
       pushToast({
-        title: "Adapter installed",
+        title: "Адаптер установлен",
         body: `Type "${result.type}" registered successfully.${result.version ? ` (v${result.version})` : ""}`,
         tone: "success",
       });
@@ -305,7 +305,7 @@ export function AdapterManager() {
     mutationFn: (type: string) => adaptersApi.remove(type),
     onSuccess: () => {
       invalidate();
-      pushToast({ title: "Adapter removed", tone: "success" });
+      pushToast({ title: "Адаптер удалён", tone: "success" });
     },
     onError: (err: Error) => {
       pushToast({ title: "Удаление не удалось", body: err.message, tone: "error" });
@@ -330,7 +330,7 @@ export function AdapterManager() {
       invalidate();
     },
     onError: (err: Error) => {
-      pushToast({ title: "Override toggle failed", body: err.message, tone: "error" });
+      pushToast({ title: "Переключение override не удалось", body: err.message, tone: "error" });
     },
   });
 
@@ -341,7 +341,7 @@ export function AdapterManager() {
       invalidateDynamicParser(result.type);
       invalidateConfigSchemaCache(result.type);
       pushToast({
-        title: "Adapter reloaded",
+        title: "Адаптер перезагружен",
         body: `Type "${result.type}" reloaded.${result.version ? ` (v${result.version})` : ""}`,
         tone: "success",
       });
@@ -358,13 +358,13 @@ export function AdapterManager() {
       invalidateDynamicParser(result.type);
       invalidateConfigSchemaCache(result.type);
       pushToast({
-        title: "Adapter reinstalled",
+        title: "Адаптер переустановлен",
         body: `Type "${result.type}" updated from npm.${result.version ? ` (v${result.version})` : ""}`,
         tone: "success",
       });
     },
     onError: (err: Error) => {
-      pushToast({ title: "Reinstall failed", body: err.message, tone: "error" });
+      pushToast({ title: "Переустановка не удалась", body: err.message, tone: "error" });
     },
   });
 
@@ -569,9 +569,9 @@ export function AdapterManager() {
                   isToggling={isBuiltinOverride ? overrideMutation.isPending : toggleMutation.isPending}
                   isReloading={reloadMutation.isPending}
                   isReinstalling={reinstallMutation.isPending}
-                  toggleTitleDisabled={isBuiltinOverride ? "Pause external override" : undefined}
+                  toggleTitleDisabled={isBuiltinOverride ? "Приостановить внешнее override" : undefined}
                   toggleTitleEnabled={isBuiltinOverride ? "Возобновить внешнее override" : undefined}
-                  disabledBadgeLabel={isBuiltinOverride ? "Override paused" : undefined}
+                  disabledBadgeLabel={isBuiltinOverride ? "Override приостановлен" : undefined}
                 />
               );
             })}

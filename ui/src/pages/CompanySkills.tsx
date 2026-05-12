@@ -157,15 +157,15 @@ function sourceMeta(sourceBadge: CompanySkillSourceBadge, sourceLabel: string | 
     case "github":
       return isSkillsShManaged
         ? { icon: VercelMark, label: sourceLabel ?? "skills.sh", managedLabel: "skills.sh managed" }
-        : { icon: Github, label: sourceLabel ?? "GitHub", managedLabel: "GitHub managed" };
+        : { icon: Github, label: sourceLabel ?? "GitHub", managedLabel: "Управляется GitHub" };
     case "url":
       return { icon: Link2, label: sourceLabel ?? "URL", managedLabel: "URL управляется" };
     case "local":
-      return { icon: Folder, label: sourceLabel ?? "Folder", managedLabel: "Folder managed" };
+      return { icon: Folder, label: sourceLabel ?? "Folder", managedLabel: "Управляется папкой" };
     case "paperclip":
-      return { icon: Paperclip, label: sourceLabel ?? "Paperclip", managedLabel: "Paperclip managed" };
+      return { icon: Paperclip, label: sourceLabel ?? "Paperclip", managedLabel: "Управляется Paperclip" };
     default:
-      return { icon: Boxes, label: sourceLabel ?? "Catalog", managedLabel: "Catalog managed" };
+      return { icon: Boxes, label: sourceLabel ?? "Catalog", managedLabel: "Управляется каталогом" };
   }
 }
 
@@ -281,7 +281,7 @@ function NewSkillForm({
         <Textarea
           value={description}
           onChange={(event) => setDescription(event.target.value)}
-          placeholder="Short description"
+          placeholder="Краткое описание"
           className="min-h-20 rounded-none border-0 border-b border-border px-0 shadow-none focus-visible:ring-0"
         />
         <div className="flex items-center justify-end gap-2">
@@ -909,11 +909,11 @@ export function CompanySkills() {
       if (result.imported[0]) navigate(skillRoute(result.imported[0].id));
       pushToast({
         tone: "success",
-        title: "Skills imported",
+        title: "Навыки импортированы",
         body: `${result.imported.length} skill${result.imported.length === 1 ? "" : "s"} added.`,
       });
       if (result.warnings[0]) {
-        pushToast({ tone: "warn", title: "Import warnings", body: result.warnings[0] });
+        pushToast({ tone: "warn", title: "Предупреждения импорта", body: result.warnings[0] });
       }
       setSource("");
     },
@@ -942,7 +942,7 @@ export function CompanySkills() {
       pushToast({
         tone: "error",
         title: "Ошибка создания навыка",
-        body: error instanceof Error ? error.message : "Failed to create skill.",
+        body: error instanceof Error ? error.message : "Не удалось создать навык.",
       });
     },
   });
@@ -965,7 +965,7 @@ export function CompanySkills() {
       if (result.conflicts[0]) {
         pushToast({
           tone: "warn",
-          title: "Skill conflicts found",
+          title: "Найдены конфликты навыков",
           body: result.conflicts[0].reason,
         });
       } else if (result.warnings[0]) {
@@ -1074,7 +1074,7 @@ export function CompanySkills() {
       pushToast({
         tone: "error",
         title: "Удаление не удалось",
-        body: error instanceof Error ? error.message : "Failed to remove skill.",
+        body: error instanceof Error ? error.message : "Не удалось удалить навык.",
       });
     },
   });

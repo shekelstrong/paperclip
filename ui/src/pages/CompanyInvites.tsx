@@ -72,7 +72,7 @@ export function CompanyInvites() {
     }
 
     pushToast({
-      title: "Clipboard unavailable",
+      title: "Буфер обмена недоступен",
       body: "Скопируйте URL приглашения вручную из поля ниже.",
       tone: "warn",
     });
@@ -122,7 +122,7 @@ export function CompanyInvites() {
       await queryClient.invalidateQueries({ queryKey: inviteHistoryQueryKey });
       pushToast({
         title: "Приглашение создано",
-        body: copied ? "Приглашение готово ниже и скопировано в буфер обмена." : "Invite ready below.",
+        body: copied ? "Приглашение готово ниже и скопировано в буфер обмена." : "Приглашение готово ниже.",
         tone: "success",
       });
     },
@@ -143,7 +143,7 @@ export function CompanyInvites() {
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to revoke invite",
+        title: "Не удалось отозвать приглашение",
         body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
@@ -164,7 +164,7 @@ export function CompanyInvites() {
         ? "У вас нет разрешения на управление приглашениями компании."
         : invitesQuery.error instanceof Error
           ? invitesQuery.error.message
-          : "Failed to load invites.";
+          : "Не удалось загрузить приглашения.";
     return <div className="text-sm text-destructive">{message}</div>;
   }
 
@@ -314,7 +314,7 @@ export function CompanyInvites() {
                       </td>
                       <td className="px-5 py-3 align-top">{invite.humanRole ?? "—"}</td>
                       <td className="px-5 py-3 align-top">
-                        <div>{invite.invitedByUser?.name || invite.invitedByUser?.email || "Unknown inviter"}</div>
+                        <div>{invite.invitedByUser?.name || invite.invitedByUser?.email || "Неизвестный пригласитель"}</div>
                         {invite.invitedByUser?.email && invite.invitedByUser.name ? (
                           <div className="text-xs text-muted-foreground">{invite.invitedByUser.email}</div>
                         ) : null}

@@ -481,14 +481,14 @@ export function RoutineDetail() {
       if (error instanceof ApiError && error.status === 409) {
         setSaveConflict(true);
         pushToast({
-          title: "Routine changed",
+          title: "Процедура изменена",
           body: "Кто-то обновил эту процедуру. Перезагрузите для просмотра последней ревизии.",
           tone: "warn",
         });
         return;
       }
       pushToast({
-        title: "Failed to save routine",
+        title: "Не удалось сохранить процедуру",
         body: error instanceof Error ? error.message : "Paperclip could not save the routine.",
         tone: "error",
       });
@@ -534,7 +534,7 @@ export function RoutineDetail() {
     onSuccess: async (_data, status) => {
       pushToast({
         title: "Процедура сохранена",
-        body: status === "paused" ? "Automation paused." : "Automation enabled.",
+        body: status === "paused" ? "Автоматизация приостановлена." : "Автоматизация включена.",
         tone: "success",
       });
       await Promise.all([
@@ -572,7 +572,7 @@ export function RoutineDetail() {
     onSuccess: async (result) => {
       if (result.secretMaterial) {
         setSecretMessage({
-          title: "Webhook trigger created",
+          title: "Webhook trigger создан",
           entries: [{
             webhookUrl: result.secretMaterial.webhookUrl,
             webhookSecret: result.secretMaterial.webhookSecret,
@@ -593,7 +593,7 @@ export function RoutineDetail() {
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to add trigger",
+        title: "Не удалось добавить триггер",
         body: error instanceof Error ? error.message : "Paperclip could not create the trigger.",
         tone: "error",
       });
@@ -627,7 +627,7 @@ export function RoutineDetail() {
     mutationFn: (id: string) => routinesApi.deleteTrigger(id),
     onSuccess: async () => {
       pushToast({
-        title: "Trigger deleted",
+        title: "Триггер удалён",
         tone: "success",
       });
       await Promise.all([
@@ -649,7 +649,7 @@ export function RoutineDetail() {
     mutationFn: (id: string): Promise<RotateRoutineTriggerResponse> => routinesApi.rotateTriggerSecret(id),
     onSuccess: async (result) => {
       setSecretMessage({
-        title: "Webhook secret rotated",
+        title: "Webhook secret сменён",
         entries: [{
           webhookUrl: result.secretMaterial.webhookUrl,
           webhookSecret: result.secretMaterial.webhookSecret,
@@ -721,7 +721,7 @@ export function RoutineDetail() {
   if (error || !routine) {
     return (
       <p className="pt-6 text-sm text-destructive">
-        {error instanceof Error ? error.message : "Routine not found"}
+        {error instanceof Error ? error.message : "Процедура не найдена"}
       </p>
     );
   }
@@ -1245,7 +1245,7 @@ export function RoutineDetail() {
               if (response.secretMaterials.length > 0) {
                 setSecretMessage({
                   title: response.secretMaterials.length === 1
-                    ? "Webhook trigger restored"
+                    ? "Webhook trigger восстановлен"
                     : `${response.secretMaterials.length} webhook triggers restored`,
                   entries: response.secretMaterials.map((recreated) => ({
                     webhookUrl: recreated.webhookUrl,

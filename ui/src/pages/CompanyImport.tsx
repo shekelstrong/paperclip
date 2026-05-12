@@ -804,7 +804,7 @@ export function CompanyImport() {
     onError: (err) => {
       pushToast({
         tone: "error",
-        title: "Preview failed",
+        title: "Превью не удалось",
         body: err instanceof Error ? err.message : "Не удалось просмотреть импорт.",
       });
     },
@@ -873,7 +873,7 @@ export function CompanyImport() {
       pushToast({
         tone: "error",
         title: "Импорт не удался",
-        body: err instanceof Error ? err.message : "Failed to apply import.",
+        body: err instanceof Error ? err.message : "Не удалось применить импорт.",
       });
     },
   });
@@ -888,8 +888,8 @@ export function CompanyImport() {
     } catch (err) {
       pushToast({
         tone: "error",
-        title: "Package read failed",
-        body: err instanceof Error ? err.message : "Failed to read folder.",
+        title: "Чтение пакета не удалось",
+        body: err instanceof Error ? err.message : "Не удалось прочитать папку.",
       });
     }
   }
@@ -1196,7 +1196,7 @@ export function CompanyImport() {
 
         {targetMode === "new" && (
           <Field
-            label="New company name"
+            label="Новое название компании"
             hint="Опциональное переопределение. Оставьте пустым для использования имени пакета."
           >
             <input
@@ -1204,13 +1204,13 @@ export function CompanyImport() {
               type="text"
               value={newCompanyName}
               onChange={(e) => setNewCompanyName(e.target.value)}
-              placeholder="Imported Company"
+              placeholder="Импортированная компания"
             />
           </Field>
         )}
 
         <Field
-          label="Collision strategy"
+          label="Стратегия коллизий"
           hint="Импорты доски могут переименовывать, пропускать или заменять соответствующий контент компании."
         >
           <select
@@ -1234,7 +1234,7 @@ export function CompanyImport() {
             onClick={() => previewMutation.mutate()}
             disabled={previewMutation.isPending || !hasSource}
           >
-            {previewMutation.isPending ? "Previewing..." : "Preview import"}
+            {previewMutation.isPending ? "Previewing..." : "Превью импорта"}
           </Button>
         </div>
       </div>

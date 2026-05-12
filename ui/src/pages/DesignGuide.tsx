@@ -202,7 +202,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  COVERAGE                                                     */}
       {/* ============================================================ */}
-      <Section title="Component Coverage">
+      <Section title="Покрытие компонентов">
         <p className="text-sm text-muted-foreground">
           This page should be updated when new UI primitives or app-level patterns ship.
         </p>
@@ -220,7 +220,7 @@ export function DesignGuide() {
               ))}
             </div>
           </SubSection>
-          <SubSection title="App components">
+          <SubSection title="Компоненты приложения">
             <div className="flex flex-wrap gap-2">
               {[
                 "StatusBadge", "StatusIcon", "PriorityIcon", "EntityRow", "EmptyState", "MetricCard",
@@ -453,7 +453,7 @@ export function DesignGuide() {
           </div>
         </SubSection>
 
-        <SubSection title="Run invocation badges">
+        <SubSection title="Бейджи вызовов запусков">
           <div className="flex items-center gap-2 flex-wrap">
             {[
               ["timer", "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"],
@@ -478,7 +478,7 @@ export function DesignGuide() {
             <IssueReferencePill issue={{ id: "demo-1", identifier: "PAP-123", title: "Identifier only — no status yet" }} />
             <IssueReferencePill issue={{ id: "demo-2", identifier: "PAP-456", title: "Со статусом в работе", status: "in_progress" }} />
             <IssueReferencePill issue={{ id: "demo-3", identifier: "PAP-789", title: "Статус завершено", status: "done" }} />
-            <IssueReferencePill issue={{ id: "demo-4", identifier: "PAP-101", title: "Blocked status", status: "blocked" }} />
+            <IssueReferencePill issue={{ id: "demo-4", identifier: "PAP-101", title: "Статус blocked", status: "blocked" }} />
             <IssueReferencePill strikethrough issue={{ id: "demo-5", identifier: "PAP-202", title: "Удалено (зачёркивание)", status: "todo" }} />
           </div>
         </SubSection>
@@ -676,7 +676,7 @@ export function DesignGuide() {
             <div className="space-y-4 px-4">
               <div className="space-y-1">
                 <Label htmlFor="sheet-title">Title</Label>
-                <Input id="sheet-title" defaultValue="Improve onboarding docs" />
+                <Input id="sheet-title" defaultValue="Улучшить документацию онбординга" />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="sheet-description">Description</Label>
@@ -709,7 +709,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  COMMAND                                                      */}
       {/* ============================================================ */}
-      <Section title="Command (CMDK)">
+      <Section title="Команда (CMDK)">
         <div className="rounded-md border border-border">
           <Command>
             <CommandInput placeholder="Введите команду или поиск..." />
@@ -866,7 +866,7 @@ export function DesignGuide() {
             }
             identifier="PAP-002"
             title="Set up CI/CD pipeline"
-            subtitle="Completed 2 days ago"
+            subtitle="Завершено 2 дня назад"
             trailing={<StatusBadge status="done" />}
             onClick={() => {}}
           />
@@ -890,8 +890,8 @@ export function DesignGuide() {
               </>
             }
             identifier="PAP-004"
-            title="Deploy to production"
-            subtitle="Blocked by PAP-001"
+            title="Развёртывание в production"
+            subtitle="Заблокировано PAP-001"
             trailing={<StatusBadge status="blocked" />}
             selected
           />
@@ -966,7 +966,7 @@ export function DesignGuide() {
         </SubSection>
 
         <SubSection title="Пользовательские инициалы">
-          <Identity name="Backend Service" initials="BS" size="sm" />
+          <Identity name="Backend сервис" initials="BS" size="sm" />
         </SubSection>
       </Section>
 
@@ -1184,7 +1184,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  COMMENT THREAD PATTERN                                       */}
       {/* ============================================================ */}
-      <Section title="Comment Thread Pattern">
+      <Section title="Паттерн thread комментариев">
         <div className="space-y-3 max-w-2xl">
           <h3 className="text-sm font-semibold">Comments (2)</h3>
           <div className="space-y-3">
@@ -1213,7 +1213,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  COST TABLE PATTERN                                           */}
       {/* ============================================================ */}
-      <Section title="Cost Table Pattern">
+      <Section title="Паттерн таблицы затрат">
         <div className="border border-border rounded-lg overflow-hidden">
           <table className="w-full text-xs">
             <thead className="border-b border-border bg-accent/20">
@@ -1287,7 +1287,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  ICON REFERENCE                                               */}
       {/* ============================================================ */}
-      <Section title="Common Icons (Lucide)">
+      <Section title="Общие иконки (Lucide)">
         <div className="grid grid-cols-4 md:grid-cols-6 gap-4">
           {[
             ["Inbox", Inbox],
@@ -1327,8 +1327,8 @@ export function DesignGuide() {
           {[
             ["Cmd+K / Ctrl+K", "Открыть палитру команд"],
             ["C", "Новая задача (внешние входы)"],
-            ["[", "Toggle Sidebar"],
-            ["]", "Toggle Properties Panel"],
+            ["[", "Переключить сайдбар"],
+            ["]", "Переключить панель свойств"],
 
             ["Cmd+Enter / Ctrl+Enter", "Отправить markdown-комментарий"],
           ].map(([key, desc]) => (

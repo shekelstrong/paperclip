@@ -32,14 +32,14 @@ const permissionLabels: Record<PermissionKey, string> = {
   "users:invite": "Пригласить людей и агентов",
   "users:manage_permissions": "Управлять членами и правами",
   "tasks:assign": "Назначать задачи",
-  "tasks:assign_scope": "Assign scoped tasks",
+  "tasks:assign_scope": "Назначить scoped задачи",
   "tasks:manage_active_checkouts": "Управлять активными checkout задач",
-  "joins:approve": "Approve join requests",
-  "environments:manage": "Manage environments",
+  "joins:approve": "Утвердить запросы на присоединение",
+  "environments:manage": "Управлять окружениями",
 };
 
 function formatGrantSummary(member: CompanyMember) {
-  if (member.grants.length === 0) return "No explicit grants";
+  if (member.grants.length === 0) return "Нет явных grants";
   return member.grants.map((grant) => permissionLabels[grant.permissionKey]).join(", ");
 }
 
@@ -114,13 +114,13 @@ export function CompanyAccess() {
       setEditingMemberId(null);
       await refreshAccessData();
       pushToast({
-        title: "Member updated",
+        title: "Член обновлён",
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to update member",
+        title: "Не удалось обновить члена",
         body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
@@ -202,7 +202,7 @@ export function CompanyAccess() {
         await queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(selectedCompanyId) });
       }
       pushToast({
-        title: "Member removed",
+        title: "Член удалён",
         body:
           result.reassignedIssueCount > 0
             ? `${result.reassignedIssueCount} assigned issue${result.reassignedIssueCount === 1 ? "" : "s"} cleaned up.`
@@ -212,7 +212,7 @@ export function CompanyAccess() {
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to remove member",
+        title: "Не удалось удалить члена",
         body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
@@ -320,7 +320,7 @@ export function CompanyAccess() {
                     request.requesterUser?.email ||
                     request.requestEmailSnapshot ||
                     request.requestingUserId ||
-                    "No email available"
+                    "Email недоступен"
                   }
                   context={
                     request.invite

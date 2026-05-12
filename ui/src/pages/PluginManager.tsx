@@ -128,7 +128,7 @@ export function PluginManager() {
       pushToast({ title: "Плагин включён", tone: "success" });
     },
     onError: (err: Error) => {
-      pushToast({ title: "Failed to enable plugin", body: err.message, tone: "error" });
+      pushToast({ title: "Не удалось включить плагин", body: err.message, tone: "error" });
     },
   });
 
@@ -136,7 +136,7 @@ export function PluginManager() {
     mutationFn: (pluginId: string) => pluginsApi.disable(pluginId),
     onSuccess: () => {
       invalidatePluginQueries();
-      pushToast({ title: "Plugin disabled", tone: "info" });
+      pushToast({ title: "Плагин отключён", tone: "info" });
     },
     onError: (err: Error) => {
       pushToast({ title: "Не удалось отключить плагин", body: err.message, tone: "error" });
@@ -291,7 +291,7 @@ export function PluginManager() {
                             })
                           }
                         >
-                          {installPending ? "Installing..." : "Install Example"}
+                          {installPending ? "Installing..." : "Установить пример"}
                         </Button>
                       )}
                     </div>

@@ -173,7 +173,7 @@ const JUMP_TO_LATEST_MAX_COMMENT_PAGES = 10;
 const TREE_CONTROL_MODE_LABEL: Record<IssueTreeControlMode, string> = {
   pause: "Приостановить поддерево",
   resume: "Возобновить поддерево",
-  cancel: "Cancel subtree",
+  cancel: "Отменить поддерево",
   restore: "Восстановить поддерево",
 };
 const LEAF_WORK_CONTROL_MODE_LABEL: Partial<Record<IssueTreeControlMode, string>> = {

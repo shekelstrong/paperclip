@@ -37,9 +37,9 @@ type ProjectWorkspaceSourceType = ProjectWorkspace["sourceType"];
 type ProjectWorkspaceVisibility = ProjectWorkspace["visibility"];
 
 const SOURCE_TYPE_OPTIONS: Array<{ value: ProjectWorkspaceSourceType; label: string; description: string }> = [
-  { value: "local_path", label: "Local git checkout", description: "Локальный путь, который Paperclip может использовать напрямую." },
-  { value: "non_git_path", label: "Local non-git path", description: "Локальная папка без git семантики." },
-  { value: "git_repo", label: "Remote git repo", description: "URL репозитория с опциональными refs и локальным checkout." },
+  { value: "local_path", label: "Локальный git checkout", description: "Локальный путь, который Paperclip может использовать напрямую." },
+  { value: "non_git_path", label: "Локальный non-git путь", description: "Локальная папка без git семантики." },
+  { value: "git_repo", label: "Удалённый git repo", description: "URL репозитория с опциональными refs и локальным checkout." },
   { value: "remote_managed", label: "Удалённо управляемое рабочее пространство", description: "Хостированное рабочее пространство, отслеживаемое внешним референсом." },
 ];
 
@@ -374,7 +374,7 @@ export function ProjectWorkspaceDetail() {
           </Link>
         </Button>
         <div className="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
-          {workspace.isPrimary ? "Primary workspace" : "Secondary workspace"}
+          {workspace.isPrimary ? "Основное рабочее пространство" : "Вторичное рабочее пространство"}
         </div>
       </div>
 
@@ -497,7 +497,7 @@ export function ProjectWorkspaceDetail() {
                     placeholder="origin/main"
                   />
                 </Field>
-                <Field label="Shared workspace key">
+                <Field label="Ключ общего рабочего пространства">
                   <input
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm outline-none"
                     value={form.sharedWorkspaceKey}
@@ -508,7 +508,7 @@ export function ProjectWorkspaceDetail() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Remote provider">
+                <Field label="Удалённый провайдер">
                   <input
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none"
                     value={form.remoteProvider}

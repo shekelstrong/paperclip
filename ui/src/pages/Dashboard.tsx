@@ -241,7 +241,7 @@ export function Dashboard() {
             <MetricCard
               icon={Bot}
               value={data.agents.active + data.agents.running + data.agents.paused + data.agents.error}
-              label="Agents Enabled"
+              label="Агенты включены"
               to="/agents"
               description={
                 <span>
@@ -254,7 +254,7 @@ export function Dashboard() {
             <MetricCard
               icon={CircleDot}
               value={data.tasks.inProgress}
-              label="Tasks In Progress"
+              label="Задачи в работе"
               to="/issues"
               description={
                 <span>
@@ -279,13 +279,13 @@ export function Dashboard() {
             <MetricCard
               icon={ShieldCheck}
               value={data.pendingApprovals + data.budgets.pendingApprovals}
-              label="Pending Approvals"
+              label="Ожидающие утверждения"
               to="/approvals"
               description={
                 <span>
                   {data.budgets.pendingApprovals > 0
                     ? `${data.budgets.pendingApprovals} budget overrides awaiting board review`
-                    : "Awaiting board review"}
+                    : "Ожидание review доски"}
                 </span>
               }
             />

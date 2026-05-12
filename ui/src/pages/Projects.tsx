@@ -54,7 +54,7 @@ export function Projects() {
       {!isLoading && projects.length === 0 && (
         <EmptyState
           icon={Hexagon}
-          message="No projects yet."
+          message="Пока нет проектов."
           action="Добавить проект"
           onAction={openNewProject}
         />

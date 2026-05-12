@@ -316,7 +316,7 @@ export function CompanySettings() {
                       {logoUploadError ??
                         (logoUploadMutation.error instanceof Error
                           ? logoUploadMutation.error.message
-                          : "Logo upload failed")}
+                          : "Загрузка логотипа не удалась")}
                     </span>
                   )}
                   {clearLogoMutation.isError && (
@@ -365,7 +365,7 @@ export function CompanySettings() {
                 </div>
               </Field>
               <Field
-                label="Attachment size limit"
+                label="Лимит размера вложения"
                 hint={`Accepted range: 1-${MAX_COMPANY_ATTACHMENT_MAX_MIB} MiB.`}
               >
                 <div className="flex flex-col gap-1.5">
@@ -576,8 +576,8 @@ export function CompanySettings() {
               {archiveMutation.isPending
                 ? "Archiving..."
                 : selectedCompany.status === "archived"
-                ? "Already archived"
-                : "Archive company"}
+                ? "Уже заархивировано"
+                : "Архивировать компанию"}
             </Button>
             {archiveMutation.isError && (
               <span className="text-xs text-destructive">

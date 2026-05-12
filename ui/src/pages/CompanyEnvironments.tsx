@@ -216,7 +216,7 @@ export function CompanyEnvironments() {
       setEditingEnvironmentId(null);
       setEnvironmentForm(createEmptyEnvironmentForm());
       pushToast({
-        title: editingEnvironmentId ? "Environment updated" : "Environment created",
+        title: editingEnvironmentId ? "Окружение обновлено" : "Окружение создано",
         body: `${environment.name} is ready.`,
         tone: "success",
       });
@@ -269,7 +269,7 @@ export function CompanyEnvironments() {
     },
     onSuccess: (probe) => {
       pushToast({
-        title: probe.ok ? "Draft probe passed" : "Черновая проверка не удалась",
+        title: probe.ok ? "Draft probe пройден" : "Черновая проверка не удалась",
         body: probe.summary,
         tone: probe.ok ? "success" : "error",
       });
@@ -535,7 +535,7 @@ export function CompanyEnvironments() {
                           {environmentProbeMutation.isPending
                             ? "Testing..."
                             : environment.driver === "ssh"
-                              ? "Test connection"
+                              ? "Тест подключения"
                               : "Тест провайдера"}
                         </Button>
                       ) : null}
@@ -570,7 +570,7 @@ export function CompanyEnvironments() {
 
         <div className="border-t border-border/60 pt-4">
           <div className="mb-3 text-sm font-medium">
-            {editingEnvironmentId ? "Edit environment" : "Добавить окружение"}
+            {editingEnvironmentId ? "Редактировать окружение" : "Добавить окружение"}
           </div>
           <div className="space-y-3">
             <Field label="Name" hint="Имя для оператора для этого целевого объекта выполнения.">
@@ -636,7 +636,7 @@ export function CompanyEnvironments() {
                     onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshHost: e.target.value }))}
                   />
                 </Field>
-                <Field label="Port" hint="Defaults to 22.">
+                <Field label="Port" hint="По умолчанию 22.">
                   <input
                     className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                     type="number"
@@ -646,7 +646,7 @@ export function CompanyEnvironments() {
                     onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshPort: e.target.value }))}
                   />
                 </Field>
-                <Field label="Username" hint="SSH login user.">
+                <Field label="Username" hint="SSH login пользователь.">
                   <input
                     className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                     type="text"
@@ -654,7 +654,7 @@ export function CompanyEnvironments() {
                     onChange={(e) => setEnvironmentForm((current) => ({ ...current, sshUsername: e.target.value }))}
                   />
                 </Field>
-                <Field label="Remote workspace path" hint="Абсолютный путь, который Paperclip проверит во время SSH тестов подключения.">
+                <Field label="Путь удалённого рабочего пространства" hint="Абсолютный путь, который Paperclip проверит во время SSH тестов подключения.">
                   <input
                     className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
                     type="text"
@@ -770,8 +770,8 @@ export function CompanyEnvironments() {
                     ? "Saving..."
                     : "Creating..."
                   : editingEnvironmentId
-                    ? "Save environment"
-                    : "Create environment"}
+                    ? "Сохранить окружение"
+                    : "Создать окружение"}
               </Button>
               {editingEnvironmentId ? (
                 <Button

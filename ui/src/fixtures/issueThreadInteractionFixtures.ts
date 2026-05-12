@@ -159,17 +159,17 @@ function createAskUserQuestionsInteraction(
           options: [
             {
               id: "answers-inline",
-              label: "Inline answer pills",
+              label: "Инлайн-пилюли ответов",
               description: "Keep the exact operator choices visible under each question.",
             },
             {
               id: "summary-note",
-              label: "Short markdown summary",
+              label: "Краткое markdown summary",
               description: "Добавьте компактное повествовательное summary внизу карточки.",
             },
             {
               id: "resolver-meta",
-              label: "Resolver metadata",
+              label: "Метаданные resolver",
               description: "Показать, кто ответил и когда, без открытия raw thread.",
             },
           ],
@@ -314,7 +314,7 @@ export const pendingRequestConfirmationInteraction = createRequestConfirmationIn
 
 export const genericPendingRequestConfirmationInteraction = createRequestConfirmationInteraction({
   id: "interaction-confirmation-generic-pending",
-  title: "Confirm next step",
+  title: "Подтвердить следующий шаг",
   summary: "Исполнителю нужно простое да или нет перед продолжением.",
   continuationPolicy: "none",
   payload: {
@@ -370,7 +370,7 @@ export const planApprovalAcceptedRequestConfirmationInteraction = createRequestC
     version: 1,
     prompt: "Утвердить план и позволить исполнителю начать реализацию?",
     acceptLabel: "Утвердить план",
-    rejectLabel: "Request changes",
+    rejectLabel: "Запросить изменения",
     rejectRequiresReason: true,
     declineReasonPlaceholder: "Опционально: что бы вы хотели исправить?",
     target: {

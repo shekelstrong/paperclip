@@ -182,9 +182,9 @@ export function IssueChatLongThreadPerf() {
               <CardTitle className="text-base">Baseline metrics</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-2">
-              <MetricTile label="Profiler commits" value={String(metrics.commitCount)} testId="perf-commit-count" />
+              <MetricTile label="Коммиты profiler" value={String(metrics.commitCount)} testId="perf-commit-count" />
               <MetricTile label="Длительность монтирования" value={formatMs(metrics.mountActualDuration)} testId="perf-mount-duration" />
-              <MetricTile label="Latest duration" value={formatMs(metrics.latestActualDuration)} testId="perf-latest-duration" />
+              <MetricTile label="Последняя продолжительность" value={formatMs(metrics.latestActualDuration)} testId="perf-latest-duration" />
               <MetricTile label="Макс. длительность" value={formatMs(metrics.maxActualDuration)} testId="perf-max-duration" />
               <MetricTile label="Общая длительность" value={formatMs(metrics.totalActualDuration)} testId="perf-total-duration" />
             </CardContent>

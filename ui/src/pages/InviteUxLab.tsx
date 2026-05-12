@@ -53,7 +53,7 @@ const inviteHistory = [
     humanRole: "operator",
     invitedBy: "Пользователь 25",
     email: "board25@paperclip.local",
-    createdAt: "Apr 25, 2026, 9:00 AM",
+    createdAt: "25 апр 2026, 9:00",
     action: "Revoke",
     relatedLabel: "Запрос на ревью",
   },
@@ -63,7 +63,7 @@ const inviteHistory = [
     humanRole: "viewer",
     invitedBy: "Пользователь 24",
     email: "board24@paperclip.local",
-    createdAt: "Apr 24, 2026, 8:15 AM",
+    createdAt: "24 апр 2026, 8:15",
     action: "Inactive",
     relatedLabel: "—",
   },
@@ -73,7 +73,7 @@ const inviteHistory = [
     humanRole: "admin",
     invitedBy: "Пользователь 20",
     email: "board20@paperclip.local",
-    createdAt: "Apr 20, 2026, 2:45 PM",
+    createdAt: "20 апр 2026, 14:45",
     action: "Inactive",
     relatedLabel: "—",
   },
@@ -83,7 +83,7 @@ const inviteHistory = [
     humanRole: "owner",
     invitedBy: "Пользователь 19",
     email: "board19@paperclip.local",
-    createdAt: "Apr 19, 2026, 7:10 PM",
+    createdAt: "19 апр 2026, 19:10",
     action: "Inactive",
     relatedLabel: "—",
   },
@@ -783,7 +783,7 @@ export function InviteUxLab() {
           />
           <StatusCard
             icon={<ArrowRight className="h-4 w-4" />}
-            title="Auto-accept in progress"
+            title="Авто-принятие в процессе"
             body="Вошедшие пользователи пропускают лишний клик и переходят сразу к отправке присоединения."
           />
           <StatusCard
@@ -793,7 +793,7 @@ export function InviteUxLab() {
           />
           <StatusCard
             icon={<UserPlus className="h-4 w-4" />}
-            title="Invite result surfaces"
+            title="Экраны результата приглашения"
             body="Оба подтверждения — ожидание утверждения и присоединение — включены ниже с дополнениями."
             tone="success"
           />
@@ -801,7 +801,7 @@ export function InviteUxLab() {
       </LabSection>
 
       <LabSection
-        eyebrow="Invite landing"
+        eyebrow="Landing приглашения"
         title="Разделённые потоки приглашения"
         description="These frames mirror the production invite surface closely enough to review spacing, hierarchy, and control states while keeping data fixture-driven."
         accentClassName="bg-[linear-gradient(180deg,rgba(234,179,8,0.06),transparent_28%),var(--background)]"
@@ -904,7 +904,7 @@ export function InviteUxLab() {
 
       <LabSection
         eyebrow="Автономная авторизация"
-        title="Auth page states"
+        title="Состояния страницы auth"
         description="The general `/auth` page uses a different composition from invite landing. These previews keep both sign-in and sign-up variants visible."
         accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.06),transparent_28%),var(--background)]"
       >
@@ -915,7 +915,7 @@ export function InviteUxLab() {
       </LabSection>
 
       <LabSection
-        eyebrow="Company settings"
+        eyebrow="Настройки компании"
         title="Управление приглашениями компании"
         description="This section captures the board-side invite creation flow, copied-link state, audit table, and the edge states that are otherwise tedious to stage."
         accentClassName="bg-[linear-gradient(180deg,rgba(244,114,182,0.06),transparent_28%),var(--background)]"

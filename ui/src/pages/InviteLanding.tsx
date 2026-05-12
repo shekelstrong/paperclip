@@ -84,7 +84,7 @@ function mapInviteAuthFeedback(
     };
   }
 
-  if (authMode === "sign_in" && message === "Request failed: 401") {
+  if (authMode === "sign_in" && message === "Запрос не удался: 401") {
     return {
       tone: "error",
       message:
@@ -92,7 +92,7 @@ function mapInviteAuthFeedback(
     };
   }
 
-  if (authMode === "sign_up" && message === "Request failed: 422") {
+  if (authMode === "sign_up" && message === "Запрос не удался: 422") {
     return {
       tone: "info",
       message: `An account may already exist for ${emailLabel}. Try signing in instead.`,
@@ -161,7 +161,7 @@ function AwaitingJoinApprovalPanel({
   onboardingTextUrl = null,
 }: AwaitingJoinApprovalPanelProps) {
   const approvalUrl = `${window.location.origin}/company/settings/access`;
-  const approverLabel = invitedByUserName ?? "A company admin";
+  const approverLabel = invitedByUserName ?? "Администратор компании";
 
   return (
     <div className="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
@@ -284,7 +284,7 @@ export function InviteLandingPage() {
       companiesQuery.data?.some((company) => company.id === invite?.companyId),
     );
   const companyName = invite?.companyName?.trim() || null;
-  const companyDisplayName = companyName || "this Paperclip company";
+  const companyDisplayName = companyName || "эта компания Paperclip";
   const companyLogoUrl = invite?.companyLogoUrl?.trim() || null;
   const companyBrandColor = invite?.companyBrandColor?.trim() || null;
   const invitedByUserName = invite?.invitedByUserName?.trim() || null;
@@ -318,7 +318,7 @@ export function InviteLandingPage() {
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      if (!invite) throw new Error("Invite not found");
+      if (!invite) throw new Error("Приглашение не найдено");
       if (isCheckingExistingMembership) {
         throw new Error("Проверка доступа к компании. Попробуйте снова через мгновение.");
       }
@@ -348,7 +348,7 @@ export function InviteLandingPage() {
       }
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Failed to accept invite");
+      setError(err instanceof Error ? err.message : "Не удалось принять приглашение");
     },
   });
 
@@ -554,7 +554,7 @@ export function InviteLandingPage() {
                   You&apos;ve been invited to join Paperclip
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold">
-                  {invite.inviteType === "bootstrap_ceo" ? "Set up Paperclip" : `Join ${companyDisplayName}`}
+                  {invite.inviteType === "bootstrap_ceo" ? "Настроить Paperclip" : `Join ${companyDisplayName}`}
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-300">
                   {showsAgentForm
@@ -573,7 +573,7 @@ export function InviteLandingPage() {
               </div>
               <div className="border border-zinc-800 p-3">
                 <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Invited by</div>
-                <div className="mt-1 text-sm text-zinc-100">{invitedByUserName ?? "Paperclip board"}</div>
+                <div className="mt-1 text-sm text-zinc-100">{invitedByUserName ?? "Доска Paperclip"}</div>
               </div>
               <div className="border border-zinc-800 p-3">
                 <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Requested access</div>
@@ -788,10 +788,10 @@ export function InviteLandingPage() {
                 <div>
                   <h2 className="text-lg font-semibold">
                     {shouldAutoAcceptHumanInvite
-                      ? "Submitting join request"
+                      ? "Отправка запроса на присоединение"
                       : invite.inviteType === "bootstrap_ceo"
-                        ? "Accept bootstrap invite"
-                        : "Accept company invite"}
+                        ? "Принять bootstrap приглашение"
+                        : "Принять приглашение компании"}
                   </h2>
                   <p className="mt-1 text-sm text-zinc-400">
                     {shouldAutoAcceptHumanInvite
@@ -806,7 +806,7 @@ export function InviteLandingPage() {
                 {error ? <p className="text-xs text-red-400">{error}</p> : null}
                 {shouldAutoAcceptHumanInvite ? (
                   <div className="text-sm text-zinc-400">
-                    {acceptMutation.isPending ? "Submitting request..." : "Finishing sign-in..."}
+                    {acceptMutation.isPending ? "Отправка запроса..." : "Завершение входа..."}
                   </div>
                 ) : (
                   <Button

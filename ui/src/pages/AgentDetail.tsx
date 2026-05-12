@@ -592,7 +592,7 @@ function WorkspaceOperationsSection({
               )}
               {typeof metadata?.created === "boolean" && (
                 <div className="text-xs text-muted-foreground">
-                  {metadata.created ? "Created by this run" : "Повторно использовано существующее рабочее пространство"}
+                  {metadata.created ? "Создано этим запуском" : "Повторно использовано существующее рабочее пространство"}
                 </div>
               )}
               {operation.stderrExcerpt && operation.stderrExcerpt.trim() && (
@@ -2348,7 +2348,7 @@ function PromptsTab({
                 <p className="text-xs text-muted-foreground">
                   {selectedFileExists
                     ? selectedFileSummary?.deprecated
-                      ? "Deprecated virtual file"
+                      ? "Устаревший виртуальный файл"
                       : `${selectedFileDetail?.language ?? "text"} file`
                     : "Новый файл в этом пакете"}
                 </p>
@@ -3284,7 +3284,7 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
                   onClick={() => runClaudeLogin.mutate()}
                   disabled={runClaudeLogin.isPending}
                 >
-                  {runClaudeLogin.isPending ? "Running claude login..." : "Вход в Claude Code"}
+                  {runClaudeLogin.isPending ? "Запуск claude login..." : "Вход в Claude Code"}
                 </Button>
                 {runClaudeLogin.isError && (
                   <p className="text-xs text-destructive">

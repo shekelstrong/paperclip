@@ -263,9 +263,9 @@ function validateDraftRow(
   existing: CompanySecret[],
   otherDrafts: DraftSelection[],
 ): string | null {
-  if (!draft.name.trim()) return "Name is required.";
+  if (!draft.name.trim()) return "Имя обязательно.";
   if (draft.name.length > 160) return "Имя должно быть не более 160 символов.";
-  if (!draft.key.trim()) return "Key is required.";
+  if (!draft.key.trim()) return "Ключ обязателен.";
   if (!KEY_PATTERN.test(draft.key)) {
     return "Ключ может содержать только строчные буквы, цифры, точку, подчёркивание или дефис.";
   }
@@ -658,7 +658,7 @@ export function ImportFromVaultDialog({
             type="button"
             className="rounded-sm text-muted-foreground transition-opacity hover:opacity-100 opacity-70"
             onClick={() => handleClose()}
-            aria-label="Close import dialog"
+            aria-label="Закрыть диалог импорта"
           >
             <X className="h-4 w-4" />
           </button>
@@ -899,8 +899,8 @@ function SelectStep(props: SelectStepProps) {
             value={vaultId ?? undefined}
             onValueChange={onVaultChange}
           >
-            <SelectTrigger size="sm" className="text-xs" aria-label="Select AWS vault">
-              <SelectValue placeholder="Select an AWS vault" />
+            <SelectTrigger size="sm" className="text-xs" aria-label="Выберите AWS vault">
+              <SelectValue placeholder="Выберите AWS vault" />
             </SelectTrigger>
             <SelectContent>
               {awsVaults.map((vault) => {
@@ -938,9 +938,9 @@ function SelectStep(props: SelectStepProps) {
           <Input
             value={searchInput}
             onChange={(event) => onSearchInput(event.target.value)}
-            placeholder="Search by name, ARN, tag"
+            placeholder="Поиск по имени, ARN, тегу"
             className="pl-7 pr-7 text-xs"
-            aria-label="Search remote secrets"
+            aria-label="Поиск удалённых секретов"
             data-testid="vault-search"
           />
           {showSearchSpinner && (
@@ -953,7 +953,7 @@ function SelectStep(props: SelectStepProps) {
           size="sm"
           onClick={onRefresh}
           disabled={previewLoading || !vaultId}
-          aria-label="Refresh remote secrets"
+          aria-label="Обновить удалённые секреты"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", previewLoading && "animate-spin")} />
         </Button>
@@ -1122,7 +1122,7 @@ function PreviewErrorBanner({ error, onRetry }: { error: unknown; onRetry: () =>
       <div className="flex-1">
         <div className="font-medium">
           {isPermission
-            ? "AWS denied list access"
+            ? "AWS отклонил доступ к списку"
             : isThrottling
               ? "AWS throttled listing запрос"
               : "Не удалось загрузить удалённые секреты"}

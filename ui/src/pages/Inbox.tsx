@@ -221,7 +221,7 @@ export function formatJoinRequestInboxLabel(
   if (requesterEmail) return requesterEmail;
   if (requesterName) return requesterName;
   if (requesterId) return requesterId;
-  return "Human join request";
+  return "Запрос на присоединение человека";
 }
 
 
@@ -1482,7 +1482,7 @@ export function Inbox() {
       return { previousData };
     },
     onError: (err, id, context) => {
-      setActionError(err instanceof Error ? err.message : "Failed to archive issue");
+      setActionError(err instanceof Error ? err.message : "Не удалось архивировать задачу");
       setArchivingIssueIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -2060,7 +2060,7 @@ export function Inbox() {
                 onClick={() => setShowMarkAllReadConfirm(true)}
                 disabled={markAllReadMutation.isPending}
               >
-                {markAllReadMutation.isPending ? "Marking…" : "Mark all as read"}
+                {markAllReadMutation.isPending ? "Marking…" : "Отметить всё как прочитанное"}
               </Button>
               <Dialog open={showMarkAllReadConfirm} onOpenChange={setShowMarkAllReadConfirm}>
                 <DialogContent className="sm:max-w-md">
@@ -2116,7 +2116,7 @@ export function Inbox() {
               onValueChange={(value) => updateAllApprovalFilter(value as InboxApprovalFilter)}
             >
               <SelectTrigger className="h-8 w-[170px] text-xs">
-                <SelectValue placeholder="Approval status" />
+                <SelectValue placeholder="Статус утверждения" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All approval statuses</SelectItem>
@@ -2146,7 +2146,7 @@ export function Inbox() {
               : tab === "unread"
               ? "Нет новых входящих."
               : tab === "recent"
-                ? "No recent inbox items."
+                ? "Нет недавних элементов входящих."
                 : "Нет элементов входящих, соответствующих этим фильтрам."
           }
         />

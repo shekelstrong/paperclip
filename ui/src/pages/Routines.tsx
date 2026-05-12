@@ -866,7 +866,7 @@ export function Routines() {
       {error ? (
         <Card>
           <CardContent className="pt-6 text-sm text-destructive">
-            {error instanceof Error ? error.message : "Failed to load routines"}
+            {error instanceof Error ? error.message : "Не удалось загрузить процедуры"}
           </CardContent>
         </Card>
       ) : null}

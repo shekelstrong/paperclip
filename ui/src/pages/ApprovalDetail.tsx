@@ -91,7 +91,7 @@ export function ApprovalDetail() {
       refresh();
       navigate(`/approvals/${approvalId}?resolved=approved`, { replace: true });
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Approve failed"),
+    onError: (err) => setError(err instanceof Error ? err.message : "Утверждение не удалось"),
   });
 
   const rejectMutation = useMutation({
@@ -109,7 +109,7 @@ export function ApprovalDetail() {
       setError(null);
       refresh();
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Revision request failed"),
+    onError: (err) => setError(err instanceof Error ? err.message : "Запрос revision не удался"),
   });
 
   const resubmitMutation = useMutation({
@@ -118,7 +118,7 @@ export function ApprovalDetail() {
       setError(null);
       refresh();
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Resubmit failed"),
+    onError: (err) => setError(err instanceof Error ? err.message : "Повторная отправка не удалась"),
   });
 
   const addCommentMutation = useMutation({
@@ -156,13 +156,13 @@ export function ApprovalDetail() {
       ? {
           label:
             (linkedIssues?.length ?? 0) > 1
-              ? "Review linked issues"
-              : "Review linked issue",
+              ? "Просмотр связанных задач"
+              : "Просмотр связанной задачи",
           to: `/issues/${primaryLinkedIssue.identifier ?? primaryLinkedIssue.id}`,
         }
       : linkedAgentId
         ? {
-            label: "Open hired agent",
+            label: "Открыть нанятого агента",
             to: `/agents/${linkedAgentId}`,
           }
         : {
@@ -350,7 +350,7 @@ export function ApprovalDetail() {
         <Textarea
           value={commentBody}
           onChange={(e) => setCommentBody(e.target.value)}
-          placeholder="Add a comment..."
+          placeholder="Добавить комментарий..."
           rows={3}
         />
         <div className="flex justify-end">

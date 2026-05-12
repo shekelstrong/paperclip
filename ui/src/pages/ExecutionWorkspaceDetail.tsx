@@ -368,7 +368,7 @@ function WorkspaceRoutineRow({
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span>{routine.assigneeAgentId ? "Default agent set" : "Выбрать агента при запуске"}</span>
+          <span>{routine.assigneeAgentId ? "Агент по умолчанию установлен" : "Выбрать агента при запуске"}</span>
           <span>Last run {formatOptionalDateTime(routine.lastRun?.triggeredAt ?? routine.lastTriggeredAt)}</span>
           <span className="flex flex-wrap gap-1">
             {variableNames.map((name) => (
@@ -445,7 +445,7 @@ function ExecutionWorkspaceRoutinesList({
         queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(workspace.companyId) }),
       ]);
       pushToast({
-        title: "Routine started",
+        title: "Процедура запущена",
         body: "Paperclip created a run using this execution workspace.",
         tone: "success",
       });
@@ -859,7 +859,7 @@ export function ExecutionWorkspaceDetail() {
 
                 <div className="space-y-4">
                   <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Lifecycle commands</div>
-                  <Field label="Provision command" hint="Выполняется, когда Paperclip готовит это рабочее пространство выполнения">
+                  <Field label="Команда provision" hint="Выполняется, когда Paperclip готовит это рабочее пространство выполнения">
                     <Textarea
                       className="min-h-20 font-mono"
                       value={form.provisionCommand}
@@ -868,7 +868,7 @@ export function ExecutionWorkspaceDetail() {
                     />
                   </Field>
 
-                  <Field label="Teardown command" hint="Выполняется, когда рабочее пространство выполнения архивируется или очищается">
+                  <Field label="Команда teardown" hint="Выполняется, когда рабочее пространство выполнения архивируется или очищается">
                     <Textarea
                       className="min-h-20 font-mono"
                       value={form.teardownCommand}

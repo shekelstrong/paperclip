@@ -581,7 +581,7 @@ export function Costs() {
 
           <div className="grid gap-3 lg:grid-cols-4">
             <MetricTile
-              label="Inference spend"
+              label="Расходы на инференс"
               value={formatCents(spendData?.summary.spendCents ?? 0)}
               subtitle={`${formatTokens(inferenceTokenTotal)} tokens across request-scoped events`}
               icon={DollarSign}
@@ -847,13 +847,13 @@ export function Costs() {
                 </CardHeader>
                 <CardContent className="grid gap-3 px-5 pb-5 pt-0 md:grid-cols-4">
                   <MetricTile
-                    label="Active incidents"
+                    label="Активные инциденты"
                     value={String(activeBudgetIncidents.length)}
                     subtitle="Открыть soft или hard threshold crossings"
                     icon={ReceiptText}
                   />
                   <MetricTile
-                    label="Pending approvals"
+                    label="Ожидающие утверждения"
                     value={String(budgetData?.pendingApprovalCount ?? 0)}
                     subtitle="Утверждения превышения бюджета, ожидающие действия доски"
                     icon={ArrowUpRight}
@@ -865,7 +865,7 @@ export function Costs() {
                     icon={Coins}
                   />
                   <MetricTile
-                    label="Paused projects"
+                    label="Приостановленные проекты"
                     value={String(budgetData?.pausedProjectCount ?? 0)}
                     subtitle="Выполнение проекта заблокировано бюджетом"
                     icon={DollarSign}

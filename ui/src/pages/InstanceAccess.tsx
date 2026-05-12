@@ -64,13 +64,13 @@ export function InstanceAccess() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.access.userCompanyAccess(selectedUserId!) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.access.adminUsers(search) });
-      pushToast({ title: "Company access updated", tone: "success" });
+      pushToast({ title: "Доступ к компании обновлён", tone: "success" });
     },
   });
 
   const setAdminMutation = useMutation({
     mutationFn: async (makeAdmin: boolean) => {
-      if (!selectedUserId) throw new Error("No user selected");
+      if (!selectedUserId) throw new Error("Пользователь не выбран");
       if (makeAdmin) return accessApi.promoteInstanceAdmin(selectedUserId);
       return accessApi.demoteInstanceAdmin(selectedUserId);
     },
@@ -79,7 +79,7 @@ export function InstanceAccess() {
       if (selectedUserId) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.access.userCompanyAccess(selectedUserId) });
       }
-      pushToast({ title: "Instance role updated", tone: "success" });
+      pushToast({ title: "Роль инстанса обновлена", tone: "success" });
     },
   });
 
@@ -93,7 +93,7 @@ export function InstanceAccess() {
         ? "Для управления пользователями требуется доступ администратора инстанса."
         : usersQuery.error instanceof Error
           ? usersQuery.error.message
-          : "Failed to load users.";
+          : "Не удалось загрузить пользователей.";
     return <div className="text-sm text-destructive">{message}</div>;
   }
 
@@ -117,7 +117,7 @@ export function InstanceAccess() {
               className="w-full rounded-md border border-border bg-background px-3 py-2"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by name or email"
+              placeholder="Поиск по имени или email"
             />
           </label>
           <div className="space-y-2">
@@ -174,7 +174,7 @@ export function InstanceAccess() {
                   onClick={() => setAdminMutation.mutate(!(selectedUser?.isInstanceAdmin ?? false))}
                   disabled={setAdminMutation.isPending}
                 >
-                  {selectedUser?.isInstanceAdmin ? "Remove instance admin" : "Повысить до администратора инстанса"}
+                  {selectedUser?.isInstanceAdmin ? "Удалить администратора инстанса" : "Повысить до администратора инстанса"}
                 </Button>
               </div>
 
@@ -214,7 +214,7 @@ export function InstanceAccess() {
                     onClick={() => updateCompanyAccessMutation.mutate()}
                     disabled={updateCompanyAccessMutation.isPending}
                   >
-                    {updateCompanyAccessMutation.isPending ? "Saving…" : "Save company access"}
+                    {updateCompanyAccessMutation.isPending ? "Saving…" : "Сохранить доступ к компании"}
                   </Button>
                 </div>
               </div>

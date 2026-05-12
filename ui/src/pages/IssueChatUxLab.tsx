@@ -197,8 +197,8 @@ export function IssueChatUxLab() {
 
       <LabSection
         id="rotating-text"
-        eyebrow="Animation demo"
-        title="Rotating reasoning text"
+        eyebrow="Демо анимации"
+        title="Вращающийся текст reasoning"
         description="Isolated ticker that cycles sample reasoning lines on a timer. The outgoing line slides up and fades out while the incoming line slides up from below. Runs in a loop so you can tune timing and easing without needing a live stream."
         accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.06),transparent_28%),var(--background)]"
       >
@@ -257,8 +257,8 @@ export function IssueChatUxLab() {
 
       <LabSection
         id="live-execution"
-        eyebrow="Primary preview"
-        title="Live execution thread"
+        eyebrow="Основное превью"
+        title="Поток живого выполнения"
         description="Shows the fully active state: timeline events, historical run marker, a running assistant reply with reasoning and tools, and a queued follow-up from the user."
         accentClassName="bg-[linear-gradient(180deg,rgba(6,182,212,0.05),transparent_28%),var(--background)]"
       >
@@ -288,8 +288,8 @@ export function IssueChatUxLab() {
       </LabSection>
 
       <LabSection
-        eyebrow="Submitting state"
-        title="Pending message bubble"
+        eyebrow="Состояние отправки"
+        title="Пузырь ожидающего сообщения"
         description='When a user sends a message, the bubble briefly shows a "Sending..." label at reduced opacity until the server confirms receipt. This preview renders that transient state.'
         accentClassName="bg-[linear-gradient(180deg,rgba(59,130,246,0.06),transparent_28%),var(--background)]"
       >
@@ -309,7 +309,7 @@ export function IssueChatUxLab() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <LabSection
-          eyebrow="Settled review"
+          eyebrow="Завершённый review"
           title="Устойчивые комментарии и обратная связь"
           description="Shows the post-run state: assistant comment feedback controls, historical run context, and timeline reassignment without any active stream."
           accentClassName="bg-[linear-gradient(180deg,rgba(168,85,247,0.05),transparent_26%),var(--background)]"

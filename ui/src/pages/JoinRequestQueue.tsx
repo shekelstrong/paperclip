@@ -137,7 +137,7 @@ export function JoinRequestQueue() {
                     <div className="text-base font-medium">
                       {request.requestType === "human"
                         ? request.requesterUser?.name || request.requestEmailSnapshot || request.requestingUserId || "Неизвестный человек-запросчик"
-                        : request.agentName || "Unknown agent requester"}
+                        : request.agentName || "Неизвестный запрашивающий агент"}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {request.requestType === "human"

@@ -20,7 +20,7 @@ const surfaceOptions: Array<{
   {
     id: "detail",
     label: "Детали запуска",
-    eyebrow: "Full transcript",
+    eyebrow: "Полный transcript",
     description: "The long-form run page with the `Nice | Raw` toggle and the most inspectable transcript view.",
     icon: MonitorCog,
   },
@@ -165,7 +165,7 @@ function DashboardPreview({
                 <Identity name={runTranscriptFixtureMeta.agentName} size="sm" />
               </div>
               <div className="mt-2 text-[11px] text-muted-foreground">
-                {streaming ? "В эфире" : "Finished 2m ago"}
+                {streaming ? "В эфире" : "Завершено 2 мин назад"}
               </div>
             </div>
             <span className="rounded-full border border-border/70 bg-background/70 px-2 py-1 text-[10px] text-muted-foreground">
@@ -311,7 +311,7 @@ export function RunTranscriptUxLab() {
                 className="rounded-full"
                 onClick={() => setStreaming((value) => !value)}
               >
-                {streaming ? "Show settled state" : "Show streaming state"}
+                {streaming ? "Показать settled состояние" : "Показать streaming состояние"}
               </Button>
             </div>
 

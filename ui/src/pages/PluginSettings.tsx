@@ -119,7 +119,7 @@ export function PluginSettings() {
       { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
       { label: "Settings", href: "/instance/settings/heartbeats" },
       { label: "Plugins", href: "/instance/settings/plugins" },
-      { label: plugin?.manifestJson?.displayName ?? plugin?.packageName ?? "Plugin Details" },
+      { label: plugin?.manifestJson?.displayName ?? plugin?.packageName ?? "Детали плагина" },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs, companyPrefix, plugin]);
 
@@ -661,7 +661,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
       setMessage({
         type: nextStatus.healthy ? "success" : "error",
         text: nextStatus.healthy
-          ? "Local folder saved."
+          ? "Локальная папка сохранена."
           : "Локальная папка сохранена, но валидация требует внимания.",
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.plugins.localFolders(pluginId, companyId) });
@@ -698,7 +698,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
               {declaration.folderKey}
             </Badge>
             <Badge variant={status?.healthy ? "default" : "secondary"}>
-              {status?.healthy ? "Healthy" : "Needs attention"}
+              {status?.healthy ? "Healthy" : "Требует внимания"}
             </Badge>
           </div>
           {declaration.description ? (
@@ -820,14 +820,14 @@ function FolderRequirements({
   return (
     <div className="grid gap-3 text-sm md:grid-cols-2">
       <RequirementList
-        title="Required directories"
+        title="Обязательные директории"
         items={requiredDirectories}
         missingItems={missingDirectories}
-        missingLabel="Missing directories"
+        missingLabel="Отсутствующие директории"
         inspectionUnavailable={rootNotInspected}
       />
       <RequirementList
-        title="Required files"
+        title="Обязательные файлы"
         items={requiredFiles}
         missingItems={missingFiles}
         missingLabel="Отсутствуют файлы"
@@ -973,7 +973,7 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
     mutationFn: (configJson: Record<string, unknown>) =>
       pluginsApi.saveConfig(pluginId, configJson),
     onSuccess: () => {
-      setSaveMessage({ type: "success", text: "Configuration saved." });
+      setSaveMessage({ type: "success", text: "Конфигурация сохранена." });
       setTestResult(null);
       queryClient.invalidateQueries({ queryKey: queryKeys.plugins.config(pluginId) });
       // Clear success message after 3s
@@ -1087,7 +1087,7 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
               Saving...
             </>
           ) : (
-            "Save Configuration"
+            "Сохранить конфигурацию"
           )}
         </Button>
         {pluginStatus === "ready" && supportsConfigTest && (

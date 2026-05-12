@@ -124,7 +124,7 @@ export function ProfileSettings() {
   if (sessionQuery.error || !sessionQuery.data) {
     return (
       <div className="text-sm text-destructive">
-        {sessionQuery.error instanceof Error ? sessionQuery.error.message : "Failed to load profile."}
+        {sessionQuery.error instanceof Error ? sessionQuery.error.message : "Не удалось загрузить профиль."}
       </div>
     );
   }

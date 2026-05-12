@@ -22,9 +22,9 @@ function readErrorMessage(error: unknown): string {
 }
 
 export const RETRY_NOW_OUTCOME_HEADLINE: Record<IssueRetryNowOutcome, string> = {
-  promoted: "Retry promoted",
-  already_promoted: "Retry already running",
-  no_scheduled_retry: "No scheduled retry",
+  promoted: "Повторная попытка продвинута",
+  already_promoted: "Повторная попытка уже запущена",
+  no_scheduled_retry: "Нет запланированной повторной попытки",
   gate_suppressed: "Couldn't retry now",
 };
 
@@ -38,7 +38,7 @@ export function useRetryNowMutation(
 
   const mutation = useMutation({
     mutationFn: () => {
-      if (!issueId) throw new Error("Missing issue id");
+      if (!issueId) throw new Error("Отсутствует id задачи");
       return issuesApi.retryScheduledRetryNow(issueId);
     },
     onSuccess: (response) => {

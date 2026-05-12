@@ -439,7 +439,7 @@ function PluginSdkProjectPicker({
   placeholder = "Project",
   noneLabel = "Нет проекта",
   searchPlaceholder = "Поиск проектов...",
-  emptyMessage = "No projects found.",
+  emptyMessage = "Проекты не найдены.",
   includeArchived = false,
   className,
   onConfirm,

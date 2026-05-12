@@ -31,7 +31,7 @@ export function InstanceGeneralSettings() {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.session });
     },
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to sign out.");
+      setActionError(error instanceof Error ? error.message : "Не удалось выйти.");
     },
   });
 
@@ -123,11 +123,11 @@ export function InstanceGeneralSettings() {
               value={healthQuery.data?.authReady ? "Ready" : "Не готово"}
             />
             <StatusBox
-              label="Bootstrap status"
+              label="Статус bootstrap"
               value={healthQuery.data?.bootstrapStatus === "bootstrap_pending" ? "Требуется настройка" : "Ready"}
             />
             <StatusBox
-              label="Bootstrap invite"
+              label="Bootstrap приглашение"
               value={healthQuery.data?.bootstrapInviteActive ? "Active" : "None"}
             />
           </div>
