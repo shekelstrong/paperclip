@@ -119,7 +119,7 @@ const NEUTRAL_METADATA: SystemNoticeMetadataSection[] = [
       {
         kind: "text",
         label: "Reason",
-        value: "Manual reassignment requested by Board.",
+        value: "Ручное переназначение, запрошенное доской.",
       },
     ],
   },

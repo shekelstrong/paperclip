@@ -103,7 +103,7 @@ export function IssueRelatedWorkPanel({
         title="Упоминается в"
         description="Другие задачи, которые в данный момент указывают на эту."
         items={inbound}
-        emptyLabel="No other tasks reference this issue yet."
+        emptyLabel="Пока нет других задач, ссылающихся на эту."
       />
     </div>
   );

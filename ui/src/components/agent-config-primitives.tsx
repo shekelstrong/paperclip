@@ -21,7 +21,7 @@ import { AGENT_ROLE_LABELS } from "@paperclipai/shared";
 /* ---- Help text for (?) tooltips ---- */
 export const help: Record<string, string> = {
   name: "Display name for this agent.",
-  title: "Job title shown in the org chart.",
+  title: "Должность, отображаемая в орг. структуре.",
   role: "Организационная роль. Определяет позицию и возможности.",
   reportsTo: "Агент, которому этот подчиняется в иерархии организации.",
   capabilities: "Описывает возможности агента. Отображается в org chart и используется для маршрутизации задач.",
@@ -43,7 +43,7 @@ export const help: Record<string, string> = {
   maxTurnsPerRun: "Maximum number of agentic turns (tool calls) per heartbeat run.",
   command: "Команда для выполнения (например, node, python).",
   localCommand: "Override the path to the CLI command you want the adapter to call (e.g. /usr/local/bin/claude, codex, opencode).",
-  args: "Command-line arguments, comma-separated.",
+  args: "Аргументы командной строки, через запятую.",
   extraArgs: "Дополнительные CLI аргументы для локальных адаптеров, через запятую.",
   envVars: "Переменные окружения, передаваемые в процесс адаптера. Используйте простые значения или референсы секретов.",
   bootstrapPrompt: "Only sent when Paperclip starts a fresh session. Use this for stable setup guidance that should not be repeated on every heartbeat.",

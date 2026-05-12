@@ -249,7 +249,7 @@ export function CompanySettings() {
           General
         </div>
         <div className="space-y-3 rounded-md border border-border px-4 py-4">
-          <Field label="Название компании" hint="The display name for your company.">
+          <Field label="Название компании" hint="Отображаемое название вашей компании.">
             <input
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
@@ -423,7 +423,7 @@ export function CompanySettings() {
         </div>
         <div className="rounded-md border border-border px-4 py-3">
           <ToggleField
-            label="Require board approval for new hires"
+            label="Требовать утверждения доски для новых наймов"
             hint="Новые агенты остаются в ожидании до утверждения доской."
             checked={!!selectedCompany.requireBoardApprovalForNewAgents}
             onChange={(v) => settingsMutation.mutate(v)}

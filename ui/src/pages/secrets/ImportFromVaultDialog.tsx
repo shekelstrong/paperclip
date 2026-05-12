@@ -264,12 +264,12 @@ function validateDraftRow(
   otherDrafts: DraftSelection[],
 ): string | null {
   if (!draft.name.trim()) return "Name is required.";
-  if (draft.name.length > 160) return "Name must be 160 characters or fewer.";
+  if (draft.name.length > 160) return "Имя должно быть не более 160 символов.";
   if (!draft.key.trim()) return "Key is required.";
   if (!KEY_PATTERN.test(draft.key)) {
     return "Ключ может содержать только строчные буквы, цифры, точку, подчёркивание или дефис.";
   }
-  if (draft.key.length > 120) return "Key must be 120 characters or fewer.";
+  if (draft.key.length > 120) return "Ключ должен быть не более 120 символов.";
   if (draft.description.length > 500) return "Описание должно быть не более 500 символов.";
 
   const lowerName = draft.name.trim().toLowerCase();
@@ -1124,7 +1124,7 @@ function PreviewErrorBanner({ error, onRetry }: { error: unknown; onRetry: () =>
           {isPermission
             ? "AWS denied list access"
             : isThrottling
-              ? "AWS throttled the listing request"
+              ? "AWS throttled listing запрос"
               : "Could not load remote secrets"}
         </div>
         <div className="mt-1 text-xs leading-relaxed text-destructive/80">
@@ -1174,7 +1174,7 @@ function EmptyCandidates({ query }: { query: string }) {
   return (
     <EmptyState
       icon={Database}
-      message="No secrets visible to this vault."
+      message="Нет секретов, видимых этому vault."
     />
   );
 }

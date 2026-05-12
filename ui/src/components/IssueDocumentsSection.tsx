@@ -275,7 +275,7 @@ export function IssueDocumentsSection({
       invalidateIssueDocuments();
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Failed to restore document revision");
+      setError(err instanceof Error ? err.message : "Не удалось восстановить ревизию документа");
     },
   });
 
@@ -372,7 +372,7 @@ export function IssueDocumentsSection({
 
     if (!normalizedKey || !normalizedBody) {
       if (currentDraft.isNew) {
-        setError("Document key and body are required");
+        setError("Ключ и тело документа обязательны");
       } else if (!normalizedBody) {
         setError("Document body cannot be empty");
       }

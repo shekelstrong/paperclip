@@ -149,7 +149,7 @@ export function InstanceExperimentalSettings() {
       ]);
     },
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to update experimental settings.");
+      setActionError(error instanceof Error ? error.message : "Не удалось обновить экспериментальные настройки.");
     },
   });
 
@@ -162,7 +162,7 @@ export function InstanceExperimentalSettings() {
       setPreviewDialogOpen(true);
     },
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to preview recovery tasks.");
+      setActionError(error instanceof Error ? error.message : "Не удалось просмотреть задачи восстановления.");
     },
   });
 
@@ -198,7 +198,7 @@ export function InstanceExperimentalSettings() {
       <div className="text-sm text-destructive">
         {experimentalQuery.error instanceof Error
           ? experimentalQuery.error.message
-          : "Failed to load experimental settings."}
+          : "Не удалось загрузить экспериментальные настройки."}
       </div>
     );
   }
@@ -275,7 +275,7 @@ export function InstanceExperimentalSettings() {
             checked={enableEnvironments}
             onCheckedChange={() => toggleMutation.mutate({ enableEnvironments: !enableEnvironments })}
             disabled={toggleMutation.isPending}
-            aria-label="Toggle environments experimental setting"
+            aria-label="Переключить экспериментальную настройку окружений"
           />
         </div>
       </section>
@@ -311,7 +311,7 @@ export function InstanceExperimentalSettings() {
             checked={autoRestartDevServerWhenIdle}
             onCheckedChange={() => toggleMutation.mutate({ autoRestartDevServerWhenIdle: !autoRestartDevServerWhenIdle })}
             disabled={toggleMutation.isPending}
-            aria-label="Toggle guarded dev-server auto-restart"
+            aria-label="Переключить guarded dev-server auto-restart"
           />
         </div>
       </section>

@@ -37,8 +37,8 @@ type ProjectWorkspaceSourceType = ProjectWorkspace["sourceType"];
 type ProjectWorkspaceVisibility = ProjectWorkspace["visibility"];
 
 const SOURCE_TYPE_OPTIONS: Array<{ value: ProjectWorkspaceSourceType; label: string; description: string }> = [
-  { value: "local_path", label: "Local git checkout", description: "A local path Paperclip can use directly." },
-  { value: "non_git_path", label: "Local non-git path", description: "A local folder without git semantics." },
+  { value: "local_path", label: "Local git checkout", description: "Локальный путь, который Paperclip может использовать напрямую." },
+  { value: "non_git_path", label: "Local non-git path", description: "Локальная папка без git семантики." },
   { value: "git_repo", label: "Remote git repo", description: "URL репозитория с опциональными refs и локальным checkout." },
   { value: "remote_managed", label: "Remote-managed workspace", description: "Хостированное рабочее пространство, отслеживаемое внешним референсом." },
 ];
@@ -161,7 +161,7 @@ function validateWorkspaceForm(form: WorkspaceFormState) {
   }
 
   if (cwd && (form.sourceType === "local_path" || form.sourceType === "non_git_path") && !isAbsolutePath(cwd)) {
-    return "Local workspace path must be absolute.";
+    return "Путь локального рабочего пространства должен быть абсолютным.";
   }
 
   if (repoUrl) {

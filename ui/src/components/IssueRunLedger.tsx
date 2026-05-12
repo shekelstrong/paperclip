@@ -88,12 +88,12 @@ const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
   empty_response: {
     label: "Пустой ответ",
     tone: "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300",
-    description: "Run finished without useful output.",
+    description: "Запуск завершён без полезного вывода.",
   },
   blocked: {
     label: "Blocked",
     tone: "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
-    description: "Run or issue declared a blocker.",
+    description: "Запуск или задача объявлены блокером.",
   },
   failed: {
     label: "Failed",
@@ -541,7 +541,7 @@ export function IssueRunLedgerContent({
             {latestRun
               ? runSummary(latestRun, agentMap)
               : issueStatus === "in_progress"
-                ? "Waiting for the first run record."
+                ? "Ожидание первой записи запуска."
                 : "No runs linked yet."}
           </p>
         </div>
@@ -815,7 +815,7 @@ export function IssueRunLedgerContent({
                   return (
                     <p className="min-w-0 break-words text-[11px] leading-5 text-amber-700 dark:text-amber-300">
                       {profile.requested === "cheap"
-                        ? "Cheap profile fell back to primary"
+                        ? "Cheap profile откатился к primary"
                         : `${profile.requested} profile unavailable`}
                       {": "}
                       <span className="font-mono">{profile.fallbackReason}</span>

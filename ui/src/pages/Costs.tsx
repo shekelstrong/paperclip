@@ -126,7 +126,7 @@ function FinanceSummaryCard({
         <MetricTile
           label="Credits"
           value={formatCents(creditCents)}
-          subtitle="Refunds, offsets, and credit returns"
+          subtitle="Возвраты, компенсации и возвраты кредитов"
           icon={ArrowDownLeft}
         />
         <MetricTile
@@ -849,7 +849,7 @@ export function Costs() {
                   <MetricTile
                     label="Active incidents"
                     value={String(activeBudgetIncidents.length)}
-                    subtitle="Open soft or hard threshold crossings"
+                    subtitle="Открыть soft или hard threshold crossings"
                     icon={ReceiptText}
                   />
                   <MetricTile
@@ -867,7 +867,7 @@ export function Costs() {
                   <MetricTile
                     label="Paused projects"
                     value={String(budgetData?.pausedProjectCount ?? 0)}
-                    subtitle="Project execution blocked by budget"
+                    subtitle="Выполнение проекта заблокировано бюджетом"
                     icon={DollarSign}
                   />
                 </CardContent>

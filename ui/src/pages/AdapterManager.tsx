@@ -115,7 +115,7 @@ function AdapterRow({
               variant="outline"
               size="icon-sm"
               className="h-8 w-8"
-              title="Reinstall adapter (pull latest from npm)"
+              title="Переустановить адаптер (pull latest from npm)"
               disabled={isReinstalling}
               onClick={() => onReinstall(adapter.type)}
             >

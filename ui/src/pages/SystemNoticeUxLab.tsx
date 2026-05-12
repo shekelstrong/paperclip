@@ -220,7 +220,7 @@ export function SystemNoticeUxLab() {
       <LabSection
         id="hierarchy"
         eyebrow="Hierarchy in thread"
-        title="Distinct from user and agent comments"
+        title="Отличается от комментариев пользователя и агента"
         description="Side-by-side with adjacent comment types so reviewers can confirm the system row reads as a system row — full width, no avatar gutter, no chat bubble — while user and agent comments keep their existing rounded bubbles."
         accentClassName="bg-[linear-gradient(180deg,rgba(8,145,178,0.05),transparent_28%),var(--background)]"
       >

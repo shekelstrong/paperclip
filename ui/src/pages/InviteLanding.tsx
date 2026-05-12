@@ -469,8 +469,8 @@ export function InviteLandingPage() {
           <h1 className="text-lg font-semibold">Invite not available</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {inviteJoinRequestStatus === "rejected"
-              ? "This join request was not approved."
-              : "This invite has already been used."}
+              ? "Этот запрос на присоединение не был утверждён."
+              : "Это приглашение уже использовано."}
           </p>
         </div>
       </div>

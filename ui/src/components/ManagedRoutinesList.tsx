@@ -146,7 +146,7 @@ export function ManagedRoutinesList({
                 <span>
                   {missingRefs.length
                     ? `Missing ${missingRefs.map((ref) => `${ref.resourceKind}:${ref.resourceKey}`).join(", ")}`
-                    : "Routine defaults can be repaired."}
+                    : "Значения по умолчанию процедуры можно восстановить."}
                 </span>
                 <span className="flex items-center gap-2">
                   {onReconcile ? (

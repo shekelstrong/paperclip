@@ -27,7 +27,7 @@ export function MyIssues() {
   });
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={ListTodo} message="Select a company to view your issues." />;
+    return <EmptyState icon={ListTodo} message="Выберите компанию для просмотра ваших задач." />;
   }
 
   if (isLoading) {

@@ -173,7 +173,7 @@ function ArchiveDangerZone({
     <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
       <p className="text-sm text-muted-foreground">
         {isArchive
-          ? "Archive this project to hide it from the sidebar and project selectors."
+          ? "Архивируйте проект, чтобы скрыть его из сайдбара и селекторов проектов."
           : "Разархивировать проект, чтобы восстановить его в сайдбаре и селекторах проектов."}
       </p>
       {archivePending ? (
@@ -477,8 +477,8 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
   const clearLocalWorkspace = () => {
     const confirmed = window.confirm(
       codebase.repoUrl
-        ? "Clear local folder from this workspace?"
-        : "Delete this workspace local folder?",
+        ? "Очистить локальную папку из этого рабочего пространства?"
+        : "Удалить локальную папку этого рабочего пространства?",
     );
     if (!confirmed) return;
     persistCodebase({ cwd: null });

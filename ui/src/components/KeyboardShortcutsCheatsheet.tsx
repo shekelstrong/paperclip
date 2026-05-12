@@ -38,7 +38,7 @@ const sections: ShortcutSection[] = [
   {
     title: "Global",
     shortcuts: [
-      { keys: ["/"], label: "Search current page or quick search" },
+      { keys: ["/"], label: "Поиск текущей страницы или быстрый поиск" },
       { keys: ["c"], label: "Новая задача" },
       { keys: ["["], label: "Переключить сайдбар" },
       { keys: ["]"], label: "Переключить панель" },

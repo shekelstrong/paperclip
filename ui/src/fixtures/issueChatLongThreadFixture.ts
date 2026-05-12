@@ -191,7 +191,7 @@ export const issueChatLongThreadTranscriptsByRunId = new Map<string, readonly Is
 export const issueChatLongThreadFixtureContext = {
   issue: {
     identifier: "PAP-PERF",
-    title: "Long-thread rendering baseline fixture",
+    title: "Базовый fixture рендеринга длинных потоков",
     status: "in_progress",
     priority: "medium",
     projectName: "Paperclip App",

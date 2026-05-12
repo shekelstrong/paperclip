@@ -374,7 +374,7 @@ function AcceptInvitePreview({
             ? "Отправка запроса на присоединение к Acme Robotics."
             : isCurrentMember
               ? "This account already belongs to Acme Robotics."
-              : "This will submit or complete your join request for Acme Robotics."}
+              : "Это отправит или завершит запрос на присоединение к Acme Robotics."}
         </p>
       </div>
       {error ? <p className="text-xs text-red-400">{error}</p> : null}

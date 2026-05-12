@@ -2047,7 +2047,7 @@ export function Inbox() {
             visibleColumnSet={visibleIssueColumnSet}
             onToggleColumn={toggleIssueColumn}
             onResetColumns={() => setIssueColumns(DEFAULT_INBOX_ISSUE_COLUMNS)}
-            title="Choose which inbox columns stay visible"
+            title="Выберите, какие колонки входящих остаются видимыми"
             iconOnly
           />
           {canMarkAllRead && (
@@ -2140,14 +2140,14 @@ export function Inbox() {
           icon={searchQuery.trim() ? Search : InboxIcon}
           message={
             searchQuery.trim()
-              ? "No inbox items match your search."
+              ? "Нет элементов входящих, соответствующих вашему поиску."
               : tab === "mine"
               ? "Входящие пусты."
               : tab === "unread"
               ? "Нет новых входящих."
               : tab === "recent"
                 ? "No recent inbox items."
-                : "No inbox items match these filters."
+                : "Нет элементов входящих, соответствующих этим фильтрам."
           }
         />
       )}

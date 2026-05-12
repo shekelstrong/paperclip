@@ -334,7 +334,7 @@ export function IssueChatUxLab() {
         <div className="space-y-6">
           <LabSection
             eyebrow="Пустой поток"
-            title="Empty state and disabled composer"
+            title="Пустое состояние и отключённый composer"
             description="Keeps the message area visible even when there is no thread yet, and replaces the composer with an explicit warning when replies are blocked."
             accentClassName="bg-[linear-gradient(180deg,rgba(245,158,11,0.08),transparent_26%),var(--background)]"
           >

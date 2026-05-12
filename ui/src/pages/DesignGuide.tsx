@@ -680,7 +680,7 @@ export function DesignGuide() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="sheet-description">Description</Label>
-                <Textarea id="sheet-description" defaultValue="Capture setup pitfalls and screenshots." />
+                <Textarea id="sheet-description" defaultValue="Захватите проблемы установки и скриншоты." />
               </div>
             </div>
             <SheetFooter>

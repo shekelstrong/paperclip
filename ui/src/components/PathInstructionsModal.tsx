@@ -20,7 +20,7 @@ const platforms: { id: Platform; label: string; icon: typeof Apple }[] = [
 const instructions: Record<Platform, { steps: string[]; tip?: string }> = {
   mac: {
     steps: [
-      "Open Finder and navigate to the folder.",
+      "Откройте Finder и перейдите к папке.",
       "Щёлкните правой кнопкой (или Control-click) по папке.",
       "Hold the Option (⌥) key — \"Copy\" changes to \"Copy as Pathname\".",
       "Click \"Copy as Pathname\", then paste here.",

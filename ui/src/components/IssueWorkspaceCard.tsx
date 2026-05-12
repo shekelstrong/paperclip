@@ -528,7 +528,7 @@ export function IssueWorkspaceCard({
                 <option value="">
                   {reuseExistingSelection
                     ? configuredReusableWorkspace
-                      ? "No environment on reused workspace"
+                      ? "Нет окружения на повторно используемом рабочем пространстве"
                       : "Выберите существующее рабочее пространство для просмотра его окружения"
                     : projectEnvironmentId
                       ? "Project default environment"

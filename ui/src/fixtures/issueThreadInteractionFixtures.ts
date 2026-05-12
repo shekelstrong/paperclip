@@ -113,7 +113,7 @@ function createAskUserQuestionsInteraction(
     companyId: issueThreadInteractionFixtureMeta.companyId,
     issueId: issueThreadInteractionFixtureMeta.issueId,
     kind: "ask_user_questions",
-    title: "Resolve open UX decisions before Phase 1",
+    title: "Разрешите открытые UX-решения перед Phase 1",
     summary:
       "This form stays local until the operator submits it, so the assignee only wakes once after the whole answer set is ready.",
     status: "pending",
@@ -140,12 +140,12 @@ function createAskUserQuestionsInteraction(
           options: [
             {
               id: "visible-root",
-              label: "Only collapse hidden descendants",
+              label: "Сворачивать только скрытых потомков",
               description: "Держать развёрнутыми корневые и видимые дочерние задачи.",
             },
             {
               id: "collapse-all",
-              label: "Collapse all descendants by default",
+              label: "Свернуть всех потомков по умолчанию",
               description: "Показывать только корневые задачи, пока оператор не развернёт дерево.",
             },
           ],
@@ -319,7 +319,7 @@ export const genericPendingRequestConfirmationInteraction = createRequestConfirm
   continuationPolicy: "none",
   payload: {
     version: 1,
-    prompt: "Continue with the current approach?",
+    prompt: "Продолжить с текущим подходом?",
   },
 });
 
@@ -328,7 +328,7 @@ export const optionalDeclineRequestConfirmationInteraction = createRequestConfir
   continuationPolicy: "none",
   payload: {
     version: 1,
-    prompt: "Use the smaller implementation path?",
+    prompt: "Использовать более короткий путь реализации?",
     acceptLabel: "Confirm",
     rejectLabel: "Decline",
     rejectRequiresReason: false,
@@ -372,7 +372,7 @@ export const planApprovalAcceptedRequestConfirmationInteraction = createRequestC
     acceptLabel: "Утвердить план",
     rejectLabel: "Request changes",
     rejectRequiresReason: true,
-    declineReasonPlaceholder: "Optional: what would you like revised?",
+    declineReasonPlaceholder: "Опционально: что бы вы хотели исправить?",
     target: {
       type: "issue_document",
       issueId: issueThreadInteractionFixtureMeta.issueId,

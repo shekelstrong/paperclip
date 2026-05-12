@@ -605,7 +605,7 @@ export function RoutineDetail() {
     onSuccess: async () => {
       pushToast({
         title: "Триггер сохранён",
-        body: "The routine cadence update was saved.",
+        body: "Обновление каденции процедуры сохранено.",
         tone: "success",
       });
       await Promise.all([

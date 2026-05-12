@@ -34,12 +34,12 @@ const issueColumnLabels: Record<InboxIssueColumn, string> = {
 };
 
 const issueColumnDescriptions: Record<InboxIssueColumn, string> = {
-  status: "Issue state chip on the left edge.",
-  id: "Ticket identifier like PAP-1009.",
+  status: "Chip состояния задачи на левом краю.",
+  id: "Идентификатор тикета, например PAP-1009.",
   assignee: "Assigned agent or board user.",
-  project: "Linked project pill with its color.",
+  project: "Linked project pill с его цветом.",
   workspace: "Рабочее пространство выполнения или проекта, используемое для задачи.",
-  parent: "Parent issue identifier and title.",
+  parent: "Идентификатор и название родительской задачи.",
   labels: "Issue labels and tags.",
   updated: "Latest visible activity time.",
 };

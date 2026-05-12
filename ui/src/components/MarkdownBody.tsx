@@ -460,7 +460,7 @@ function MermaidDiagramBlock({ source, darkMode }: { source: string; darkMode: b
         const message =
           err instanceof Error && err.message
             ? err.message
-            : "Failed to render Mermaid diagram.";
+            : "Не удалось отрендерить Mermaid диаграмму.";
         setError(message);
       });
 

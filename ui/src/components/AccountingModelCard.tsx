@@ -13,7 +13,7 @@ const SURFACES = [
     title: "Финансовый реестр",
     description: "Начисления на уровне аккаунта, не являющиеся одной парой запрос-ответ.",
     icon: ReceiptText,
-    points: ["top-ups, refunds, fees", "Bedrock provisioned or training charges", "credit expiries and adjustments"],
+    points: ["top-ups, refunds, fees", "Начисления за Bedrock provisioned или обучение", "credit expiries and adjustments"],
     tone: "from-amber-500/14 via-amber-500/6 to-transparent",
   },
   {

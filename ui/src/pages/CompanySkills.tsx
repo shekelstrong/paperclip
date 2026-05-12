@@ -546,7 +546,7 @@ function SkillPane({
     return (
       <EmptyState
         icon={Boxes}
-        message="Select a skill to inspect its files."
+        message="Выберите навык для просмотра его файлов."
       />
     );
   }
@@ -981,7 +981,7 @@ export function CompanySkills() {
       pushToast({
         tone: "error",
         title: "Project skill scan failed",
-        body: error instanceof Error ? error.message : "Failed to scan project workspaces.",
+        body: error instanceof Error ? error.message : "Не удалось сканировать рабочие пространства проекта.",
       });
     },
   });
@@ -1080,7 +1080,7 @@ export function CompanySkills() {
   });
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Boxes} message="Select a company to manage skills." />;
+    return <EmptyState icon={Boxes} message="Выберите компанию для управления навыками." />;
   }
 
   function handleAddSkillSource() {
@@ -1106,7 +1106,7 @@ export function CompanySkills() {
             <p>
               {deleteTargetDetail
                 ? `You are about to remove ${deleteTargetDetail.name}.`
-                : "You are about to remove this skill."}
+                : "Вы собираетесь удалить этот навык."}
             </p>
             {deleteTargetDetail?.usedByAgents?.length ? (
               <div className="rounded-md border border-border px-3 py-3 text-muted-foreground">
@@ -1200,7 +1200,7 @@ export function CompanySkills() {
                   size="icon-sm"
                   onClick={() => scanProjects.mutate()}
                   disabled={scanProjects.isPending}
-                  title="Scan project workspaces for skills"
+                  title="Сканировать рабочие пространства проекта для навыков"
                 >
                   <RefreshCw className={cn("h-4 w-4", scanProjects.isPending && "animate-spin")} />
                 </Button>

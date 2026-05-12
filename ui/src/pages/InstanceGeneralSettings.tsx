@@ -59,7 +59,7 @@ export function InstanceGeneralSettings() {
       await queryClient.invalidateQueries({ queryKey: queryKeys.instance.generalSettings });
     },
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to update general settings.");
+      setActionError(error instanceof Error ? error.message : "Не удалось обновить общие настройки.");
     },
   });
 
@@ -72,7 +72,7 @@ export function InstanceGeneralSettings() {
       <div className="text-sm text-destructive">
         {generalQuery.error instanceof Error
           ? generalQuery.error.message
-          : "Failed to load general settings."}
+          : "Не удалось загрузить общие настройки."}
       </div>
     );
   }
@@ -303,12 +303,12 @@ export function InstanceGeneralSettings() {
               {
                 value: "allowed",
                 label: "Всегда разрешать",
-                description: "Share voted AI outputs automatically.",
+                description: "Автоматически делиться проголосованными AI-выходами.",
               },
               {
                 value: "not_allowed",
                 label: "Don't allow",
-                description: "Keep voted AI outputs local only.",
+                description: "Держать проголосованные AI-выходы только локально.",
               },
             ].map((option) => {
               const active = feedbackDataSharingPreference === option.value;

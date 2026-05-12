@@ -385,7 +385,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
       : ["agents", "none", "detect-model", adapterType],
     queryFn: () => {
       if (!selectedCompanyId) {
-        throw new Error("Select a company to detect the model");
+        throw new Error("Выберите компанию для определения модели");
       }
       return agentsApi.detectModel(selectedCompanyId, adapterType);
     },
@@ -1539,7 +1539,7 @@ function ModelDropdown({
           <div className="relative mb-1">
             <input
               className="w-full px-2 py-1.5 pr-6 text-xs bg-transparent outline-none border-b border-border placeholder:text-muted-foreground/50"
-              placeholder={creatable ? "Search models... (type to create)" : "Поиск моделей..."}
+              placeholder={creatable ? "Поиск моделей... (введите для создания)" : "Поиск моделей..."}
               value={modelSearch}
               onChange={(e) => setModelSearch(e.target.value)}
               autoFocus

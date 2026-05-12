@@ -60,7 +60,7 @@ export function IssueScheduledRetryCard({
   const title = `${titleAction} ${titleSuffix}`;
 
   const helperIdle = continuation
-    ? "Pulls continuation forward immediately"
+    ? "Сразу вытягивает continuation вперёд"
     : "Pulls retry forward immediately";
   const isError = retryNow.isError || retryNow.lastError !== null;
   const isSuccessTransient = retryNow.isSuccess

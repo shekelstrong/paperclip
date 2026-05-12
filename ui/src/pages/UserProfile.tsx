@@ -243,7 +243,7 @@ export function UserProfile() {
   );
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={UserRound} message="Select a company to view user profiles." />;
+    return <EmptyState icon={UserRound} message="Выберите компанию для просмотра профилей пользователей." />;
   }
 
   if (isLoading) {
@@ -251,7 +251,7 @@ export function UserProfile() {
   }
 
   if (error || !data) {
-    return <EmptyState icon={AlertCircle} message="User profile not found for this company." />;
+    return <EmptyState icon={AlertCircle} message="Профиль пользователя не найден для этой компании." />;
   }
 
   const allTimeTokens = allTime ? totalTokens(allTime) : 0;
@@ -352,7 +352,7 @@ export function UserProfile() {
 
       <div className="grid gap-10 xl:grid-cols-2">
         <UsageList title="Agent attribution" empty="No issue-linked token usage yet." rows={agentUsageRows} />
-        <UsageList title="Смесь провайдеров" empty="No provider usage attributed yet." rows={providerUsageRows} />
+        <UsageList title="Смесь провайдеров" empty="Пока нет приписанного использования провайдера." rows={providerUsageRows} />
       </div>
     </div>
   );
