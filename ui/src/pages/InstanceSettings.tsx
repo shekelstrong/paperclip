@@ -193,7 +193,7 @@ export function InstanceSettings() {
               disableAllMutation.mutate(agents);
             }}
           >
-            {disableAllMutation.isPending ? "Disabling..." : "Disable All"}
+            {disableAllMutation.isPending ? "Disabling..." : "Отключить всё"}
           </Button>
         )}
       </div>

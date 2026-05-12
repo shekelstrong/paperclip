@@ -1104,7 +1104,7 @@ export function CompanyImport() {
           {(
             [
               { key: "github", icon: Github, label: "Репозиторий GitHub" },
-              { key: "local", icon: Upload, label: "Local zip" },
+              { key: "local", icon: Upload, label: "Локальный zip" },
             ] as const
           ).map(({ key, icon: Icon, label }) => (
             <button
@@ -1162,7 +1162,7 @@ export function CompanyImport() {
           </div>
         ) : (
           <Field
-            label="GitHub URL"
+            label="URL GitHub"
             hint="Repo tree path or blob URL to COMPANY.md (e.g. github.com/owner/repo/tree/main/company)."
           >
             <input

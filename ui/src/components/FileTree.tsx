@@ -227,7 +227,7 @@ export const FRONTMATTER_FIELD_LABELS: Record<string, string> = {
   assignee: "Assignee",
   project: "Project",
   recurring: "Recurring",
-  targetDate: "Target date",
+  targetDate: "Целевая дата",
 };
 
 // -- File tree component -----------------------------------------------------
@@ -381,7 +381,7 @@ export function FileTree({
     return (
       <div aria-label={ariaLabel} role="tree" className="p-3">
         <div className="rounded-md border border-dashed border-border px-4 py-8 text-center">
-          <div className="text-sm font-medium">{empty?.title ?? "No files"}</div>
+          <div className="text-sm font-medium">{empty?.title ?? "Нет файлов"}</div>
           <div className="mt-1 text-xs text-muted-foreground">
             {empty?.description ?? "Files will appear here when they are available."}
           </div>

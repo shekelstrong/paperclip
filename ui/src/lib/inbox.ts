@@ -602,7 +602,7 @@ export function resolveIssueWorkspaceGroup(
 
   return {
     key: "workspace:none",
-    label: "No workspace",
+    label: "Нет рабочего пространства",
   };
 }
 
@@ -817,8 +817,8 @@ const inboxWorkItemKindOrder: InboxWorkItem["kind"][] = [
 const inboxWorkItemKindLabels: Record<InboxWorkItem["kind"], string> = {
   issue: "Issues",
   approval: "Approvals",
-  failed_run: "Failed runs",
-  join_request: "Join requests",
+  failed_run: "Неудачные запуски",
+  join_request: "Запросы на присоединение",
 };
 
 function resolveIssueAssigneeGroup(

@@ -201,7 +201,7 @@ export function RoutineVariablesEditor({
                         })))}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="No default" />
+                          <SelectValue placeholder="Нет значения по умолч." />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__unset__">No default</SelectItem>
@@ -220,7 +220,7 @@ export function RoutineVariablesEditor({
                       ...current,
                       defaultValue: event.target.value || null,
                     })))}
-                    placeholder={variable.type === "number" ? "42" : "Default value"}
+                    placeholder={variable.type === "number" ? "42" : "Значение по умолчанию"}
                   />
                 )}
               </div>

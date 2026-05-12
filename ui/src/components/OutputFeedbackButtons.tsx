@@ -174,7 +174,7 @@ export function OutputFeedbackButtons({
                 });
               }}
             >
-              {isSaving ? "Saving..." : "Save note"}
+              {isSaving ? "Saving..." : "Сохранить заметку"}
             </Button>
           </div>
         </div>

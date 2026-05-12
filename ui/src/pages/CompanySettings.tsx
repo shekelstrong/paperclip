@@ -249,7 +249,7 @@ export function CompanySettings() {
           General
         </div>
         <div className="space-y-3 rounded-md border border-border px-4 py-4">
-          <Field label="Company name" hint="The display name for your company.">
+          <Field label="Название компании" hint="The display name for your company.">
             <input
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
@@ -307,7 +307,7 @@ export function CompanySettings() {
                         onClick={handleClearLogo}
                         disabled={clearLogoMutation.isPending}
                       >
-                        {clearLogoMutation.isPending ? "Removing..." : "Remove logo"}
+                        {clearLogoMutation.isPending ? "Removing..." : "Удалить логотип"}
                       </Button>
                     </div>
                   )}
@@ -330,7 +330,7 @@ export function CompanySettings() {
                 </div>
               </Field>
               <Field
-                label="Brand color"
+                label="Цвет бренда"
                 hint="Sets the hue for the company icon. Leave empty for auto-generated color."
               >
                 <div className="flex items-center gap-2">
@@ -410,7 +410,7 @@ export function CompanySettings() {
             <span className="text-xs text-destructive">
               {generalMutation.error instanceof Error
                   ? generalMutation.error.message
-                  : "Failed to save"}
+                  : "Не удалось сохранить"}
             </span>
           )}
         </div>
@@ -501,7 +501,7 @@ export function CompanySettings() {
                       }
                     }}
                   >
-                    {snippetCopied ? "Copied snippet" : "Copy snippet"}
+                    {snippetCopied ? "Сниппет скопирован" : "Копировать сниппет"}
                   </Button>
                 </div>
               </div>

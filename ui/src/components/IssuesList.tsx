@@ -435,7 +435,7 @@ function IssueSearchInput({
         }}
         placeholder="Search issues..."
         className="pl-7 text-xs sm:text-sm"
-        aria-label="Search issues"
+        aria-label="Поиск задач"
         data-page-search-target="true"
       />
     </div>
@@ -530,7 +530,7 @@ function SubIssueProgressSummaryStrip({
           {target && targetIssue ? (
             <>
               <div className="text-xs font-medium text-muted-foreground">
-                {target.kind === "next" ? "Next up" : "Waiting on blockers"}
+                {target.kind === "next" ? "Следующее" : "Waiting on blockers"}
               </div>
               <Link
                 to={createIssueDetailPath(targetPathId)}
@@ -1069,7 +1069,7 @@ export function IssuesList({
         })
         .map((key) => ({
           key,
-          label: key === "__no_parent" ? "No Parent" : (issueTitleMap.get(key) ?? key.slice(0, 8)),
+          label: key === "__no_parent" ? "Нет родителя" : (issueTitleMap.get(key) ?? key.slice(0, 8)),
           items: groups[key]!,
         }));
     }
@@ -1298,14 +1298,14 @@ export function IssuesList({
             <button
               className={`p-1.5 transition-colors ${viewState.viewMode === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               onClick={() => updateView({ viewMode: "list" })}
-              title="List view"
+              title="Список"
             >
               <List className="h-3.5 w-3.5" />
             </button>
             <button
               className={`p-1.5 transition-colors ${viewState.viewMode === "board" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               onClick={() => updateView({ viewMode: "board" })}
-              title="Board view"
+              title="Доска"
             >
               <Columns3 className="h-3.5 w-3.5" />
             </button>
@@ -1407,7 +1407,7 @@ export function IssuesList({
                     ["assignee", "Assignee"],
                     ["project", "Project"],
                     ["workspace", "Workspace"],
-                    ["parent", "Parent Issue"],
+                    ["parent", "Родительская задача"],
                     ["none", "None"],
                   ] as const).map(([value, label]) => (
                     <button

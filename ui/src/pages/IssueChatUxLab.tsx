@@ -220,7 +220,7 @@ export function IssueChatUxLab() {
 
       <LabSection
         id="working-tokens"
-        eyebrow="Status tokens"
+        eyebrow="Токены статуса"
         title="Working / Worked header verb"
         description='The "Working" token uses the shimmer-text gradient sweep to signal an active run. Once the run completes it becomes the static "Worked" token.'
         accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.06),transparent_28%),var(--background)]"
@@ -333,7 +333,7 @@ export function IssueChatUxLab() {
 
         <div className="space-y-6">
           <LabSection
-            eyebrow="Empty thread"
+            eyebrow="Пустой поток"
             title="Empty state and disabled composer"
             description="Keeps the message area visible even when there is no thread yet, and replaces the composer with an explicit warning when replies are blocked."
             accentClassName="bg-[linear-gradient(180deg,rgba(245,158,11,0.08),transparent_26%),var(--background)]"

@@ -51,7 +51,7 @@ const inviteHistory = [
     id: "invite-active",
     state: "Active",
     humanRole: "operator",
-    invitedBy: "Board User 25",
+    invitedBy: "Пользователь 25",
     email: "board25@paperclip.local",
     createdAt: "Apr 25, 2026, 9:00 AM",
     action: "Revoke",
@@ -61,7 +61,7 @@ const inviteHistory = [
     id: "invite-accepted",
     state: "Accepted",
     humanRole: "viewer",
-    invitedBy: "Board User 24",
+    invitedBy: "Пользователь 24",
     email: "board24@paperclip.local",
     createdAt: "Apr 24, 2026, 8:15 AM",
     action: "Inactive",
@@ -71,7 +71,7 @@ const inviteHistory = [
     id: "invite-revoked",
     state: "Revoked",
     humanRole: "admin",
-    invitedBy: "Board User 20",
+    invitedBy: "Пользователь 20",
     email: "board20@paperclip.local",
     createdAt: "Apr 20, 2026, 2:45 PM",
     action: "Inactive",
@@ -81,7 +81,7 @@ const inviteHistory = [
     id: "invite-expired",
     state: "Expired",
     humanRole: "owner",
-    invitedBy: "Board User 19",
+    invitedBy: "Пользователь 19",
     email: "board19@paperclip.local",
     createdAt: "Apr 19, 2026, 7:10 PM",
     action: "Inactive",
@@ -208,9 +208,9 @@ function InviteSummaryPanel({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <MetaCard label="Company" value="Acme Robotics" />
-        <MetaCard label="Приглашён" value="Board User" />
+        <MetaCard label="Приглашён" value="Пользователь доски" />
         <MetaCard label="Запрошен доступ" value={requestedAccess} />
-        <MetaCard label="Приглашение истекает" value="Mar 7, 2027" />
+        <MetaCard label="Приглашение истекает" value="7 марта 2027" />
       </div>
 
       {inviteMessage ? (
@@ -878,7 +878,7 @@ export function InviteUxLab() {
       </LabSection>
 
       <LabSection
-        eyebrow="Result states"
+        eyebrow="Состояния результатов"
         title="Approval and completion screens"
         description="These are the post-submit states returned from invite acceptance, including optional claim and onboarding metadata."
         accentClassName="bg-[linear-gradient(180deg,rgba(16,185,129,0.06),transparent_30%),var(--background)]"

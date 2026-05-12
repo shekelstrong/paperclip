@@ -12,7 +12,7 @@ export function ModeBadge({
 
   const label =
     deploymentMode === "local_trusted"
-      ? "Local trusted"
+      ? "Локальный доверенный"
       : `Authenticated ${deploymentExposure ?? "private"}`;
 
   return <Badge variant="outline">{label}</Badge>;

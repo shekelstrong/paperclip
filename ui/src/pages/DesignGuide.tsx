@@ -266,11 +266,11 @@ export function DesignGuide() {
 
         <SubSection title="Chart">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Swatch name="Chart 1" cssVar="--chart-1" />
-            <Swatch name="Chart 2" cssVar="--chart-2" />
-            <Swatch name="Chart 3" cssVar="--chart-3" />
-            <Swatch name="Chart 4" cssVar="--chart-4" />
-            <Swatch name="Chart 5" cssVar="--chart-5" />
+            <Swatch name="График 1" cssVar="--chart-1" />
+            <Swatch name="График 2" cssVar="--chart-2" />
+            <Swatch name="График 3" cssVar="--chart-3" />
+            <Swatch name="График 4" cssVar="--chart-4" />
+            <Swatch name="График 5" cssVar="--chart-5" />
           </div>
         </SubSection>
       </Section>
@@ -842,7 +842,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  ENTITY ROWS                                                  */}
       {/* ============================================================ */}
-      <Section title="Entity Rows">
+      <Section title="Строки сущностей">
         <div className="border border-border rounded-md">
           <EntityRow
             leading={
@@ -901,7 +901,7 @@ export function DesignGuide() {
       {/* ============================================================ */}
       {/*  FILTER BAR                                                   */}
       {/* ============================================================ */}
-      <Section title="Filter Bar">
+      <Section title="Панель фильтров">
         <FilterBar
           filters={filters}
           onRemove={(key) => setFilters((f) => f.filter((x) => x.key !== key))}
@@ -1031,7 +1031,7 @@ export function DesignGuide() {
           <EmptyState
             icon={Inbox}
             message="Нет элементов для отображения. Создайте первый, чтобы начать."
-            action="Create Item"
+            action="Создать элемент"
             onAction={() => {}}
           />
         </div>

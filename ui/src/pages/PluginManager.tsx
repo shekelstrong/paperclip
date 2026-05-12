@@ -125,7 +125,7 @@ export function PluginManager() {
     mutationFn: (pluginId: string) => pluginsApi.enable(pluginId),
     onSuccess: () => {
       invalidatePluginQueries();
-      pushToast({ title: "Plugin enabled", tone: "success" });
+      pushToast({ title: "Плагин включён", tone: "success" });
     },
     onError: (err: Error) => {
       pushToast({ title: "Failed to enable plugin", body: err.message, tone: "error" });
@@ -276,7 +276,7 @@ export function PluginManager() {
                           )}
                           <Button variant="outline" size="sm" asChild>
                             <Link to={`/instance/settings/plugins/${installedPlugin.id}`}>
-                              {installedPlugin.status === "ready" ? "Open Settings" : "Review"}
+                              {installedPlugin.status === "ready" ? "Открыть настройки" : "Review"}
                             </Link>
                           </Button>
                         </>

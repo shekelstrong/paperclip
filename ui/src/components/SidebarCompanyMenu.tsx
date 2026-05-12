@@ -301,7 +301,7 @@ export function SidebarCompanyMenu({ open: controlledOpen, onOpenChange }: Sideb
           >
             <UserPlus className="size-4" />
             <span className="truncate">
-              {selectedCompany ? `Invite people to ${selectedCompany.name}` : "Invite people"}
+              {selectedCompany ? `Invite people to ${selectedCompany.name}` : "Пригласить людей"}
             </span>
           </Link>
         </DropdownMenuItem>

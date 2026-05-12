@@ -114,7 +114,7 @@ export function ExecutionWorkspaceCloseDialog({
                   ? "Close is blocked"
                   : readiness.state === "ready_with_warnings"
                     ? "Close is allowed with warnings"
-                    : "Close is ready"}
+                    : "Закрытие готово"}
               </div>
               <div className="mt-1 text-xs opacity-80">
                 {readiness.isSharedWorkspace

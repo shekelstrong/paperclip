@@ -255,7 +255,7 @@ export function PluginSettings() {
                 <div className="rounded-md border border-border/60 bg-muted/20 px-4 py-3 text-sm">
                   <p className="font-medium text-foreground">Configure this plugin from Company Environments.</p>
                   <p className="mt-1 text-muted-foreground">
-                    {driverLabel || "This plugin"} registers environment runtime settings there so credentials stay
+                    {driverLabel || "Этот плагин"} registers environment runtime settings there so credentials stay
                     company-scoped instead of instance-global.
                   </p>
                   <div className="mt-3">
@@ -717,7 +717,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
         <FolderStatusMetric label="Readable" value={status?.readable ? "Yes" : "No"} ok={!!status?.readable} />
         <FolderStatusMetric
           label="Writable"
-          value={access === "read" ? "Not requested" : status?.writable ? "Yes" : "No"}
+          value={access === "read" ? "Не запрошено" : status?.writable ? "Yes" : "No"}
           ok={access === "read" || !!status?.writable}
         />
       </div>
@@ -830,7 +830,7 @@ function FolderRequirements({
         title="Required files"
         items={requiredFiles}
         missingItems={missingFiles}
-        missingLabel="Missing files"
+        missingLabel="Отсутствуют файлы"
         inspectionUnavailable={rootNotInspected}
       />
     </div>

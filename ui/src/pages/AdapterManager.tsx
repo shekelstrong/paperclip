@@ -151,7 +151,7 @@ function AdapterRow({
               variant="outline"
               size="icon-sm"
               className="h-8 w-8 text-destructive hover:text-destructive"
-              title="Remove adapter"
+              title="Удалить адаптер"
               onClick={() => onRemove(adapter.type)}
             >
               <Trash2 className="h-4 w-4" />
@@ -297,7 +297,7 @@ export function AdapterManager() {
       });
     },
     onError: (err: Error) => {
-      pushToast({ title: "Install failed", body: err.message, tone: "error" });
+      pushToast({ title: "Установка не удалась", body: err.message, tone: "error" });
     },
   });
 
@@ -308,7 +308,7 @@ export function AdapterManager() {
       pushToast({ title: "Adapter removed", tone: "success" });
     },
     onError: (err: Error) => {
-      pushToast({ title: "Removal failed", body: err.message, tone: "error" });
+      pushToast({ title: "Удаление не удалось", body: err.message, tone: "error" });
     },
   });
 
@@ -319,7 +319,7 @@ export function AdapterManager() {
       invalidate();
     },
     onError: (err: Error) => {
-      pushToast({ title: "Toggle failed", body: err.message, tone: "error" });
+      pushToast({ title: "Переключение не удалось", body: err.message, tone: "error" });
     },
   });
 
@@ -347,7 +347,7 @@ export function AdapterManager() {
       });
     },
     onError: (err: Error) => {
-      pushToast({ title: "Reload failed", body: err.message, tone: "error" });
+      pushToast({ title: "Перезагрузка не удалась", body: err.message, tone: "error" });
     },
   });
 

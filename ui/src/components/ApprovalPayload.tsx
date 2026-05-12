@@ -3,9 +3,9 @@ import { formatCents } from "../lib/utils";
 
 export const typeLabel: Record<string, string> = {
   hire_agent: "Нанять агента",
-  approve_ceo_strategy: "CEO Strategy",
+  approve_ceo_strategy: "Стратегия CEO",
   budget_override_required: "Budget Override",
-  request_board_approval: "Board Approval",
+  request_board_approval: "Утверждение доски",
 };
 
 function firstNonEmptyString(...values: unknown[]): string | null {

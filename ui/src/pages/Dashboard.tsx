@@ -266,7 +266,7 @@ export function Dashboard() {
             <MetricCard
               icon={DollarSign}
               value={formatCents(data.costs.monthSpendCents)}
-              label="Month Spend"
+              label="Расход за месяц"
               to="/costs"
               description={
                 <span>

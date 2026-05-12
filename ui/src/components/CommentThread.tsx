@@ -1029,7 +1029,7 @@ export function CommentThread({
                   size="icon-sm"
                   onClick={() => attachInputRef.current?.click()}
                   disabled={attaching}
-                  title="Attach image"
+                  title="Прикрепить изображение"
                 >
                   <Paperclip className="h-4 w-4" />
                 </Button>

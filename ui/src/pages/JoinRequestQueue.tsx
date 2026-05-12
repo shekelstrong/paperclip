@@ -22,7 +22,7 @@ export function JoinRequestQueue() {
     setBreadcrumbs([
       { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
       { label: "Inbox", href: "/inbox" },
-      { label: "Join Requests" },
+      { label: "Запросы на присоединение" },
     ]);
   }, [selectedCompany?.name, setBreadcrumbs]);
 

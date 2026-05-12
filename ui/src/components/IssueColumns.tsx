@@ -28,9 +28,9 @@ const issueColumnLabels: Record<InboxIssueColumn, string> = {
   assignee: "Assignee",
   project: "Project",
   workspace: "Workspace",
-  parent: "Parent issue",
+  parent: "Родительская задача",
   labels: "Tags",
-  updated: "Last updated",
+  updated: "Последнее обновление",
 };
 
 const issueColumnDescriptions: Record<InboxIssueColumn, string> = {

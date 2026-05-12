@@ -31,7 +31,7 @@ export function TriggerListCard({
     ? describeSchedule(trigger.cronExpression)
     : isWebhook
       ? `Webhook${trigger.publicId ? ` · ${trigger.publicId}` : ""}`
-      : "API trigger";
+      : "API триггер";
 
   const nextRun = isSchedule && trigger.enabled && trigger.nextRunAt
     ? new Date(trigger.nextRunAt).toLocaleString(undefined, {
@@ -117,7 +117,7 @@ export function TriggerListCard({
 
       <div className="mt-3 flex items-center justify-end gap-1 border-t border-border pt-2">
         {isWebhook && onRotateSecret && (
-          <Button variant="ghost" size="xs" onClick={onRotateSecret} title="Rotate secret">
+          <Button variant="ghost" size="xs" onClick={onRotateSecret} title="Ротировать секрет">
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         )}

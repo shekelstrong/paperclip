@@ -17,7 +17,7 @@ export function ReportsToPicker({
   disabled = false,
   excludeAgentIds = [],
   disabledEmptyLabel = "Reports to: N/A (CEO)",
-  chooseLabel = "Reports to...",
+  chooseLabel = "Подчиняется...",
 }: {
   agents: Agent[];
   value: string | null;

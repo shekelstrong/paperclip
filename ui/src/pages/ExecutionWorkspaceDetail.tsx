@@ -737,7 +737,7 @@ export function ExecutionWorkspaceDetail() {
               { value: "issues", label: "Issues" },
               { value: "services", label: "Services" },
               { value: "configuration", label: "Configuration" },
-              { value: "runtime_logs", label: "Runtime logs" },
+              { value: "runtime_logs", label: "Логи выполнения" },
               { value: "routines", label: "Routines" },
             ]}
             align="start"
@@ -804,7 +804,7 @@ export function ExecutionWorkspaceDetail() {
                 <div className="space-y-4">
                   <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Source control</div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Branch name" hint="Useful for isolated worktrees">
+                    <Field label="Название ветки" hint="Useful for isolated worktrees">
                       <Input
                         className="font-mono"
                         value={form.branchName}
@@ -1015,7 +1015,7 @@ export function ExecutionWorkspaceDetail() {
                   "None"
                 )}
               </DetailRow>
-              <DetailRow label="Derived from">
+              <DetailRow label="Произведено от">
                 {derivedWorkspace ? (
                   <Link to={executionWorkspaceTabPath(derivedWorkspace.id, "configuration")} className="hover:underline">
                     {derivedWorkspace.name}
@@ -1038,10 +1038,10 @@ export function ExecutionWorkspaceDetail() {
                 <CardDescription>Paths and refs</CardDescription>
               </CardHeader>
               <CardContent>
-              <DetailRow label="Working dir">
+              <DetailRow label="Рабочая директория">
                 {workspace.cwd ? <MonoValue value={workspace.cwd} copy /> : "None"}
               </DetailRow>
-              <DetailRow label="Provider ref">
+              <DetailRow label="Реф провайдера">
                 {workspace.providerRef ? <MonoValue value={workspace.providerRef} copy /> : "None"}
               </DetailRow>
               <DetailRow label="URL репозитория">
@@ -1068,11 +1068,11 @@ export function ExecutionWorkspaceDetail() {
                 {workspace.branchName ? <MonoValue value={workspace.branchName} copy /> : "None"}
               </DetailRow>
               <DetailRow label="Opened">{formatDateTime(workspace.openedAt)}</DetailRow>
-              <DetailRow label="Last used">{formatDateTime(workspace.lastUsedAt)}</DetailRow>
+              <DetailRow label="Последнее использование">{formatDateTime(workspace.lastUsedAt)}</DetailRow>
               <DetailRow label="Cleanup">
                 {workspace.cleanupEligibleAt
                   ? `${formatDateTime(workspace.cleanupEligibleAt)}${workspace.cleanupReason ? ` · ${workspace.cleanupReason}` : ""}`
-                  : "Not scheduled"}
+                  : "Не запланировано"}
               </DetailRow>
               </CardContent>
             </Card>

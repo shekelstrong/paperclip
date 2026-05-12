@@ -99,7 +99,7 @@ function workspaceModeLabel(mode: string | null | undefined) {
   switch (mode) {
     case "isolated_workspace": return "Isolated workspace";
     case "operator_branch": return "Operator branch";
-    case "cloud_sandbox": return "Cloud sandbox";
+    case "cloud_sandbox": return "Облачная песочница";
     case "adapter_managed": return "Adapter managed";
     default: return "Workspace";
   }
@@ -532,7 +532,7 @@ export function IssueWorkspaceCard({
                       : "Select an existing workspace to inspect its environment"
                     : projectEnvironmentId
                       ? "Project default environment"
-                      : "No environment"}
+                      : "Нет окружения"}
                 </option>
                 {runSelectableEnvironments.map((environment) => (
                   <option key={environment.id} value={environment.id}>

@@ -151,7 +151,7 @@ export function ResizableSidebarPane({
       {resizable && open ? (
         <div
           role="separator"
-          aria-label="Resize sidebar"
+          aria-label="Изменить размер сайдбара"
           aria-orientation="vertical"
           aria-valuemin={MIN_SIDEBAR_WIDTH}
           aria-valuemax={MAX_SIDEBAR_WIDTH}

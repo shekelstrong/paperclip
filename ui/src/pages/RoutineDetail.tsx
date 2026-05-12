@@ -580,7 +580,7 @@ export function RoutineDetail() {
         });
       } else {
         pushToast({
-          title: "Trigger added",
+          title: "Триггер добавлен",
           body: "The routine schedule was saved.",
           tone: "success",
         });
@@ -604,7 +604,7 @@ export function RoutineDetail() {
     mutationFn: ({ id, patch }: { id: string; patch: Record<string, unknown> }) => routinesApi.updateTrigger(id, patch),
     onSuccess: async () => {
       pushToast({
-        title: "Trigger saved",
+        title: "Триггер сохранён",
         body: "The routine cadence update was saved.",
         tone: "success",
       });
@@ -831,7 +831,7 @@ export function RoutineDetail() {
                 )}
                 <div className="flex items-center gap-2">
                   <Input value={entry.webhookUrl} readOnly className="flex-1" />
-                  <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook URL", entry.webhookUrl)}>
+                  <Button variant="outline" size="sm" onClick={() => copySecretValue("URL вебхука", entry.webhookUrl)}>
                     <Copy className="h-3.5 w-3.5 mr-1" />
                     URL
                   </Button>

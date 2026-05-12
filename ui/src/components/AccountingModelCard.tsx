@@ -10,14 +10,14 @@ const SURFACES = [
     tone: "from-sky-500/12 via-sky-500/6 to-transparent",
   },
   {
-    title: "Finance ledger",
+    title: "Финансовый реестр",
     description: "Account-level charges that are not one prompt-response pair.",
     icon: ReceiptText,
     points: ["top-ups, refunds, fees", "Bedrock provisioned or training charges", "credit expiries and adjustments"],
     tone: "from-amber-500/14 via-amber-500/6 to-transparent",
   },
   {
-    title: "Live quotas",
+    title: "Активные квоты",
     description: "Provider or biller windows that can stop traffic in real time.",
     icon: Gauge,
     points: ["provider quota windows", "biller credit systems", "errors surfaced directly"],

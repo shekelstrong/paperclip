@@ -28,7 +28,7 @@ import { useToast } from "@/context/ToastContext";
 import { queryKeys } from "@/lib/queryKeys";
 
 const permissionLabels: Record<PermissionKey, string> = {
-  "agents:create": "Create agents",
+  "agents:create": "Создать агентов",
   "users:invite": "Invite humans and agents",
   "users:manage_permissions": "Manage members and grants",
   "tasks:assign": "Назначать задачи",
@@ -328,8 +328,8 @@ export function CompanyAccess() {
                       : "Метаданные приглашения недоступны"
                   }
                   detail={`Submitted ${new Date(request.createdAt).toLocaleString()}`}
-                  approveLabel="Approve human"
-                  rejectLabel="Reject human"
+                  approveLabel="Утвердить человека"
+                  rejectLabel="Отклонить человека"
                   disabled={joinRequestActionPending}
                   onApprove={() => approveJoinRequestMutation.mutate(request.id)}
                   onReject={() => rejectJoinRequestMutation.mutate(request.id)}
@@ -521,7 +521,7 @@ export function CompanyAccess() {
               }}
               disabled={updateMemberMutation.isPending}
             >
-              {updateMemberMutation.isPending ? "Saving…" : "Save access"}
+              {updateMemberMutation.isPending ? "Saving…" : "Сохранить доступ"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -607,7 +607,7 @@ export function CompanyAccess() {
               }}
               disabled={archiveMemberMutation.isPending || assignedIssuesQuery.isLoading}
             >
-              {archiveMemberMutation.isPending ? "Removing..." : "Remove member"}
+              {archiveMemberMutation.isPending ? "Removing..." : "Удалить участника"}
             </Button>
           </DialogFooter>
         </DialogContent>

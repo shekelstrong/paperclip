@@ -24,11 +24,11 @@ const sections: ShortcutSection[] = [
       { keys: ["a"], label: "Архивировать элемент" },
       { keys: ["y"], label: "Архивировать элемент" },
       { keys: ["r"], label: "Отметить прочитанным" },
-      { keys: ["U"], label: "Mark as unread" },
+      { keys: ["U"], label: "Отметить непрочитанным" },
     ],
   },
   {
-    title: "Issue detail",
+    title: "Детали задачи",
     shortcuts: [
       { keys: ["y"], label: "Quick-archive back to inbox" },
       { keys: ["g", "i"], label: "Перейти к входящим" },
@@ -39,9 +39,9 @@ const sections: ShortcutSection[] = [
     title: "Global",
     shortcuts: [
       { keys: ["/"], label: "Search current page or quick search" },
-      { keys: ["c"], label: "New issue" },
-      { keys: ["["], label: "Toggle sidebar" },
-      { keys: ["]"], label: "Toggle panel" },
+      { keys: ["c"], label: "Новая задача" },
+      { keys: ["["], label: "Переключить сайдбар" },
+      { keys: ["]"], label: "Переключить панель" },
       { keys: ["?"], label: "Show keyboard shortcuts" },
     ],
   },

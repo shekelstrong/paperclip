@@ -44,7 +44,7 @@ const HANDOFF_METADATA: SystemNoticeMetadataSection[] = [
       },
       {
         kind: "run",
-        label: "Recovery run",
+        label: "Восстановительный запуск",
         runId: "61fdb79b-8012-4676-ac71-2971830e126a",
         href: "/PAP/agents/codexcoder/runs/61fdb79b-8012-4676-ac71-2971830e126a",
         status: "failed",
@@ -77,24 +77,24 @@ const REQUIRED_METADATA: SystemNoticeMetadataSection[] = [
       },
       {
         kind: "text",
-        label: "Next step",
+        label: "Следующий шаг",
         value: "Pick done, blocked, or in_review and post a one-line rationale.",
       },
     ],
   },
   {
-    title: "Run context",
+    title: "Контекст запуска",
     rows: [
       {
         kind: "run",
-        label: "Successful run",
+        label: "Успешный запуск",
         runId: "9cdba892-c7ca-4d93-8604-4843873b127c",
         href: "/PAP/agents/codexcoder/runs/9cdba892-c7ca-4d93-8604-4843873b127c",
         status: "succeeded",
       },
       {
         kind: "code",
-        label: "Status before",
+        label: "Статус до",
         value: "in_progress",
       },
     ],
@@ -106,7 +106,7 @@ const NEUTRAL_METADATA: SystemNoticeMetadataSection[] = [
     rows: [
       {
         kind: "agent",
-        label: "Reassigned to",
+        label: "Переназначено",
         name: "ClaudeFixer",
         href: "/PAP/agents/claudefixer",
       },

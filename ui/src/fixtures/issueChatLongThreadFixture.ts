@@ -198,9 +198,9 @@ export const issueChatLongThreadFixtureContext = {
   },
   documents: [
     "Implementation Plan",
-    "Profiler Notes",
+    "Заметки профайлера",
     "Release Checklist",
-    "QA Readout",
+    "QA отчёт",
   ],
   subIssues: [
     "Phase 1: Add long-thread perf fixture and baseline",
@@ -212,6 +212,6 @@ export const issueChatLongThreadFixtureContext = {
     ["Comments", String(LONG_THREAD_COMMENT_COUNT)],
     ["Markdown bodies", String(LONG_THREAD_MARKDOWN_COMMENT_COUNT)],
     ["Timeline events", String(LONG_THREAD_EVENT_COUNT)],
-    ["Linked runs", String(LONG_THREAD_LINKED_RUN_COUNT)],
+    ["Связанные запуски", String(LONG_THREAD_LINKED_RUN_COUNT)],
   ],
 } as const;

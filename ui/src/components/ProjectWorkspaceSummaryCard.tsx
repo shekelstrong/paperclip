@@ -161,7 +161,7 @@ export function ProjectWorkspaceSummaryCard({
                     </CopyText>
                     <CopyText
                       text={summary.branchName}
-                      ariaLabel="Copy branch"
+                      ariaLabel="Копировать ветку"
                       className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
                       copiedLabel="Ветка скопирована"
                     >
@@ -189,7 +189,7 @@ export function ProjectWorkspaceSummaryCard({
                     </CopyText>
                     <CopyText
                       text={summary.cwd}
-                      ariaLabel="Copy path"
+                      ariaLabel="Копировать путь"
                       className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
                       copiedLabel="Путь скопирован"
                     >

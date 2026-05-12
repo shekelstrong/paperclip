@@ -21,7 +21,7 @@ export type RunRetryStateSummary = {
 const RETRY_REASON_LABELS: Record<string, string> = {
   transient_failure: "Transient failure",
   missing_issue_comment: "Missing issue comment",
-  process_lost: "Process lost",
+  process_lost: "Процесс потерян",
   assignment_recovery: "Восстановление назначения",
   issue_continuation_needed: "Требуется продолжение",
   max_turns_continuation: "Продолжение по макс. ходам",
@@ -90,7 +90,7 @@ export function describeRunRetryState(run: RetryAwareRun): RunRetryStateSummary 
 
   return {
     kind: "attempted",
-    badgeLabel: isMaxTurnContinuation ? "Continued run" : "Retried run",
+    badgeLabel: isMaxTurnContinuation ? "Продолженный запуск" : "Повторный запуск",
     tone: "border-slate-500/20 bg-slate-500/10 text-slate-700 dark:text-slate-300",
     detail: joinFragments([attemptLabel, reasonLabel]),
     secondary: null,

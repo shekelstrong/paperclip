@@ -304,7 +304,7 @@ export function SidebarProjects() {
           { type: "item", label: "Browse projects", icon: FolderOpen, href: "/projects" },
           { type: "separator" },
         ],
-        radioLabel: "Project sort",
+        radioLabel: "Сортировка проектов",
         radioChoices: PROJECT_SORT_CHOICES,
         radioValue: sortMode,
         onRadioValueChange: persistSortMode,

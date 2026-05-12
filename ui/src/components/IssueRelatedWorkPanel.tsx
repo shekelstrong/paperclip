@@ -100,7 +100,7 @@ export function IssueRelatedWorkPanel({
         emptyLabel="This issue does not reference any other tasks yet."
       />
       <Section
-        title="Referenced by"
+        title="Упоминается в"
         description="Other tasks that currently point at this issue."
         items={inbound}
         emptyLabel="No other tasks reference this issue yet."

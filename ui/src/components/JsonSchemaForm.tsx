@@ -746,7 +746,7 @@ const ArrayField = React.memo(({
           }}
         >
           <Plus className="mr-2 h-4 w-4" />
-          {isComplex ? "Add item" : "Add"}
+          {isComplex ? "Добавить" : "Add"}
         </Button>
       </div>
 

@@ -19,22 +19,22 @@ const surfaceOptions: Array<{
 }> = [
   {
     id: "detail",
-    label: "Run Detail",
+    label: "Детали запуска",
     eyebrow: "Full transcript",
     description: "The long-form run page with the `Nice | Raw` toggle and the most inspectable transcript view.",
     icon: MonitorCog,
   },
   {
     id: "live",
-    label: "Issue Widget",
-    eyebrow: "Live stream",
+    label: "Виджет задачи",
+    eyebrow: "Прямой эфир",
     description: "The issue-detail live run widget, optimized for following an active run without leaving the task page.",
     icon: RadioTower,
   },
   {
     id: "dashboard",
-    label: "Dashboard Card",
-    eyebrow: "Dense card",
+    label: "Карточка дашборда",
+    eyebrow: "Компактная карточка",
     description: "The active-agents dashboard card, tuned for compact scanning while keeping the same transcript language.",
     icon: PanelsTopLeft,
   },

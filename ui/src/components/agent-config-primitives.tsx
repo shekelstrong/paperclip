@@ -423,7 +423,7 @@ export function ChoosePathButton() {
               <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
                 <li>Find the folder in File Explorer.</li>
                 <li>Hold <kbd>Shift</kbd> and right-click the folder.</li>
-                <li>Click "Copy as path".</li>
+                <li>Click "Копировать как путь".</li>
                 <li>Paste the result into the path input.</li>
               </ol>
               <p className="rounded-md bg-muted px-2 py-1 font-mono text-xs">

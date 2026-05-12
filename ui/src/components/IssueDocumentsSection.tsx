@@ -726,7 +726,7 @@ export function IssueDocumentsSection({
             onChange={(event) =>
               setDraft((current) => current ? { ...current, key: event.target.value.toLowerCase() } : current)
             }
-            placeholder="Document key"
+            placeholder="Ключ документа"
           />
           {newDocumentKeyError && (
             <p className="text-xs text-destructive">{newDocumentKeyError}</p>
@@ -905,7 +905,7 @@ export function IssueDocumentsSection({
                       "text-muted-foreground transition-colors",
                       copiedDocumentKey === doc.key && "text-foreground",
                     )}
-                    title={copiedDocumentKey === doc.key ? "Copied" : "Copy document"}
+                    title={copiedDocumentKey === doc.key ? "Copied" : "Копировать документ"}
                     onClick={() => void copyDocumentBody(doc.key, displayedBody)}
                   >
                     {copiedDocumentKey === doc.key ? (
@@ -1034,7 +1034,7 @@ export function IssueDocumentsSection({
                               )
                             }
                           >
-                            {activeConflict.showRemote ? "Hide remote" : "Review remote"}
+                            {activeConflict.showRemote ? "Скрыть удалённое" : "Просмотреть удалённое"}
                           </Button>
                           <Button
                             variant="outline"
@@ -1131,7 +1131,7 @@ export function IssueDocumentsSection({
                         ? "Viewing historical revision"
                         : activeDraft
                           ? activeConflict
-                          ? "Out of date"
+                          ? "Устарело"
                           : autosaveDocumentKey === doc.key
                             ? autosaveState === "saving"
                               ? "Autosaving..."

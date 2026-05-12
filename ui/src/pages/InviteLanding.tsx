@@ -414,7 +414,7 @@ export function InviteLandingPage() {
   const joinButtonLabel = useMemo(() => {
     if (!invite) return "Continue";
     if (invite.inviteType === "bootstrap_ceo") return "Принять приглашение";
-    if (showsAgentForm) return "Submit request";
+    if (showsAgentForm) return "Отправить запрос";
     return sessionQuery.data ? "Принять приглашение" : "Continue";
   }, [invite, sessionQuery.data, showsAgentForm]);
 
@@ -578,7 +578,7 @@ export function InviteLandingPage() {
               <div className="border border-zinc-800 p-3">
                 <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Requested access</div>
                 <div className="mt-1 text-sm text-zinc-100">
-                  {showsAgentForm ? "Заявка агента" : requestedHumanRole ?? "Company access"}
+                  {showsAgentForm ? "Заявка агента" : requestedHumanRole ?? "Доступ к компании"}
                 </div>
               </div>
               <div className="border border-zinc-800 p-3">

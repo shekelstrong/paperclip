@@ -80,7 +80,7 @@ function isCompanySearchScope(value: string | null): value is CompanySearchScope
 }
 
 function describeScope(scope: CompanySearchScope) {
-  if (scope === "all") return "All scopes";
+  if (scope === "all") return "Все области";
   return SCOPE_LABELS[scope];
 }
 
@@ -343,14 +343,14 @@ export function Search() {
               }
             }}
             placeholder="Search issues, comments, documents, agents, projects…"
-            aria-label="Search query"
+            aria-label="Поисковый запрос"
             className="h-10 pl-9 pr-20 text-sm"
           />
           {draftQuery.length > 0 ? (
             <button
               type="button"
               onClick={handleClear}
-              aria-label="Clear search"
+              aria-label="Очистить поиск"
               className="absolute right-12 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-accent/50"
             >
               <X className="h-3.5 w-3.5" />

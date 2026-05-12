@@ -531,7 +531,7 @@ export function Routines() {
                     {([
                       ["updated", "Updated"],
                       ["created", "Created"],
-                      ["lastRun", "Last run"],
+                      ["lastRun", "Последний запуск"],
                       ["title", "Title"],
                     ] as const).map(([field, label]) => (
                       <button
@@ -851,7 +851,7 @@ export function Routines() {
                 }
               >
                 <Plus className="mr-2 h-4 w-4" />
-                {createRoutine.isPending ? "Creating..." : "Create routine"}
+                {createRoutine.isPending ? "Creating..." : "Создать процедуру"}
               </Button>
               {createRoutine.isError ? (
                 <p className="text-sm text-destructive">

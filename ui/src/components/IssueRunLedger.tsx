@@ -81,12 +81,12 @@ const LIVENESS_COPY: Record<RunLivenessState, LivenessCopy> = {
     description: "Run produced concrete evidence of progress.",
   },
   plan_only: {
-    label: "Plan only",
+    label: "Только план",
     tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
     description: "Run described future work without concrete action evidence.",
   },
   empty_response: {
-    label: "Empty response",
+    label: "Пустой ответ",
     tone: "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300",
     description: "Run finished without useful output.",
   },
@@ -137,11 +137,11 @@ type RunOutputSilenceCopy = {
 
 const RUN_OUTPUT_SILENCE_COPY: Partial<Record<RunOutputSilenceLevel, RunOutputSilenceCopy>> = {
   suspicious: {
-    label: "Silence watch",
+    label: "Тихое наблюдение",
     tone: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
   },
   critical: {
-    label: "Stale run",
+    label: "Устаревший запуск",
     tone: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300",
   },
   snoozed: {
@@ -325,9 +325,9 @@ function stopStatusLabel(run: LedgerRun, stopReason: string | null) {
   if (stopReason) return stopReason;
   if (run.status === "scheduled_retry") return "Повтор в ожидании";
   if (run.status === "queued") return "Waiting to start";
-  if (run.status === "running") return "Still running";
+  if (run.status === "running") return "Всё ещё работает";
   if (!run.livenessState) return "Unavailable";
-  return "No stop reason";
+  return "Нет причины остановки";
 }
 
 function lastUsefulActionLabel(run: LedgerRun) {

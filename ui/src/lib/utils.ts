@@ -166,13 +166,13 @@ export function visibleRunCostUsd(
 export function financeEventKindDisplayName(eventKind: FinanceEventKind): string {
   const map: Record<FinanceEventKind, string> = {
     inference_charge: "Inference charge",
-    platform_fee: "Platform fee",
+    platform_fee: "Платёж за платформу",
     credit_purchase: "Credit purchase",
-    credit_refund: "Credit refund",
-    credit_expiry: "Credit expiry",
+    credit_refund: "Возврат кредитов",
+    credit_expiry: "Истечение кредитов",
     byok_fee: "Комиссия BYOK",
     gateway_overhead: "Gateway overhead",
-    log_storage_charge: "Log storage",
+    log_storage_charge: "Хранение логов",
     logpush_charge: "Logpush",
     provisioned_capacity_charge: "Provisioned capacity",
     training_charge: "Training",

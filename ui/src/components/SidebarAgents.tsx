@@ -101,7 +101,7 @@ function SidebarAgentItem({
   const isActive = activeAgentId === routeRef;
   const isPaused = agent.status === "paused";
   const isBudgetPaused = isPaused && agent.pauseReason === "budget";
-  const pauseResumeLabel = isPaused ? "Resume agent" : "Pause agent";
+  const pauseResumeLabel = isPaused ? "Возобновить агента" : "Приостановить агента";
   const pauseResumeDisabled = disabled || agent.status === "pending_approval" || isBudgetPaused;
   const pauseResumeDisabledLabel = disabled
     ? "Updating..."
@@ -355,7 +355,7 @@ export function SidebarAgents() {
       menu={{
         ariaLabel: "Agents section actions",
         actions: [
-          { type: "item", label: "Browse agents", icon: Users, href: "/agents/all" },
+          { type: "item", label: "Обзор агентов", icon: Users, href: "/agents/all" },
           { type: "separator" },
         ],
         radioLabel: "Сортировка агентов",

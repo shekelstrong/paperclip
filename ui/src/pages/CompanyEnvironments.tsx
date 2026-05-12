@@ -506,7 +506,7 @@ export function CompanyEnvironments() {
                       ) : null}
                       {environment.driver === "ssh" ? (
                         <div className="text-xs text-muted-foreground">
-                          {typeof environment.config.host === "string" ? environment.config.host : "SSH host"} ·{" "}
+                          {typeof environment.config.host === "string" ? environment.config.host : "SSH хост"} ·{" "}
                           {typeof environment.config.username === "string" ? environment.config.username : "user"}
                         </div>
                       ) : environment.driver === "sandbox" ? (
@@ -536,7 +536,7 @@ export function CompanyEnvironments() {
                             ? "Testing..."
                             : environment.driver === "ssh"
                               ? "Test connection"
-                              : "Test provider"}
+                              : "Тест провайдера"}
                         </Button>
                       ) : null}
                       <Button
@@ -664,7 +664,7 @@ export function CompanyEnvironments() {
                       setEnvironmentForm((current) => ({ ...current, sshRemoteWorkspacePath: e.target.value }))}
                   />
                 </Field>
-                <Field label="Private key" hint="Optional PEM private key. Leave blank to rely on the server's SSH agent or default keychain.">
+                <Field label="Приватный ключ" hint="Optional PEM private key. Leave blank to rely on the server's SSH agent or default keychain.">
                   <div className="space-y-2">
                     <select
                       className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
@@ -689,7 +689,7 @@ export function CompanyEnvironments() {
                     />
                   </div>
                 </Field>
-                <Field label="Known hosts" hint="Optional known_hosts block used when strict host key checking is enabled.">
+                <Field label="Известные хосты" hint="Optional known_hosts block used when strict host key checking is enabled.">
                   <textarea
                     className="h-32 w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-mono outline-none"
                     value={environmentForm.sshKnownHosts}
@@ -790,7 +790,7 @@ export function CompanyEnvironments() {
                   onClick={() => draftEnvironmentProbeMutation.mutate(environmentForm)}
                   disabled={draftEnvironmentProbeMutation.isPending || !environmentFormValid}
                 >
-                  {draftEnvironmentProbeMutation.isPending ? "Testing..." : "Test draft"}
+                  {draftEnvironmentProbeMutation.isPending ? "Testing..." : "Тест черновика"}
                 </Button>
               ) : null}
               {environmentMutation.isError ? (

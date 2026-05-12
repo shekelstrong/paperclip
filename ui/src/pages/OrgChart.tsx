@@ -512,7 +512,7 @@ export function OrgChart() {
           <button
             className="flex size-9 items-center justify-center rounded border border-border bg-background text-[10px] transition-colors hover:bg-accent sm:size-7"
             onClick={fitToScreen}
-            title="Fit to screen"
+            title="По размеру экрана"
             aria-label="Fit chart to screen"
           >
             <Maximize2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />

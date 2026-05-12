@@ -173,7 +173,7 @@ export function OpenClawGatewayConfigFields({
           </Field>
 
           {sessionStrategy === "fixed" && (
-            <Field label="Session key">
+            <Field label="Ключ сессии">
               <DraftInput
                 value={eff("adapterConfig", "sessionKey", String(config.sessionKey ?? "paperclip"))}
                 onCommit={(v) => mark("adapterConfig", "sessionKey", v || undefined)}
@@ -234,7 +234,7 @@ export function OpenClawGatewayConfigFields({
             />
           </Field>
 
-          <Field label="Device auth">
+          <Field label="Авторизация устройства">
             <div className="text-xs text-muted-foreground leading-relaxed">
               Always enabled for gateway agents. Paperclip persists a device key during onboarding so pairing approvals
               remain stable across runs.

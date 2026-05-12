@@ -90,7 +90,7 @@ const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
   },
   pi_local: {
     label: "Pi",
-    description: "Local Pi agent",
+    description: "Локальный агент Pi",
     icon: Terminal,
   },
   cursor: {

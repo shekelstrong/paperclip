@@ -87,7 +87,7 @@ function createSuggestTasksInteraction(
             "Show comments, activity, live runs, and interaction cards in one chronological feed.",
           priority: "medium",
           assigneeAgentId: "agent-codex",
-          labels: ["Issue thread"],
+          labels: ["Поток задачи"],
         },
         {
           clientKey: "hidden-follow-up",
@@ -128,7 +128,7 @@ function createAskUserQuestionsInteraction(
     payload: {
       version: 1,
       title: "Before I wire the persistence layer, which preview behavior do you want?",
-      submitLabel: "Send answers",
+      submitLabel: "Отправить ответы",
       questions: [
         {
           id: "collapse-depth",
@@ -342,8 +342,8 @@ export const disabledDeclineReasonRequestConfirmationInteraction = createRequest
   payload: {
     version: 1,
     prompt: "Close this low-risk follow-up as unnecessary?",
-    acceptLabel: "Close it",
-    rejectLabel: "Keep it",
+    acceptLabel: "Закрыть",
+    rejectLabel: "Оставить",
     allowDeclineReason: false,
   },
 });

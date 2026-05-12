@@ -62,7 +62,7 @@ export function IssueMonitorActivityCard({
             onClick={onCheckNow}
             disabled={checkingNow}
           >
-            {checkingNow ? "Checking..." : "Check now"}
+            {checkingNow ? "Checking..." : "Проверить"}
           </Button>
         ) : null}
       </div>

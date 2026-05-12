@@ -454,7 +454,7 @@ function SuggestTasksCard({
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>{totalTasks === 1 ? "1 draft issue" : `${totalTasks} draft issues`}</span>
         {interaction.payload.defaultParentId ? (
-          <TaskField label="Default parent" value={interaction.payload.defaultParentId} tone="subtle" />
+          <TaskField label="Родитель по умолчанию" value={interaction.payload.defaultParentId} tone="subtle" />
         ) : null}
       </div>
 
@@ -530,7 +530,7 @@ function SuggestTasksCard({
                     Accepting...
                   </>
                 ) : (
-                  selectedCount === totalTasks ? "Accept drafts" : "Accept selected drafts"
+                  selectedCount === totalTasks ? "Принять черновики" : "Accept selected drafts"
                 )}
               </Button>
               <Button
@@ -575,7 +575,7 @@ function SuggestTasksCard({
                       Saving...
                     </>
                   ) : (
-                    "Save rejection"
+                    "Сохранить отклонение"
                   )}
                 </Button>
               </div>
@@ -760,7 +760,7 @@ function AskUserQuestionsCard({
                   ) : null}
                 </div>
                 <TaskField
-                  label={question.selectionMode === "single" ? "Pick" : "Pick many"}
+                  label={question.selectionMode === "single" ? "Pick" : "Выбрать несколько"}
                   value={question.required ? "Required" : "Optional"}
                   tone="subtle"
                 />
@@ -820,7 +820,7 @@ function AskUserQuestionsCard({
                     Submitting...
                   </>
                 ) : (
-                  interaction.payload.submitLabel ?? "Submit answers"
+                  interaction.payload.submitLabel ?? "Отправить ответы"
                 )}
               </Button>
             </div>
@@ -1251,7 +1251,7 @@ export function IssueThreadInteractionCard({
                 <ListChecks className="h-3.5 w-3.5" />
                 {interaction.continuationPolicy === "wake_assignee_on_accept"
                   ? "Wakes on confirm"
-                  : "Wakes assignee"}
+                  : "Будит исполнителя"}
               </span>
             ) : null}
           </div>

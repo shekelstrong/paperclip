@@ -415,7 +415,7 @@ function CodeBlock({
       <button
         type="button"
         onClick={handleCopy}
-        aria-label="Copy code"
+        aria-label="Копировать код"
         title={label}
         className="paperclip-markdown-codeblock-copy"
         data-copied={copied || undefined}

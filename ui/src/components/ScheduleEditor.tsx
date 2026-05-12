@@ -8,12 +8,12 @@ type SchedulePreset = "every_minute" | "every_hour" | "every_day" | "weekdays" |
 
 const PRESETS: { value: SchedulePreset; label: string }[] = [
   { value: "every_minute", label: "Каждую минуту" },
-  { value: "every_hour", label: "Every hour" },
-  { value: "every_day", label: "Every day" },
+  { value: "every_hour", label: "Каждый час" },
+  { value: "every_day", label: "Каждый день" },
   { value: "weekdays", label: "Weekdays" },
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },
-  { value: "custom", label: "Custom (cron)" },
+  { value: "custom", label: "Пользовательский (cron)" },
 ];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => ({

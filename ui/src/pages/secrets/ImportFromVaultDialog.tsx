@@ -877,7 +877,7 @@ function SelectStep(props: SelectStepProps) {
         <EmptyState
           icon={Cloud}
           message="No AWS provider vault configured. Add one to import secrets."
-          action={onManageVaults ? "Manage vaults" : undefined}
+          action={onManageVaults ? "Управлять хранилищами" : undefined}
           onAction={onManageVaults}
         />
       </div>
@@ -970,7 +970,7 @@ function SelectStep(props: SelectStepProps) {
             className="h-6 px-2 text-xs"
             onClick={() => onShowOnlySelectedChange(!showOnlySelected)}
           >
-            {showOnlySelected ? "Показать все" : "Show selected"}
+            {showOnlySelected ? "Показать все" : "Показать выбранные"}
           </Button>
         </div>
       )}

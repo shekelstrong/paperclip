@@ -171,7 +171,7 @@ const ISSUE_COMMENT_PAGE_SIZE = 50;
 const ISSUE_COMMENT_AUTOLOAD_LIMIT = ISSUE_COMMENT_PAGE_SIZE * 3;
 const JUMP_TO_LATEST_MAX_COMMENT_PAGES = 10;
 const TREE_CONTROL_MODE_LABEL: Record<IssueTreeControlMode, string> = {
-  pause: "Pause subtree",
+  pause: "Приостановить поддерево",
   resume: "Возобновить поддерево",
   cancel: "Cancel subtree",
   restore: "Восстановить поддерево",
@@ -533,7 +533,7 @@ function InboxMobileToolbar({
             navigate(backHref);
           }
         }}
-        aria-label="Back to inbox"
+        aria-label="Назад во входящие"
       >
         <ArrowLeft className="h-5 w-5" />
       </Button>

@@ -1022,7 +1022,7 @@ export function Secrets() {
                     items={[
                       { value: "details", label: "Details" },
                       { value: "usage", label: usageQuery.data ? `Usage (${usageQuery.data.bindings.length})` : "Usage" },
-                      { value: "events", label: "Access events" },
+                      { value: "events", label: "События доступа" },
                     ]}
                     align="start"
                     value={secretDetailTab}
@@ -1556,7 +1556,7 @@ function SecretsFiltersPopover({
 
   const statusOptions: Array<{ value: SecretStatus | "all"; label: string }> = [
     { value: "active", label: "Active" },
-    { value: "all", label: "All statuses" },
+    { value: "all", label: "Все статусы" },
     { value: "disabled", label: "Disabled" },
     { value: "archived", label: "Archived" },
   ];
@@ -1971,7 +1971,7 @@ function ProviderVaultFields({
   if (form.provider === "aws_secrets_manager") {
     return (
       <div className="grid gap-3 sm:grid-cols-2">
-        <TextField label="AWS region" value={form.region} onChange={(value) => setField("region", value)} placeholder="us-east-1" required />
+        <TextField label="Регион AWS" value={form.region} onChange={(value) => setField("region", value)} placeholder="us-east-1" required />
         <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
         <TextField label="Префикс названия секрета" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
         <TextField label="ID ключа KMS" value={form.kmsKeyId} onChange={(value) => setField("kmsKeyId", value)} placeholder="alias/paperclip-secrets" />

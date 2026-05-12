@@ -185,9 +185,9 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  todo: "To Do",
+  todo: "К выполнению",
   in_progress: "В работе",
-  in_review: "In Review",
+  in_review: "На ревью",
   done: "Done",
   blocked: "Blocked",
   cancelled: "Cancelled",

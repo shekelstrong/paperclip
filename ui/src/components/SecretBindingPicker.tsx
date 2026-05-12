@@ -61,7 +61,7 @@ export function SecretBindingPicker({
   value,
   onChange,
   label = "Secret",
-  placeholder = "Select secret",
+  placeholder = "Выбрать секрет",
   allowVersionSelector = true,
   emptyHint = "No matching secrets. Create one to bind it here.",
   className,
