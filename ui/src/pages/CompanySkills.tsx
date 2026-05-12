@@ -618,8 +618,8 @@ function SkillPane({
                     <CopyText
                       text={detail.sourcePath}
                       copiedLabel="Copied path"
-                      ariaLabel="Copy source path"
-                      title="Copy source path"
+                      ariaLabel="Копировать исходный путь"
+                      title="Копировать исходный путь"
                       className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       <Copy className="h-3.5 w-3.5" />
@@ -670,7 +670,7 @@ function SkillPane({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Mode</span>
-              <span>{detail.editable ? "Editable" : "Read only"}</span>
+              <span>{detail.editable ? "Editable" : "Только для чтения"}</span>
             </div>
           </div>
           <div className="flex flex-wrap items-start gap-x-3 gap-y-1">

@@ -21,7 +21,7 @@ export function HermesLocalConfigFields({
 }: AdapterConfigFieldsProps) {
   if (hideInstructionsFile) return null;
   return (
-    <Field label="Agent instructions file" hint={instructionsFileHint}>
+    <Field label="Файл инструкций агента" hint={instructionsFileHint}>
       <div className="flex items-center gap-2">
         <DraftInput
           value={

@@ -100,7 +100,7 @@ export function ApprovalDetail() {
       setError(null);
       refresh();
     },
-    onError: (err) => setError(err instanceof Error ? err.message : "Reject failed"),
+    onError: (err) => setError(err instanceof Error ? err.message : "Отклонение не удалось"),
   });
 
   const revisionMutation = useMutation({

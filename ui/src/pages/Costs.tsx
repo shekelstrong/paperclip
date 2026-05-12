@@ -671,7 +671,7 @@ export function Costs() {
                         <div className="mt-1 text-sm text-muted-foreground">
                           {spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
                             ? `Budget ${formatCents(spendData.summary.budgetCents)}`
-                            : "Unlimited budget"}
+                            : "Неограниченный бюджет"}
                         </div>
                       </div>
                       <div className="border border-border px-4 py-3 text-right">

@@ -49,7 +49,7 @@ export function Approvals() {
       navigate(`/approvals/${id}?resolved=approved`);
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to approve");
+      setActionError(err instanceof Error ? err.message : "Утверждение не удалось");
     },
   });
 
@@ -60,7 +60,7 @@ export function Approvals() {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list(selectedCompanyId!) });
     },
     onError: (err) => {
-      setActionError(err instanceof Error ? err.message : "Failed to reject");
+      setActionError(err instanceof Error ? err.message : "Отклонение не удалось");
     },
   });
 

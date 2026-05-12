@@ -343,7 +343,7 @@ export function PluginManager() {
                       </p>
                     </div>
                     <p className="text-sm text-muted-foreground truncate mt-0.5" title={plugin.manifestJson.description}>
-                      {plugin.manifestJson.description || "No description provided."}
+                      {plugin.manifestJson.description || "Описание не предоставлено."}
                     </p>
                     {plugin.status === "error" && (
                       <div className="mt-3 rounded-md border border-red-500/25 bg-red-500/[0.06] px-3 py-2">

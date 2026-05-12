@@ -143,7 +143,7 @@ export function CompanySettings() {
     },
     onError: (err) => {
       setInviteError(
-        err instanceof Error ? err.message : "Failed to create invite"
+        err instanceof Error ? err.message : "Не удалось создать приглашение"
       );
     }
   });

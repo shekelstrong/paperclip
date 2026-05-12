@@ -272,7 +272,7 @@ export function Dashboard() {
                 <span>
                   {data.costs.monthBudgetCents > 0
                     ? `${data.costs.monthUtilizationPercent}% of ${formatCents(data.costs.monthBudgetCents)} budget`
-                    : "Unlimited budget"}
+                    : "Неограниченный бюджет"}
                 </span>
               }
             />
@@ -292,16 +292,16 @@ export function Dashboard() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <ChartCard title="Run Activity" subtitle="Последние 14 дней">
+            <ChartCard title="Активность запусков" subtitle="Последние 14 дней">
               <RunActivityChart activity={data.runActivity} />
             </ChartCard>
-            <ChartCard title="Issues by Priority" subtitle="Последние 14 дней">
+            <ChartCard title="Задачи по приоритету" subtitle="Последние 14 дней">
               <PriorityChart issues={issues ?? []} />
             </ChartCard>
-            <ChartCard title="Issues by Status" subtitle="Последние 14 дней">
+            <ChartCard title="Задачи по статусу" subtitle="Последние 14 дней">
               <IssueStatusChart issues={issues ?? []} />
             </ChartCard>
-            <ChartCard title="Success Rate" subtitle="Последние 14 дней">
+            <ChartCard title="Процент успеха" subtitle="Последние 14 дней">
               <SuccessRateChart activity={data.runActivity} />
             </ChartCard>
           </div>

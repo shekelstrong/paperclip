@@ -48,7 +48,7 @@ function AdapterRow({
   toggleTitleEnabled,
   /** Custom tooltip for the power button when adapter is disabled. */
   toggleTitleDisabled,
-  /** Custom label for the disabled badge (defaults to "Hidden from menus"). */
+  /** Custom label for the disabled badge (defaults to "Скрыто из меню"). */
   disabledBadgeLabel,
 }: {
   adapter: AdapterInfo;
@@ -97,7 +97,7 @@ function AdapterRow({
             )}
             {adapter.disabled && (
               <Badge variant="secondary" className="text-amber-600 border-amber-400">
-                {disabledBadgeLabel ?? "Hidden from menus"}
+                {disabledBadgeLabel ?? "Скрыто из меню"}
               </Badge>
             )}
           </div>

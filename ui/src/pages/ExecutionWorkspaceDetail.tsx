@@ -121,14 +121,14 @@ function parseWorkspaceRuntimeJson(value: string) {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {
         ok: false as const,
-        error: "Workspace commands JSON must be a JSON object.",
+        error: "JSON команд рабочего пространства должен быть JSON-объектом.",
       };
     }
     return { ok: true as const, value: parsed as Record<string, unknown> };
   } catch (error) {
     return {
       ok: false as const,
-      error: error instanceof Error ? error.message : "Invalid JSON.",
+      error: error instanceof Error ? error.message : "Некорректный JSON.",
     };
   }
 }
@@ -195,7 +195,7 @@ function validateForm(form: WorkspaceFormState) {
     try {
       new URL(repoUrl);
     } catch {
-      return "Repo URL must be a valid URL.";
+      return "URL репозитория должен быть валидным URL.";
     }
   }
 
@@ -650,17 +650,17 @@ export function ExecutionWorkspaceDetail() {
       setRuntimeActionErrorMessage(null);
       setRuntimeActionMessage(
         request.action === "run"
-          ? "Workspace job completed."
+          ? "Задача рабочего пространства завершена."
           : request.action === "stop"
             ? "Workspace service stopped."
             : request.action === "restart"
               ? "Workspace service restarted."
-              : "Workspace service started.",
+              : "Сервис рабочего пространства запущен.",
       );
     },
     onError: (error) => {
       setRuntimeActionMessage(null);
-      setRuntimeActionErrorMessage(error instanceof Error ? error.message : "Failed to control workspace commands.");
+      setRuntimeActionErrorMessage(error instanceof Error ? error.message : "Не удалось управлять командами рабочего пространства.");
     },
   });
 
@@ -668,7 +668,7 @@ export function ExecutionWorkspaceDetail() {
   if (workspaceQuery.error) {
     return (
       <p className="text-sm text-destructive">
-        {workspaceQuery.error instanceof Error ? workspaceQuery.error.message : "Failed to load workspace"}
+        {workspaceQuery.error instanceof Error ? workspaceQuery.error.message : "Не удалось загрузить рабочее пространство"}
       </p>
     );
   }
@@ -813,7 +813,7 @@ export function ExecutionWorkspaceDetail() {
                       />
                     </Field>
 
-                    <Field label="Base ref">
+                    <Field label="Базовый референс">
                       <Input
                         className="font-mono"
                         value={form.baseRef}
@@ -877,7 +877,7 @@ export function ExecutionWorkspaceDetail() {
                     />
                   </Field>
 
-                  <Field label="Cleanup command" hint="Workspace-specific cleanup before teardown">
+                  <Field label="Команда очистки" hint="Workspace-specific cleanup before teardown">
                     <Textarea
                       className="min-h-16 font-mono"
                       value={form.cleanupCommand}
@@ -929,7 +929,7 @@ export function ExecutionWorkspaceDetail() {
                       Override the inherited workspace command model only when this execution workspace truly needs different service or job behavior.
                     </p>
                     <div className="mt-3">
-                      <Field label="Workspace commands JSON" hint="Legacy `services` arrays still work, but `commands` supports both services and jobs.">
+                      <Field label="JSON команд рабочего пространства" hint="Legacy `services` arrays still work, but `commands` supports both services and jobs.">
                         <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
                           <input
                             id="inherit-runtime-config"
@@ -1004,7 +1004,7 @@ export function ExecutionWorkspaceDetail() {
                   "None"
                 )}
               </DetailRow>
-              <DetailRow label="Source issue">
+              <DetailRow label="Исходная задача">
                 {sourceIssue ? (
                   <Link to={issueUrl(sourceIssue)} className="hover:underline">
                     {sourceIssue.identifier ?? sourceIssue.id} · {sourceIssue.title}
@@ -1026,7 +1026,7 @@ export function ExecutionWorkspaceDetail() {
                   "None"
                 )}
               </DetailRow>
-              <DetailRow label="Workspace ID">
+              <DetailRow label="ID рабочего пространства">
                 <MonoValue value={workspace.id} />
               </DetailRow>
               </CardContent>
@@ -1061,7 +1061,7 @@ export function ExecutionWorkspaceDetail() {
                   "None"
                 )}
               </DetailRow>
-              <DetailRow label="Base ref">
+              <DetailRow label="Базовый референс">
                 {workspace.baseRef ? <MonoValue value={workspace.baseRef} copy /> : "None"}
               </DetailRow>
               <DetailRow label="Branch">

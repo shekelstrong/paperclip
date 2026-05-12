@@ -223,7 +223,7 @@ export function CompanyEnvironments() {
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to save environment",
+        title: "Не удалось сохранить окружение",
         body: error instanceof Error ? error.message : "Environment save failed.",
         tone: "error",
       });
@@ -238,7 +238,7 @@ export function CompanyEnvironments() {
         [environmentId]: probe,
       }));
       pushToast({
-        title: probe.ok ? "Environment probe passed" : "Environment probe failed",
+        title: probe.ok ? "Environment probe passed" : "Проверка окружения не удалась",
         body: probe.summary,
         tone: probe.ok ? "success" : "error",
       });
@@ -255,7 +255,7 @@ export function CompanyEnvironments() {
         },
       }));
       pushToast({
-        title: "Environment probe failed",
+        title: "Проверка окружения не удалась",
         body: error instanceof Error ? error.message : "Проверка окружения не удалась.",
         tone: "error",
       });
@@ -269,14 +269,14 @@ export function CompanyEnvironments() {
     },
     onSuccess: (probe) => {
       pushToast({
-        title: probe.ok ? "Draft probe passed" : "Draft probe failed",
+        title: probe.ok ? "Draft probe passed" : "Черновая проверка не удалась",
         body: probe.summary,
         tone: probe.ok ? "success" : "error",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Draft probe failed",
+        title: "Черновая проверка не удалась",
         body: error instanceof Error ? error.message : "Проверка окружения не удалась.",
         tone: "error",
       });
@@ -797,7 +797,7 @@ export function CompanyEnvironments() {
                 <span className="text-xs text-destructive">
                   {environmentMutation.error instanceof Error
                     ? environmentMutation.error.message
-                    : "Failed to save environment"}
+                    : "Не удалось сохранить окружение"}
                 </span>
               ) : null}
               {draftEnvironmentProbeMutation.data ? (

@@ -155,7 +155,7 @@ export function ProjectWorkspaceSummaryCard({
                       text={summary.branchName}
                       containerClassName="min-w-0"
                       className="min-w-0 break-all text-left font-mono text-xs text-foreground"
-                      copiedLabel="Branch copied"
+                      copiedLabel="Ветка скопирована"
                     >
                       {summary.branchName}
                     </CopyText>
@@ -163,7 +163,7 @@ export function ProjectWorkspaceSummaryCard({
                       text={summary.branchName}
                       ariaLabel="Copy branch"
                       className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
-                      copiedLabel="Branch copied"
+                      copiedLabel="Ветка скопирована"
                     >
                       <Copy className="h-3.5 w-3.5" />
                     </CopyText>
@@ -183,7 +183,7 @@ export function ProjectWorkspaceSummaryCard({
                       title={summary.cwd}
                       containerClassName="min-w-0"
                       className="min-w-0 break-all text-left font-mono text-xs text-foreground"
-                      copiedLabel="Path copied"
+                      copiedLabel="Путь скопирован"
                     >
                       {truncatePath(summary.cwd)}
                     </CopyText>
@@ -191,7 +191,7 @@ export function ProjectWorkspaceSummaryCard({
                       text={summary.cwd}
                       ariaLabel="Copy path"
                       className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
-                      copiedLabel="Path copied"
+                      copiedLabel="Путь скопирован"
                     >
                       <Copy className="h-3.5 w-3.5" />
                     </CopyText>

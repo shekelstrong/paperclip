@@ -103,14 +103,14 @@ function parseRuntimeConfigJson(value: string) {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {
         ok: false as const,
-        error: "Workspace commands JSON must be a JSON object.",
+        error: "JSON команд рабочего пространства должен быть JSON-объектом.",
       };
     }
     return { ok: true as const, value: parsed as Record<string, unknown> };
   } catch (error) {
     return {
       ok: false as const,
-      error: error instanceof Error ? error.message : "Invalid JSON.",
+      error: error instanceof Error ? error.message : "Некорректный JSON.",
     };
   }
 }
@@ -168,7 +168,7 @@ function validateWorkspaceForm(form: WorkspaceFormState) {
     try {
       new URL(repoUrl);
     } catch {
-      return "Repo URL must be a valid URL.";
+      return "URL репозитория должен быть валидным URL.";
     }
   }
 
@@ -315,17 +315,17 @@ export function ProjectWorkspaceDetail() {
       setErrorMessage(null);
       setRuntimeActionMessage(
         request.action === "run"
-          ? "Workspace job completed."
+          ? "Задача рабочего пространства завершена."
           : request.action === "stop"
             ? "Workspace service stopped. Issue execution is not paused."
             : request.action === "restart"
               ? "Workspace service restarted. Issue execution is not paused."
-              : "Workspace service started.",
+              : "Сервис рабочего пространства запущен.",
       );
     },
     onError: (error) => {
       setRuntimeActionMessage(null);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to control workspace commands.");
+      setErrorMessage(error instanceof Error ? error.message : "Не удалось управлять командами рабочего пространства.");
     },
   });
 
@@ -333,7 +333,7 @@ export function ProjectWorkspaceDetail() {
   if (projectQuery.error) {
     return (
       <p className="text-sm text-destructive">
-        {projectQuery.error instanceof Error ? projectQuery.error.message : "Failed to load workspace"}
+        {projectQuery.error instanceof Error ? projectQuery.error.message : "Не удалось загрузить рабочее пространство"}
       </p>
     );
   }
@@ -456,7 +456,7 @@ export function ProjectWorkspaceDetail() {
               </Field>
 
               <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
-                <Field label="Local path">
+                <Field label="Локальный путь">
                   <input
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm outline-none"
                     value={form.cwd}
@@ -489,7 +489,7 @@ export function ProjectWorkspaceDetail() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Default ref">
+                <Field label="Референс по умолчанию">
                   <input
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm outline-none"
                     value={form.defaultRef}
@@ -535,7 +535,7 @@ export function ProjectWorkspaceDetail() {
                     placeholder="pnpm install && pnpm dev"
                   />
                 </Field>
-                <Field label="Cleanup command" hint="Runs before project-level execution workspace teardown">
+                <Field label="Команда очистки" hint="Runs before project-level execution workspace teardown">
                   <textarea
                     className="min-h-28 w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm outline-none"
                     value={form.cleanupCommand}
@@ -551,7 +551,7 @@ export function ProjectWorkspaceDetail() {
                   Paperclip derives Services and Jobs from this JSON. Prefer editing named commands first; use raw JSON for advanced lifecycle, port, readiness, or environment settings.
                 </p>
                 <div className="mt-3">
-                  <Field label="Workspace commands JSON" hint="Execution workspaces inherit this config unless they override it. Legacy `services` arrays still work, but `commands` supports both services and jobs.">
+                  <Field label="JSON команд рабочего пространства" hint="Execution workspaces inherit this config unless they override it. Legacy `services` arrays still work, but `commands` supports both services and jobs.">
                     <textarea
                       className="min-h-96 w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm outline-none"
                       value={form.runtimeConfig}
@@ -596,10 +596,10 @@ export function ProjectWorkspaceDetail() {
             <DetailRow label="Project">
               <Link to={`/projects/${canonicalProjectRef}`} className="hover:underline">{project.name}</Link>
             </DetailRow>
-            <DetailRow label="Workspace ID">
+            <DetailRow label="ID рабочего пространства">
               <span className="break-all font-mono text-xs">{workspace.id}</span>
             </DetailRow>
-            <DetailRow label="Local path">
+            <DetailRow label="Локальный путь">
               <span className="break-all font-mono text-xs">{workspace.cwd ?? "None"}</span>
             </DetailRow>
             <DetailRow label="Repo">
@@ -612,7 +612,7 @@ export function ProjectWorkspaceDetail() {
                 <span className="break-all font-mono text-xs">{workspace.repoUrl}</span>
               ) : "None"}
             </DetailRow>
-            <DetailRow label="Default ref">{workspace.defaultRef ?? "None"}</DetailRow>
+            <DetailRow label="Референс по умолчанию">{workspace.defaultRef ?? "None"}</DetailRow>
             <DetailRow label="Updated">{new Date(workspace.updatedAt).toLocaleString()}</DetailRow>
           </div>
 

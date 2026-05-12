@@ -43,7 +43,7 @@ export function JoinRequestQueue() {
       await queryClient.invalidateQueries({ queryKey: queryKeys.access.joinRequests(selectedCompanyId!, `${status}:${requestType}`) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.access.companyMembers(selectedCompanyId!) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.access.companyUserDirectory(selectedCompanyId!) });
-      pushToast({ title: "Join request approved", tone: "success" });
+      pushToast({ title: "Запрос на присоединение утверждён", tone: "success" });
     },
   });
 
@@ -51,7 +51,7 @@ export function JoinRequestQueue() {
     mutationFn: (requestId: string) => accessApi.rejectJoinRequest(selectedCompanyId!, requestId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.access.joinRequests(selectedCompanyId!, `${status}:${requestType}`) });
-      pushToast({ title: "Join request rejected", tone: "success" });
+      pushToast({ title: "Запрос на присоединение отклонён", tone: "success" });
     },
   });
 
@@ -136,7 +136,7 @@ export function JoinRequestQueue() {
                   <div>
                     <div className="text-base font-medium">
                       {request.requestType === "human"
-                        ? request.requesterUser?.name || request.requestEmailSnapshot || request.requestingUserId || "Unknown human requester"
+                        ? request.requesterUser?.name || request.requestEmailSnapshot || request.requestingUserId || "Неизвестный человек-запросчик"
                         : request.agentName || "Unknown agent requester"}
                     </div>
                     <div className="text-sm text-muted-foreground">
@@ -172,7 +172,7 @@ export function JoinRequestQueue() {
                   <div className="mt-2">
                     {request.invite
                       ? `${request.invite.allowedJoinTypes} join invite${request.invite.humanRole ? ` • default role ${request.invite.humanRole}` : ""}`
-                      : "Invite metadata unavailable"}
+                      : "Метаданные приглашения недоступны"}
                   </div>
                   {request.invite?.inviteMessage ? (
                     <div className="mt-2 text-foreground">{request.invite.inviteMessage}</div>

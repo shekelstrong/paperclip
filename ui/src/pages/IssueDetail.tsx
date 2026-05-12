@@ -2061,7 +2061,7 @@ export function IssueDetail() {
     },
     onError: (err) => {
       pushToast({
-        title: "Reject failed",
+        title: "Отклонение не удалось",
         body: err instanceof Error ? err.message : "Unable to reject the suggested tasks",
         tone: "error",
       });

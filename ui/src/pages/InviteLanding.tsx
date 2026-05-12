@@ -80,7 +80,7 @@ function mapInviteAuthFeedback(
     return {
       tone: "error",
       message:
-        "That email and password did not match an existing Paperclip account. Check both fields, or create an account first if you are new here.",
+        "Указанный email и пароль не совпадают с существующим аккаунтом Paperclip. Проверьте оба поля или создайте аккаунт, если вы новый пользователь.",
     };
   }
 
@@ -88,7 +88,7 @@ function mapInviteAuthFeedback(
     return {
       tone: "error",
       message:
-        "That email and password did not match an existing Paperclip account. Check both fields, or create an account first if you are new here.",
+        "Указанный email и пароль не совпадают с существующим аккаунтом Paperclip. Проверьте оба поля или создайте аккаунт, если вы новый пользователь.",
     };
   }
 
@@ -101,7 +101,7 @@ function mapInviteAuthFeedback(
 
   return {
     tone: "error",
-    message: message ?? "Authentication failed",
+    message: message ?? "Аутентификация не удалась",
   };
 }
 
@@ -323,7 +323,7 @@ export function InviteLandingPage() {
         throw new Error("Checking your company access. Try again in a moment.");
       }
       if (isCurrentMember) {
-        throw new Error("This account already belongs to the company.");
+        throw new Error("Этот аккаунт уже принадлежит компании.");
       }
       if (invite.inviteType === "bootstrap_ceo" || invite.allowedJoinTypes !== "agent") {
         return accessApi.acceptInvite(token, { requestType: "human" });
@@ -413,9 +413,9 @@ export function InviteLandingPage() {
 
   const joinButtonLabel = useMemo(() => {
     if (!invite) return "Continue";
-    if (invite.inviteType === "bootstrap_ceo") return "Accept invite";
+    if (invite.inviteType === "bootstrap_ceo") return "Принять приглашение";
     if (showsAgentForm) return "Submit request";
-    return sessionQuery.data ? "Accept invite" : "Continue";
+    return sessionQuery.data ? "Принять приглашение" : "Continue";
   }, [invite, sessionQuery.data, showsAgentForm]);
 
   if (!token) {
@@ -558,7 +558,7 @@ export function InviteLandingPage() {
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-300">
                   {showsAgentForm
-                    ? "Review the invite details, then submit the agent information below to start the join request."
+                    ? "Просмотрите детали приглашения, затем отправьте информацию об агенте ниже для начала запроса на присоединение."
                     : requiresHumanAccount
                       ? "Сначала создайте аккаунт Paperclip. Если он уже есть, переключитесь на вход и продолжите приглашение с тем же email."
                       : "Ваш аккаунт готов. Просмотрите детали приглашения, затем примите его, чтобы продолжить."}
@@ -654,12 +654,12 @@ export function InviteLandingPage() {
               <div className="space-y-5">
                 <div>
                   <h2 className="text-lg font-semibold">
-                    {authMode === "sign_up" ? "Создайте аккаунт" : "Sign in to continue"}
+                    {authMode === "sign_up" ? "Создайте аккаунт" : "Войдите, чтобы продолжить"}
                   </h2>
                   <p className="mt-1 text-sm text-zinc-400">
                     {authMode === "sign_up"
                       ? `Start with a Paperclip account. After that, you'll come right back here to accept the invite for ${companyDisplayName}.`
-                      : "Use the Paperclip account that already matches this invite. If you do not have one yet, switch back to create account."}
+                      : "Используйте аккаунт Paperclip, который уже соответствует этому приглашению. Если у вас ещё нет аккаунта, переключитесь обратно на создание аккаунта."}
                   </p>
                 </div>
 
@@ -772,15 +772,15 @@ export function InviteLandingPage() {
                     {authMutation.isPending
                       ? "Working..."
                       : authMode === "sign_in"
-                        ? "Sign in and continue"
-                        : "Create account and continue"}
+                        ? "Войти и продолжить"
+                        : "Создать аккаунт и продолжить"}
                   </Button>
                 </form>
 
                 <p className="text-xs leading-5 text-zinc-500">
                   {authMode === "sign_up"
-                    ? "Already signed up before? Use the existing-account option instead so the invite lands on the right Paperclip user."
-                    : "No account yet? Switch back to create account so you can accept the invite with a new login."}
+                    ? "Уже регистрировались раньше? Используйте опцию существующего аккаунта, чтобы приглашение попало на правильного пользователя Paperclip."
+                    : "Ещё нет аккаунта? Переключитесь обратно на создание аккаунта, чтобы принять приглашение с новым логином."}
                 </p>
               </div>
             ) : (

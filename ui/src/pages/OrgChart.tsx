@@ -488,8 +488,8 @@ export function OrgChart() {
                 });
               }
             }}
-            title="Zoom in"
-            aria-label="Zoom in"
+            title="Приблизить"
+            aria-label="Приблизить"
           >
             <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
@@ -504,8 +504,8 @@ export function OrgChart() {
                 });
               }
             }}
-            title="Zoom out"
-            aria-label="Zoom out"
+            title="Отдалить"
+            aria-label="Отдалить"
           >
             <Minus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>

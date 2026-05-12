@@ -1288,16 +1288,16 @@ function AgentOverview({
 
       {/* Charts */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <ChartCard title="Run Activity" subtitle="Последние 14 дней">
+        <ChartCard title="Активность запусков" subtitle="Последние 14 дней">
           <RunActivityChart runs={runs} />
         </ChartCard>
-        <ChartCard title="Issues by Priority" subtitle="Последние 14 дней">
+        <ChartCard title="Задачи по приоритету" subtitle="Последние 14 дней">
           <PriorityChart issues={assignedIssues} />
         </ChartCard>
-        <ChartCard title="Issues by Status" subtitle="Последние 14 дней">
+        <ChartCard title="Задачи по статусу" subtitle="Последние 14 дней">
           <IssueStatusChart issues={assignedIssues} />
         </ChartCard>
-        <ChartCard title="Success Rate" subtitle="Последние 14 дней">
+        <ChartCard title="Процент успеха" subtitle="Последние 14 дней">
           <SuccessRateChart runs={runs} />
         </ChartCard>
       </div>
@@ -3106,7 +3106,7 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
         payload: retryPayload,
       }, run.companyId);
       if (!("id" in result)) {
-        throw new Error(result.message ?? "Retry was skipped.");
+        throw new Error(result.message ?? "Повтор был пропущен.");
       }
       return result;
     },

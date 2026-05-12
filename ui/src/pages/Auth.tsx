@@ -55,7 +55,7 @@ export function AuthPage() {
       navigate(nextPath, { replace: true });
     },
     onError: (err) => {
-      setError(err instanceof Error ? err.message : "Authentication failed");
+      setError(err instanceof Error ? err.message : "Аутентификация не удалась");
     },
   });
 

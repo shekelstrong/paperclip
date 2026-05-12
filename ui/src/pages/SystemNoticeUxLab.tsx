@@ -242,11 +242,11 @@ export function SystemNoticeUxLab() {
             body="Paperclip could not resolve this issue's missing disposition automatically. The issue is blocked on a recovery owner."
             metadata={[
               {
-                title: "Recovery owner",
+                title: "Владелец восстановления",
                 rows: [
                   {
                     kind: "issue",
-                    label: "Recovery issue",
+                    label: "Задача восстановления",
                     identifier: "PAP-3440",
                     href: "/PAP/issues/PAP-3440",
                     title: "Успешный запуск — отсутствует распоряжение",
@@ -260,11 +260,11 @@ export function SystemNoticeUxLab() {
                 ],
               },
               {
-                title: "Run evidence",
+                title: "Доказательства запуска",
                 rows: [
                   {
                     kind: "run",
-                    label: "Source run",
+                    label: "Исходный запуск",
                     runId: "9cdba892-c7ca-4d93-8604-4843873b127c",
                     href: "/PAP/agents/codexcoder/runs/9cdba892-c7ca-4d93-8604-4843873b127c",
                     status: "succeeded",

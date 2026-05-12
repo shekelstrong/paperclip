@@ -967,7 +967,7 @@ export function Secrets() {
                   }}
                 >
                   <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                  {selectedSecret.managedMode === "external_reference" ? "Update reference" : "Update value"}
+                  {selectedSecret.managedMode === "external_reference" ? "Обновить референс" : "Обновить значение"}
                 </Button>
                 {selectedSecret.status === "active" ? (
                   <Button
@@ -1483,7 +1483,7 @@ export function Secrets() {
               }
             >
               {rotateMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-              {selectedSecret?.managedMode === "external_reference" ? "Update reference" : "Update value"}
+              {selectedSecret?.managedMode === "external_reference" ? "Обновить референс" : "Обновить значение"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1973,7 +1973,7 @@ function ProviderVaultFields({
       <div className="grid gap-3 sm:grid-cols-2">
         <TextField label="AWS region" value={form.region} onChange={(value) => setField("region", value)} placeholder="us-east-1" required />
         <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
-        <TextField label="Secret name prefix" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
+        <TextField label="Префикс названия секрета" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
         <TextField label="KMS key id" value={form.kmsKeyId} onChange={(value) => setField("kmsKeyId", value)} placeholder="alias/paperclip-secrets" />
         <TextField label="Owner tag" value={form.ownerTag} onChange={(value) => setField("ownerTag", value)} placeholder="platform" />
         <TextField label="Environment tag" value={form.environmentTag} onChange={(value) => setField("environmentTag", value)} placeholder="prod" />
@@ -1987,7 +1987,7 @@ function ProviderVaultFields({
         <TextField label="Project id" value={form.projectId} onChange={(value) => setField("projectId", value)} placeholder="paperclip-prod" />
         <TextField label="Location" value={form.location} onChange={(value) => setField("location", value)} placeholder="global" />
         <TextField label="Namespace" value={form.namespace} onChange={(value) => setField("namespace", value)} placeholder="production" />
-        <TextField label="Secret name prefix" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
+        <TextField label="Префикс названия секрета" value={form.secretNamePrefix} onChange={(value) => setField("secretNamePrefix", value)} placeholder="paperclip" />
       </div>
     );
   }

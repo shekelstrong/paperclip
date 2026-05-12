@@ -69,8 +69,8 @@ export function describeRunRetryState(run: RetryAwareRun): RunRetryStateSummary 
       tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
       detail: joinFragments([attemptLabel, reasonLabel]),
       secondary: dueAt
-        ? `${isMaxTurnContinuation ? "Next continuation" : "Next retry"} ${dueAt}`
-        : `${isMaxTurnContinuation ? "Next continuation" : "Next retry"} pending schedule`,
+        ? `${isMaxTurnContinuation ? "Следующее продолжение" : "Следующая попытка"} ${dueAt}`
+        : `${isMaxTurnContinuation ? "Следующее продолжение" : "Следующая попытка"} pending schedule`,
       retryOfRunId,
     };
   }

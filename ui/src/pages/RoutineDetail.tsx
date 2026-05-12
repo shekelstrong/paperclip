@@ -77,7 +77,7 @@ const concurrencyPolicyDescriptions: Record<string, string> = {
 };
 const catchUpPolicyDescriptions: Record<string, string> = {
   skip_missed: "Ignore schedule windows that were missed while the routine or scheduler was paused.",
-  enqueue_missed_with_cap: "Catch up missed schedule windows in capped batches after recovery.",
+  enqueue_missed_with_cap: "Настига пропущенные окна расписания ограниченными партиями после восстановления.",
 };
 const signingModeDescriptions: Record<string, string> = {
   bearer: "Ожидается общий bearer-токен в заголовке Authorization.",
@@ -544,8 +544,8 @@ export function RoutineDetail() {
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to update routine",
-        body: error instanceof Error ? error.message : "Paperclip could not update the routine.",
+        title: "Не удалось обновить процедуру",
+        body: error instanceof Error ? error.message : "Paperclip не смог обновить процедуру.",
         tone: "error",
       });
     },
@@ -711,7 +711,7 @@ export function RoutineDetail() {
   const currentProject = editDraft.projectId ? projectById.get(editDraft.projectId) ?? null : null;
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Repeat} message="Select a company to view routines." />;
+    return <EmptyState icon={Repeat} message="Выберите компанию для просмотра процедур." />;
   }
 
   if (isLoading) {
@@ -750,7 +750,7 @@ export function RoutineDetail() {
           <textarea
             ref={titleInputRef}
             className="w-full resize-none overflow-hidden bg-transparent text-xl font-bold outline-none placeholder:text-muted-foreground/50"
-            placeholder="Routine title"
+            placeholder="Название процедуры"
             rows={1}
             value={editDraft.title}
             onChange={(event) => {
@@ -797,8 +797,8 @@ export function RoutineDetail() {
             onCheckedChange={() => {
               if (!automationEnabled && !routine.assigneeAgentId) {
                 pushToast({
-                  title: "Default agent required",
-                  body: "Set a default agent before enabling routine automation.",
+                  title: "Требуется агент по умолчанию",
+                  body: "Установите агента по умолчанию перед включением автоматизации процедур.",
                   tone: "warn",
                 });
                 return;
@@ -984,7 +984,7 @@ export function RoutineDetail() {
         ref={descriptionEditorRef}
         value={editDraft.description}
         onChange={(description) => setEditDraft((current) => ({ ...current, description }))}
-        placeholder="Add instructions..."
+        placeholder="Добавьте инструкции..."
         bordered={false}
         contentClassName="min-h-[120px] text-[15px] leading-7"
         mentions={mentionOptions}

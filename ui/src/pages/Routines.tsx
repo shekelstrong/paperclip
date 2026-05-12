@@ -55,7 +55,7 @@ const concurrencyPolicyDescriptions: Record<string, string> = {
 };
 const catchUpPolicyDescriptions: Record<string, string> = {
   skip_missed: "Ignore windows that were missed while the scheduler or routine was paused.",
-  enqueue_missed_with_cap: "Catch up missed schedule windows in capped batches after recovery.",
+  enqueue_missed_with_cap: "Настига пропущенные окна расписания ограниченными партиями после восстановления.",
 };
 
 function autoResizeTextarea(element: HTMLTextAreaElement | null) {
@@ -343,8 +343,8 @@ export function Routines() {
     },
     onError: (mutationError) => {
       pushToast({
-        title: "Failed to update routine",
-        body: mutationError instanceof Error ? mutationError.message : "Paperclip could not update the routine.",
+        title: "Не удалось обновить процедуру",
+        body: mutationError instanceof Error ? mutationError.message : "Paperclip не смог обновить процедуру.",
         tone: "error",
       });
     },
@@ -459,8 +459,8 @@ export function Routines() {
   function handleToggleEnabled(routine: RoutineListItem, enabled: boolean) {
     if (!enabled && !routine.assigneeAgentId) {
       pushToast({
-        title: "Default agent required",
-        body: "Set a default agent before enabling routine automation.",
+        title: "Требуется агент по умолчанию",
+        body: "Установите агента по умолчанию перед включением автоматизации процедур.",
         tone: "warn",
       });
       return;
@@ -479,7 +479,7 @@ export function Routines() {
   }
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Repeat} message="Select a company to view routines." />;
+    return <EmptyState icon={Repeat} message="Выберите компанию для просмотра процедур." />;
   }
 
   if (isLoading) {
@@ -645,7 +645,7 @@ export function Routines() {
               <textarea
                 ref={titleInputRef}
                 className="w-full resize-none overflow-hidden bg-transparent text-xl font-semibold outline-none placeholder:text-muted-foreground/50"
-                placeholder="Routine title"
+                placeholder="Название процедуры"
                 rows={1}
                 value={draft.title}
                 onChange={(event) => {
@@ -775,7 +775,7 @@ export function Routines() {
                 ref={descriptionEditorRef}
                 value={draft.description}
                 onChange={(description) => setDraft((current) => ({ ...current, description }))}
-                placeholder="Add instructions..."
+                placeholder="Добавьте инструкции..."
                 bordered={false}
                 contentClassName="min-h-[160px] text-sm text-muted-foreground"
                 mentions={mentionOptions}

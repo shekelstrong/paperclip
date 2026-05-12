@@ -142,7 +142,7 @@ export function PluginSettings() {
       : plugin.status === "error"
         ? "destructive"
         : "secondary";
-  const pluginDescription = plugin.manifestJson.description || "No description provided.";
+  const pluginDescription = plugin.manifestJson.description || "Описание не предоставлено.";
   const pluginCapabilities = plugin.manifestJson.capabilities ?? [];
   const environmentDrivers = plugin.manifestJson.environmentDrivers ?? [];
   const localFolderDeclarations = plugin.manifestJson.localFolders ?? [];
@@ -708,7 +708,7 @@ function PluginLocalFolderRow({ pluginId, companyId, declaration, status }: Plug
           ) : null}
         </div>
         <Badge variant={access === "readWrite" ? "default" : "outline"}>
-          {access === "readWrite" ? "Read/write" : "Read only"}
+          {access === "readWrite" ? "Read/write" : "Только для чтения"}
         </Badge>
       </div>
 
@@ -992,11 +992,11 @@ function PluginConfigForm({ pluginId, schema, initialValues, isLoading, pluginSt
       if (result.valid) {
         setTestResult({ type: "success", text: "Configuration test passed." });
       } else {
-        setTestResult({ type: "error", text: result.message || "Configuration test failed." });
+        setTestResult({ type: "error", text: result.message || "Тест конфигурации не пройден." });
       }
     },
     onError: (err: Error) => {
-      setTestResult({ type: "error", text: err.message || "Configuration test failed." });
+      setTestResult({ type: "error", text: err.message || "Тест конфигурации не пройден." });
     },
   });
 

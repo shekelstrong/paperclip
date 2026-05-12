@@ -203,9 +203,9 @@ function createRequestConfirmationInteraction(
     resolvedAt: null,
     payload: {
       version: 1,
-      prompt: "Approve the plan and let the assignee start implementation?",
-      acceptLabel: "Approve plan",
-      rejectLabel: "Request revisions",
+      prompt: "Утвердить план и позволить исполнителю начать реализацию?",
+      acceptLabel: "Утвердить план",
+      rejectLabel: "Запросить правки",
       rejectRequiresReason: true,
       rejectReasonLabel: "Describe the plan changes needed before approval",
       detailsMarkdown:
@@ -368,8 +368,8 @@ export const planApprovalAcceptedRequestConfirmationInteraction = createRequestC
   updatedAt: new Date("2026-04-20T14:34:00.000Z"),
   payload: {
     version: 1,
-    prompt: "Approve the plan and let the assignee start implementation?",
-    acceptLabel: "Approve plan",
+    prompt: "Утвердить план и позволить исполнителю начать реализацию?",
+    acceptLabel: "Утвердить план",
     rejectLabel: "Request changes",
     rejectRequiresReason: true,
     declineReasonPlaceholder: "Optional: what would you like revised?",
@@ -434,9 +434,9 @@ export const staleTargetRequestConfirmationInteraction = createRequestConfirmati
   updatedAt: new Date("2026-04-20T14:40:00.000Z"),
   payload: {
     version: 1,
-    prompt: "Approve the plan and let the assignee start implementation?",
-    acceptLabel: "Approve plan",
-    rejectLabel: "Request revisions",
+    prompt: "Утвердить план и позволить исполнителю начать реализацию?",
+    acceptLabel: "Утвердить план",
+    rejectLabel: "Запросить правки",
     rejectRequiresReason: true,
     target: {
       type: "issue_document",

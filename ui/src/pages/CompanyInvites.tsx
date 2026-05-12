@@ -14,26 +14,26 @@ const inviteRoleOptions = [
   {
     value: "viewer",
     label: "Viewer",
-    description: "Can view company work and follow along without operational permissions.",
-    gets: "No built-in grants.",
+    description: "Может просматривать работу компании без оперативных прав.",
+    gets: "Нет встроенных разрешений.",
   },
   {
     value: "operator",
     label: "Operator",
-    description: "Recommended for people who need to help run work without managing access.",
-    gets: "Can assign tasks.",
+    description: "Рекомендуется для тех, кто помогает с работой без управления доступом.",
+    gets: "Может назначать задачи.",
   },
   {
     value: "admin",
     label: "Admin",
-    description: "Recommended for operators who need to invite people, create agents, and approve joins.",
-    gets: "Can create agents, invite users, assign tasks, and approve join requests.",
+    description: "Рекомендуется для операторов, которым нужно приглашать людей, создавать агентов и утверждать присоединения.",
+    gets: "Может создавать агентов, приглашать пользователей, назначать задачи и утверждать запросы на присоединение.",
   },
   {
     value: "owner",
     label: "Owner",
-    description: "Full company access, including membership and permission management.",
-    gets: "Everything in Admin, plus managing members and permission grants.",
+    description: "Полный доступ к компании, включая управление членами и разрешениями.",
+    gets: "Всё как у Admin, плюс управление членами и разрешениями.",
   },
 ] as const;
 
@@ -128,7 +128,7 @@ export function CompanyInvites() {
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to create invite",
+        title: "Не удалось создать приглашение",
         body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });

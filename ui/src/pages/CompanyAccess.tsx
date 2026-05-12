@@ -132,13 +132,13 @@ export function CompanyAccess() {
     onSuccess: async () => {
       await refreshAccessData();
       pushToast({
-        title: "Join request approved",
+        title: "Запрос на присоединение утверждён",
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to approve join request",
+        title: "Не удалось утвердить запрос на присоединение",
         body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
@@ -150,13 +150,13 @@ export function CompanyAccess() {
     onSuccess: async () => {
       await refreshAccessData();
       pushToast({
-        title: "Join request rejected",
+        title: "Запрос на присоединение отклонён",
         tone: "success",
       });
     },
     onError: (error) => {
       pushToast({
-        title: "Failed to reject join request",
+        title: "Не удалось отклонить запрос на присоединение",
         body: error instanceof Error ? error.message : "Неизвестная ошибка",
         tone: "error",
       });
@@ -314,7 +314,7 @@ export function CompanyAccess() {
                     request.requesterUser?.name ||
                     request.requestEmailSnapshot ||
                     request.requestingUserId ||
-                    "Unknown human requester"
+                    "Неизвестный человек-запросчик"
                   }
                   subtitle={
                     request.requesterUser?.email ||
@@ -325,7 +325,7 @@ export function CompanyAccess() {
                   context={
                     request.invite
                       ? `${request.invite.allowedJoinTypes} join invite${request.invite.humanRole ? ` • default role ${request.invite.humanRole}` : ""}`
-                      : "Invite metadata unavailable"
+                      : "Метаданные приглашения недоступны"
                   }
                   detail={`Submitted ${new Date(request.createdAt).toLocaleString()}`}
                   approveLabel="Approve human"

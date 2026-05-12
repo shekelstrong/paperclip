@@ -114,7 +114,7 @@ const PENDING_LIVENESS_COPY: LivenessCopy = {
 };
 
 const RETRY_PENDING_LIVENESS_COPY: LivenessCopy = {
-  label: "Retry pending",
+  label: "Повтор в ожидании",
   tone: "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
   description: "Paperclip queued an automatic retry that has not started yet.",
 };
@@ -323,7 +323,7 @@ function stopReasonLabel(run: RunForIssue) {
 
 function stopStatusLabel(run: LedgerRun, stopReason: string | null) {
   if (stopReason) return stopReason;
-  if (run.status === "scheduled_retry") return "Retry pending";
+  if (run.status === "scheduled_retry") return "Повтор в ожидании";
   if (run.status === "queued") return "Waiting to start";
   if (run.status === "running") return "Still running";
   if (!run.livenessState) return "Unavailable";

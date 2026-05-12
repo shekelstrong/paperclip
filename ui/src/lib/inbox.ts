@@ -851,7 +851,7 @@ function resolveIssueProjectGroup(
   issue: Pick<Issue, "projectId">,
   { projectById }: Pick<InboxWorkspaceGroupingOptions, "projectById">,
 ): { key: string; label: string } {
-  if (!issue.projectId) return { key: "project:none", label: "No project" };
+  if (!issue.projectId) return { key: "project:none", label: "Нет проекта" };
 
   const projectName = projectById?.get(issue.projectId)?.name?.trim();
   return {

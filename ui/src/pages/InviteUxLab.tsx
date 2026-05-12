@@ -23,26 +23,26 @@ const inviteRoleOptions = [
   {
     value: "viewer",
     label: "Viewer",
-    description: "Can view company work and follow along without operational permissions.",
-    gets: "No built-in grants.",
+    description: "Может просматривать работу компании без оперативных прав.",
+    gets: "Нет встроенных разрешений.",
   },
   {
     value: "operator",
     label: "Operator",
-    description: "Recommended for people who need to help run work without managing access.",
-    gets: "Can assign tasks.",
+    description: "Рекомендуется для тех, кто помогает с работой без управления доступом.",
+    gets: "Может назначать задачи.",
   },
   {
     value: "admin",
     label: "Admin",
-    description: "Recommended for operators who need to invite people, create agents, and approve joins.",
-    gets: "Can create agents, invite users, assign tasks, and approve join requests.",
+    description: "Рекомендуется для операторов, которым нужно приглашать людей, создавать агентов и утверждать присоединения.",
+    gets: "Может создавать агентов, приглашать пользователей, назначать задачи и утверждать запросы на присоединение.",
   },
   {
     value: "owner",
     label: "Owner",
-    description: "Full company access, including membership and permission management.",
-    gets: "Everything in Admin, plus managing members and permission grants.",
+    description: "Полный доступ к компании, включая управление членами и разрешениями.",
+    gets: "Всё как у Admin, плюс управление членами и разрешениями.",
   },
 ] as const;
 
@@ -251,12 +251,12 @@ function InlineAuthPreview({
     <div className="space-y-5">
       <div>
         <h3 className="text-lg font-semibold text-zinc-100">
-          {mode === "sign_up" ? "Создайте аккаунт" : "Sign in to continue"}
+          {mode === "sign_up" ? "Создайте аккаунт" : "Войдите, чтобы продолжить"}
         </h3>
         <p className="mt-1 text-sm text-zinc-400">
           {mode === "sign_up"
             ? "Start with a Paperclip account. After that, you'll come right back here to accept the invite for Acme Robotics."
-            : "Use the Paperclip account that already matches this invite. If you do not have one yet, switch back to create account."}
+            : "Используйте аккаунт Paperclip, который уже соответствует этому приглашению. Если у вас ещё нет аккаунта, переключитесь обратно на создание аккаунта."}
         </p>
       </div>
 
@@ -306,14 +306,14 @@ function InlineAuthPreview({
           </p>
         ) : null}
         <Button type="button" className="w-full rounded-none" disabled={working}>
-          {working ? "Working..." : mode === "sign_in" ? "Sign in and continue" : "Create account and continue"}
+          {working ? "Working..." : mode === "sign_in" ? "Войти и продолжить" : "Создать аккаунт и продолжить"}
         </Button>
       </form>
 
       <p className="text-xs leading-5 text-zinc-500">
         {mode === "sign_up"
-          ? "Already signed up before? Use the existing-account option instead so the invite lands on the right Paperclip user."
-          : "No account yet? Switch back to create account so you can accept the invite with a new login."}
+          ? "Уже регистрировались раньше? Используйте опцию существующего аккаунта, чтобы приглашение попало на правильного пользователя Paperclip."
+          : "Ещё нет аккаунта? Переключитесь обратно на создание аккаунта, чтобы принять приглашение с новым логином."}
       </p>
     </div>
   );
@@ -856,7 +856,7 @@ export function InviteUxLab() {
             left={
               <InviteSummaryPanel
                 title="Присоединиться к Acme Robotics"
-                description="Review the invite details, then submit the agent information below to start the join request."
+                description="Просмотрите детали приглашения, затем отправьте информацию об агенте ниже для начала запроса на присоединение."
                 requestedAccess="Заявка агента"
               />
             }
@@ -872,7 +872,7 @@ export function InviteUxLab() {
                 signedInLabel="Jane Example"
               />
             }
-            right={<AcceptInvitePreview error="This account already belongs to the company." isCurrentMember />}
+            right={<AcceptInvitePreview error="Этот аккаунт уже принадлежит компании." isCurrentMember />}
           />
         </div>
       </LabSection>

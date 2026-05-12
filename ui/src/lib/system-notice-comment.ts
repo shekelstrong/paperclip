@@ -11,11 +11,11 @@ import type {
 } from "../components/SystemNotice";
 
 const TONE_LABEL: Record<SystemNoticeTone, string> = {
-  neutral: "System notice",
-  info: "System notice",
-  success: "System notice",
-  warning: "System warning",
-  danger: "System alert",
+  neutral: "Системное уведомление",
+  info: "Системное уведомление",
+  success: "Системное уведомление",
+  warning: "Системное предупреждение",
+  danger: "Системное оповещение",
 };
 
 function metadataRowText(row: { label?: string | null }, fallback: string) {
