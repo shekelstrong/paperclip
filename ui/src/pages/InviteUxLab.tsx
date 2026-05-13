@@ -194,7 +194,7 @@ function InviteSummaryPanel({
     <>
       <div className="flex items-start gap-4">
         <CompanyPatternIcon
-          companyName="Acme Robotics"
+          companyName="Acme Роботика"
           logoUrl="/api/invites/pcp_invite_test/logo"
           brandColor="#114488"
           className="h-16 w-16 rounded-none border border-zinc-800"
@@ -207,7 +207,7 @@ function InviteSummaryPanel({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <MetaCard label="Company" value="Acme Robotics" />
+        <MetaCard label="Company" value="Acme Роботика" />
         <MetaCard label="Приглашён" value="Пользователь доски" />
         <MetaCard label="Запрошен доступ" value={requestedAccess} />
         <MetaCard label="Приглашение истекает" value="7 марта 2027" />
@@ -330,7 +330,7 @@ function AgentRequestPreview() {
       </div>
       <label className="block text-sm">
         <span className="mb-1 block text-zinc-400">Agent name</span>
-        <input className={fieldClassName} defaultValue="Acme Ops Agent" readOnly />
+        <input className={fieldClassName} defaultValue="Агент Ops Acme" readOnly />
       </label>
       <label className="block text-sm">
         <span className="mb-1 block text-zinc-400">Adapter type</span>
@@ -406,7 +406,7 @@ function InviteResultPreview({
     <div className="mx-auto max-w-md border border-zinc-800 bg-zinc-950 p-6 text-zinc-100">
       <div className="flex items-center gap-3">
         <CompanyPatternIcon
-          companyName="Acme Robotics"
+          companyName="Acme Роботика"
           logoUrl="/api/invites/pcp_invite_test/logo"
           brandColor="#114488"
           className="h-12 w-12 rounded-none border border-zinc-800"

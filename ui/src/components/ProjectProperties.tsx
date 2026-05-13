@@ -919,7 +919,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
                     <button
                       type="button"
                       className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border text-[10px] text-muted-foreground hover:text-foreground"
-                      aria-label="Execution workspaces help"
+                      aria-label="Справка по рабочим пространствам выполнения"
                     >
                       ?
                     </button>

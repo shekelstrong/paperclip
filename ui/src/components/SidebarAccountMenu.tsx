@@ -130,7 +130,7 @@ export function SidebarAccountMenu({
 
   const displayName = session?.user.name?.trim() || "Board";
   const secondaryLabel =
-    session?.user.email?.trim() || (deploymentMode === "authenticated" ? "Signed in" : "Local workspace board");
+    session?.user.email?.trim() || (deploymentMode === "authenticated" ? "Вы вошли" : "Локальная доска");
   const accountBadge = deploymentMode === "authenticated" ? "Account" : "Local";
   const initials = deriveInitials(displayName);
   const profileHref = `/u/${deriveUserSlug(session?.user.name, session?.user.email, session?.user.id)}`;
@@ -147,7 +147,7 @@ export function SidebarAccountMenu({
           <button
             type="button"
             className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] font-medium text-foreground/80 transition-colors hover:bg-accent/50 hover:text-foreground"
-            aria-label="Open account menu"
+            aria-label="Открыть меню аккаунта"
           >
             <Avatar size="sm">
               {session?.user.image ? <AvatarImage src={session.user.image} alt={displayName} /> : null}
@@ -187,21 +187,21 @@ export function SidebarAccountMenu({
 
             <div className="mt-4 space-y-1">
               <MenuAction
-                label="View profile"
+                label="Просмотр профиля"
                 description="Open your activity, task, and usage ledger."
                 icon={UserRound}
                 href={profileHref}
                 onClick={closeNavigationChrome}
               />
               <MenuAction
-                label="Edit profile"
+                label="Редактировать профиль"
                 description="Update your display name and avatar."
                 icon={UserRoundPen}
                 href={PROFILE_SETTINGS_PATH}
                 onClick={closeNavigationChrome}
               />
               <MenuAction
-                label="Instance settings"
+                label="Настройки экземпляра"
                 description="Jump back to the last settings page you opened."
                 icon={Settings}
                 href={instanceSettingsTarget}
@@ -216,7 +216,7 @@ export function SidebarAccountMenu({
                 onClick={() => setOpen(false)}
               />
               <MenuAction
-                label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                label={theme === "dark" ? "Переключить на светлый режим" : "Переключить на тёмный режим"}
                 description="Toggle the app appearance."
                 icon={theme === "dark" ? Sun : Moon}
                 onClick={() => {

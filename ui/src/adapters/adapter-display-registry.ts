@@ -161,7 +161,7 @@ export function getAdapterDisplay(type: string): AdapterDisplayInfo {
   const label = withSuffix(humanizeType(type), suffix);
   return {
     label,
-    description: suffix ? `External ${suffix} adapter` : "Внешний адаптер",
+    description: suffix ? `Внешний ${suffix === 'gateway' ? 'шлюзовый' : 'локальный'} адаптер` : "Внешний адаптер",
     icon: Cpu,
   };
 }

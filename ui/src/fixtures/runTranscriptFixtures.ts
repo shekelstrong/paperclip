@@ -17,7 +17,7 @@ export const runTranscriptFixtureMeta: RunTranscriptFixtureMeta = {
   agentName: "CodexCoder",
   agentId: "codexcoder-fixture",
   issueIdentifier: "PAP-473",
-  issueTitle: "Humanize run transcripts across run detail and live surfaces",
+  issueTitle: "Человекочитаемые транскрипты запусков на страницах деталей и в реальном времени",
   startedAt: "2026-03-11T15:21:05.948Z",
   finishedAt: null,
 };

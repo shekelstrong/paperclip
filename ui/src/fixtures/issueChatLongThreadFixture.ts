@@ -194,7 +194,7 @@ export const issueChatLongThreadFixtureContext = {
     title: "Базовый fixture рендеринга длинных потоков",
     status: "in_progress",
     priority: "medium",
-    projectName: "Paperclip App",
+    projectName: "Приложение Paperclip",
   },
   documents: [
     "План реализации",

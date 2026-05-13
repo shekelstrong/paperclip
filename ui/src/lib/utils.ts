@@ -125,7 +125,7 @@ export function quotaSourceDisplayName(source: string): string {
     "anthropic-oauth": "OAuth Anthropic",
     "claude-cli": "Claude CLI",
     "bedrock": "AWS Bedrock",
-    "codex-rpc": "Codex app server",
+    "codex-rpc": "Сервер Codex",
     "codex-wham": "ChatGPT WHAM",
   };
   return map[source] ?? source;

@@ -118,7 +118,7 @@ export function isCommandTool(name: string, input: unknown): boolean {
 }
 
 export function displayToolName(name: string, input: unknown): string {
-  if (isCommandTool(name, input)) return "Executing command";
+  if (isCommandTool(name, input)) return "Выполнение команды";
   return humanizeLabel(name);
 }
 
@@ -242,7 +242,7 @@ export function summarizeToolResult(
   isError: boolean | undefined,
   density: TranscriptDensity = "comfortable",
 ): string {
-  if (!result) return isError ? "Tool failed" : "Waiting for result";
+  if (!result) return isError ? "Инструмент не сработал" : "Ожидание результата";
   const structured = parseStructuredToolResult(result);
   if (structured) {
     if (structured.body) {

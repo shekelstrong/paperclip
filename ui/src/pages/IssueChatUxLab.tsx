@@ -24,7 +24,7 @@ const noop = async () => {};
 
 const highlights = [
   "Running assistant replies with streamed text, reasoning, tool cards, and background status notes",
-  "Historical issue events and linked runs rendered inline with the chat timeline",
+  "Исторические события задач и связанные запуски отображаются в хронологии чата",
   "Сообщения пользователей в очереди, установленные комментарии ассистента и элементы управления обратной связью",
   "Отправка (pending) пузыря сообщения с меткой Sending... и уменьшенной непрозрачностью",
   "Пустые состояния и отключённые composer без зависимости от live backend данных",

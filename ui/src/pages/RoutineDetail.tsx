@@ -838,7 +838,7 @@ export function RoutineDetail() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Input value={entry.webhookSecret} readOnly className="flex-1" />
-                  <Button variant="outline" size="sm" onClick={() => copySecretValue("Webhook secret", entry.webhookSecret)}>
+                  <Button variant="outline" size="sm" onClick={() => copySecretValue("Секрет вебхука", entry.webhookSecret)}>
                     <Copy className="h-3.5 w-3.5 mr-1" />
                     Secret
                   </Button>
