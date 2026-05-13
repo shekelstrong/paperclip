@@ -420,6 +420,85 @@ Paperclip собирает анонимную телеметрию для пон
 
 MIT &copy; 2026 Paperclip
 
+---
+
+## 🤖 Интеграция с Hermes и Telegram
+
+Paperclip работает с [Hermes Agent](https://hermes-agent.nousresearch.com/) как AI-агент через `hermes_local` адаптер. Это позволяет управлять задачами через Telegram-бот.
+
+### Быстрая настройка (под ключ)
+
+#### 1. Установите Hermes
+
+```bash
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+hermes setup
+```
+
+#### 2. Настройте CEO-агента в Paperclip
+
+В UI Paperclip создайте агента с типом **Hermes Local** и укажите `adapterConfig`:
+
+```json
+{
+  "env": {
+    "Ollama": {
+      "type": "plain",
+      "value": "ВАШ_OLLAMA_API_КЛЮЧ"
+    }
+  },
+  "model": "kimi-k2.6",
+  "quiet": false,
+  "timeoutSec": 600,
+  "persistSession": true,
+  "paperclipApiUrl": "http://127.0.0.1:ВЕШ_ПОРТ/api"
+}
+```
+
+**Важно:**
+- `quiet: false` — **обязательно**. Без этого Hermes падает с `KeyboardInterrupt` на длинных промптах.
+- `timeoutSec: 600` — CEO-агенту нужно время на выполнение задач.
+- `paperclipApiUrl` — URL Paperclip API (с `/api` на конце).
+
+#### 3. Отключите tirith (security scanner)
+
+Hermes security scanner `tirith` блокирует `curl`-запросы CEO к localhost. Добавьте в `~/.hermes/config.yaml`:
+
+```yaml
+security:
+  tirith_enabled: false
+  allow_private_urls: true
+```
+
+#### 4. Синхронизация модели
+
+Если вы управляете моделью через Telegram-бот (`/model`), настройте авто-синхронизацию:
+
+```bash
+# Cronjob каждые 1-5 минут:
+cp /root/.hermes/config.yaml /home/paperclip/.hermes/config.yaml
+```
+
+Или используйте API для обновления `adapterConfig.model` у CEO-агента.
+
+#### 5. Telegram-мост (опционально)
+
+Для получения уведомлений в Telegram:
+- Создайте Telegram Bot через @BotFather
+- Используйте скрипт `paperclip_notifier.py` (cronjob каждые 1 мин)
+- Для создания задач из Telegram: `telegram_to_paperclip.py`
+
+### Поддерживаемые модели Ollama Cloud
+
+У Ollama Cloud нет API для списка моделей. Используйте известные модели:
+- `kimi-k2.6` — быстрые ответы
+- `glm-5.1` — текущая модель
+
+### Известные баги
+
+1. **Hermes `-Q` баг**: `quiet: false` — обязательно. Флаг `-Q` вызывает `KeyboardInterrupt`.
+2. **Ollama Cloud 503**: Временные ошибки провайдера. При 503 CEO таймаутится → задача → `blocked`.
+
 ## История звёзд
 
 [![Star History Chart](https://api.star-history.com/image?repos=paperclipai/paperclip&type=date&legend=top-left)](https://www.star-history.com/?repos=paperclipai%2Fpaperclip&type=date&legend=top-left)
