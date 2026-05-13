@@ -125,16 +125,30 @@ export function companyService(db: Db) {
   }
 
   function isIssuePrefixConflict(error: unknown) {
-    const constraint = typeof error === "object" && error !== null && "constraint" in error
-      ? (error as { constraint?: string }).constraint
-      : typeof error === "object" && error !== null && "constraint_name" in error
-        ? (error as { constraint_name?: string }).constraint_name
-        : undefined;
-    return typeof error === "object"
-      && error !== null
-      && "code" in error
-      && (error as { code?: string }).code === "23505"
-      && constraint === "companies_issue_prefix_idx";
+    const e = error as Record<string, unknown> | null;
+    if (typeof e !== "object" || e === null) return false;
+
+    // Structured properties (raw postgres error)
+    const constraint = (e.constraint ?? e.constraint_name) as string | undefined;
+    const code = e.code as string | undefined;
+    if (code === "23505" && constraint === "companies_issue_prefix_idx") return true;
+
+    // DrizzleQueryError wraps the original; check message for the constraint name
+    const message = String(e.message ?? "");
+    if (
+      message.includes("duplicate key value violates unique constraint") &&
+      message.includes("companies_issue_prefix_idx")
+    ) {
+      return true;
+    }
+
+    // ES2022 Error.cause chain (Drizzle sometimes nests PostgresError here)
+    const cause = e.cause;
+    if (cause && typeof cause === "object") {
+      return isIssuePrefixConflict(cause);
+    }
+
+    return false;
   }
 
   async function createCompanyWithUniquePrefix(data: typeof companies.$inferInsert) {
